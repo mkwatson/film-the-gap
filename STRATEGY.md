@@ -92,6 +92,55 @@ Before doing material work, ask:
 
 If there is no crisp answer, the work is probably feature accumulation rather than win optimization.
 
+### Sponsor-product portfolio objective
+
+We want to leverage **as many sponsor products as possible subject to positive marginal winning value**. The target is not a low integration count, and it is not sponsor bingo.
+
+A useful qualitative model is:
+
+```text
+marginal sponsor-product value ≈
+  rubric gain
+  × depth and novelty
+  × expert recognizability
+  × demo or execution relevance
+  × probability it works
+  − coherence cost
+  − reliability risk
+  − explanation cost
+  − opportunity cost
+```
+
+New products can score unusually well on novelty, expert recognizability, and sponsor enthusiasm. They also tend to carry beta access, documentation churn, compatibility, and reliability risk. We should explore them aggressively, then place them on a cumulative rung with a proven fallback.
+
+The coherent portfolio has layers:
+
+| Layer | Portfolio rule | Illustrative shape, not a stack decision |
+| --- | --- | --- |
+| Required agent clients | Use both deeply and test their real differences. | ChatGPT Site Tools as hero; native Chrome WebMCP plus DevTools as second acceptance/evidence surface. |
+| One primary platform ecosystem | Select one host, then exploit several complementary products inside it rather than adding redundant hosts. | Cloudflare Worker + Durable Objects + RealtimeKit + AI Search + tracing, **or** Vercel Next/Hydrogen + WebSockets + Eve + Workflow + Sandbox + observability. |
+| Orthogonal domain protocol | Add a represented protocol/product when it owns a real boundary the host does not. | Shopify native WebMCP/UCP owns catalog, cart, checkout, or merchant negotiation around a custom collaboration layer. |
+| Intelligence and media | Use the best sponsor capabilities for a specific missing function, not generic “AI.” | OpenAI Realtime/provenance/evals, Chrome built-in AI, Cloudflare Stream, or a platform sandbox for Lean/video work. |
+| Trust, identity, and economics | Compose these only when they make a consequential action safer or enable a new market. | Scoped mandates, Web Bot Auth, Vercel Connect, UCP profiles, MPP/x402 receipts, or a Lean-checked certificate. |
+| Build, evaluation, and operations | Leverage many products here because they raise execution without cluttering the user story. | Chrome DevTools MCP, OpenAI evals, Browser Run, Agent Runs, Deploy Previews, Render Preview Environments, tracing, flags, and rollbacks. |
+| Gated future glimpse | Preserve the most exciting current announcements without pretending they are available. | Universal Cart, Cloudflare Wallets, direct trusted checkout, or private-preview security tools behind a complete lower rung. |
+
+Products from different layers usually compose; products competing for the same job usually create distraction. One primary host can contribute five or six deep capabilities without architectural incoherence. Two primary hosts, two voice stacks, two authoritative room-state systems, or three generic model gateways usually cannot.
+
+Not every sponsor product belongs in the first 30 seconds. The demo should tell one user story. Load-bearing products appear naturally when their effect is visible; build/quality products belong in a short implementation beat, README, trace, or repository evidence. Judges should feel product depth before hearing an inventory.
+
+A sponsor product enters the integrated portfolio only when:
+
+1. its unique job in the user-to-outcome chain can be stated in one sentence;
+2. it improves at least one official criterion or materially reduces execution risk;
+3. its behavior is real and inspectable, not a logo-level integration;
+4. it composes with the current architecture without duplicating authority;
+5. its access and current-version compatibility have been proven;
+6. a failure or unavailable beta cannot destroy the last complete rung; and
+7. the full experience is clearer with it than without it.
+
+When those conditions hold, integration count is an advantage: it demonstrates unusually broad command of the sponsor ecosystem while every component reinforces one memorable future-of-the-web thesis.
+
 ## Operating system — working end to end early without thinking small
 
 Early end-to-end execution is what enables greater ambition. A stable loop turns the remaining time into repeated product experiments instead of one long integration gamble.

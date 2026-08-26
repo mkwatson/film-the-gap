@@ -25,7 +25,7 @@ evidence, proof, tracing, security, and evaluation
   provenance / Lean / browser evals / agent observability
 ```
 
-A deep use of one represented product can make an expert judge an informed advocate for the entry. That multiplier is valuable only when the capability is load-bearing, novel, and obvious in the demo. We should eventually choose one coherent primary host; during discovery, keeping Cloudflare, Vercel, Netlify, and Render branches alive is cheap and prevents architecture from silently choosing the idea for us.
+A deep use of a represented product can make an expert judge an informed advocate for the entry. Several deep, orthogonal sponsor products can compound that advantage when they form one user-to-outcome chain. The [portfolio rule](STRATEGY.md#sponsor-product-portfolio-objective) is to maximize positive marginal sponsor-product value, not minimize integrations or collect logos. We should eventually choose one coherent primary host; during discovery, keeping Cloudflare, Vercel, Netlify, and Render branches alive is cheap and prevents architecture from silently choosing the idea for us.
 
 ## Status vocabulary
 
