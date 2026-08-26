@@ -10,7 +10,139 @@ UCP, Lean, Vidably, and the video-foundational research are optional sources of 
 
 The official challenge asks for an app that becomes meaningfully better when people and agents use it together. Stage-two judging gives equal weight to WebMCP leverage, execution, potential impact, and creativity/ambition. WebMCP leverage is the first tie-breaker. The public gallery is not yet visible, but the official showcase and partner examples already make ordinary catalog/cart, CRUD, itinerary, document/canvas editing, games, reservations, and generic data exploration crowded territory.
 
-Sources: [challenge page](https://openai.com/webmcp-challenge/), [Devpost](https://webmcp.devpost.com/), [resources and FAQ](https://webmcp.devpost.com/resources), [WebMCP draft](https://webmachinelearning.github.io/webmcp/), [OpenAI showcase](https://developers.openai.com/showcase?view=webmcp-apps), the living [resource ledger](RESOURCES.md), [platform decision record](PLATFORMS.md), and [judge intelligence map](JUDGES.md).
+Sources: [challenge page](https://openai.com/webmcp-challenge/), [Devpost](https://webmcp.devpost.com/), [resources and FAQ](https://webmcp.devpost.com/resources), [WebMCP draft](https://webmachinelearning.github.io/webmcp/), [OpenAI showcase](https://developers.openai.com/showcase?view=webmcp-apps), the living [resource ledger](RESOURCES.md), [sponsor-product atlas](SPONSOR-PRODUCTS.md), [platform decision record](PLATFORMS.md), and [judge intelligence map](JUDGES.md).
+
+## Winning-probability model — all factors in play
+
+The optimization target is expected winning probability under a hard deadline, not maximum ambition, maximum reliability, or maximum build speed independently.
+
+A useful, deliberately simplified model is:
+
+```text
+P(win) ≈
+  P(eligible and compliant)
+  × P(pass stage one)
+  × P(the judged artifact actually works)
+  × P(the submission communicates the magic)
+  × P(top-ten rubric score | the work is understood)
+```
+
+The terms are not statistically independent. The model is useful because it prevents a brilliant concept with a broken demo, a polished product with decorative WebMCP, or a technically deep build that nobody understands from masquerading as a strong bet.
+
+### Official gates and scoring mechanics
+
+| Factor | Why it affects winning probability | Operating implication |
+| --- | --- | --- |
+| Eligibility and conflict rules | Failure makes every other score irrelevant. | Recheck entrant, team, country, support/funding, and conflict facts before submission. |
+| Stage-one viability | The project must fit the human-agent open-web theme and reasonably apply required WebMCP tooling. | Maintain one unmistakable native WebMCP flow and explain why the page/session matters. |
+| WebMCP Leverage — 25% | Judges score depth, skill, genuine effort, and a working non-trivial implementation. It is also the first tie-breaker. | Make WebMCP load-bearing, dynamic, visible in source, and exercised across a complete workflow—not a wrapper around buttons. |
+| Execution — 25% | The entry must be a complete, coherent working product, not a proof of concept. | Ship a golden path early; test the full flow in the exact clients; include recovery, fallback, polish, and stable deployment. |
+| Potential Impact — 25% | The problem, real audience, and demonstrated solution must be specific and credible. | Anchor the demo in a painful decision or action, real domain state, and a believable path to repeated use or economic/social value. |
+| Creativity and Ambition — 25% | The concept must be novel and materially different from existing ideas. | Preserve wild branches, research prior art and official examples, and show one memorable future-of-the-web primitive rather than a larger conventional app. |
+| Tie-break order | Ties resolve by WebMCP, then Execution, Impact, and Creativity in rubric order. | All four matter equally in normal scoring; when tradeoffs are otherwise equal, favor deeper WebMCP and dependable execution. |
+| Potential multi-round/automated evaluation | Judges can change and the process may include expert, peer, or automated analysis. | Optimize for the published rubric and inspectable evidence, not private-preference speculation or a single judge. |
+| One submission | We cannot submit a portfolio of alternatives. | Explore broadly now, then converge on the highest-evidence product thesis and make every feature support it. |
+| New-work boundary | Only eligible challenge-period work is judged; existing projects require clear separation. | Keep dated commits and a purpose-built public boundary. Treat Vidably/math assets as owned inputs, not ambiguous pre-existing submission work. |
+| Working live access | Judges need a free reachable URL and may test in ChatGPT or Chrome throughout judging. | Remove access friction, provide credentials if unavoidable, monitor dependencies, and freeze a known-good submitted revision. |
+| Public repository and license | Missing source, setup, assets, detectable license, or implementation evidence can invalidate or weaken the entry. | Make the native registration path, architecture, tests, setup, new-work history, licenses, and limitations obvious. |
+| Submission cutoff and freeze | Late or post-deadline changes cannot rescue a broken submission. | Establish internal buffers for deployment, YouTube processing, Devpost verification, rights review, and rollback. |
+| IP, privacy, authorization, and trademark compliance | A rights or terms violation can disqualify the entry or force damaging edits. | Use owned/cleared media and data, current SDK/API terms, minimal personal data, and explicit provenance. |
+
+The official page showed **1,563 registered participants on 2026-08-26**. Registrations are not completed submissions, but the field is large enough that competence alone will not be memorable.
+
+### Strategic score multipliers
+
+These are not additional official criteria. They determine whether judges perceive and reward the four official criteria.
+
+| Multiplier | Winning version | Failure mode |
+| --- | --- | --- |
+| WebMCP necessity | The page has live/authenticated/rich state, and semantic tools let the agent collaborate in a way remote MCP or DOM automation cannot match cleanly. | “Natural language over existing buttons.” |
+| Human-agent complementarity | Human judgment, taste, responsibility, private context, or physical action combines with agent synthesis, speed, search, or formal reasoning. | The human is a spectator or the agent is ornamental. |
+| Shared visible consequence | Tool calls visibly and attributably alter the same artifact the human is using. | Important work happens invisibly on a backend and returns prose. |
+| First-30-second clarity | The problem, collaboration, WebMCP role, and surprising result are understood before protocol exposition. | The viewer must understand an architecture diagram before caring. |
+| Three-minute narrative density | One clean arc shows the complete loop, recovery/safety, technical depth, and ambitious differentiator. | Feature tour, jargon, setup waiting, or unproven future claims. |
+| Retellability and expert advocacy | A judge can explain the new primitive to the rest of the panel in one sentence and cite a concrete moment. | Many integrations without one memorable thesis. |
+| Product coherence | Every protocol, model, platform, and feature strengthens the same user outcome. | Sponsor bingo, redundant hosts, or several demos sharing a repository. |
+| Judge-product depth | A represented product is used in a novel, load-bearing way its expert immediately recognizes. | Selecting a vendor to flatter a judge or placing its logo in the stack. |
+| Exact-runtime reliability | The current ChatGPT app and Chrome build repeatedly finish the hero task, including state changes and confirmations. | Passing unit tests, a polyfill, or headless Chrome is mistaken for judged-client success. |
+| Agent Experience | Tools are discoverable, non-overlapping, state-aware, repairable, cancellable, and honest about permissions and untrusted content. | Ambiguous selection, stale tools, dead ends, or silent failure. |
+| Safety and human control | Consequential actions have clear authority, validation, preview/approval, attribution, idempotency, and recovery. | The demo is reckless, blocked by confirmations, or merely simulates safety. |
+| Real-world credibility | Data, catalog state, evidence, model behavior, or transactions are authoritative enough for the demonstrated claim. | A polished mock proves no real audience value. |
+| Novelty versus the live field | The concept differs from the current OpenAI showcase, sponsor examples, public gallery, incumbents, and likely peer entries. | A technically good CRUD/storefront/reservation app lands in a crowded category. |
+| Ambition ceiling | The product reveals a plausible new market, collaboration model, trust primitive, or open-web behavior. | The final result is useful but unsurprising. |
+| End-to-end learning speed | A thin real loop reveals client, latency, confirmation, tool-selection, and UX truths early. | Days of horizontal infrastructure produce no observable product evidence. |
+| Cumulative architecture | Each ambitious rung lands behind or on top of a stable complete path. | The final high-risk integration breaks the only demo. |
+| Access and dependency probability | Critical capabilities are available in our accounts, plans, regions, runtimes, and deadline window. | A gated beta, model, merchant tier, or live vendor becomes a single point of failure. |
+| Graceful fallback | The product remains coherent when voice, video, on-device AI, a live model, UCP tier, or payment rail is unavailable. | The fallback exposes that the core idea never worked without spectacle. |
+| Performance, accessibility, and visual craft | The experience is fast, legible, responsive, keyboard/screen-reader aware, and visually communicates agent state. | Technical depth is undermined by a confusing or brittle page. |
+| Evidence quality | Tests, evals, traces, screenshots, commit history, metrics, and limitations make claims easy to trust. | The submission asks judges to take architecture claims on faith. |
+| Current-documentation accuracy | The implementation uses the exact current cohesive versions and observed runtime behavior. | A recent blog, stale helper, or training-memory API silently breaks the demo. |
+| Team focus and reversible decisions | We spend complexity only on the product's hardest differentiator and postpone reversible stack choices. | Over-engineering consumes iterations without increasing a judge-visible factor. |
+| Optional asset leverage | UCP, Lean, Vidably, or existing expertise gives us an unfair advantage after the idea earns it. | Familiar assets constrain ideation or leak private/pre-existing work into the entry. |
+
+### Expected-value test for a feature or integration
+
+Before doing material work, ask:
+
+1. Which hard gate, rubric score, multiplier, execution risk, or learning uncertainty does it improve?
+2. Is that improvement visible in the judged app or three-minute submission?
+3. Is this the smallest vertical experiment that can test the claim?
+4. What evidence decides whether to integrate, revise, or discard it?
+5. What is the fallback, and can the last complete rung remain untouched?
+
+If there is no crisp answer, the work is probably feature accumulation rather than win optimization.
+
+## Operating system — working end to end early without thinking small
+
+Early end-to-end execution is what enables greater ambition. A stable loop turns the remaining time into repeated product experiments instead of one long integration gamble.
+
+### Non-negotiable golden-path invariant
+
+As soon as implementation begins, establish and continuously preserve a judged-client path containing:
+
+1. a deployed or deployable human-usable page;
+2. direct native WebMCP registration that the current client discovers;
+3. at least one meaningful read and one meaningful state-changing action;
+4. a visible, attributable result in the shared UI;
+5. human edit, approval, correction, or cancellation where appropriate;
+6. a coherent end state and an actionable failure state;
+7. ordinary-browser progressive enhancement;
+8. a reproducible test and a short captured demo of the loop.
+
+The first version may use deterministic local data and a prerecorded event. It is still a real product loop, not a fake integration: the actual WebMCP contract, page state, human control, and outcome must work.
+
+### Two simultaneous lanes
+
+- **Golden-path lane:** keep the strongest complete rung green, deployed, tested, and recordable. Fix regressions immediately.
+- **Frontier lane:** pursue the highest-upside uncertain interaction, sponsor capability, real-data boundary, or ambitious rung behind a flag, branch, adapter, or replaceable fixture.
+
+The frontier lane can be extremely aggressive because failure does not erase the submission. A frontier experiment graduates only after it improves the complete hero flow; otherwise its learning is recorded and its complexity is removed or isolated.
+
+### Vertical iteration loop
+
+For each meaningful iteration:
+
+1. State the winning factor and user-visible hypothesis.
+2. Retrieve the exact current documentation and check access/version assumptions.
+3. Implement the thinnest slice across UI, WebMCP tool, state, validation, failure handling, and outcome.
+4. Run the entire hero task in the exact available client, not only handler tests.
+5. Measure the intended behavior: selection, latency, success, recovery, comprehension, or delight.
+6. Record the result and decide: integrate, revise once, preserve as optional, or kill.
+7. Re-run the golden path, deploy the known-good revision, and capture useful footage.
+
+### Convergence without premature pruning
+
+We do not converge because an idea sounds expensive or because a week feels short. We converge when observed evidence shows that one direction has the best combination of:
+
+- unmistakable WebMCP necessity;
+- a magical and retellable human-agent moment;
+- credible audience impact;
+- genuinely differentiated ambition;
+- a complete working lower rung;
+- accessible current dependencies;
+- a believable route to judged-quality reliability and presentation.
+
+Until then, research and cheap concept-specific slices keep option value alive. After convergence, new ideas can still displace the leader, but only by beating its observed complete experience—not by sounding more impressive on paper.
 
 ## Judge intelligence as a decision lens
 

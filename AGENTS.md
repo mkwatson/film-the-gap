@@ -5,8 +5,12 @@ These instructions apply to the entire repository.
 ## Strategic priority
 
 - Maximize the probability of winning the OpenAI WebMCP Challenge.
+- Optimize expected winning probability, not feature count, protocol count, technical cleverness, or speed in isolation. A change must improve a hard gate, official rubric score, judge-visible multiplier, execution confidence, or learning speed.
 - UCP, Lean, Vidably, and video-AI work are optional advantages, not requirements. Use them only when they make the winning product thesis stronger.
 - Err on the side of wild ambition, delivered as cumulative end-to-end rungs. Keep the latest completed rung working while adding the next one.
+- Establish a real end-to-end golden path as early as possible: deployable page, native WebMCP discovery, at least one meaningful tool call, visible state change, human control, coherent outcome, and ordinary-browser fallback. Keep it demoable throughout development; make it a public live URL once Mark approves the external deployment.
+- Build vertically through the whole experience instead of completing infrastructure layers in isolation. Put frontier experiments behind flags or clean boundaries so a failed high-ambition rung cannot break the last judged-quality path.
+- After every meaningful iteration, identify which winning factor it improved, run the complete hero flow, record the result, and keep, revise, or remove it based on evidence. Capture demo footage continuously; the video and description are primary judging surfaces, not end-of-week packaging.
 - Strategically maximize judge-product leverage when a judge's product, protocol, or platform can materially strengthen the product. Prefer one deep, novel, demonstrable use over several shallow integrations.
 - Explore broadly before convergence. Preserve ambitious concept and platform branches until a concrete experiment falsifies them; do not let an imagined one-week schedule silently narrow the search.
 - Eventually choose one coherent primary hosting/runtime path. During exploration, compare the strongest alternatives against the same hero interaction. Judge affiliation can raise the strategic value of an otherwise strong integration, but it cannot substitute for product fit, rubric value, compatibility, or reliability.
