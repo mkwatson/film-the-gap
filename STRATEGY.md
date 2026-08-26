@@ -1,0 +1,323 @@
+# WebMCP Challenge strategy and idea frontier
+
+Research state: 2026-08-26. This is a working decision document, not a project commitment or a novelty claim.
+
+## Objective
+
+Maximize the probability of being one of the ten winning submissions.
+
+UCP, Lean, Vidably, and the video-foundational research are optional sources of leverage. None is a requirement. A concept that uses none of them should win our internal selection if it is more likely to win the challenge.
+
+The official challenge asks for an app that becomes meaningfully better when people and agents use it together. Stage-two judging gives equal weight to WebMCP leverage, execution, potential impact, and creativity/ambition. WebMCP leverage is the first tie-breaker. The public gallery is not yet visible, but the official showcase and partner examples already make ordinary catalog/cart, CRUD, itinerary, document/canvas editing, games, reservations, and generic data exploration crowded territory.
+
+Sources: [challenge page](https://openai.com/webmcp-challenge/), [Devpost](https://webmcp.devpost.com/), [resources and FAQ](https://webmcp.devpost.com/resources), [WebMCP draft](https://webmachinelearning.github.io/webmcp/), [OpenAI showcase](https://developers.openai.com/showcase?view=webmcp-apps), the living [resource ledger](RESOURCES.md), [platform decision record](PLATFORMS.md), and [judge intelligence map](JUDGES.md).
+
+## Judge intelligence as a decision lens
+
+Read [JUDGES.md](JUDGES.md) before concept selection, stack selection, or a material architecture change. The panel spans Chrome/browser standards, OpenAI's browser agent, MCP-B, Next.js, open agent infrastructure, Agent Experience, and Shopify/UCP commerce.
+
+Use that coverage to anticipate expert scrutiny and to find opportunities for concentrated judge-product leverage. A deep, novel use of a product or standard represented on the panel can be instantly legible to its expert and create an informed advocate. Choose one coherent infrastructure path, then add only orthogonal judge products that strengthen the same thesis; do not assemble redundant services merely to collect affiliations. The official rubric stays authoritative, and the rules permit changing or multiple panels, peer review, and automated analysis.
+
+## Options for the next phase
+
+| Approach                                       | Upside                                                | Tradeoff                                                                              |
+| ---------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Commit now to a Vidably/UCP/Lean concept       | Fastest route to using existing assets                | Anchors on ingredients before proving the experience; commerce is crowded             |
+| Build a generic WebMCP starter first           | Establishes runtime and deployment early              | Generic infrastructure can become throwaway work and bias later designs               |
+| Explore broadly, then build                    | Best protection against missing the strongest concept | Delays empirical feedback from a working interaction                                  |
+| Build several complete micro-prototypes        | Lets visible "magic" beat paper scoring               | Costs more implementation effort and can spread polish thin                           |
+| Extend the current Vidably product             | Real data, code, and domain credibility               | Only post-August-25 work is judged; existing-product complexity can slow iteration    |
+| Start a purpose-built challenge app            | Total control of story and demo                       | Must recreate any useful Vidably capabilities or expose them through a clean boundary |
+| Optimize tightly for judges and standards gaps | Can make WebMCP leverage unusually legible            | Risks becoming a protocol demo instead of a useful product                            |
+
+## Recommendation: a wildly ambitious frontier portfolio
+
+Do broad exploration and vertical slicing at the same time, but do not build a generic platform.
+
+1. Keep generating concepts across domains and interaction patterns until new passes stop producing materially new families. There is no arbitrary cap on the brainstorm.
+2. Maintain a moving frontier of roughly eight to twelve concept families. A concept enters the frontier only if it has both a wild ambition ceiling and a compelling first complete rung.
+3. For frontier concepts, research prior art and sketch the three-minute demo before architecture. The demo forces the human-agent complement to be concrete.
+4. Build small concept-specific walking skeletons for the few ideas whose value cannot be settled on paper. Each skeleton must contain a real WebMCP call, a visible state change, human review/control, and an end state.
+5. Select the project based on observed product magic, rubric strength, and execution evidence. Keep ideation running after provisional selection so a much better concept can still displace it.
+6. Add ambition as cumulative layers. Every layer must strengthen the same thesis and leave the previous rung fully working.
+
+This approach preserves the broad search Mark wants while satisfying the preference for end-to-end progress as early as possible.
+
+## What a likely winner needs
+
+A strong concept should make all six statements true:
+
+1. The human has something the agent lacks: judgment, physical action, private intent, taste, or responsibility.
+2. The agent has something the site and human lack: synthesis, external context, speed, search, or formal reasoning.
+3. The page has something neither can replace cleanly: live rich state, an authenticated session, media, a simulation, or an instrument.
+4. Tool calls visibly change the same artifact the human is inspecting and editing.
+5. The important action is safer, clearer, or more capable because the human and agent remain in one interface.
+6. The first 30 seconds of the demo make the benefit and WebMCP's role obvious without protocol exposition.
+
+A weak concept usually reduces to one of these:
+
+- Natural language over buttons.
+- A backend agent with WebMCP added only as transport.
+- A normal shopping/search/CRUD flow with no new collaboration model.
+- An impressive model whose work is invisible in the page.
+- Several protocols placed next to one another without one product thesis.
+
+## Ambition architecture
+
+Every serious concept gets a ladder like this:
+
+- Rung 1, complete loop: deterministic local data, one real WebMCP workflow, visible agent activity, human edit or approval, coherent final artifact.
+- Rung 2, domain reality: one real external data source or model replaces the most important static assumption.
+- Rung 3, differentiation: the capability that makes the concept hard to copy, such as Vidably evidence extraction, UCP state, a solver, or formal verification.
+- Rung 4, future glimpse: the ambitious multi-step experience that makes the submission memorable.
+- Rung 5, judged product: exact ChatGPT runtime compatibility, graceful failures, polished first minute, public deployment, tests, README, and sub-three-minute video.
+
+The rungs are cumulative. A failed Rung 4 never breaks Rungs 1 through 3.
+
+## Broad idea landscape, pass one
+
+These are descriptive labels, not proposed product names. The challenge FAQ specifically advises entrants to choose their own project name.
+
+### A. Agent and human reach into the physical world
+
+1. Repair workbench: the human shows a malfunction, the agent directs diagnostic checks, the page tracks evidence and state, and verified compatible parts become actionable.
+2. Guided product-evidence capture: the agent identifies missing decision-useful shots or measurements and directs a creator through capturing them.
+3. Used-item inspection: a seller and agent build a timestamped condition record that a buyer can interrogate.
+4. Home-maintenance diagnosis: the agent maintains competing hypotheses and asks the human for the next most informative observation.
+5. Remote quality inspection: a human operator captures evidence while an agent checks a formal inspection plan and records exceptions.
+6. Assembly copilot: the page holds a parts diagram and progress state while the agent adapts instructions to what the human actually sees.
+7. Field-science notebook: a human gathers samples or observations while the agent directs collection and updates hypotheses.
+8. Accessibility mapper: a user and agent inspect a physical venue, record barriers, and create an actionable route or remediation plan.
+
+### B. Evidence, claims, and trust
+
+9. Product-claim evidence lab: a human and agent map claims in UGC video to exact segments, catalog facts, supporting evidence, conflicts, and unresolved questions.
+10. Active evidence acquisition: the agent chooses the next clip, angle, measurement, or source with the highest expected decision value; the human decides whether to obtain it.
+11. Conflict-aware research board: sources remain isolated, conflicts stay visible, and the agent cannot silently collapse incompatible evidence.
+12. Provenance-preserving recommendation canvas: every recommendation remains linked to the observations and constraints that caused it.
+13. Advertising-claim review: brand and agent review a video timeline, flag unsupported or risky statements, and replace them with evidence-backed language.
+14. Public-record investigation: agent synthesis becomes a visible claim/evidence graph that the human can challenge and correct.
+15. Insurance evidence packet: agent and claimant organize media and documents into a transparent timeline without turning uncertainty into fact.
+16. Authenticity investigation: the page accumulates product-specific visual and documentary signals while preserving competing hypotheses.
+
+### C. Commerce beyond generic storefront tools
+
+17. Evidence-to-cart: a shopper and agent interrogate a video, ground depicted products and claims, compare authoritative UCP offers, and preserve why each cart line was chosen.
+18. Proof-carrying bundle: the agent assembles a multi-product solution and produces a machine-checked certificate that budget, compatibility, quantity, and policy constraints hold.
+19. Cross-merchant repair procurement: diagnostics determine required part properties; UCP resolves offers; the page makes compatibility evidence and handoffs visible.
+20. Intent-to-kit compiler: the user supplies a goal and inspiration media; the agent builds a complete kit while exposing missing categories and tradeoffs.
+21. Creator-video product grounding: a creator or merchant resolves ambiguous products and variants depicted at each moment before publishing commerce metadata.
+22. Return-prevention workspace: shopper fit/usage constraints are checked against video evidence and product facts before checkout.
+23. Substitute negotiator: when an item is unavailable, the agent proposes replacements, but the page shows exactly which requirements each replacement preserves or violates.
+24. Procurement exception room: the agent builds a compliant order, humans adjudicate exceptions, and checkout is impossible until required approvals are visible.
+
+### C2. Live agent commerce and markets
+
+The ambitious object is not an autobidder. Whatnot already offers Max Bid and pre-bidding, and a first competitive scan found live-auction platforms advertising AI hosts or planned policy-scoped agent bidding. The distinct thesis is a live market designed for humans and their agents to attend together.
+
+1. Agent-native live shopping room: a human watches a live host while ChatGPT co-attends, understands the current lot, and works in the same visible page.
+2. Ephemeral lot tools: every lot creates a temporary semantic action surface for inspection, evidence requests, interest, bidding, reservation, or purchase, then removes it when the lot closes.
+3. Evidence-aware live buyer: the agent maps claims made on stream to catalog facts, prior evidence, and unresolved questions before recommending action.
+4. Proof-scoped bidder: the buyer grants a conditional mandate, such as an all-in budget and required properties, and the system permits only bids that satisfy it.
+5. Host evidence director: audience agents aggregate missing questions or requested demonstrations; the host sees which physical evidence would unlock the most demand.
+6. Mixed human-agent audience: hosts sell to people and personal agents in the same room, with agent actions visibly attributed and reversible where possible.
+7. Live conditional offer market: buyers' agents express structured conditions, the host responds with demonstrations or bundles, and offers become executable only when conditions are resolved.
+8. Agent-attended product drop: the user can remain socially present while the agent tracks variants, availability, constraints, and authoritative commerce state.
+9. Live collectible or resale authentication: the host supplies requested angles or tests while agents maintain visible competing authenticity and condition hypotheses.
+10. Live demand-to-production: audience agents aggregate intent and constraints while a creator or merchant adapts the next product, configuration, or bundle in real time.
+
+Current protocol fit:
+
+- WebMCP is unusually native to this because tools belong to the open page and can be registered or removed as show state changes. The human sees the live stream and every agent-caused state change in the same session.
+- ChatGPT Site Tools can use the current page and signed-in session while it remains open. Purchases, messages, and other sensitive actions require confirmation, so rapid-fire bidding cannot be assumed to work without a carefully designed mandate or handoff.
+- UCP is useful for product resolution, cart, checkout, payment, and post-win order state. The current core overview and checkout documentation do not expose auction or bidding primitives, so live bidding would initially be application-owned or a clearly labeled extension.
+- Vidably can turn the stream into timestamped product evidence and claims. WebMCP results do not carry native video, so media remains visible in the page while tools return IDs, timestamps, state, and provenance.
+- Lean or another formal system is relevant only if it certifies a visible consequential property, such as mandate compliance or an auction invariant. It should not be used to claim that an empirical statement from the stream is true.
+
+Current execution evidence:
+
+- Vidably already has the Mux Node SDK, direct browser-to-Mux VOD uploads through UpChunk, vertical-video playback surfaces, and downstream video/evidence workflows.
+- The app scan found no Mux Live Stream calls or realtime-room dependency. We should treat live broadcast, synchronized room state, chat, and auction state as new work rather than implied existing capability.
+- Mux's current live product can reuse the existing account and SDK, but it ingests over RTMP/RTMPS. Mux says browser-to-RTMP encoding lacks a reliable open-source path, and even low-latency HLS can be around five seconds. OBS or a prerecorded show advanced by a host control is the reliable first rung.
+- The existing creator flows in Vidably are intentionally dormant and should not become the challenge's host surface. A purpose-built challenge app gives a cleaner judged boundary and avoids entangling a live production repo.
+
+### D. Formal safety and proof-carrying action
+
+25. Permission workflow composer: human and agent design an automation graph; a solver proves least-privilege, data-flow, and approval invariants before activation.
+26. Safe incident-response simulator: an agent proposes and executes simulated remediations while formal guards prevent unacceptable blast radius.
+27. Verified configuration studio: agent edits a complex system configuration and the page displays proofs or counterexamples for declared invariants.
+28. Policy-to-controls compiler: human writes policy intent, agent maps it to controls, and formal checks expose gaps and contradictions.
+29. Proof-carrying checkout: UCP state transitions and purchase constraints are represented as a small verified state machine with visible human handoffs.
+30. Contract scenario verifier: human and agent edit economic terms while a solver searches for counterexamples to promised outcomes.
+31. Safety-case builder: agent assembles claims, evidence, assumptions, and formal obligations into an inspectable argument rather than a prose assurance.
+32. Verifiable agent plan: before consequential tool calls become available, the page proves the proposed plan stays within a declared capability envelope.
+
+### E. Operations and coordination
+
+33. Incident command surface: the page owns a live system map, the agent correlates signals and proposes actions, and the human controls irreversible steps.
+34. Disaster-relief allocation: humans set priorities and exceptions while the agent continuously recomputes a constrained allocation and procurement plan.
+35. Event production control room: agent updates the run-of-show against delays and resource constraints while humans own live calls.
+36. Supply-chain exception manager: agent identifies downstream impact and alternatives; humans resolve commercial and relationship tradeoffs.
+37. Volunteer dispatch map: agent matches evolving needs and capabilities while coordinators see and adjust the same assignments.
+38. Security tabletop: human decisions change a simulated network; the agent attacks, explains evidence, and tests mitigations.
+39. Launch readiness room: agent traverses dependencies and evidence, but owners visibly accept risk and unblock gates.
+40. Collaborative negotiation board: agents explore feasible deals while humans control preferences, concessions, and final acceptance.
+
+### F. Science, engineering, and mathematics
+
+41. Interactive theorem laboratory: human manipulates a conjecture or diagram, the agent runs Lean-backed proof attempts, and proof state remains visible and editable.
+42. Counterexample studio: human proposes a rule, agent searches examples, and the page visualizes the smallest failure or a bounded certificate.
+43. Experiment design lab: agent chooses informative experiments, human changes assumptions and costs, and results update a shared posterior.
+44. Circuit or mechanism co-design: agent modifies a visual design while simulation and formal constraints stay live.
+45. Causal-model workbench: human edits a graph, agent finds observational ambiguities and proposes interventions.
+46. Reproducibility cockpit: agent reruns analysis variants while the human sees data lineage, assumptions, and result sensitivity.
+47. Mathematical proof review: the agent links each prose step to formal obligations; the human adjudicates intent where formalization exposes ambiguity.
+48. Specification miner: human supplies examples and counterexamples, agent proposes a formal rule, and the page searches for edge cases interactively.
+
+### G. Private context, personalization, and accessibility
+
+49. Private preference negotiator: the user's agent translates sensitive preferences into minimal page actions without uploading the full private profile.
+50. Benefits or plan comparison: the agent applies personal context to an interactive scenario model while the human inspects eligibility assumptions and tradeoffs.
+51. Adaptive accessibility surface: agent and user transform a complex application around the user's needs, preserving an explicit and reversible preference model.
+52. Cognitive-load mode: the agent progressively reveals and groups a complex workflow based on current user intent, not a permanent site-wide persona.
+53. Learning accommodation studio: student and agent tune representations, examples, pacing, and assessment without hiding the underlying material.
+54. Family decision board: private constraints from several people become a visible feasible set without exposing every raw preference to every participant.
+
+### H. Media and creation
+
+55. Creator evidence director: the agent directs a product shoot toward missing claims and variations while the creator controls voice and aesthetics.
+56. Video contradiction editor: agent flags where narration, visuals, product metadata, and disclosures disagree on the timeline.
+57. Adaptive storyboarding: human controls intent and taste; the agent reorganizes real available footage and identifies shots that do not yet exist.
+58. Rights-aware media assembler: every clip, asset, and generated element carries visible permission and usage constraints.
+59. Interactive video explainer: the agent creates multiple paths through a source video for different questions while the human edits the evidence links.
+60. Campaign scenario lab: agent changes offer, audience, sequence, and claim assumptions; the page previews both creative and measurable constraints.
+
+### I. Developer and protocol infrastructure
+
+61. WebMCP behavioral contract lab: developers and agents design tool contracts, generate adversarial tasks, replay traces, and expose description/behavior mismatches.
+62. Human-agent handoff debugger: a page visualizes dynamic tool availability, confirmation boundaries, cancellation, state synchronization, and recovery.
+63. WebMCP eval arena: the agent proposes task suites and probes tool-selection ambiguity while the human curates expected behavior.
+64. Proof-carrying tool registry: consequential tools are paired with executable preconditions and state-transition invariants rather than unenforced descriptions alone.
+65. Agent UX replay studio: teams replay human-agent sessions against alternate tool schemas and interfaces to see where collaboration failed.
+66. Cross-protocol commerce debugger: UCP negotiation and lifecycle state are made visible through a WebMCP surface with safe human handoffs.
+
+## Initial frontier
+
+This frontier is intentionally provisional. It is a set to investigate, not a shortlist to converge on yet.
+
+| Working concept                         | Why it may be exceptional                                                                                                                    | Principal risk                                                                                            |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Agent-native live shopping room         | A new social and commercial primitive: hosts sell to humans and their personal agents together; ephemeral tools mirror the live show         | Real-time agent latency, confirmation prompts, streaming infrastructure, and adjacent AI-auction products |
+| Proof-scoped live buyer                 | Turns agent delegation and trust into the product; WebMCP, video evidence, UCP settlement, and formal constraints can form one coherent loop | Can collapse into ordinary Max Bid unless semantic conditions and shared evidence are central             |
+| Host evidence director                  | Audience agents cause the host to demonstrate what buyers actually need to know, joining the physical world to live demand                   | Multi-viewer aggregation is harder to demo and may require a seller-side surface                          |
+| Agent-directed product-evidence capture | The agent reaches into the physical world through a human; directly uses Vidably's strongest research and product advantage                  | Real-time capture/model loop may be brittle                                                               |
+| Product-claim evidence lab              | Makes video, evidence, human judgment, and agent synthesis one shared artifact                                                               | Must show a decisive action, not merely annotation                                                        |
+| Repair workbench with verified parts    | Highly visual, useful, and memorable; UCP and constraint verification fit naturally                                                          | Diagnosis and compatibility data can become a large domain project                                        |
+| Evidence-to-cart                        | More differentiated than generic shopping because each line remains grounded to media evidence and intent                                    | Judges may still bucket it as another storefront unless the evidence layer dominates                      |
+| Proof-carrying bundle                   | Lean or another solver creates a visible trust primitive instead of decoration                                                               | Formal proof can be intellectually impressive but emotionally flat                                        |
+| Safe incident-response simulator        | Strongest pure human-agent-control story; consequential actions make WebMCP's trust boundary legible                                         | Harder to make production-real in one week                                                                |
+| Permission workflow composer            | Formal methods are native to the problem and the artifact is visually inspectable                                                            | Developer tooling has a narrower perceived impact                                                         |
+| Active evidence research board          | Generalizes Vidably's research into a new collaboration model with broad applicability                                                       | Needs a sharp domain demo to avoid feeling abstract                                                       |
+| WebMCP behavioral contract lab          | Targets a gap the draft explicitly acknowledges and speaks directly to challenge judges                                                      | Chrome eval and DevTools offerings create adjacent competition                                            |
+| Interactive theorem/counterexample lab  | Lean is central, visible, and technically credible                                                                                           | Creativity and mainstream repeat-use story may be weaker                                                  |
+| Private constraint planner              | Uses the user's agent as a holder of context the site should not own                                                                         | Needs a domain where privacy minimization is obvious and measurable                                       |
+| Creator campaign truth layer            | Real commercial pain, strong Vidably leverage, visible video collaboration                                                                   | Could look like a feature of an existing product rather than a new interaction model                      |
+
+## Preliminary rubric read
+
+Scores are 1 to 5 and deliberately uncertain. They compare hypotheses before prior-art and feasibility work.
+
+| Concept                                 | WebMCP | Execution | Impact | Creativity / ambition | Demo clarity | Overall read                                                                |
+| --------------------------------------- | -----: | --------: | -----: | --------------------: | -----------: | --------------------------------------------------------------------------- |
+| Agent-native live shopping room         |    5.0 |       3.0 |    5.0 |                   5.0 |          5.0 | Highest current ambition ceiling; substantial runtime risk                  |
+| Proof-scoped live buyer                 |    5.0 |       3.5 |    4.5 |                   5.0 |          5.0 | Strongest possible UCP, Lean, video, and WebMCP conjunction if the UX works |
+| Host evidence director                  |    5.0 |       3.0 |    4.5 |                   5.0 |          5.0 | Wildly differentiated physical-world collaboration                          |
+| Agent-directed product-evidence capture |    5.0 |       3.5 |    4.5 |                   5.0 |          5.0 | Current leading interaction pattern                                         |
+| Repair workbench with verified parts    |    5.0 |       3.0 |    4.5 |                   5.0 |          5.0 | Highest consumer wow, higher domain risk                                    |
+| Product-claim evidence lab              |    5.0 |       4.0 |    4.5 |                   4.5 |          4.5 | Strongest risk-adjusted Vidably concept                                     |
+| Safe incident-response simulator        |    5.0 |       3.0 |    4.5 |                   4.5 |          4.5 | Strong non-Vidably control concept                                          |
+| Active evidence research board          |    4.5 |       3.5 |    4.5 |                   4.5 |          4.0 | Broad thesis, must pick a concrete wedge                                    |
+| Proof-carrying bundle                   |    4.5 |       3.5 |    4.0 |                   4.5 |          4.5 | Best natural UCP plus Lean combination                                      |
+| Permission workflow composer            |    4.5 |       4.0 |    4.0 |                   4.5 |          4.0 | Strong formal-methods control concept                                       |
+| Evidence-to-cart                        |    4.5 |       4.0 |    5.0 |                   4.0 |          5.0 | Strong but faces a commerce saturation penalty                              |
+| WebMCP behavioral contract lab          |    4.5 |       4.0 |    4.0 |                   4.0 |          4.0 | Rubric-relevant but adjacent tools exist                                    |
+| Creator campaign truth layer            |    5.0 |       4.5 |    4.5 |                   4.0 |          4.5 | Excellent execution odds; must transcend feature framing                    |
+| Private constraint planner              |    4.5 |       4.0 |    4.5 |                   4.0 |          4.0 | Needs the right domain embodiment                                           |
+| Interactive theorem/counterexample lab  |    4.0 |       4.0 |    3.5 |                   4.0 |          4.0 | Credible but currently below the frontier leaders                           |
+
+## First ambition ladders
+
+### Agent-native live shopping room
+
+- Rung 1: a prerecorded show behaves as live. One scripted lot opens and closes, the top-level page registers real WebMCP tools for the current lot, ChatGPT inspects it, asks one question, and visibly records interest or a reversible reservation.
+- Rung 2: a host view and buyer view share real-time show state. Advancing the lot changes the buyer UI and available tool surface without navigation.
+- Rung 3: a live or near-live transcript plus Vidably evidence records claims and exact timestamps. The agent can request one missing demonstration from the host.
+- Rung 4: UCP grounds the lot in authoritative catalog and checkout state; a confirmed semantic mandate allows bounded action without turning every moment into a safety-prompt race.
+- Rung 5: multiple humans and personal agents participate in a real live room, and the host adapts the show based on structured demand and unresolved evidence.
+
+### Proof-scoped live buyer
+
+- Rung 1: the human declares three constraints and a budget. The agent evaluates one active lot, shows which constraints are supported, unsupported, or violated, and asks before taking a consequential action.
+- Rung 2: the host supplies a missing fact or demonstration, and the buyer's visible eligibility state changes immediately.
+- Rung 3: a small solver checks all-in price and semantic constraints for every proposed action; negative cases visibly refuse execution.
+- Rung 4: a Lean-checked model or equivalent certificate proves the delegation logic and auction-state invariants, while empirical evidence remains explicitly uncertain.
+- Rung 5: the agent safely represents the buyer across a fast sequence of lots without losing the human's control or the social experience.
+
+### Agent-directed product-evidence capture
+
+- Rung 1: a page contains a product, a small evidence checklist, and selectable prerecorded clips. The agent calls WebMCP tools to inspect coverage, request one missing observation, and update the visible evidence state after the human supplies it.
+- Rung 2: real video upload or capture and real timestamped evidence extraction.
+- Rung 3: query-conditional gaps, conflicts, provenance, and abstention drawn from Vidably's evidence research.
+- Rung 4: resolve the product through UCP and show how newly captured evidence improves a real shopper decision or commerce surface.
+- Rung 5: the agent directs a live creator through producing a complete, grounded product-evidence package.
+
+### Repair workbench with verified parts
+
+- Rung 1: one appliance or object, a prerecorded symptom video, three hypotheses, two human checks, and one deterministic compatible part. The complete diagnose-review-select loop runs through WebMCP.
+- Rung 2: the agent chooses the next diagnostic step based on current evidence and updates a visible hypothesis graph.
+- Rung 3: real catalog/UCP part resolution with authoritative price and availability.
+- Rung 4: a solver or Lean certificate proves declared physical/electrical/fit constraints for the selected part.
+- Rung 5: live camera evidence and safe step-by-step repair progression.
+
+### Product-claim evidence lab
+
+- Rung 1: one product video, timestamped claims, candidate evidence cards, visible conflicts, and accept/reject/edit actions exposed through WebMCP.
+- Rung 2: real extraction from one Vidably sample and merchant-authoritative catalog facts.
+- Rung 3: the agent actively requests the evidence needed to resolve the most consequential uncertainty.
+- Rung 4: the approved evidence graph becomes a shoppable, agent-readable artifact with UCP identifiers.
+- Rung 5: multiple independent sources, contamination warnings, and claim-level provenance survive all the way to cart or publication.
+
+### Safe incident-response simulator
+
+- Rung 1: a deterministic service graph, one incident, read-only inspection tools, two reversible mitigations, and a human-confirmed consequential action.
+- Rung 2: dynamic tool availability follows incident state; the interface shows cause, effect, and rollback.
+- Rung 3: a solver proves blast-radius and availability invariants before actions become executable.
+- Rung 4: noisy, conflicting telemetry and adversarial events force genuine human-agent collaboration.
+- Rung 5: replay, branching counterfactuals, and a polished incident narrative demonstrate safe speed at scale.
+
+### WebMCP behavioral contract lab
+
+- Rung 1: a fixture app registers tools; the agent runs a task; the page displays the tool trace, expected visible effect, and pass/fail result.
+- Rung 2: schema ambiguity, cancellation, stale state, and hidden side effects become reproducible adversarial cases.
+- Rung 3: humans and agents revise tool descriptions and schemas, rerun the same task suite, and compare outcomes.
+- Rung 4: executable preconditions and state-machine invariants expose behavior the current WebMCP draft cannot verify.
+- Rung 5: import or inspect a real third-party WebMCP surface under explicit origin permissions.
+
+## Research and experiment queue
+
+1. Expand the idea landscape with more domains, especially concepts unrelated to commerce, formal methods, or Vidably.
+2. Search prior art and current products for the frontier concepts. "Not in the official showcase" is not evidence of originality.
+   - For live commerce, distinguish autobidding, AI hosting, agent checkout, and a genuinely shared human-agent live market. Existing Max Bid and advertised policy-scoped bidding are direct controls.
+3. Write a 45-second and three-minute storyboard for each frontier leader. Reject any concept whose WebMCP role disappears from the story.
+4. Identify the smallest real data/model asset for each first rung and verify local availability.
+5. Test the exact ChatGPT Site Tools runtime with one throwaway imperative `document.modelContext.registerTool` loop before depending on library types.
+6. Create walking skeletons only when a concept has a question that implementation can answer better than research or storyboarding.
+7. Re-score using evidence, including failure modes and deployment/runtime dependencies.
+
+## Not doing yet
+
+- Selecting a final concept: the first broad pass surfaced new high-potential families and has not saturated.
+- Building a generic starter: no concept has yet earned architecture that should constrain the rest.
+- Forcing all four assets into one project: coherence and judging strength remain the gate.
+- Treating preliminary scores as decisions: they do not yet include concept-specific prior art or prototypes.
+- Naming the submission: the labels above are functional placeholders, and the final name should be chosen by Mark.

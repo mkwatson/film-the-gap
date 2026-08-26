@@ -1,0 +1,9 @@
+.DS_Store
+.next/
+coverage/
+node_modules/
+out/
+tmp/
+*.private.md
+*.log
+*.tsbuildinfo
