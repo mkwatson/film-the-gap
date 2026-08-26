@@ -2,6 +2,8 @@
 
 Last full pass: 2026-08-26 PT. The [official Devpost resources page](https://webmcp.devpost.com/resources) is the challenge-specific checklist; the [Official Rules](https://webmcp.devpost.com/rules) control when sources conflict. Recheck both pages because the draft standard, supporter material, FAQ, and browser implementations are moving during the challenge.
 
+At the last same-day refresh, Devpost showed 1,717 participants and no published project gallery. The live count is context, not a selection metric; it reinforces the need for a structurally memorable interaction and a judge-legible deterministic path.
+
 ## Current status
 
 | Requirement                                                            | Status                                                      | Evidence or blocker                                                                                                                                                                                                                                                          |
@@ -31,7 +33,7 @@ The minimum enablement objective is therefore not broad machine access. It is tw
 | Capability                         | Ready now                                                                                                                                                        | Gap or next action                                                                                                                                                              |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Local implementation and tests     | Node 26.3.1, pnpm 11.6.0, strict TypeScript, Vitest, Next.js production builds, and isolated browser automation.                                                 | None for the deterministic rung.                                                                                                                                                |
-| Native WebMCP lab                  | Isolated Headless Chrome 150 completes the app's native provider/consumer loop; isolated Chrome 151 proves the latest flag-gated API and observed draft skew.    | Connect Mark's normal Chrome 151 profile for interactive DevTools and extension evidence.                                                                                       |
+| Native WebMCP lab                  | Isolated Headless Chrome 150 completes Rung 2's native provider/consumer loop; isolated installed Chrome 151 proves positive and negative feature gates.         | Connect Mark's normal Chrome 151 profile for interactive DevTools and extension evidence.                                                                                       |
 | ChatGPT Site Tools                 | Current first-party docs and exact acceptance plan are available.                                                                                                | Expose a controllable in-app Browser target, then open the app with GPT-5.6 Sol or Terra.                                                                                       |
 | Voice, audio, and media processing | FFmpeg/ffprobe 9.0.1 are installed; page-owned audio can be tested in normal browser code later.                                                                 | One human microphone action may remain necessary for ChatGPT Voice; no supported desktop audio-injection path is exposed in this session.                                       |
 | Git and GitHub                     | GitHub CLI and the GitHub connector are authenticated; local challenge-period history is intact.                                                                 | This repository has no remote. Creating a public repository or pushing remains an explicit external action for Mark to approve.                                                 |
@@ -42,7 +44,7 @@ The minimum enablement objective is therefore not broad machine access. It is tw
 
 The operating rule is capability-on-demand: keep current docs and deterministic local verification universal, then connect the narrow deployment, media, commerce, or proof capability required by the next experiment. Installing every sponsor CLI up front would not make the agent meaningfully more autonomous; connected judged-client control does.
 
-## Walking-skeleton native run
+## Historical Rung 1 native run
 
 On 2026-08-26 PT, revision worktree before the first feature commit passed a complete native WebMCP loop at `http://localhost:3000` in agent-browser's isolated Headless Chrome 150.0.0.0 runtime:
 
@@ -55,6 +57,22 @@ On 2026-08-26 PT, revision worktree before the first feature commit passed a com
 The same run verified desktop and 390 px layouts, meaningful accessibility snapshots, no framework error overlay, no recorded page errors, no horizontal mobile overflow, and no console errors beyond development notices. Formatting, ESLint, strict TypeScript, 12 Vitest behaviors, and the Next.js 16.3.3 production build also passed.
 
 This is stronger than a polyfill or handler-only test, but it is still supplementary: it does not prove Mark's current Chrome 151 profile, model-driven tool selection, ChatGPT's trust/confirmation layer, or Voice-to-Site-Tools composition. Those remain explicit gates below.
+
+## Rung 2 native product run
+
+On 2026-08-26 PT, the privacy-membrane worktree passed the full product flow in agent-browser's native isolated Headless Chrome 150.0.0.0 runtime:
+
+1. The browser discovered exactly `inspect_live_show`, `set_evidence_requirements`, and `inspect_current_lot` initially.
+2. Native `executeTool` set four product-evidence requirements. The page showed a privacy receipt, no buyer ceiling appeared in the page or result, and `request_host_evidence` registered.
+3. Native execution queued repair-history evidence. Seven anonymous demo signals became eight queued requests and the redundant request tool disappeared.
+4. One visible host answer changed the aggregate to eight resolved requests and registered `reserve_current_lot`.
+5. A stale `$400` call against the public `$423` all-in quote was refused without a hold and returned the exact recovery action.
+6. An exact `$423` call created the attributed hold; reserve disappeared and `release_current_lot` replaced it.
+7. Native release restored the valid pre-hold tool surface.
+
+The ordinary-browser UI completed the corresponding share → request → answer → hold → release flow. Desktop and 390 px checks showed no framework error overlay or horizontal overflow. Fresh profiles in the installed Chrome 151.0.7922.174 rendered `Site Tools live` with `--enable-features=WebMCP` and `Browser fallback` with the feature disabled.
+
+Strict schema tests reject a supplied `maxAllInPrice`; recursive contract tests reject forbidden private-value fields in registered definitions and snapshots. Data minimization does not prove zero statistical inference. The seven other agents are a transparent deterministic fixture, not a live room. Exact ChatGPT, model-driven selection, normal-profile Chrome, navigation lifecycle, and Voice-to-Site-Tools acceptance remain pending.
 
 ## Official documentation
 
@@ -159,18 +177,18 @@ The reproducible fixture is [research/webmcp-runtime-smoke](research/webmcp-runt
 
 Run this matrix at the walking skeleton, every material tool-surface change, release candidate, and final deployed build.
 
-| Behavior                                                              | Chrome native | ChatGPT Site Tools |
-| --------------------------------------------------------------------- | ------------: | -----------------: |
-| Feature detection and async registration succeed                      |       Pending |            Pending |
-| Read tool is discovered and returns current visible state             |       Pending |            Pending |
-| Write tool changes the same visible UI                                |       Pending |            Pending |
-| Dynamic registration/removal is observed after state changes          |       Pending |            Pending |
-| Ambiguous prompt selects or clarifies correctly                       |       Pending |            Pending |
-| Invalid/stale input is rejected with actionable recovery              |       Pending |            Pending |
-| Abort/cancellation stops work and leaves coherent state               |       Pending |            Pending |
-| Consequential action produces the real confirmation behavior          |       Pending |            Pending |
-| Navigation, refresh, BFCache, and reconnect do not expose stale tools |       Pending |            Pending |
-| Tool output and page content cannot silently escalate authority       |       Pending |            Pending |
-| Ordinary-browser fallback remains fully usable                        |       Pending |                N/A |
+| Behavior                                                              | Chrome native                                               | ChatGPT Site Tools |
+| --------------------------------------------------------------------- | ----------------------------------------------------------- | -----------------: |
+| Feature detection and async registration succeed                      | Pass: Chrome 150 flow + Chrome 151 positive/negative gates  |            Pending |
+| Read tool is discovered and returns current visible state             | Pass: isolated Chrome 150                                   |            Pending |
+| Write tool changes the same visible UI                                | Pass: isolated Chrome 150                                   |            Pending |
+| Dynamic registration/removal is observed after state changes          | Pass: isolated Chrome 150                                   |            Pending |
+| Ambiguous prompt selects or clarifies correctly                       | Pending: no model-driven consumer                           |            Pending |
+| Invalid/stale input is rejected with actionable recovery              | Pass: isolated Chrome 150 stale quote                       |            Pending |
+| Abort/cancellation stops work and leaves coherent state               | Unit pass; native cancellation still pending                |            Pending |
+| Consequential action produces the real confirmation behavior          | N/A for the reversible, non-payment hold fixture            |            Pending |
+| Navigation, refresh, BFCache, and reconnect do not expose stale tools | Pending                                                     |            Pending |
+| Tool output and page content cannot silently escalate authority       | Contract pass; adversarial native prompt test still pending |            Pending |
+| Ordinary-browser fallback remains fully usable                        | Pass: desktop and 390 px                                    |                N/A |
 
 Record browser/app versions, model, URL/revision, prompt, expected result, observed result, screenshots/trace, and any failure. A passing development shim is supplementary evidence only.

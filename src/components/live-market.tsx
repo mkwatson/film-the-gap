@@ -5,14 +5,16 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   answerRepairHistory,
   createInitialState,
-  defaultBuyerMandate,
-  evaluateMandate,
+  defaultEvidenceRequirements,
+  evaluateEvidence,
+  getActionFrontier,
   getAllInPrice,
   getAvailableToolNames,
+  getEvidenceDemandSummary,
   releaseCurrentLot,
   requestRepairHistory,
   reserveCurrentLot,
-  setBuyingMandate,
+  setEvidenceRequirements,
   type EvidenceStatus,
   type LiveMarketState,
   type TransitionResult,
@@ -41,7 +43,7 @@ function actorLabel(actor: string): string {
 
 export function LiveMarket(): React.JSX.Element {
   const [state, setState] = useState<LiveMarketState>(createInitialState);
-  const [lastMessage, setLastMessage] = useState('Waiting for a buyer mandate.');
+  const [lastMessage, setLastMessage] = useState('Waiting for public evidence requirements.');
   const stateRef = useRef(state);
 
   const transition = useCallback((next: MarketTransition): TransitionResult => {
@@ -60,7 +62,10 @@ export function LiveMarket(): React.JSX.Element {
   const availableToolNames = getAvailableToolNames(state);
   const availabilityKey = availableToolNames.join('|');
   const siteToolStatus = useSiteTools(siteToolRuntime, availabilityKey);
-  const evaluation = evaluateMandate(state);
+  const evaluation = evaluateEvidence(state);
+  const frontier = getActionFrontier(state);
+  const demand = getEvidenceDemandSummary(state, 'repair_history');
+  const allInPrice = getAllInPrice(state.lot);
   const queuedRepairRequest = state.evidenceRequests.some(
     ({ kind, status }) => kind === 'repair_history' && status === 'queued',
   );
@@ -69,17 +74,17 @@ export function LiveMarket(): React.JSX.Element {
     const initialState = createInitialState();
     stateRef.current = initialState;
     setState(initialState);
-    setLastMessage('Demo reset. Waiting for a buyer mandate.');
+    setLastMessage('Demo reset. Waiting for public evidence requirements.');
   }, []);
 
   const evaluationTitle =
-    evaluation.outcome === 'no-mandate'
-      ? 'No mandate shared'
+    evaluation.outcome === 'no-requirements'
+      ? 'Private context intact'
       : evaluation.outcome === 'unresolved'
         ? 'One fact still missing'
-        : evaluation.outcome === 'eligible'
-          ? 'Mandate satisfied'
-          : 'Mandate violated';
+        : evaluation.outcome === 'ready'
+          ? 'Public evidence ready'
+          : 'Evidence conflicts';
 
   return (
     <main className="market-shell">
@@ -90,7 +95,7 @@ export function LiveMarket(): React.JSX.Element {
           </span>
           <span>
             <strong>Agent-attended market</strong>
-            <small>Working rung · one live lot</small>
+            <small>Privacy membrane · working rung</small>
           </span>
         </div>
         <div className="topbar-actions">
@@ -111,11 +116,11 @@ export function LiveMarket(): React.JSX.Element {
       </header>
 
       <section className="hero-copy" aria-labelledby="page-title">
-        <p className="eyebrow">Proof before pressure</p>
-        <h1 id="page-title">The agent asks the camera for what the decision is missing.</h1>
+        <p className="eyebrow">Private intent · public proof</p>
+        <h1 id="page-title">The market learns what to show—not what you’ll pay.</h1>
         <p>
-          The buyer watches the show. ChatGPT tracks the mandate, directs one useful host
-          demonstration, and receives only the actions that become safe.
+          ChatGPT keeps the buyer’s ceiling and wider context, shares only product-evidence needs,
+          and asks one human camera answer to serve a private crowd.
         </p>
       </section>
 
@@ -147,7 +152,7 @@ export function LiveMarket(): React.JSX.Element {
               <span>Host</span>
               “Edges are clean. Ask me for any angle you need.”
             </div>
-            <div className="viewer-count">● 184 watching</div>
+            <div className="viewer-count">● deterministic demo room · 184 watching</div>
           </div>
 
           <div className="price-strip">
@@ -160,25 +165,34 @@ export function LiveMarket(): React.JSX.Element {
               <strong>{usd.format(state.lot.shipping)}</strong>
             </span>
             <span className="all-in-price">
-              <small>All-in now</small>
-              <strong>{usd.format(getAllInPrice(state.lot))}</strong>
+              <small>Exact quote now</small>
+              <strong>{usd.format(allInPrice)}</strong>
             </span>
           </div>
 
-          <div className={`host-queue ${queuedRepairRequest ? 'queue-active' : ''}`}>
+          <div
+            className={`host-queue ${queuedRepairRequest ? 'queue-active' : ''} ${demand.status === 'resolved' ? 'queue-resolved' : ''}`}
+          >
             <div className="queue-title">
               <span className="queue-icon" aria-hidden="true">
                 ↗
               </span>
               <span>
-                <strong>Host evidence queue</strong>
+                <strong>Private-crowd evidence queue</strong>
                 <small>
-                  {queuedRepairRequest ? '1 agent-directed request' : 'No open requests'}
+                  {demand.status === 'resolved'
+                    ? `${demand.totalAgentCount} decisions updated`
+                    : queuedRepairRequest
+                      ? `${demand.totalAgentCount} private agents waiting`
+                      : `${demand.anonymousAgentCount} anonymous demo signals`}
                 </small>
               </span>
             </div>
             {queuedRepairRequest ? (
               <div className="queue-request">
+                <span className="aggregate-badge">
+                  {demand.totalAgentCount} decisions · one camera answer
+                </span>
                 <p>Show the base and disclose whether it has ever been repaired.</p>
                 <div className="host-controls" aria-label="Deterministic host response controls">
                   <button
@@ -198,9 +212,18 @@ export function LiveMarket(): React.JSX.Element {
                   </button>
                 </div>
               </div>
+            ) : demand.status === 'resolved' ? (
+              <div className="multicast-result">
+                <strong>One answer → {demand.totalAgentCount} private decisions</strong>
+                <p>
+                  The fixture recorded one host source frame. No profile or price crossed the
+                  boundary.
+                </p>
+              </div>
             ) : (
               <p className="empty-copy">
-                Agents can request only evidence that matters to a disclosed mandate.
+                Seven anonymous demo-room agents need the same normalized fact. Their profiles,
+                ceilings, and individual choices are not collected.
               </p>
             )}
           </div>
@@ -211,54 +234,73 @@ export function LiveMarket(): React.JSX.Element {
             <span>Buyer decision</span>
             <span className={`outcome-tag outcome-${evaluation.outcome}`}>{evaluationTitle}</span>
           </div>
-          <h2 id="decision-title">Evidence, not a recommendation</h2>
+          <h2 id="decision-title">Public proof, private decision</h2>
           <p className="panel-intro">
-            Only the minimum constraints shared with this page are evaluated. The buyer’s wider
-            conversation stays with ChatGPT.
+            The seller sees only product facts it can help establish. Maximum price, urgency, and
+            the wider conversation stay with ChatGPT.
           </p>
 
-          <section className="mandate-card" aria-labelledby="mandate-title">
+          <section className="mandate-card" aria-labelledby="requirements-title">
             <div className="section-heading">
               <span>
                 <small>01</small>
-                <strong id="mandate-title">Disclosed mandate</strong>
+                <strong id="requirements-title">Seller-visible evidence envelope</strong>
               </span>
-              {state.mandate === null ? <em>Empty</em> : <em>5 constraints</em>}
+              {state.evidenceRequirements === null ? <em>Empty</em> : <em>4 fields</em>}
             </div>
-            {state.mandate === null ? (
+            {state.evidenceRequirements === null ? (
               <div className="empty-mandate">
-                <p>Tell ChatGPT what matters, or use the deterministic fallback below.</p>
+                <p>Share what the product must prove—not what the buyer can afford.</p>
                 <button
                   className="primary-button"
                   type="button"
                   onClick={() =>
-                    transition((current) => setBuyingMandate(current, defaultBuyerMandate, 'buyer'))
+                    transition((current) =>
+                      setEvidenceRequirements(current, defaultEvidenceRequirements, 'buyer'),
+                    )
                   }
                 >
-                  Share demo mandate
+                  Share demo evidence needs
                 </button>
               </div>
             ) : (
-              <dl className="mandate-grid">
-                <div>
-                  <dt>All-in ceiling</dt>
-                  <dd>{usd.format(state.mandate.maxAllInPrice)}</dd>
+              <>
+                <dl className="mandate-grid">
+                  <div>
+                    <dt>Length</dt>
+                    <dd>
+                      {state.evidenceRequirements.minLengthCm}-
+                      {state.evidenceRequirements.maxLengthCm} cm
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Edge proof</dt>
+                    <dd>
+                      {state.evidenceRequirements.requireVisibleEdgeEvidence
+                        ? 'Required'
+                        : 'Optional'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Prior repair</dt>
+                    <dd>
+                      {state.evidenceRequirements.forbidPriorBaseRepair ? 'Forbidden' : 'Allowed'}
+                    </dd>
+                  </div>
+                  <div className="private-field">
+                    <dt>Maximum price</dt>
+                    <dd>Stays private</dd>
+                  </div>
+                </dl>
+                <div className="privacy-receipt">
+                  <span aria-hidden="true">◉</span>
+                  <p>
+                    <strong>Privacy receipt</strong>
+                    The market received four product fields and no buyer profile or numeric ceiling.
+                    This minimizes disclosure; it does not claim zero inference.
+                  </p>
                 </div>
-                <div>
-                  <dt>Length</dt>
-                  <dd>
-                    {state.mandate.minLengthCm}-{state.mandate.maxLengthCm} cm
-                  </dd>
-                </div>
-                <div>
-                  <dt>Edge proof</dt>
-                  <dd>{state.mandate.requireVisibleEdgeEvidence ? 'Required' : 'Optional'}</dd>
-                </div>
-                <div>
-                  <dt>Prior repair</dt>
-                  <dd>{state.mandate.forbidPriorBaseRepair ? 'Forbidden' : 'Allowed'}</dd>
-                </div>
-              </dl>
+              </>
             )}
           </section>
 
@@ -266,7 +308,7 @@ export function LiveMarket(): React.JSX.Element {
             <div className="section-heading">
               <span>
                 <small>02</small>
-                <strong id="evidence-title">Constraint evidence</strong>
+                <strong id="evidence-title">Public evidence</strong>
               </span>
               {evaluation.conditions.length > 0 ? (
                 <em>
@@ -276,7 +318,9 @@ export function LiveMarket(): React.JSX.Element {
               ) : null}
             </div>
             {evaluation.conditions.length === 0 ? (
-              <p className="empty-copy">Evidence will be evaluated when a mandate is shared.</p>
+              <p className="empty-copy">
+                Evidence will be evaluated when public requirements are shared.
+              </p>
             ) : (
               <ul className="evidence-list">
                 {evaluation.conditions.map((condition) => (
@@ -309,13 +353,15 @@ export function LiveMarket(): React.JSX.Element {
             <div className="section-heading">
               <span>
                 <small>03</small>
-                <strong id="action-title">Currently safe action</strong>
+                <strong id="action-title">Exact-quote action</strong>
               </span>
             </div>
             {state.reservation !== null ? (
               <div className="action-content">
                 <div>
-                  <strong>Reversible hold active</strong>
+                  <strong>
+                    Reversible hold active at {usd.format(state.reservation.acceptedAllInPrice)}
+                  </strong>
                   <p>Attributed to {actorLabel(state.reservation.heldBy)}. No payment was taken.</p>
                 </div>
                 <button
@@ -326,30 +372,39 @@ export function LiveMarket(): React.JSX.Element {
                   Release hold
                 </button>
               </div>
-            ) : evaluation.outcome === 'eligible' ? (
+            ) : evaluation.outcome === 'ready' ? (
               <div className="action-content">
                 <div>
-                  <strong>10-minute hold unlocked</strong>
-                  <p>All disclosed constraints are supported by current page evidence.</p>
+                  <strong>Public evidence complete</strong>
+                  <p>
+                    ChatGPT privately compares {usd.format(allInPrice)} and passes only that exact
+                    quote if a hold is wanted.
+                  </p>
                 </div>
                 <button
                   className="primary-button"
                   type="button"
-                  onClick={() => transition((current) => reserveCurrentLot(current, 'buyer'))}
+                  onClick={() =>
+                    transition((current) =>
+                      reserveCurrentLot(current, 'buyer', getAllInPrice(current.lot)),
+                    )
+                  }
                 >
-                  Hold this lot
+                  Hold at {usd.format(allInPrice)}
                 </button>
               </div>
             ) : (
               <div className="action-content">
                 <div>
-                  <strong>Reservation unavailable</strong>
+                  <strong>Hold unavailable</strong>
                   <p>
-                    {evaluation.outcome === 'no-mandate'
-                      ? 'Share a mandate before the page exposes a reservation action.'
+                    {evaluation.outcome === 'no-requirements'
+                      ? 'Share public evidence requirements before the page exposes a hold.'
                       : evaluation.outcome === 'unresolved'
-                        ? 'The page still needs repair-history evidence from the host.'
-                        : 'At least one disclosed constraint is violated.'}
+                        ? queuedRepairRequest
+                          ? 'The host must answer the aggregated repair-history question.'
+                          : 'Repair-history evidence is still missing from the live camera.'
+                        : 'At least one public product requirement is violated.'}
                   </p>
                 </div>
                 {evaluation.outcome === 'unresolved' && !queuedRepairRequest ? (
@@ -358,7 +413,7 @@ export function LiveMarket(): React.JSX.Element {
                     type="button"
                     onClick={() => transition((current) => requestRepairHistory(current, 'buyer'))}
                   >
-                    Request missing evidence
+                    Join evidence request
                   </button>
                 ) : null}
               </div>
@@ -392,9 +447,27 @@ export function LiveMarket(): React.JSX.Element {
               ))}
             </ul>
             <p className="contract-note">
-              The reservation tool is not hidden with CSS. It is unregistered until eligibility
-              changes.
+              The hold tool is genuinely unregistered until public evidence is ready. It accepts an
+              exact quote, never a private ceiling.
             </p>
+          </section>
+
+          <section className="frontier-section" aria-labelledby="frontier-title">
+            <div className="section-heading">
+              <span>
+                <small>Counterfactual contract</small>
+                <strong id="frontier-title">Next capability</strong>
+              </span>
+              <em>{frontier.next.actor === 'host' ? 'Host' : 'Buyer'}</em>
+            </div>
+            <code>{frontier.next.action}</code>
+            <p>{frontier.next.instruction}</p>
+            {frontier.blocked[0] === undefined ? null : (
+              <div className="frontier-blocked">
+                <small>{frontier.blocked[0].name} remains unavailable</small>
+                <p>{frontier.blocked[0].recovery}</p>
+              </div>
+            )}
           </section>
 
           <section className="activity-section" aria-labelledby="activity-title">
@@ -422,7 +495,7 @@ export function LiveMarket(): React.JSX.Element {
             <span aria-hidden="true">↩</span>
             <p>
               <strong>Human control stays visible.</strong>
-              This rung creates only a reversible hold. It cannot bid, pay, or purchase.
+              This rung creates only a reversible exact-quote hold. It cannot bid, pay, or purchase.
             </p>
           </footer>
         </aside>

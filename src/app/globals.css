@@ -491,6 +491,11 @@ button:focus-visible {
   background: rgba(247, 201, 111, 0.06);
 }
 
+.host-queue.queue-resolved {
+  border-color: rgba(95, 224, 170, 0.35);
+  background: rgba(95, 224, 170, 0.05);
+}
+
 .queue-title {
   gap: 9px;
 }
@@ -528,10 +533,42 @@ button:focus-visible {
   border-top: 1px solid var(--line);
 }
 
+.aggregate-badge {
+  display: inline-flex;
+  margin-bottom: 8px;
+  padding: 4px 7px;
+  color: var(--amber);
+  border: 1px solid rgba(247, 201, 111, 0.25);
+  border-radius: 999px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 .queue-request p {
   margin: 0;
   color: #d9e4dd;
   font-size: 11px;
+  line-height: 1.45;
+}
+
+.multicast-result {
+  margin-top: 11px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+}
+
+.multicast-result strong {
+  color: var(--mint);
+  font-size: 11px;
+}
+
+.multicast-result p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 9px;
   line-height: 1.45;
 }
 
@@ -589,14 +626,19 @@ button:focus-visible {
   border-color: rgba(247, 201, 111, 0.3);
 }
 
-.outcome-eligible {
+.outcome-ready {
   color: var(--mint);
   border-color: rgba(95, 224, 170, 0.3);
 }
 
-.outcome-ineligible {
+.outcome-incompatible {
   color: var(--coral);
   border-color: rgba(255, 132, 111, 0.3);
+}
+
+.outcome-no-requirements {
+  color: var(--violet);
+  border-color: rgba(159, 150, 255, 0.3);
 }
 
 .decision-panel > h2 {
@@ -725,6 +767,46 @@ button:focus-visible {
   white-space: nowrap;
 }
 
+.mandate-grid .private-field {
+  border-color: rgba(159, 150, 255, 0.26);
+  background: rgba(159, 150, 255, 0.055);
+}
+
+.mandate-grid .private-field dd {
+  color: #c8c2ff;
+}
+
+.privacy-receipt {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin-top: 8px;
+  padding: 9px 10px;
+  color: var(--violet);
+  border: 1px solid rgba(159, 150, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(159, 150, 255, 0.035);
+}
+
+.privacy-receipt > span {
+  margin-top: 1px;
+  font-size: 9px;
+}
+
+.privacy-receipt p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+.privacy-receipt strong {
+  display: block;
+  margin-bottom: 1px;
+  color: #d6d2ff;
+  font-size: 8px;
+}
+
 .evidence-list,
 .tool-list,
 .activity-list {
@@ -826,12 +908,12 @@ button:focus-visible {
   background: rgba(0, 0, 0, 0.12);
 }
 
-.action-eligible {
+.action-ready {
   border-color: rgba(95, 224, 170, 0.3);
   background: rgba(95, 224, 170, 0.045);
 }
 
-.action-ineligible {
+.action-incompatible {
   border-color: rgba(255, 132, 111, 0.25);
   background: rgba(255, 132, 111, 0.035);
 }
@@ -870,6 +952,44 @@ button:focus-visible {
 .tool-contract {
   padding-bottom: 17px;
   border-bottom: 1px solid var(--line);
+}
+
+.frontier-section {
+  padding: 17px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.frontier-section > code {
+  display: inline-flex;
+  margin-top: 10px;
+  padding: 5px 7px;
+  color: var(--cyan);
+  border: 1px solid rgba(109, 231, 235, 0.2);
+  border-radius: 7px;
+  background: rgba(109, 231, 235, 0.04);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 8px;
+}
+
+.frontier-section > p,
+.frontier-blocked p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+.frontier-blocked {
+  margin-top: 9px;
+  padding: 8px;
+  border: 1px dashed var(--line-bright);
+  border-radius: 8px;
+}
+
+.frontier-blocked small {
+  color: var(--dim);
+  font-size: 7px;
+  text-transform: uppercase;
 }
 
 .runtime-message {
@@ -928,7 +1048,7 @@ button:focus-visible {
 
 .activity-list {
   display: grid;
-  max-height: 405px;
+  max-height: 300px;
   gap: 0;
   overflow: auto;
   margin: 11px 0 0;
@@ -1036,11 +1156,12 @@ button:focus-visible {
   .trace-panel {
     grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 0.85fr) minmax(0, 1.3fr);
     gap: 18px;
   }
 
-  .tool-contract {
+  .tool-contract,
+  .frontier-section {
     padding: 0 18px 0 0;
     border-right: 1px solid var(--line);
     border-bottom: 0;
@@ -1090,6 +1211,7 @@ button:focus-visible {
 
   .trace-panel,
   .tool-contract,
+  .frontier-section,
   .activity-section,
   .safety-note {
     grid-column: auto;
@@ -1097,6 +1219,12 @@ button:focus-visible {
 
   .tool-contract {
     padding: 0 0 17px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .frontier-section {
+    padding: 17px 0;
     border-right: 0;
     border-bottom: 1px solid var(--line);
   }

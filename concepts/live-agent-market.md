@@ -6,7 +6,7 @@ Status: frontier experiment, not final selection. Updated 2026-08-26.
 
 A live market designed for humans and their personal agents to attend together.
 
-The host is not presenting to an undifferentiated chat feed. Every viewer can bring an agent that understands that person's intent, interrogates the live item's claims and evidence, requests the next useful demonstration, and makes only commitments authorized by an explicit mandate. The host sees structured unresolved demand rather than hundreds of repetitive comments. Products, tools, and allowed actions change with the live event.
+The host is not presenting to an undifferentiated chat feed. Every viewer can bring an agent that privately understands that person's intent, shares only the evidence requirements needed from the market, requests the next useful demonstration, and accepts only an exact public quote. The host sees structured unresolved evidence demand rather than profiles, ceilings, or hundreds of repetitive comments. Products, tools, and allowed actions change with the live event.
 
 The social video remains primary. The agent does the vigilance, constraint tracking, evidence bookkeeping, and safe action that humans are poor at during a fast show.
 
@@ -20,7 +20,33 @@ The social video remains primary. The agent does the vigilance, constraint track
 
 If the experiment works just as well with a remote backend tool while the page is closed, the concept has failed its WebMCP test.
 
-## Walking-skeleton question
+## Current Rung 2: a seller-blind evidence market
+
+The current implementation combines three tested interaction primitives:
+
+1. **Private-counterparty membrane:** the seller-facing page receives four product-evidence requirements but no buyer profile or numeric ceiling. ChatGPT compares the public quote privately and passes only the exact quote it is accepting.
+2. **Counterfactual capability frontier:** every state exposes the smallest valid next agent and human transition. Mutations that are not yet safe are absent from the native tool surface.
+3. **Epistemic multicast:** seven transparently labeled anonymous demo-agent signals join the current agent's real request. One host answer resolves the shared fact for all eight private decisions.
+
+The active tool sequence is:
+
+```text
+inspect + set evidence requirements
+  -> request missing host evidence
+  -> one host answer resolves eight requests
+  -> reserve only against the exact current quote
+  -> release restores the reversible state
+```
+
+Native Headless Chrome 150 completed that whole sequence, including stale-quote refusal and observed tool replacement. Fresh isolated Chrome 151 profiles proved the app's positive and negative feature gates. The same flow remains complete through ordinary human controls. Strict TypeScript, formatting, lint, 18 Vitest behaviors, production build, desktop layout, and 390 px layout passed.
+
+This is a data-minimization boundary, not a proof of zero statistical inference. The other seven agents are a deterministic room fixture, not a live multi-user backend. ChatGPT's in-app browser, model-driven calls, Voice-to-Site-Tools composition, and Mark's normal Chrome profile remain explicit acceptance gates.
+
+See [../EXPERIMENTS.md](../EXPERIMENTS.md) for the 18-primitives frontier, frozen hypotheses, protocols, results, and next recommendation.
+
+## Historical Rung 1 baseline (recoverable)
+
+Rung 1 asked whether a disclosed mandate could produce a complete loop. Commit `41ab726` preserves this positive control; Rung 2 supersedes its privacy contract.
 
 Does this loop feel meaningfully different from ordinary shopping?
 
@@ -145,7 +171,7 @@ Still unverified: the connected latest Chrome 151 profile, ChatGPT's in-app Brow
 - Main column: vertical live video, live badge, lot facts, current price, and host state.
 - Evidence rail: supported, unresolved, and violated conditions with exact provenance.
 - Host queue: agent evidence requests and deterministic host response controls.
-- Mandate card: all personal constraints currently shared with the page.
+- Evidence card: all product requirements shared with the page, plus an explicit receipt for what was not collected.
 - Activity rail: every human and agent action in chronological order.
 - Site Tools status: feature detection and currently registered tool count/names for debugging and demo legibility.
 
@@ -159,7 +185,8 @@ The memorable loop is:
 
 ```text
 spoken intent
-  -> minimum necessary mandate disclosed to the page
+  -> minimum necessary evidence requirements disclosed to the page
+  -> personal value remains with the buyer's agent
   -> WebMCP detects a missing fact
   -> agent requests a precise physical demonstration
   -> host or buyer supplies consented camera evidence
@@ -184,22 +211,24 @@ Microphone and camera access must be off by default, requested in context, visib
 
 Each rung must remain a complete demo when every later rung is disabled.
 
-1. **Deterministic page loop:** prerecorded host clip, typed ChatGPT prompt, real dynamic WebMCP tools, visible evidence transition, and reversible hold.
-2. **Hands-free buyer:** one spoken prompt through ChatGPT Voice if the combined runtime passes; otherwise page push-to-talk with the same visible mandate and typed fallback.
-3. **Live host:** a second browser or phone joins a real media room and receives the agent's structured evidence request; the deterministic host control remains available.
-4. **Camera-to-evidence:** the host submits one consented snapshot/keyframe; a model proposes a fact with source, timestamp, and uncertainty; a human accepts it before eligibility changes.
-5. **Two-way physical context:** the buyer's camera supplies a second observation and the agent directs a short cross-camera inspection.
-6. **Transactional and formal trust:** Shopify/UCP owns authoritative commerce state, while a proof-scoped mandate or Lean-checked invariant constrains the action.
-7. **Market-scale coordination:** many buyer agents aggregate unresolved demand and direct the highest-value demonstrations without overwhelming the host.
+1. **Seller-blind deterministic loop:** typed ChatGPT prompt, real dynamic WebMCP tools, visible evidence transition, exact-quote reversible hold, and no buyer ceiling crossing the page boundary.
+2. **Epistemic multicast:** one normalized host answer resolves the same missing fact for eight private decisions; the current deterministic room proves the contract.
+3. **Hands-free buyer:** one spoken prompt through ChatGPT Voice if the combined runtime passes; otherwise page push-to-talk with the same public evidence envelope and typed fallback.
+4. **Live host:** a second browser or phone joins a real room and receives the agent's structured evidence request; the deterministic host control remains available.
+5. **Camera-to-evidence:** the host submits one consented snapshot/keyframe; a model proposes a fact with source, timestamp, and uncertainty; a human accepts it before eligibility changes.
+6. **Two-way physical context:** the buyer's camera supplies a second observation and the agent directs a short cross-camera inspection.
+7. **Transactional trust:** Shopify/UCP owns authoritative offer, cart, checkout, consent, permalink, and post-purchase state after the evidence interaction earns the complexity.
+8. **Proof-carrying authority:** a Lean-checked invariant controls a consequential capability only when the proof is judge-visible and stronger than ordinary runtime validation.
+9. **Market-scale coordination:** real buyer agents aggregate unresolved demand and direct the highest-value demonstrations without overwhelming the host.
 
 ## Forty-five-second demo
 
-1. Show a live snowboard lot and an empty buyer mandate.
-2. Say—or type if voice is unavailable—that the buyer needs a 154 to 158 cm board, under $450 all-in, with visible edge evidence and no prior base repair.
-3. ChatGPT sets the mandate and inspects the lot. The page turns three conditions green and leaves repair history unresolved.
-4. ChatGPT requests repair-history evidence through WebMCP. The exact request appears in the host queue.
-5. The host shows the requested area or uses the deterministic host control. The cited evidence changes the final condition to green and the tool list visibly gains `reserve_current_lot`.
-6. ChatGPT reserves the board. The page shows the agent-attributed hold and offers release.
+1. Show a live snowboard lot and an empty public evidence envelope.
+2. Say—or type if voice is unavailable—that the buyer needs a 154 to 158 cm board, under a private limit, with visible edge evidence and no prior base repair.
+3. ChatGPT keeps the limit private, shares the four product requirements, and inspects the lot. The page turns three conditions green and leaves repair history unresolved.
+4. ChatGPT joins seven anonymous demo agents requesting repair-history evidence. The aggregate changes from seven open to eight queued.
+5. The host answers once. Eight requests resolve, the final condition turns green, and `reserve_current_lot` appears.
+6. ChatGPT privately compares the public `$423` quote with the buyer's limit and reserves against exactly `$423`. The page shows the attributed hold and offers release without ever receiving the ceiling.
 
 The line to land: "The page did not give the agent a buy button. It gave the agent exactly the actions that became safe as the live evidence changed."
 
@@ -207,18 +236,18 @@ The line to land: "The page did not give the agent a buy button. It gave the age
 
 The product may be wildly ambitious; the judged story must be singular. The public video should demonstrate one thesis: **"Your agent does not merely watch a live market. It can ask the physical world for the exact evidence your decision requires."**
 
-Recommended capture: ChatGPT desktop's built-in browser and conversation are the primary screen. A host phone or second browser appears only when it answers the evidence request. The page keeps the mandate, evidence graph, host queue, current dynamic tool set, and attributed activity visible enough that the audience can distinguish real WebMCP collaboration from a generic voice assistant.
+Recommended capture: ChatGPT desktop's built-in browser and conversation are the primary screen. A host phone or second browser appears only when it answers the evidence request. The page keeps the public evidence envelope, privacy receipt, evidence graph, aggregate host queue, current dynamic tool set, and attributed activity visible enough that the audience can distinguish real WebMCP collaboration from a generic voice assistant.
 
-| Time      | Beat                    | What must be visible                                                                                                                                                                                                                                        |
-| --------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0:00-0:15 | Hook and pain           | A live item is moving faster than a buyer can track constraints and verify claims. State the one-sentence thesis before naming protocols.                                                                                                                   |
-| 0:15-0:35 | Speak the mandate       | The buyer gives one concise voice prompt. The page receives only the minimum structured constraints and shows exactly what was disclosed. Use typed ChatGPT input in the recorded take unless Voice plus Site Tools has passed repeatedly.                  |
-| 0:35-1:05 | Reveal the gap          | ChatGPT inspects the live lot through WebMCP. Three conditions resolve; repair history remains unknown; the reservation tool is absent.                                                                                                                     |
-| 1:05-1:35 | Ask the physical world  | ChatGPT calls `request_host_evidence`. The request appears on the host device; the host supplies the exact angle or answer; a source frame/transcript visibly becomes evidence.                                                                             |
-| 1:35-1:55 | Unlock and act          | The final condition resolves, `reserve_current_lot` appears dynamically, the buyer approves, and the attributed reversible hold appears on the same page.                                                                                                   |
-| 1:55-2:15 | Prove control           | Revoke or contradict one condition, or release the hold. The consequential tool disappears or the unsafe attempt is refused. Turn the camera off visibly.                                                                                                   |
-| 2:15-2:40 | Show technical depth    | Briefly expose Site Tools/recent calls, the dynamic tool rail, and a compact architecture caption. Do not tour source files or sponsor logos.                                                                                                               |
-| 2:40-2:58 | Land impact and ceiling | State what humans and agents did together that was previously impractical, then show the credible next step: many agents directing evidence, with UCP settlement and proof-scoped authority. Leave two seconds of margin under the hard three-minute limit. |
+| Time      | Beat                    | What must be visible                                                                                                                                                                                                                                         |
+| --------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 0:00-0:15 | Hook and pain           | A live item is moving faster than a buyer can track constraints and verify claims. State the one-sentence thesis before naming protocols.                                                                                                                    |
+| 0:15-0:35 | State private intent    | The buyer gives one concise voice prompt including a private limit. ChatGPT sends only the product-evidence requirements; the page visibly receipts that it received no ceiling. Use typed ChatGPT input unless Voice plus Site Tools has passed repeatedly. |
+| 0:35-1:05 | Reveal the gap          | ChatGPT inspects the live lot through WebMCP. Three conditions resolve; repair history remains unknown; the reservation tool is absent.                                                                                                                      |
+| 1:05-1:35 | Ask the physical world  | ChatGPT calls `request_host_evidence`. The request appears on the host device; the host supplies the exact angle or answer; a source frame/transcript visibly becomes evidence.                                                                              |
+| 1:35-1:55 | Unlock and act          | The final condition resolves, `reserve_current_lot` appears dynamically, the buyer approves, and the attributed reversible hold appears on the same page.                                                                                                    |
+| 1:55-2:15 | Prove control           | Revoke or contradict one condition, or release the hold. The consequential tool disappears or the unsafe attempt is refused. Turn the camera off visibly.                                                                                                    |
+| 2:15-2:40 | Show technical depth    | Briefly expose Site Tools/recent calls, the dynamic tool rail, and a compact architecture caption. Do not tour source files or sponsor logos.                                                                                                                |
+| 2:40-2:58 | Land impact and ceiling | State what humans and agents did together that was previously impractical, then show the credible next step: many agents directing evidence, with UCP settlement and proof-scoped authority. Leave two seconds of margin under the hard three-minute limit.  |
 
 The live URL should have three progressively enhanced paths behind one coherent experience:
 
@@ -231,8 +260,8 @@ A QR code may let a phone join as the host or buyer, but scanning it can never b
 The submission text should mirror the four criteria and the required prompts:
 
 - **Why WebMCP:** the open page owns ephemeral live truth, signed-in commerce state, evidence, and currently safe actions; ChatGPT owns personal reasoning and uses only page-bound tools valid at that moment.
-- **Better experience:** the buyer can stay immersed and speak naturally while the agent tracks constraints, requests one discriminating demonstration, and keeps every disclosed fact and action inspectable.
-- **New human-agent collaboration:** an agent directs a human camera to acquire missing physical evidence, then the page changes what the agent is allowed to do because of that evidence.
+- **Better experience:** the buyer can stay immersed and speak naturally while the agent keeps personal value private, tracks public evidence requirements, requests one discriminating demonstration, and keeps every disclosed fact and action inspectable.
+- **New human-agent collaboration:** several private agents coordinate one bounded human observation, then the page changes what each agent is allowed to do because of that shared evidence.
 - **Implementation:** native dynamic `document.modelContext.registerTool`, shared application actions for human and agent controls, explicit lifecycle cleanup, realtime media as a progressive layer, and deterministic fallbacks and evals.
 
 Repository and media hygiene are part of execution: keep timestamped challenge-period commits, clearly separate any pre-existing Vidably work, include a detectable open-source license and complete setup instructions, use only rights-cleared footage/music/marks, and keep the public YouTube video under three minutes with audible narration. The live URL and deterministic fixture must remain available through judging.
@@ -248,14 +277,14 @@ Drop or substantially reframe this concept if any of these survive a real browse
 - The demo's most impressive moment is the video or auction UI rather than human-agent collaboration.
 - A simpler non-commerce concept produces the same WebMCP leverage with much lower risk.
 
-## Later rungs, only if Rung 1 earns them
+## Later rungs, only if Rung 2 earns them
 
 1. Separate host and buyer pages sharing realtime show state.
 2. Near-live transcription and timestamped Vidably evidence extraction.
-3. Aggregated evidence requests from several audience agents.
-4. UCP-backed product, cart, checkout, and post-win order state.
-5. A formally verified semantic mandate and auction-state model.
-6. Live broadcast through Mux or another appropriate transport.
+3. Real cross-client evidence aggregation with minority-safety handling.
+4. UCP-backed catalog, offer, cart, checkout, consent, permalink, and post-win order state.
+5. A formally verified quote/authority invariant that visibly gates a consequential tool.
+6. Live broadcast through the transport that wins a focused comparison.
 7. Multiple real participants and agents in one show.
 
 ## Explicit non-goals for the walking skeleton

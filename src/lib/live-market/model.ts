@@ -6,8 +6,8 @@ export type ShowStatus = (typeof showStatuses)[number];
 export const evidenceStatuses = ['supported', 'unresolved', 'violated'] as const;
 export type EvidenceStatus = (typeof evidenceStatuses)[number];
 
-export const evaluationOutcomes = ['no-mandate', 'unresolved', 'eligible', 'ineligible'] as const;
-export type EvaluationOutcome = (typeof evaluationOutcomes)[number];
+export const evidenceOutcomes = ['no-requirements', 'unresolved', 'ready', 'incompatible'] as const;
+export type EvidenceOutcome = (typeof evidenceOutcomes)[number];
 
 export const activityActors = ['system', 'buyer', 'agent', 'host'] as const;
 export type ActivityActor = (typeof activityActors)[number];
@@ -18,17 +18,15 @@ export type RepairHistory = (typeof repairHistoryValues)[number];
 export const evidenceRequestKinds = ['repair_history'] as const;
 export type EvidenceRequestKind = (typeof evidenceRequestKinds)[number];
 
-export interface BuyerMandate {
-  readonly maxAllInPrice: number;
+export interface EvidenceRequirements {
   readonly minLengthCm: number;
   readonly maxLengthCm: number;
   readonly requireVisibleEdgeEvidence: boolean;
   readonly forbidPriorBaseRepair: boolean;
 }
 
-export const buyerMandateSchema = z
+export const evidenceRequirementsSchema = z
   .strictObject({
-    maxAllInPrice: z.number().finite().min(1).max(10_000),
     minLengthCm: z.number().finite().min(80).max(250),
     maxLengthCm: z.number().finite().min(80).max(250),
     requireVisibleEdgeEvidence: z.boolean(),
@@ -39,13 +37,12 @@ export const buyerMandateSchema = z
     path: ['minLengthCm'],
   });
 
-export const defaultBuyerMandate = {
-  maxAllInPrice: 450,
+export const defaultEvidenceRequirements = {
   minLengthCm: 154,
   maxLengthCm: 158,
   requireVisibleEdgeEvidence: true,
   forbidPriorBaseRepair: true,
-} as const satisfies BuyerMandate;
+} as const satisfies EvidenceRequirements;
 
 export interface LotEvidence {
   readonly edgeCondition: 'visible-closeup';
@@ -72,10 +69,17 @@ export interface EvidenceRequest {
   readonly requestedBy: 'agent' | 'buyer';
 }
 
+export interface AnonymousEvidenceDemand {
+  readonly kind: EvidenceRequestKind;
+  readonly agentCount: number;
+  readonly status: 'open' | 'resolved';
+}
+
 export interface Reservation {
   readonly id: string;
   readonly lotId: string;
   readonly heldBy: 'agent' | 'buyer';
+  readonly acceptedAllInPrice: number;
 }
 
 export interface ActivityEvent {
@@ -89,26 +93,53 @@ export interface ActivityEvent {
 export interface LiveMarketState {
   readonly showStatus: ShowStatus;
   readonly lot: LiveLot;
-  readonly mandate: BuyerMandate | null;
+  readonly evidenceRequirements: EvidenceRequirements | null;
   readonly evidenceRequests: readonly EvidenceRequest[];
+  readonly anonymousEvidenceDemand: readonly AnonymousEvidenceDemand[];
   readonly reservation: Reservation | null;
   readonly activity: readonly ActivityEvent[];
   readonly nextActivityId: number;
 }
 
 export interface ConditionEvaluation {
-  readonly id: 'price' | 'length' | 'edge_evidence' | 'repair_history';
+  readonly id: 'length' | 'edge_evidence' | 'repair_history';
   readonly label: string;
   readonly status: EvidenceStatus;
   readonly detail: string;
   readonly source: string;
 }
 
-export interface MandateEvaluation {
-  readonly outcome: EvaluationOutcome;
+export interface EvidenceEvaluation {
+  readonly outcome: EvidenceOutcome;
   readonly conditions: readonly ConditionEvaluation[];
   readonly unresolved: readonly string[];
   readonly violated: readonly string[];
+}
+
+export interface EvidenceDemandSummary {
+  readonly kind: EvidenceRequestKind;
+  readonly fixture: 'deterministic-demo-room';
+  readonly anonymousAgentCount: number;
+  readonly currentSessionAgentCount: number;
+  readonly totalAgentCount: number;
+  readonly status: 'open' | 'queued' | 'resolved';
+}
+
+export interface ActionFrontierStep {
+  readonly actor: 'agent-or-buyer' | 'host';
+  readonly action: string;
+  readonly instruction: string;
+}
+
+export interface BlockedCapability {
+  readonly name: 'request_host_evidence' | 'reserve_current_lot';
+  readonly reason: string;
+  readonly recovery: string;
+}
+
+export interface ActionFrontier {
+  readonly next: ActionFrontierStep;
+  readonly blocked: readonly BlockedCapability[];
 }
 
 export interface TransitionResult {
@@ -137,8 +168,15 @@ export function createInitialState(): LiveMarketState {
   return {
     showStatus: 'live',
     lot: initialLot,
-    mandate: null,
+    evidenceRequirements: null,
     evidenceRequests: [],
+    anonymousEvidenceDemand: [
+      {
+        kind: 'repair_history',
+        agentCount: 7,
+        status: 'open',
+      },
+    ],
     reservation: null,
     activity: [
       {
@@ -146,7 +184,7 @@ export function createInitialState(): LiveMarketState {
         actor: 'system',
         action: 'lot_opened',
         outcome: 'observed',
-        summary: 'Lot 07 opened with repair history unresolved.',
+        summary: 'Lot 07 opened with seven anonymous repair-history signals.',
       },
     ],
     nextActivityId: 2,
@@ -157,35 +195,34 @@ export function getAllInPrice(lot: LiveLot): number {
   return lot.currentBid + lot.shipping;
 }
 
-export function evaluateMandate(state: LiveMarketState): MandateEvaluation {
-  const { mandate } = state;
+export function evaluateEvidence(state: LiveMarketState): EvidenceEvaluation {
+  const { evidenceRequirements } = state;
 
-  if (mandate === null) {
+  if (evidenceRequirements === null) {
     return {
-      outcome: 'no-mandate',
+      outcome: 'no-requirements',
       conditions: [],
       unresolved: [],
       violated: [],
     };
   }
 
-  const allInPrice = getAllInPrice(state.lot);
-  const priceStatus: EvidenceStatus =
-    allInPrice <= mandate.maxAllInPrice ? 'supported' : 'violated';
   const lengthStatus: EvidenceStatus =
-    state.lot.lengthCm >= mandate.minLengthCm && state.lot.lengthCm <= mandate.maxLengthCm
+    state.lot.lengthCm >= evidenceRequirements.minLengthCm &&
+    state.lot.lengthCm <= evidenceRequirements.maxLengthCm
       ? 'supported'
       : 'violated';
   const edgeStatus: EvidenceStatus =
-    !mandate.requireVisibleEdgeEvidence || state.lot.evidence.edgeCondition === 'visible-closeup'
+    !evidenceRequirements.requireVisibleEdgeEvidence ||
+    state.lot.evidence.edgeCondition === 'visible-closeup'
       ? 'supported'
       : 'unresolved';
 
   let repairStatus: EvidenceStatus = 'supported';
-  let repairDetail = 'Prior repair is allowed by this mandate.';
-  let repairSource = 'Buyer mandate';
+  let repairDetail = 'Prior repair is allowed by the shared evidence requirements.';
+  let repairSource = 'Buyer evidence requirements';
 
-  if (mandate.forbidPriorBaseRepair) {
+  if (evidenceRequirements.forbidPriorBaseRepair) {
     if (state.lot.evidence.repairHistory === 'unknown') {
       repairStatus = 'unresolved';
       repairDetail = 'The host has not established whether the base was repaired.';
@@ -202,17 +239,10 @@ export function evaluateMandate(state: LiveMarketState): MandateEvaluation {
 
   const conditions: readonly ConditionEvaluation[] = [
     {
-      id: 'price',
-      label: 'All-in price',
-      status: priceStatus,
-      detail: `$${allInPrice} against a $${mandate.maxAllInPrice} ceiling.`,
-      source: 'Live bid + displayed shipping',
-    },
-    {
       id: 'length',
       label: 'Length',
       status: lengthStatus,
-      detail: `${state.lot.lengthCm} cm against ${mandate.minLengthCm}-${mandate.maxLengthCm} cm.`,
+      detail: `${state.lot.lengthCm} cm against ${evidenceRequirements.minLengthCm}-${evidenceRequirements.maxLengthCm} cm.`,
       source: 'Lot specification',
     },
     {
@@ -241,10 +271,35 @@ export function evaluateMandate(state: LiveMarketState): MandateEvaluation {
     .filter(({ status }) => status === 'violated')
     .map(({ label }) => label);
 
-  const outcome: EvaluationOutcome =
-    violated.length > 0 ? 'ineligible' : unresolved.length > 0 ? 'unresolved' : 'eligible';
+  const outcome: EvidenceOutcome =
+    violated.length > 0 ? 'incompatible' : unresolved.length > 0 ? 'unresolved' : 'ready';
 
   return { outcome, conditions, unresolved, violated };
+}
+
+export function getEvidenceDemandSummary(
+  state: LiveMarketState,
+  kind: EvidenceRequestKind,
+): EvidenceDemandSummary {
+  const anonymousDemand = state.anonymousEvidenceDemand.find(
+    (candidate) => candidate.kind === kind,
+  );
+  const currentSessionRequested = state.evidenceRequests.some((request) => request.kind === kind);
+  const currentSessionQueued = state.evidenceRequests.some(
+    (request) => request.kind === kind && request.status === 'queued',
+  );
+  const anonymousAgentCount = anonymousDemand?.agentCount ?? 0;
+  const currentSessionAgentCount = currentSessionRequested ? 1 : 0;
+  const resolved = anonymousDemand?.status === 'resolved';
+
+  return {
+    kind,
+    fixture: 'deterministic-demo-room',
+    anonymousAgentCount,
+    currentSessionAgentCount,
+    totalAgentCount: anonymousAgentCount + currentSessionAgentCount,
+    status: resolved ? 'resolved' : currentSessionQueued ? 'queued' : 'open',
+  };
 }
 
 function addActivity(state: LiveMarketState, event: Omit<ActivityEvent, 'id'>): LiveMarketState {
@@ -273,37 +328,37 @@ function refuse(
   };
 }
 
-export function setBuyingMandate(
+export function setEvidenceRequirements(
   state: LiveMarketState,
-  mandate: BuyerMandate,
+  evidenceRequirements: EvidenceRequirements,
   actor: 'agent' | 'buyer',
 ): TransitionResult {
   if (state.reservation !== null) {
     return refuse(
       state,
       actor,
-      'mandate_set',
-      'Release the active hold before changing the buying mandate.',
+      'evidence_requirements_set',
+      'Release the active hold before changing evidence requirements.',
     );
   }
 
   const nextState = addActivity(
     {
       ...state,
-      mandate,
+      evidenceRequirements,
     },
     {
       actor,
-      action: 'mandate_set',
+      action: 'evidence_requirements_set',
       outcome: 'accepted',
-      summary: `Shared five bounded constraints with the live page.`,
+      summary: 'Shared four product-evidence requirements. No private price was disclosed.',
     },
   );
 
   return {
     ok: true,
     state: nextState,
-    message: 'Buying mandate recorded and evaluated against the current lot.',
+    message: 'Evidence requirements recorded. Price and wider buyer context stayed private.',
   };
 }
 
@@ -320,12 +375,22 @@ export function requestRepairHistory(
     );
   }
 
-  if (state.mandate === null) {
+  if (state.evidenceRequirements === null) {
     return refuse(
       state,
       actor,
       'evidence_requested',
-      'Set a buying mandate before requesting evidence.',
+      'Share product-evidence requirements before requesting evidence.',
+    );
+  }
+
+  const evaluation = evaluateEvidence(state);
+  if (evaluation.outcome !== 'unresolved' || !state.evidenceRequirements.forbidPriorBaseRepair) {
+    return refuse(
+      state,
+      actor,
+      'evidence_requested',
+      'Repair history cannot change the current public evidence decision.',
     );
   }
 
@@ -361,14 +426,14 @@ export function requestRepairHistory(
       actor,
       action: 'evidence_requested',
       outcome: 'accepted',
-      summary: 'Asked the host to show and disclose any prior base repair.',
+      summary: 'Joined seven anonymous agents asking for the same repair-history fact.',
     },
   );
 
   return {
     ok: true,
     state: nextState,
-    message: 'Repair-history evidence request added to the host queue.',
+    message: 'One normalized question now represents eight private agent decisions.',
   };
 }
 
@@ -385,6 +450,11 @@ export function answerRepairHistory(
     );
   }
 
+  if (state.lot.evidence.repairHistory !== 'unknown') {
+    return refuse(state, 'host', 'evidence_answered', 'Repair history is already resolved.');
+  }
+
+  const resolvedAgentCount = getEvidenceDemandSummary(state, 'repair_history').totalAgentCount;
   const source =
     repairHistory === 'none'
       ? 'Host live disclosure · source frame 00:31'
@@ -403,6 +473,9 @@ export function answerRepairHistory(
       evidenceRequests: state.evidenceRequests.map((request) =>
         request.kind === 'repair_history' ? { ...request, status: 'answered' } : request,
       ),
+      anonymousEvidenceDemand: state.anonymousEvidenceDemand.map((demand) =>
+        demand.kind === 'repair_history' ? { ...demand, status: 'resolved' } : demand,
+      ),
       reservation: null,
     },
     {
@@ -411,21 +484,22 @@ export function answerRepairHistory(
       outcome: 'accepted',
       summary:
         repairHistory === 'none'
-          ? 'Host disclosed no prior base repair and supplied a source frame.'
-          : 'Host disclosed a prior base repair and supplied a source frame.',
+          ? `One host answer supplied no-repair evidence to ${resolvedAgentCount} private agents.`
+          : `One host answer disclosed a repair to ${resolvedAgentCount} private agents.`,
     },
   );
 
   return {
     ok: true,
     state: nextState,
-    message: 'Repair-history evidence updated.',
+    message: `One camera answer resolved ${resolvedAgentCount} private agent decisions.`,
   };
 }
 
 export function reserveCurrentLot(
   state: LiveMarketState,
   actor: 'agent' | 'buyer',
+  expectedAllInPrice: number,
 ): TransitionResult {
   if (state.showStatus !== 'live') {
     return refuse(state, actor, 'reservation_created', 'The lot is not live.');
@@ -435,13 +509,32 @@ export function reserveCurrentLot(
     return refuse(state, actor, 'reservation_created', 'This lot is already reserved.');
   }
 
-  const evaluation = evaluateMandate(state);
-  if (evaluation.outcome !== 'eligible') {
+  if (!Number.isFinite(expectedAllInPrice) || expectedAllInPrice <= 0) {
+    return refuse(
+      state,
+      actor,
+      'reservation_created',
+      'An exact positive all-in quote is required for a hold.',
+    );
+  }
+
+  const currentAllInPrice = getAllInPrice(state.lot);
+  if (expectedAllInPrice !== currentAllInPrice) {
+    return refuse(
+      state,
+      actor,
+      'reservation_created',
+      `The live quote changed: expected $${expectedAllInPrice}, current all-in is $${currentAllInPrice}. Inspect the lot and decide again privately.`,
+    );
+  }
+
+  const evaluation = evaluateEvidence(state);
+  if (evaluation.outcome !== 'ready') {
     const blockers = [...evaluation.violated, ...evaluation.unresolved];
     const reason =
-      evaluation.outcome === 'no-mandate'
-        ? 'A buying mandate is required before reservation.'
-        : `Reservation is unavailable until these conditions resolve: ${blockers.join(', ')}.`;
+      evaluation.outcome === 'no-requirements'
+        ? 'Evidence requirements are needed before reservation.'
+        : `Reservation is unavailable until these public evidence conditions resolve: ${blockers.join(', ')}.`;
     return refuse(state, actor, 'reservation_created', reason);
   }
 
@@ -449,6 +542,7 @@ export function reserveCurrentLot(
     id: `hold-${state.nextActivityId}`,
     lotId: state.lot.id,
     heldBy: actor,
+    acceptedAllInPrice: currentAllInPrice,
   };
   const nextState = addActivity(
     { ...state, reservation },
@@ -456,14 +550,14 @@ export function reserveCurrentLot(
       actor,
       action: 'reservation_created',
       outcome: 'accepted',
-      summary: 'Created a reversible 10-minute hold. No payment was taken.',
+      summary: `Created a reversible hold at the exact $${currentAllInPrice} quote. No ceiling or payment was shared.`,
     },
   );
 
   return {
     ok: true,
     state: nextState,
-    message: 'Current lot reserved with a reversible hold.',
+    message: 'Current lot held at the exact inspected quote. No payment was taken.',
   };
 }
 
@@ -486,7 +580,7 @@ export function releaseCurrentLot(
       actor,
       action: 'reservation_released',
       outcome: 'accepted',
-      summary: 'Released the hold and restored the eligible action state.',
+      summary: 'Released the hold and restored the evidence-ready action state.',
     },
   );
 
@@ -498,8 +592,12 @@ export function releaseCurrentLot(
 }
 
 export function getAvailableToolNames(state: LiveMarketState): readonly string[] {
-  const names = ['inspect_live_show', 'set_buying_mandate'];
-  const evaluation = evaluateMandate(state);
+  const names = ['inspect_live_show'];
+  const evaluation = evaluateEvidence(state);
+
+  if (state.reservation === null) {
+    names.push('set_evidence_requirements');
+  }
 
   if (state.showStatus === 'live') {
     names.push('inspect_current_lot');
@@ -510,16 +608,16 @@ export function getAvailableToolNames(state: LiveMarketState): readonly string[]
   );
   if (
     state.showStatus === 'live' &&
-    state.mandate !== null &&
+    state.evidenceRequirements !== null &&
     evaluation.outcome === 'unresolved' &&
-    state.mandate.forbidPriorBaseRepair &&
+    state.evidenceRequirements.forbidPriorBaseRepair &&
     state.lot.evidence.repairHistory === 'unknown' &&
     !repairRequestIsQueued
   ) {
     names.push('request_host_evidence');
   }
 
-  if (evaluation.outcome === 'eligible' && state.reservation === null) {
+  if (evaluation.outcome === 'ready' && state.reservation === null) {
     names.push('reserve_current_lot');
   }
 
@@ -528,4 +626,105 @@ export function getAvailableToolNames(state: LiveMarketState): readonly string[]
   }
 
   return names;
+}
+
+export function getActionFrontier(state: LiveMarketState): ActionFrontier {
+  const evaluation = evaluateEvidence(state);
+  const repairRequestIsQueued = state.evidenceRequests.some(
+    ({ kind, status }) => kind === 'repair_history' && status === 'queued',
+  );
+  const blocked: BlockedCapability[] = [];
+  let next: ActionFrontierStep;
+
+  if (state.reservation !== null) {
+    next = {
+      actor: 'agent-or-buyer',
+      action: 'release_current_lot',
+      instruction: 'Keep the hold, or release it to restore the evidence-ready state.',
+    };
+    blocked.push({
+      name: 'request_host_evidence',
+      reason: 'The decision already has an active hold.',
+      recovery: 'Release the hold before starting a different evidence path.',
+    });
+    blocked.push({
+      name: 'reserve_current_lot',
+      reason: 'The lot is already held.',
+      recovery: 'No second reservation is needed.',
+    });
+    return { next, blocked };
+  }
+
+  if (state.evidenceRequirements === null) {
+    next = {
+      actor: 'agent-or-buyer',
+      action: 'set_evidence_requirements',
+      instruction: 'Share only the product evidence this decision requires; keep price private.',
+    };
+    blocked.push({
+      name: 'request_host_evidence',
+      reason: 'The page does not yet know which physical facts matter.',
+      recovery: 'Share bounded product-evidence requirements.',
+    });
+    blocked.push({
+      name: 'reserve_current_lot',
+      reason: 'No public evidence envelope has been evaluated.',
+      recovery: 'Share evidence requirements, then resolve only the missing facts.',
+    });
+    return { next, blocked };
+  }
+
+  if (evaluation.outcome === 'unresolved' && !repairRequestIsQueued) {
+    next = {
+      actor: 'agent-or-buyer',
+      action: 'request_host_evidence',
+      instruction: 'Join the normalized repair-history request without sharing private context.',
+    };
+    blocked.push({
+      name: 'reserve_current_lot',
+      reason: `Public evidence is unresolved: ${evaluation.unresolved.join(', ')}.`,
+      recovery: 'Ask the host for the missing repair-history demonstration.',
+    });
+    return { next, blocked };
+  }
+
+  if (evaluation.outcome === 'unresolved') {
+    next = {
+      actor: 'host',
+      action: 'answer_repair_history',
+      instruction: 'Show the base and disclose repair history once for the aggregated question.',
+    };
+    blocked.push({
+      name: 'request_host_evidence',
+      reason: 'An identical request is already queued.',
+      recovery: 'Wait for the host answer instead of duplicating the question.',
+    });
+    blocked.push({
+      name: 'reserve_current_lot',
+      reason: `Public evidence is unresolved: ${evaluation.unresolved.join(', ')}.`,
+      recovery: 'Wait for the host to answer the queued question.',
+    });
+    return { next, blocked };
+  }
+
+  if (evaluation.outcome === 'incompatible') {
+    next = {
+      actor: 'agent-or-buyer',
+      action: 'skip_or_change_requirements',
+      instruction: `Skip this lot, or change requirements only if the buyer explicitly changes them: ${evaluation.violated.join(', ')}.`,
+    };
+    blocked.push({
+      name: 'reserve_current_lot',
+      reason: `Public evidence violates: ${evaluation.violated.join(', ')}.`,
+      recovery: 'Do not relax the requirement automatically; ask the buyer or skip the lot.',
+    });
+    return { next, blocked };
+  }
+
+  next = {
+    actor: 'agent-or-buyer',
+    action: 'reserve_current_lot',
+    instruction: `Privately compare the current $${getAllInPrice(state.lot)} quote, then pass that exact quote only if a hold is wanted.`,
+  };
+  return { next, blocked };
 }

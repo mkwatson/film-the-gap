@@ -1,14 +1,16 @@
 import { z } from 'zod';
 
 import {
-  buyerMandateSchema,
-  evaluateMandate,
+  evidenceRequirementsSchema,
+  evaluateEvidence,
+  getActionFrontier,
   getAllInPrice,
   getAvailableToolNames,
+  getEvidenceDemandSummary,
   releaseCurrentLot,
   requestRepairHistory,
   reserveCurrentLot,
-  setBuyingMandate,
+  setEvidenceRequirements,
   type LiveMarketState,
   type TransitionResult,
 } from './model';
@@ -19,15 +21,9 @@ const emptyInputSchema = {
   additionalProperties: false,
 } as const;
 
-const buyingMandateInputSchema = {
+const evidenceRequirementsInputSchema = {
   type: 'object',
   properties: {
-    maxAllInPrice: {
-      type: 'number',
-      minimum: 1,
-      maximum: 10_000,
-      description: 'Maximum total in US dollars, including the live price and displayed shipping.',
-    },
     minLengthCm: {
       type: 'number',
       minimum: 80,
@@ -42,20 +38,14 @@ const buyingMandateInputSchema = {
     },
     requireVisibleEdgeEvidence: {
       type: 'boolean',
-      description: 'Whether a visible close-up of the edges is required before reservation.',
+      description: 'Whether a visible close-up of the edges is required before a decision.',
     },
     forbidPriorBaseRepair: {
       type: 'boolean',
-      description: 'Whether any disclosed prior base repair makes the lot ineligible.',
+      description: 'Whether any disclosed prior base repair makes the lot incompatible.',
     },
   },
-  required: [
-    'maxAllInPrice',
-    'minLengthCm',
-    'maxLengthCm',
-    'requireVisibleEdgeEvidence',
-    'forbidPriorBaseRepair',
-  ],
+  required: ['minLengthCm', 'maxLengthCm', 'requireVisibleEdgeEvidence', 'forbidPriorBaseRepair'],
   additionalProperties: false,
 } as const;
 
@@ -65,15 +55,32 @@ const evidenceRequestInputSchema = {
     kind: {
       type: 'string',
       enum: ['repair_history'],
-      description: 'The currently unresolved evidence the host should provide.',
+      description: 'The normalized unresolved evidence kind the host should provide.',
     },
   },
   required: ['kind'],
   additionalProperties: false,
 } as const;
 
+const reservationInputSchema = {
+  type: 'object',
+  properties: {
+    expectedAllInPrice: {
+      type: 'number',
+      exclusiveMinimum: 0,
+      description:
+        'The exact current all-in quote observed on this page, not the buyer’s ceiling or budget.',
+    },
+  },
+  required: ['expectedAllInPrice'],
+  additionalProperties: false,
+} as const;
+
 const evidenceRequestSchema = z.strictObject({
   kind: z.literal('repair_history'),
+});
+const reservationSchema = z.strictObject({
+  expectedAllInPrice: z.number().finite().positive(),
 });
 const emptyObjectSchema = z.strictObject({});
 
@@ -105,8 +112,6 @@ function validationFailure(error: z.ZodError): {
 }
 
 function snapshot(state: LiveMarketState): object {
-  const evaluation = evaluateMandate(state);
-
   return {
     showStatus: state.showStatus,
     currentLot: {
@@ -117,8 +122,22 @@ function snapshot(state: LiveMarketState): object {
       shipping: state.lot.shipping,
       allInPrice: getAllInPrice(state.lot),
     },
-    disclosedMandate: state.mandate,
-    evaluation,
+    sellerVisibleEvidenceRequirements: state.evidenceRequirements,
+    evidenceEvaluation: evaluateEvidence(state),
+    privacyBoundary: {
+      receivedFromBuyer:
+        state.evidenceRequirements === null ? [] : Object.keys(state.evidenceRequirements),
+      notCollected: [
+        'maximum willingness to pay',
+        'private price ceiling',
+        'buyer profile',
+        'urgency',
+      ],
+      actionBinding: 'A hold accepts only the exact current page quote.',
+      guarantee: 'Data minimization, not a claim of zero statistical inference.',
+    },
+    aggregateEvidenceDemand: getEvidenceDemandSummary(state, 'repair_history'),
+    actionFrontier: getActionFrontier(state),
     pendingHostRequests: state.evidenceRequests.filter(({ status }) => status === 'queued'),
     reservation: state.reservation,
     currentlyAvailableTools: getAvailableToolNames(state),
@@ -144,7 +163,7 @@ function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextT
       name: 'inspect_live_show',
       title: 'Inspect live show',
       description:
-        'Read the current live lot, the constraints disclosed to this page, evidence status, pending host requests, reservation, and recent attributed activity. Use this first when the user asks about the live show.',
+        'Read the current live lot, seller-visible evidence requirements, privacy receipt, aggregate host question, action frontier, reservation, and recent activity. Use this first for the live show.',
       inputSchema: emptyInputSchema,
       annotations: {
         readOnlyHint: true,
@@ -160,30 +179,32 @@ function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextT
       },
     },
     {
-      name: 'set_buying_mandate',
-      title: 'Share buying constraints',
+      name: 'set_evidence_requirements',
+      title: 'Share product evidence requirements',
       description:
-        'Replace the bounded buying constraints disclosed to this page for the current live lot when no hold is active. Share only the five requested fields, not the user’s wider profile or conversation. This does not bid, reserve, purchase, or release a hold.',
-      inputSchema: buyingMandateInputSchema,
+        'Replace only the four product-evidence requirements disclosed to this page when no hold is active. Never pass the buyer’s budget, maximum price, urgency, profile, preference weights, or wider conversation. This does not bid, reserve, purchase, or release a hold.',
+      inputSchema: evidenceRequirementsInputSchema,
       annotations: {
         readOnlyHint: false,
         untrustedContentHint: true,
       },
       execute: async (input, options?: WebMCP.ToolExecuteCallbackOptions): Promise<object> => {
         checkAbort(options);
-        const parsed = buyerMandateSchema.safeParse(input);
+        const parsed = evidenceRequirementsSchema.safeParse(input);
         if (!parsed.success) {
           return validationFailure(parsed.error);
         }
-        const result = runtime.transition((state) => setBuyingMandate(state, parsed.data, 'agent'));
+        const result = runtime.transition((state) =>
+          setEvidenceRequirements(state, parsed.data, 'agent'),
+        );
         return transitionOutput(result);
       },
     },
     {
       name: 'inspect_current_lot',
-      title: 'Inspect current lot evidence',
+      title: 'Inspect current lot and exact quote',
       description:
-        'Read authoritative page state for the current lot and evaluate every disclosed buying constraint against its cited evidence. Use this before requesting evidence or taking an action.',
+        'Read authoritative page state, the exact current all-in quote, public evidence evaluation, and the next capability frontier. Compare price to private buyer context outside this page before taking an action.',
       inputSchema: emptyInputSchema,
       annotations: {
         readOnlyHint: true,
@@ -200,9 +221,9 @@ function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextT
     },
     {
       name: 'request_host_evidence',
-      title: 'Request missing evidence',
+      title: 'Join missing-evidence request',
       description:
-        'Add the currently unresolved repair-history question to the visible host queue. This asks the host for a disclosure and source view; it does not treat the future answer as verified automatically.',
+        'Join the normalized repair-history question in the visible host queue. The page aggregates only the evidence kind, not buyer profiles, private prices, or individual decisions. A future host answer remains untrusted evidence.',
       inputSchema: evidenceRequestInputSchema,
       annotations: {
         readOnlyHint: false,
@@ -220,21 +241,23 @@ function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextT
     },
     {
       name: 'reserve_current_lot',
-      title: 'Create reversible hold',
+      title: 'Create exact-quote reversible hold',
       description:
-        'Create a reversible 10-minute hold only when every disclosed constraint is currently supported. This does not place a bid, charge money, or complete a purchase.',
-      inputSchema: emptyInputSchema,
+        'Create a reversible 10-minute hold only after public evidence is ready. Pass the exact all-in quote just inspected—not the buyer’s ceiling. A stale quote is rejected. This does not bid, charge money, or complete a purchase.',
+      inputSchema: reservationInputSchema,
       annotations: {
         readOnlyHint: false,
         untrustedContentHint: true,
       },
       execute: async (input, options?: WebMCP.ToolExecuteCallbackOptions): Promise<object> => {
         checkAbort(options);
-        const parsed = emptyObjectSchema.safeParse(input);
+        const parsed = reservationSchema.safeParse(input);
         if (!parsed.success) {
           return validationFailure(parsed.error);
         }
-        const result = runtime.transition((state) => reserveCurrentLot(state, 'agent'));
+        const result = runtime.transition((state) =>
+          reserveCurrentLot(state, 'agent', parsed.data.expectedAllInPrice),
+        );
         return transitionOutput(result);
       },
     },
@@ -242,7 +265,7 @@ function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextT
       name: 'release_current_lot',
       title: 'Release current hold',
       description:
-        'Release the active reversible hold on the current lot. This restores the eligible action state and does not charge money.',
+        'Release the active reversible hold on the current lot. This restores the evidence-ready state and does not charge money.',
       inputSchema: emptyInputSchema,
       annotations: {
         readOnlyHint: false,

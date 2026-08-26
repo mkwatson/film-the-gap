@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { defaultBuyerMandate } from '@/lib/live-market/model';
+import { defaultEvidenceRequirements } from '@/lib/live-market/model';
 
 import { LiveMarket } from './live-market';
 
@@ -55,28 +55,33 @@ afterEach(() => {
 });
 
 describe('LiveMarket', () => {
-  it('keeps the complete human fallback usable in an ordinary browser', async () => {
+  it('keeps the private-crowd hero flow usable in an ordinary browser', async () => {
     setModelContext(undefined);
     render(<LiveMarket />);
 
     expect(await screen.findByText('Browser fallback')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Share demo mandate' }));
+    expect(screen.getByText('7 anonymous demo signals')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Share demo evidence needs' }));
     expect(screen.getByText('One fact still missing')).toBeTruthy();
+    expect(screen.queryByText('$450')).toBeNull();
+    expect(screen.getByText('Stays private')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Request missing evidence' }));
-    expect(screen.getByText('1 agent-directed request')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Join evidence request' }));
+    expect(screen.getByText('8 private agents waiting')).toBeTruthy();
+    expect(screen.getByText('8 decisions · one camera answer')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Show: no repair' }));
-    expect(screen.getByText('Mandate satisfied')).toBeTruthy();
+    expect(screen.getByText('Public evidence ready')).toBeTruthy();
+    expect(screen.getByText('One answer → 8 private decisions')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Hold this lot' }));
-    expect(screen.getByText('Reversible hold active')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Hold at $423' }));
+    expect(screen.getByText('Reversible hold active at $423')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Release hold' }));
-    expect(screen.getByText('10-minute hold unlocked')).toBeTruthy();
+    expect(screen.getByText('Public evidence complete')).toBeTruthy();
   });
 
-  it('re-registers the native tool contract as live eligibility changes', async () => {
+  it('re-registers the native tool contract as evidence and exact-quote state changes', async () => {
     const modelContext = new RecordingModelContext();
     setModelContext(modelContext);
     render(<LiveMarket />);
@@ -84,14 +89,14 @@ describe('LiveMarket', () => {
     await waitFor(() => {
       expect(modelContext.activeToolNames()).toEqual([
         'inspect_live_show',
-        'set_buying_mandate',
+        'set_evidence_requirements',
         'inspect_current_lot',
       ]);
     });
 
     await modelContext
-      .latestTool('set_buying_mandate')
-      .execute(defaultBuyerMandate, { signal: new AbortController().signal });
+      .latestTool('set_evidence_requirements')
+      .execute(defaultEvidenceRequirements, { signal: new AbortController().signal });
 
     await waitFor(() => {
       expect(modelContext.activeToolNames()).toContain('request_host_evidence');
@@ -103,23 +108,25 @@ describe('LiveMarket', () => {
 
     await waitFor(() => {
       expect(modelContext.activeToolNames()).not.toContain('request_host_evidence');
-      expect(screen.getByText('1 agent-directed request')).toBeTruthy();
+      expect(screen.getByText('8 private agents waiting')).toBeTruthy();
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Show: no repair' }));
 
     await waitFor(() => {
       expect(modelContext.activeToolNames()).toContain('reserve_current_lot');
+      expect(screen.getAllByText('reserve_current_lot')).toHaveLength(2);
     });
 
     await modelContext
       .latestTool('reserve_current_lot')
-      .execute({}, { signal: new AbortController().signal });
+      .execute({ expectedAllInPrice: 423 }, { signal: new AbortController().signal });
 
     await waitFor(() => {
       expect(modelContext.activeToolNames()).not.toContain('reserve_current_lot');
+      expect(modelContext.activeToolNames()).not.toContain('set_evidence_requirements');
       expect(modelContext.activeToolNames()).toContain('release_current_lot');
-      expect(screen.getByText('Reversible hold active')).toBeTruthy();
+      expect(screen.getByText('Reversible hold active at $423')).toBeTruthy();
     });
   });
 });
