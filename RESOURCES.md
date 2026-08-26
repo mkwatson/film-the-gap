@@ -4,12 +4,12 @@ Last full pass: 2026-08-26 PT. The [official Devpost resources page](https://web
 
 ## Current status
 
-| Requirement                                                            | Status                                 | Evidence or blocker                                                                                                                                                                     |
-| ---------------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Read the official resources page                                       | Complete for the 2026-08-26 page       | Every substantive documentation and supporter link below was opened and assessed; optional credits, account creation, Discord, forms, and publishing actions were not performed.        |
-| Read the current WebMCP specification and first-party browser guidance | Complete for the 2026-08-26 draft/docs | The current surface is `document.modelContext`; see findings below.                                                                                                                     |
-| Test in ChatGPT's in-app browser                                       | **Not yet tested**                     | This Codex session has no exposed ChatGPT built-in-browser target. Documentation review is not a substitute. Use the latest desktop app with GPT-5.6 Sol or Terra and the matrix below. |
-| Test in Chrome with WebMCP enabled                                     | **Not yet tested**                     | Chrome 151.0.7922.174 is installed but was not running when inspected. Launching it and changing its flag/extension state await explicit user permission.                               |
+| Requirement                                                            | Status                                                   | Evidence or blocker                                                                                                                                                                                                                 |
+| ---------------------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Read the official resources page                                       | Complete for the 2026-08-26 page                         | Every substantive documentation and supporter link below was opened and assessed; optional credits, account creation, Discord, forms, and publishing actions were not performed.                                                    |
+| Read the current WebMCP specification and first-party browser guidance | Complete for the 2026-08-26 draft/docs                   | The current surface is `document.modelContext`; see findings below.                                                                                                                                                                 |
+| Test in ChatGPT's in-app browser                                       | **Not yet tested**                                       | This Codex session has no exposed ChatGPT built-in-browser target. Documentation review is not a substitute. Use the latest desktop app with GPT-5.6 Sol or Terra and the matrix below.                                             |
+| Test in Chrome with WebMCP enabled                                     | **Native smoke test complete; interactive test pending** | An isolated Chrome 151.0.7922.174 headless profile proved flag-gated feature detection, async registration, discovery, and execution. The normal-profile DevTools/extension and human-in-the-loop acceptance matrix remain pending. |
 
 Never collapse those last two rows into a generic "browser tested" claim. ChatGPT Site Tools add their own discovery, trust review, confirmations, tool lifetime, and model behavior on top of the browser implementation.
 
@@ -84,7 +84,7 @@ Never collapse those last two rows into a generic "browser tested" claim. ChatGP
 
 1. **Video requirement:** resources FAQ line 194 says "there's no video"; line 208 and the Official Rules require a public video under three minutes. Treat video as required.
 2. **API surface:** some August 2026 partner materials still show `navigator.modelContext` or `navigator.modelContextTesting`; the current specification, Chrome documentation, and OpenAI example use `document.modelContext`.
-3. **Browser versions:** older supporter examples cite Chrome 146. The challenge requires Chrome 149+, and the installed Chrome is 151. Exact tested runtime wins over prose.
+3. **Browser versions:** older supporter examples cite Chrome 146. The challenge requires Chrome 149+, and the installed Chrome is 151. Its tested consumer surface currently differs from the August 26 draft; exact runtime wins over prose.
 4. **MCP versus WebMCP:** OpenAI's remote MCP docs describe a server connection that can work without an open page. ChatGPT Site Tools discover page-owned WebMCP only while the page is present. Test and describe them separately.
 5. **Helper packages versus draft:** the current latest Google hook (0.2.0) and MCP-B types (5.0.1) lag the August 26 execute signature. The specification project's `webmcp-types` 0.1.5 matches the provider callback but lacks the current in-page `executeTool` consumer method. Package affiliation or recency cannot override the draft and judged runtime.
 
@@ -92,7 +92,22 @@ Never collapse those last two rows into a generic "browser tested" claim. ChatGP
 
 The user-linked [WebMCP Extension](https://chromewebstore.google.com/detail/webmcp-extension/jigokfbbpcdckjmhbgapmikncfihboec) is an independent extension by Amrin Grewal (version 1.0, updated April 22, 2026). It can list, execute, and log tools, but its documentation refers to Chrome 146 and the older `navigator.modelContextTesting` surface. Use it as a secondary view only.
 
-The primary path is Chrome 151 with the WebMCP testing flag, Chrome DevTools' native WebMCP pane, and Google's [Model Context Tool Inspector](https://chromewebstore.google.com/detail/webmcp-model-context-tool/gbpdfapgefenggkahomfgkhfehlcenpd) if an extension is useful. The Google inspector is version 1.9.13, updated August 20, 2026, offered by Google, and requires Chrome 150+. Its own listing warns that it is a development aid rather than a production security boundary. Neither extension was installed during this pass.
+The primary path is Chrome 151 with the WebMCP testing flag, Chrome DevTools' native WebMCP pane, and Google's [Model Context Tool Inspector](https://chromewebstore.google.com/detail/webmcp-model-context-tool/gbpdfapgefenggkahomfgkhfehlcenpd) if an extension is useful. The Google inspector is version 1.9.13, updated August 19, 2026, offered by Google, and requires Chrome 150+. Its own listing warns that it is a development aid rather than a production security boundary. Neither extension was installed during this pass.
+
+## Chrome 151 isolated native smoke test
+
+On 2026-08-26 PT, a temporary page registered an imperative `add_numbers` tool and was served from localhost. Chrome 151.0.7922.174 ran headlessly in fresh isolated profiles so the test did not alter the normal Chrome profile.
+
+- Negative control without the feature flag: `document.modelContext` was absent.
+- With `--enable-features=WebMCP`: `document.modelContext` was present, `registerTool()` returned a promise, awaited registration succeeded, and `getTools()` returned `add_numbers`.
+- Current-draft-style `executeTool(registeredTool, object)` failed with `Failed to parse input arguments`.
+- Chrome-151-style `executeTool(registeredTool, JSON.stringify(object))` succeeded and returned the serialized tool result with sum `42`.
+- The registered execute callback received only its input object; its second cancellation-options argument was `undefined`, despite the August 26 draft specifying `(input, { signal })`.
+- Observed function arities were `registerTool.length === 1`, `getTools.length === 0`, and `executeTool.length === 2`.
+
+This is evidence of a real draft/runtime skew, not a reason to target stale APIs exclusively. Challenge code should keep provider registration current, tolerate a missing callback-options argument where the judged runtime requires it, and isolate any in-page consumer adapter. The exact ChatGPT Site Tools behavior remains higher-priority evidence. Headless execution is supplementary because Chrome's own guidance describes WebMCP as primarily human-in-the-loop.
+
+The reproducible fixture is [research/webmcp-runtime-smoke](research/webmcp-runtime-smoke/README.md). It is research evidence, not entry code. The four temporary Chrome profiles and superseded ignored fixture copy were moved to Trash after testing.
 
 ## Exact runtime acceptance matrix
 

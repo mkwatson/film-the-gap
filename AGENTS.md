@@ -51,6 +51,7 @@ As checked against the 2026-08-26 draft:
 - Test direct and ambiguous tool-selection prompts, corrections, cancellations, stale state, failure recovery, and end-to-end action sequences.
 - ChatGPT treats tool definitions and outputs as untrusted and safety-reviews calls. Messages, purchases, deletions, and permission changes may require confirmation.
 - The current native execute callback receives `(input, { signal })`, and `registerTool` is asynchronous. Await registration and propagate cancellation in challenge-critical code.
+- Chrome 151.0.7922.174 currently lags that draft in the tested native consumer path: it expects JSON-string input for in-page `executeTool` and supplies no second execute-callback argument. Preserve current provider semantics, but guard this exact runtime boundary and re-test rather than assuming convergence.
 - Current helper-package types are not automatically authoritative. Audit their installed declarations and runtime source against the same-day draft before use.
 - Do not report ChatGPT or Chrome compatibility until the exact current build has completed the recorded runtime matrix in [RESOURCES.md](RESOURCES.md).
 

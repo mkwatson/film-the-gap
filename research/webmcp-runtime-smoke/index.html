@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>WebMCP runtime smoke test</title>
+  </head>
+  <body>
+    <pre id="result">pending</pre>
+    <script type="module">
+      const result = document.querySelector('#result');
+
+      const render = (value) => {
+        result.textContent = JSON.stringify(value);
+      };
+
+      if (!('modelContext' in document)) {
+        render({ modelContext: false });
+      } else {
+        try {
+          let callbackSecondArgument = 'not-called';
+          const registration = document.modelContext.registerTool({
+            name: 'add_numbers',
+            title: 'Add two numbers',
+            description: 'Adds two finite numbers and returns their sum.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                left: { type: 'number' },
+                right: { type: 'number' },
+              },
+              required: ['left', 'right'],
+              additionalProperties: false,
+            },
+            annotations: {
+              readOnlyHint: true,
+            },
+            execute: async ({ left, right }, options) => {
+              callbackSecondArgument = options === undefined ? 'undefined' : typeof options;
+              options?.signal?.throwIfAborted();
+              return {
+                content: [{ type: 'text', text: String(left + right) }],
+                structuredContent: { sum: left + right },
+              };
+            },
+          });
+          await registration;
+
+          const tools = await document.modelContext.getTools();
+          let objectExecution;
+          let stringExecution;
+
+          try {
+            objectExecution = {
+              ok: true,
+              output: await document.modelContext.executeTool(tools[0], {
+                left: 19,
+                right: 23,
+              }),
+            };
+          } catch (error) {
+            objectExecution = {
+              ok: false,
+              error: error instanceof Error ? error.message : String(error),
+            };
+          }
+
+          try {
+            stringExecution = {
+              ok: true,
+              output: await document.modelContext.executeTool(
+                tools[0],
+                JSON.stringify({ left: 19, right: 23 }),
+              ),
+            };
+          } catch (error) {
+            stringExecution = {
+              ok: false,
+              error: error instanceof Error ? error.message : String(error),
+            };
+          }
+
+          render({
+            modelContext: true,
+            apiShape: {
+              registerToolLength: document.modelContext.registerTool.length,
+              getToolsLength: document.modelContext.getTools.length,
+              executeToolLength: document.modelContext.executeTool.length,
+              registrationReturnedPromise: registration instanceof Promise,
+              callbackSecondArgument,
+            },
+            toolNames: tools.map(({ name }) => name),
+            objectExecution,
+            stringExecution,
+          });
+        } catch (error) {
+          render({
+            modelContext: true,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+    </script>
+  </body>
+</html>

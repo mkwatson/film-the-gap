@@ -63,6 +63,18 @@ The page owns the live item, evidence, room state, current session, and visible 
 
 No affiliation guarantees a score, and the rules permit changing panels. Each use must still raise WebMCP leverage, execution, impact, or ambition for an unaffiliated evaluator.
 
+## Browser-runtime evidence
+
+An isolated Chrome 151.0.7922.174 native smoke test passed feature gating, promise-returning registration, discovery, and tool execution, but exposed a material draft/runtime mismatch. The installed browser accepts a JSON string—not the August 26 draft's object—for its in-page `executeTool` input, and it invokes the provider callback without the draft's second `{ signal }` argument. See [RESOURCES.md](RESOURCES.md) for the exact observation and negative control.
+
+Consequences for the eventual stack:
+
+- keep the direct provider implementation aligned with the current specification;
+- tolerate absent execute options at the runtime boundary until ChatGPT and Chrome converge;
+- keep in-page testing/consumer compatibility behind a tiny adapter instead of polluting tool handlers;
+- record the exact browser build with every acceptance run;
+- do not let a passing headless fixture stand in for DevTools, extension, natural-language, or ChatGPT testing.
+
 ## Current compatibility ledger
 
 Registry metadata rechecked 2026-08-26:
