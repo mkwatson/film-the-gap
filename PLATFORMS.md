@@ -1,10 +1,21 @@
 # Platform and integration decision record
 
-Research state: 2026-08-26. This is a conditional recommendation, not a final concept or stack lock. The hard acceptance test is still observed product magic in the exact ChatGPT and Chrome runtimes.
+Research state: 2026-08-26. This is a branch-level feasibility record, not a concept or stack lock. The hard acceptance test is observed product magic in the exact ChatGPT and Chrome runtimes. The broader current inventory and recent sponsor launches live in [SPONSOR-PRODUCTS.md](SPONSOR-PRODUCTS.md).
 
-## Current recommendation
+## Current posture — architecture tournament, no lock
 
-If the agent-native live-market frontier survives its first browser test, use one Cloudflare-centered React/Vite application, Shopify for authoritative commodity commerce, and direct native WebMCP for the novel collaboration layer.
+Do not prune the concept space to fit an architecture. Preserve at least these coherent alternatives until small end-to-end spikes exercise the same hero interaction:
+
+- Cloudflare for authoritative live rooms, realtime media, open-agent identity/payments, and browser-scale evaluation;
+- Vercel for a cohesive Next.js/Hydrogen, WebSocket, Eve/AI SDK, Workflow, Sandbox, and delegated-credential stack;
+- Netlify for Agent Experience, branch-isolated data, typed Functions, and unusually safe preview/recovery workflows;
+- Render for persistent multi-runtime services and long-running video, Lean, simulation, or data Workflows.
+
+Only one should become the primary production host. Shopify can remain an orthogonal authoritative commerce layer, and direct native WebMCP remains the novel page collaboration layer in every branch.
+
+## Cloudflare live-market branch
+
+If the agent-native live-market frontier survives its browser and comparative infrastructure tests, one especially strong architecture is a Cloudflare-centered React/Vite application with Shopify for authoritative commodity commerce.
 
 That means:
 
@@ -17,7 +28,7 @@ That means:
 - Lean only for a stable consequential invariant whose certificate is visible and useful;
 - MCP-B only for a current, concrete interoperability or conformance function.
 
-This is concentrated judge-product leverage. Cloudflare and Shopify solve different load-bearing layers; ChatGPT and Chrome are the required hero clients. Vercel and Netlify remain valuable quality lenses, but adding either as a second host would duplicate the deployment layer without improving the live product.
+This would be concentrated judge-product leverage: Cloudflare and Shopify solve different load-bearing layers, while ChatGPT and Chrome are the required hero clients. It is one high-upside branch, not the default imposed on every concept. Adding Vercel or Netlify as a second primary host would still be redundant; choosing either instead may be correct if its comparative spike wins.
 
 ## Why this architecture fits the current frontier
 
@@ -44,10 +55,10 @@ The page owns the live item, evidence, room state, current session, and visible 
 
 | Platform      | Deep, distinctive fit                                                                                                                                                                                                                  | Main concern                                                                                                                                                                                                      | Current call                                                                                               |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Cloudflare    | Durable Objects provide a natural single authority per room; Hibernation WebSockets keep clients connected; RealtimeKit supplies global WebRTC; Browser Run can support evals; Agent Readiness/C2PA are optional orthogonal additions. | Several products are preview/beta and their WebMCP examples can lag the draft. RealtimeKit's full UI bundle is large.                                                                                             | **Provisional primary platform** for the live-market hypothesis.                                           |
-| Vercel        | Excellent current Next.js developer experience and polished commerce reference. A judge is on Next.js core.                                                                                                                            | Queue ordering is not authoritative for auctions; realtime Function documentation conflicts; the reference storefront delegates WebMCP commerce to Shopify. Pairing with Cloudflare as another host is redundant. | Use only if the chosen concept becomes a primarily Next.js product without hard room-ordering/media needs. |
-| Netlify       | Strong Agent Experience framing and starter path; deployability and recovery discipline.                                                                                                                                               | No uniquely stronger live-room primitive found. A second primary host would add complexity.                                                                                                                       | Apply its AX test philosophy; do not add as affiliation decoration.                                        |
-| Render        | Durable asynchronous Workflows fit long-running video processing.                                                                                                                                                                      | Workflows are not an incoming-port realtime room.                                                                                                                                                                 | Consider only for an indispensable async pipeline that cannot run cohesively on the primary stack.         |
+| Cloudflare    | Durable Objects provide a natural single authority per room; Hibernation WebSockets keep clients connected; RealtimeKit supplies global WebRTC; Browser Run can support evals; agent identity/payments/tracing add an unusually complete open-agent stack. | Several products are preview/beta and their WebMCP examples can lag the draft. RealtimeKit's full UI bundle is large. | **Leading live-room branch**, to compare against the same Vercel interaction before selection. |
+| Vercel        | Current Next.js/Hydrogen craft plus public-beta WebSockets, Eve, AI SDK 7, Workflow, Sandbox, Connect, and Agent Runs can now form one cohesive agent product stack. | WebSockets and Queues are beta; strict room ordering and plan limits require a real two-client spike. The reference storefront correctly delegates commodity WebMCP commerce to Shopify. | **Leading cohesive Next/Hydrogen branch**, not a fallback. Drop Cloudflare if this branch wins. |
+| Netlify       | Strong Agent Experience framing, typed Functions, agent-isolated Postgres branches, atomic previews, and recovery discipline. | No uniquely stronger authoritative live-room primitive found. A second primary host would add complexity. | **Leading AX/reliability branch**; apply its test philosophy even if another branch wins. |
+| Render        | Persistent multi-runtime services and up-to-24-hour Workflows fit video, Lean, simulation, and data pipelines. | Workflows are beta and are not themselves an incoming-port realtime room. | **Leading long-job/native-runtime branch** when that work is indispensable. |
 | ChatGPT Sites | Tight ChatGPT experience and WebSocket-capable hosting.                                                                                                                                                                                | Current policies prohibit enabling financial transactions or processing payment-card data.                                                                                                                        | Not the primary commerce host.                                                                             |
 | Shopify       | Native current WebMCP tools for real catalog/cart/checkout/order state and direct relevance to Vidably's merchant domain.                                                                                                              | Shopify's built-in tools alone would look like an ordinary storefront, and Hydrogen WebMCP is still preview.                                                                                                      | **Provisional authoritative commerce layer**, paired with custom direct tools.                             |
 

@@ -44,6 +44,8 @@ The lenses above are inferences from public work and roles, not biographical sco
 
 ## Judge-product leverage strategy
 
+The dated capability and availability inventory behind this strategy is [SPONSOR-PRODUCTS.md](SPONSOR-PRODUCTS.md). It deliberately retains competing sponsor-stack branches until comparable end-to-end experiments justify convergence.
+
 The ideal portfolio is coherent rather than neutral:
 
 1. **Required hero surfaces:** make the experience outstanding in ChatGPT Site Tools and Chrome's native WebMCP implementation. These are the judged runtimes and directly showcase work represented by Justin and Sarah.

@@ -8,8 +8,9 @@ These instructions apply to the entire repository.
 - UCP, Lean, Vidably, and video-AI work are optional advantages, not requirements. Use them only when they make the winning product thesis stronger.
 - Err on the side of wild ambition, delivered as cumulative end-to-end rungs. Keep the latest completed rung working while adding the next one.
 - Strategically maximize judge-product leverage when a judge's product, protocol, or platform can materially strengthen the product. Prefer one deep, novel, demonstrable use over several shallow integrations.
-- Choose one coherent primary hosting/runtime path. Judge affiliation can raise the strategic value of an otherwise strong integration, but it cannot substitute for product fit, rubric value, compatibility, or reliability.
-- Read [STRATEGY.md](STRATEGY.md), [JUDGES.md](JUDGES.md), [RULES.md](RULES.md), [RESOURCES.md](RESOURCES.md), and [PLATFORMS.md](PLATFORMS.md) before concept selection or a material architecture decision.
+- Explore broadly before convergence. Preserve ambitious concept and platform branches until a concrete experiment falsifies them; do not let an imagined one-week schedule silently narrow the search.
+- Eventually choose one coherent primary hosting/runtime path. During exploration, compare the strongest alternatives against the same hero interaction. Judge affiliation can raise the strategic value of an otherwise strong integration, but it cannot substitute for product fit, rubric value, compatibility, or reliability.
+- Read [STRATEGY.md](STRATEGY.md), [JUDGES.md](JUDGES.md), [RULES.md](RULES.md), [RESOURCES.md](RESOURCES.md), [SPONSOR-PRODUCTS.md](SPONSOR-PRODUCTS.md), and [PLATFORMS.md](PLATFORMS.md) before concept selection or a material architecture decision.
 - Descriptive concept labels are not project names. The official FAQ explicitly says not to use AI to name the entry; Mark chooses the submitted name.
 - Never copy private Vidably, video-foundational-research, or math research into the public challenge repository without Mark explicitly clearing the exact material and its licenses. Local-only notes use the ignored `*.private.md` suffix.
 
