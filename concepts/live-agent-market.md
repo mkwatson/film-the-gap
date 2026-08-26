@@ -70,7 +70,7 @@ Suggested buyer mandate:
 
 Initial result: unresolved because repair history is unknown. After the host answers that the base has not been repaired, the item becomes eligible and a reversible reservation becomes available.
 
-The footage comes from Vidably's existing public demo fixture. Asset rights must be reconfirmed before any public challenge deployment.
+The current walking skeleton uses an original CSS-rendered snowboard scene and no third-party media. Later footage may come from a rights-cleared Vidably demo fixture only after its exact license and challenge use are confirmed.
 
 ## State model
 
@@ -102,10 +102,15 @@ Always available:
 
 Available only while a lot is live:
 
-| Tool                    | Effect                                                         |
-| ----------------------- | -------------------------------------------------------------- |
-| `inspect_current_lot`   | Read authoritative lot facts, evidence, and mandate evaluation |
-| `request_host_evidence` | Add one enumerated evidence request to the visible host queue  |
+| Tool                  | Effect                                                         |
+| --------------------- | -------------------------------------------------------------- |
+| `inspect_current_lot` | Read authoritative lot facts, evidence, and mandate evaluation |
+
+Available only when the disclosed mandate has unresolved repair history and no matching request is already queued:
+
+| Tool                    | Effect                                                        |
+| ----------------------- | ------------------------------------------------------------- |
+| `request_host_evidence` | Add one enumerated evidence request to the visible host queue |
 
 Available only when the current lot is eligible and unreserved:
 
@@ -120,6 +125,20 @@ Available only while reserved:
 | `release_current_lot` | Release the hold and restore the eligible state |
 
 No tool will place a binding bid or purchase in Rung 1.
+
+## Rung 1 verification record
+
+Implemented and verified locally on 2026-08-26:
+
+- One polished page with shared human/tool domain actions and an ordinary-browser fallback.
+- Direct async `document.modelContext.registerTool` registration with `AbortSignal` cleanup.
+- Runtime Zod validation plus narrow JSON Schemas.
+- Native Headless Chrome 150 execution of the entire mandate -> request -> host evidence -> reserve loop, including observed tool removal and replacement.
+- Visible actor attribution and reversible human control.
+- Desktop and 390 px visual checks with no page errors or horizontal overflow.
+- Prettier, ESLint, strict TypeScript, 12 Vitest behaviors, and a Next.js 16.3.3 production build.
+
+Still unverified: the connected latest Chrome 151 profile, ChatGPT's in-app Browser and model-driven calls, Voice-to-Site-Tools composition, public deployment, and long-lived navigation/reconnect behavior.
 
 ## Human interface
 
@@ -150,12 +169,12 @@ spoken intent
 
 There are four distinct modality layers. They must not be collapsed into one unsupported "works on any device" claim.
 
-| Layer | Product role | Current boundary | Reliable fallback |
-| --- | --- | --- | --- |
-| ChatGPT Voice -> Site Tools | The buyer speaks naturally to the same ChatGPT agent that is co-attending the page. This is the cleanest hero input if the exact desktop runtime supports the composition. | Current OpenAI documentation separately supports Voice in Chat, Work, and Codex and Site Tools in the built-in browser, but does not explicitly promise that one Voice session can invoke Site Tools. Treat this as an urgent runtime experiment, not a submission claim. | Type or dictate the identical prompt to ChatGPT. |
-| Page-owned voice | A push-to-talk control uses OpenAI Realtime or transcription to produce a visible transcript and structured draft. It makes the human UI hands-free on ordinary web/mobile clients. | This is an application feature, not proof of WebMCP leverage. It must feed the same domain state that page tools expose and must not replace the ChatGPT Site Tools path. | Text input and deterministic parsing for the golden fixture. |
-| Human live media | Cloudflare RealtimeKit can connect host and buyer audio/video across web and mobile clients. The page, not ChatGPT, owns the room and permissions. | Human media participation can span supported phones and browsers; the judged WebMCP agent path is still ChatGPT desktop or compatible Chrome. | Prerecorded rights-cleared video, transcript, and host-response controls. |
-| Agent visual evidence | A host or buyer explicitly shares a snapshot or sampled keyframe that an image-capable model turns into a cited evidence proposal for human review. | GPT-Realtime-2.1 accepts image and audio input but not continuous video. Do not claim that the model watches a raw video stream. | Precomputed evidence artifact with its source frame and uncertainty visible. |
+| Layer                       | Product role                                                                                                                                                                        | Current boundary                                                                                                                                                                                                                                                          | Reliable fallback                                                            |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| ChatGPT Voice -> Site Tools | The buyer speaks naturally to the same ChatGPT agent that is co-attending the page. This is the cleanest hero input if the exact desktop runtime supports the composition.          | Current OpenAI documentation separately supports Voice in Chat, Work, and Codex and Site Tools in the built-in browser, but does not explicitly promise that one Voice session can invoke Site Tools. Treat this as an urgent runtime experiment, not a submission claim. | Type or dictate the identical prompt to ChatGPT.                             |
+| Page-owned voice            | A push-to-talk control uses OpenAI Realtime or transcription to produce a visible transcript and structured draft. It makes the human UI hands-free on ordinary web/mobile clients. | This is an application feature, not proof of WebMCP leverage. It must feed the same domain state that page tools expose and must not replace the ChatGPT Site Tools path.                                                                                                 | Text input and deterministic parsing for the golden fixture.                 |
+| Human live media            | Cloudflare RealtimeKit can connect host and buyer audio/video across web and mobile clients. The page, not ChatGPT, owns the room and permissions.                                  | Human media participation can span supported phones and browsers; the judged WebMCP agent path is still ChatGPT desktop or compatible Chrome.                                                                                                                             | Prerecorded rights-cleared video, transcript, and host-response controls.    |
+| Agent visual evidence       | A host or buyer explicitly shares a snapshot or sampled keyframe that an image-capable model turns into a cited evidence proposal for human review.                                 | GPT-Realtime-2.1 accepts image and audio input but not continuous video. Do not claim that the model watches a raw video stream.                                                                                                                                          | Precomputed evidence artifact with its source frame and uncertainty visible. |
 
 Two-way video earns its complexity only when both cameras contribute physical context. A buyer might show a damaged part, room, outfit, or board already owned; the seller might then show compatibility, scale, condition, or provenance. The agent directs the next discriminating view and ties the resulting observation to the decision. For the snowboard fixture, buyer video is an optional later rung; host video is sufficient for the first complete loop.
 
@@ -190,15 +209,15 @@ The product may be wildly ambitious; the judged story must be singular. The publ
 
 Recommended capture: ChatGPT desktop's built-in browser and conversation are the primary screen. A host phone or second browser appears only when it answers the evidence request. The page keeps the mandate, evidence graph, host queue, current dynamic tool set, and attributed activity visible enough that the audience can distinguish real WebMCP collaboration from a generic voice assistant.
 
-| Time | Beat | What must be visible |
-| --- | --- | --- |
-| 0:00-0:15 | Hook and pain | A live item is moving faster than a buyer can track constraints and verify claims. State the one-sentence thesis before naming protocols. |
-| 0:15-0:35 | Speak the mandate | The buyer gives one concise voice prompt. The page receives only the minimum structured constraints and shows exactly what was disclosed. Use typed ChatGPT input in the recorded take unless Voice plus Site Tools has passed repeatedly. |
-| 0:35-1:05 | Reveal the gap | ChatGPT inspects the live lot through WebMCP. Three conditions resolve; repair history remains unknown; the reservation tool is absent. |
-| 1:05-1:35 | Ask the physical world | ChatGPT calls `request_host_evidence`. The request appears on the host device; the host supplies the exact angle or answer; a source frame/transcript visibly becomes evidence. |
-| 1:35-1:55 | Unlock and act | The final condition resolves, `reserve_current_lot` appears dynamically, the buyer approves, and the attributed reversible hold appears on the same page. |
-| 1:55-2:15 | Prove control | Revoke or contradict one condition, or release the hold. The consequential tool disappears or the unsafe attempt is refused. Turn the camera off visibly. |
-| 2:15-2:40 | Show technical depth | Briefly expose Site Tools/recent calls, the dynamic tool rail, and a compact architecture caption. Do not tour source files or sponsor logos. |
+| Time      | Beat                    | What must be visible                                                                                                                                                                                                                                        |
+| --------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0:00-0:15 | Hook and pain           | A live item is moving faster than a buyer can track constraints and verify claims. State the one-sentence thesis before naming protocols.                                                                                                                   |
+| 0:15-0:35 | Speak the mandate       | The buyer gives one concise voice prompt. The page receives only the minimum structured constraints and shows exactly what was disclosed. Use typed ChatGPT input in the recorded take unless Voice plus Site Tools has passed repeatedly.                  |
+| 0:35-1:05 | Reveal the gap          | ChatGPT inspects the live lot through WebMCP. Three conditions resolve; repair history remains unknown; the reservation tool is absent.                                                                                                                     |
+| 1:05-1:35 | Ask the physical world  | ChatGPT calls `request_host_evidence`. The request appears on the host device; the host supplies the exact angle or answer; a source frame/transcript visibly becomes evidence.                                                                             |
+| 1:35-1:55 | Unlock and act          | The final condition resolves, `reserve_current_lot` appears dynamically, the buyer approves, and the attributed reversible hold appears on the same page.                                                                                                   |
+| 1:55-2:15 | Prove control           | Revoke or contradict one condition, or release the hold. The consequential tool disappears or the unsafe attempt is refused. Turn the camera off visibly.                                                                                                   |
+| 2:15-2:40 | Show technical depth    | Briefly expose Site Tools/recent calls, the dynamic tool rail, and a compact architecture caption. Do not tour source files or sponsor logos.                                                                                                               |
 | 2:40-2:58 | Land impact and ceiling | State what humans and agents did together that was previously impractical, then show the credible next step: many agents directing evidence, with UCP settlement and proof-scoped authority. Leave two seconds of margin under the hard three-minute limit. |
 
 The live URL should have three progressively enhanced paths behind one coherent experience:

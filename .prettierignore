@@ -1,4 +1,5 @@
-.next
-coverage
-node_modules
+.next/
+coverage/
+next-env.d.ts
+node_modules/
 pnpm-lock.yaml
