@@ -18,7 +18,7 @@ The seller-facing page does not receive a buyer ceiling. That is a concrete data
 
 ## Run locally
 
-Requirements: Node.js 24 or newer and pnpm 11.6.0.
+Requirements: Node.js 24 or newer and pnpm 11.24.0.
 
 ```bash
 pnpm install

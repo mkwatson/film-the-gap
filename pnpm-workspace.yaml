@@ -23,3 +23,6 @@ minimumReleaseAgeExclude:
   - '@cloudflare/vitest-plugin@1.1.1'
   - miniflare@5.20260826.0-alpha
   - wrangler@4.127.0
+  - '@ai-sdk/gateway@4.0.67'
+  - '@ai-sdk/provider-utils@5.0.32'
+  - ai@7.0.83
