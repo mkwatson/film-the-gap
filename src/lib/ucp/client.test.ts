@@ -1,0 +1,287 @@
+// @vitest-environment node
+
+import { describe, expect, it } from 'vitest';
+
+import {
+  cancelUcpCart,
+  createUcpCart,
+  discoverUcpCartMerchant,
+  UcpClientError,
+  type UcpFetch,
+} from './client';
+import { ucpCartCapabilityName, ucpProtocolVersion } from './profile';
+
+const businessUrl = 'https://merchant.example';
+const endpoint = 'https://merchant.example/api/ucp/mcp';
+const platformProfileUrl = 'https://platform.example/.well-known/ucp';
+const variantId = 'gid://shopify/ProductVariant/51510885581120';
+
+interface RecordedRequest {
+  readonly url: string;
+  readonly method: string;
+  readonly body: unknown;
+}
+
+interface MockMerchantOptions {
+  readonly includeCreateCart?: boolean;
+  readonly cartProtocolVersion?: string;
+}
+
+function businessProfile(): object {
+  return {
+    ucp: {
+      version: ucpProtocolVersion,
+      services: {
+        'dev.ucp.shopping': [
+          {
+            version: ucpProtocolVersion,
+            spec: `https://ucp.dev/${ucpProtocolVersion}/specification/overview`,
+            schema: `https://ucp.dev/${ucpProtocolVersion}/services/shopping/mcp.openrpc.json`,
+            transport: 'mcp',
+            endpoint,
+          },
+        ],
+      },
+      capabilities: {
+        [ucpCartCapabilityName]: [{ version: ucpProtocolVersion }],
+      },
+      payment_handlers: {},
+    },
+  };
+}
+
+function toolSchema(): object {
+  return {
+    type: 'object',
+    properties: {
+      meta: { type: 'object' },
+      cart: { type: 'object' },
+    },
+    required: ['meta', 'cart'],
+  };
+}
+
+function cartResponse(protocolVersion: string = ucpProtocolVersion): object {
+  return {
+    ucp: {
+      version: protocolVersion,
+      capabilities: {
+        [ucpCartCapabilityName]: [{ version: protocolVersion }],
+      },
+    },
+    id: 'gid://shopify/Cart/test-cart',
+    line_items: [
+      {
+        id: 'gid://shopify/CartLine/test-line',
+        item: {
+          id: variantId,
+          title: 'Rights-cleared 156 cm demo board',
+          price: 38995,
+        },
+        quantity: 1,
+        subtotal: 38995,
+      },
+    ],
+    currency: 'USD',
+    totals: [
+      { type: 'subtotal', display_text: 'Subtotal', amount: 38995 },
+      { type: 'total', display_text: 'Total', amount: 38995 },
+    ],
+    messages: [
+      {
+        type: 'warning',
+        presentation: 'notice',
+        content: 'Shipping is finalized during checkout.',
+      },
+    ],
+    continue_url: 'https://merchant.example/cart/c/test-cart',
+  };
+}
+
+function jsonRpcRequest(body: BodyInit | null | undefined): {
+  readonly id: string | number;
+  readonly method: string;
+  readonly params: unknown;
+} {
+  if (typeof body !== 'string') {
+    throw new Error('Expected a JSON string request body.');
+  }
+  const value: unknown = JSON.parse(body);
+  if (typeof value !== 'object' || value === null) {
+    throw new Error('Expected a JSON-RPC request object.');
+  }
+  const record = value as Record<string, unknown>;
+  if (
+    (typeof record.id !== 'string' && typeof record.id !== 'number') ||
+    typeof record.method !== 'string'
+  ) {
+    throw new Error('Expected a JSON-RPC id and method.');
+  }
+  return { id: record.id, method: record.method, params: record.params };
+}
+
+function mockMerchant(options: MockMerchantOptions = {}): {
+  readonly fetch: UcpFetch;
+  readonly requests: readonly RecordedRequest[];
+} {
+  const requests: RecordedRequest[] = [];
+  const fetch: UcpFetch = async (input, init) => {
+    const url = input instanceof Request ? input.url : input.toString();
+    const method = init?.method ?? 'GET';
+    if (method === 'GET') {
+      requests.push({ url, method, body: null });
+      return Response.json(businessProfile());
+    }
+    const request = jsonRpcRequest(init?.body);
+    requests.push({ url, method, body: request });
+    if (request.method === 'tools/list') {
+      const tools = [
+        ...(options.includeCreateCart === false
+          ? []
+          : [{ name: 'create_cart', description: 'Create a cart.', inputSchema: toolSchema() }]),
+        { name: 'cancel_cart', description: 'Cancel a cart.', inputSchema: {} },
+      ];
+      return Response.json({ jsonrpc: '2.0', id: request.id, result: { tools } });
+    }
+    const params = request.params as { readonly name?: unknown };
+    if (params.name === 'create_cart') {
+      return Response.json({
+        jsonrpc: '2.0',
+        id: request.id,
+        result: {
+          structuredContent: {
+            cart: cartResponse(options.cartProtocolVersion),
+          },
+        },
+      });
+    }
+    return Response.json({
+      jsonrpc: '2.0',
+      id: request.id,
+      result: { structuredContent: { ucp: { status: 'success' } } },
+    });
+  };
+  return { fetch, requests };
+}
+
+describe('UCP Cart client', () => {
+  it('negotiates the live profile version and minimal merchant tool surface', async () => {
+    const merchant = mockMerchant();
+
+    const negotiation = await discoverUcpCartMerchant({
+      businessUrl,
+      platformProfileUrl,
+      fetch: merchant.fetch,
+    });
+
+    expect(negotiation).toMatchObject({
+      businessOrigin: businessUrl,
+      endpoint,
+      protocolVersion: ucpProtocolVersion,
+      toolNames: ['cancel_cart', 'create_cart'],
+    });
+    expect(JSON.stringify(merchant.requests[1]?.body)).toContain(platformProfileUrl);
+  });
+
+  it('creates a merchant cart without buyer identity, budget, address, or payment', async () => {
+    const merchant = mockMerchant();
+
+    const created = await createUcpCart({
+      businessUrl,
+      platformProfileUrl,
+      fetch: merchant.fetch,
+      idempotencyKey: 'create-test-idempotency-key',
+      input: {
+        variantId,
+        context: {
+          addressCountry: 'US',
+          currency: 'USD',
+          language: 'en-US',
+          intent: 'reviewed evidence requirements satisfied before cart handoff',
+        },
+      },
+    });
+
+    expect(created.cart).toMatchObject({
+      protocolVersion: ucpProtocolVersion,
+      currency: 'USD',
+      merchantOrigin: businessUrl,
+      totals: [
+        { type: 'subtotal', displayText: 'Subtotal', amount: 38995 },
+        { type: 'total', displayText: 'Total', amount: 38995 },
+      ],
+      continueUrl: 'https://merchant.example/cart/c/test-cart',
+    });
+    const callBody = JSON.stringify(merchant.requests[2]?.body);
+    expect(callBody).toContain('create_cart');
+    expect(callBody).toContain(variantId);
+    expect(callBody).not.toMatch(/450|maximum|buyer|email|postal|payment|credential/i);
+  });
+
+  it('preserves merchant messages and total order without recomputing them', async () => {
+    const merchant = mockMerchant();
+
+    const created = await createUcpCart({
+      businessUrl,
+      platformProfileUrl,
+      fetch: merchant.fetch,
+      input: { variantId },
+    });
+
+    expect(created.cart.totals.map(({ displayText }) => displayText)).toEqual([
+      'Subtotal',
+      'Total',
+    ]);
+    expect(created.cart.messages).toEqual([
+      expect.objectContaining({
+        type: 'warning',
+        presentation: 'notice',
+        content: 'Shipping is finalized during checkout.',
+      }),
+    ]);
+  });
+
+  it('refuses a merchant that omits a safely cancelable Cart surface', async () => {
+    const merchant = mockMerchant({ includeCreateCart: false });
+
+    await expect(
+      discoverUcpCartMerchant({ businessUrl, platformProfileUrl, fetch: merchant.fetch }),
+    ).rejects.toMatchObject({ code: 'tool-missing' } satisfies Partial<UcpClientError>);
+  });
+
+  it('refuses a cart response that changes the negotiated protocol version', async () => {
+    const merchant = mockMerchant({ cartProtocolVersion: '2026-01-23' });
+
+    await expect(
+      createUcpCart({
+        businessUrl,
+        platformProfileUrl,
+        fetch: merchant.fetch,
+        input: { variantId },
+      }),
+    ).rejects.toMatchObject({ code: 'cart-invalid' } satisfies Partial<UcpClientError>);
+  });
+
+  it('cancels with a fresh idempotency key and no payment fields', async () => {
+    const merchant = mockMerchant();
+    const negotiation = await discoverUcpCartMerchant({
+      businessUrl,
+      platformProfileUrl,
+      fetch: merchant.fetch,
+    });
+
+    await cancelUcpCart({
+      businessUrl,
+      platformProfileUrl,
+      fetch: merchant.fetch,
+      cartId: 'gid://shopify/Cart/test-cart',
+      idempotencyKey: 'cancel-test-idempotency-key',
+      negotiation,
+    });
+
+    const callBody = JSON.stringify(merchant.requests.at(-1)?.body);
+    expect(callBody).toContain('cancel_cart');
+    expect(callBody).toContain('cancel-test-idempotency-key');
+    expect(callBody).not.toMatch(/buyer|email|payment|credential/i);
+  });
+});

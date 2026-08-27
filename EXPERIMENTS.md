@@ -352,6 +352,20 @@ Protocol:
 
 Decision rule: graduate only if the resulting cart/handoff is externally authoritative, dynamically negotiated, visible to the user, and clearer than the local hold it replaces.
 
+#### E8.1 — Live protocol and reversible-cart checkpoint
+
+Status: **current Shopify wire path proven twice; owned merchant and judged-flow integration pending.**
+
+- Re-read UCP, Shopify profile negotiation, access-tier, Global Catalog, and Cart MCP documentation on 2026-08-26 PT. Shopify's live merchant profiles currently advertise UCP `2026-04-08`; they do not yet justify assuming the broader draft's `2026-08-25` shape. Anonymous Cart supports create/get/update/cancel and a human continuation URL without buyer credentials or payment authority.
+- Installed the official `shopify@openai-curated` Codex plugin (installed revision `11c74d6b`, UCP skill metadata `1.9.1`) and `@shopify/ucp-cli` `0.7.0`. A local `webmcp-challenge` profile is pinned to exactly `2026-04-08`; `ucp doctor` passes with one non-blocking warning. Shopify/UCP telemetry was opted out for all CLI probes.
+- Global Catalog found a real available secondhand 156 cm snowboard at `$389.95` from a public Shopify merchant. Live discovery negotiated the merchant's same-origin MCP endpoint and 13 tools. A dry run proved that Cart needed only the variant, quantity, localization context, intent, idempotency metadata, and public profile—not buyer identity, private ceiling, address, or payment data.
+- The official CLI created one real anonymous cart, preserved the merchant's ordered `$389.95` subtotal/total, returned a merchant continuation origin, and immediately canceled the cart. No purchase, checkout, seller contact, or retained cart credential occurred.
+- The app now publishes a minimal `/.well-known/ucp` platform profile declaring only Cart and includes a narrow, fetch-injected UCP JSON-RPC client. It bounds responses and time, requires credential-free HTTPS, rejects redirects and cross-origin negotiated endpoints, verifies both `create_cart` and `cancel_cart`, preserves merchant totals/messages without recomputing them, and never accepts buyer/budget/address/payment fields.
+- Seven deterministic tests cover negotiation, payload minimization, ordered merchant receipts, missing tools, version drift, cancellation, and the public profile. An opt-in live test then used the new client to create and immediately cancel a second real anonymous cart against the same merchant; it passed without logging or retaining the cart ID.
+- `@ucp-js/sdk` `0.4.6` was evaluated and removed rather than adopted for its badge: its raw Node 26 ESM build fails on extensionless internal imports, and its discovery schema rejects both Shopify's official current fixture and a live merchant profile because it expects an older services/capabilities shape. The working client follows the current profiles and the official CLI `0.7.0` request envelopes instead.
+
+This does **not** graduate E8. The public merchant was an integration control only; its trademarks/media will not enter the submission. The judged path still needs an owned development-store product with cleared media, a publicly reachable profile, Durable Object ownership of the private cart credential, visible merchant-authored receipt state, failure/expiry tests, and a human checkout handoff.
+
 ### E9 — Submission-grade Agent Experience
 
 Frozen claim:
