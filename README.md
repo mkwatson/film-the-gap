@@ -59,6 +59,8 @@ pnpm acceptance:native
 
 `EVIDENCE_ACCEPTANCE_APP_URL` defaults to `http://127.0.0.1:3000`. The runner launches a fresh named browser session with native WebMCP enabled and network access constrained to the three configured hosts. It verifies buyer reset and dynamic tools, a separate fragment-authenticated host surface, evidence-only disclosure, host publication, an exact-quote hold, UCP negotiation, a private second-origin continuation, merchant-side inspect/cancel tools, room reconciliation, host non-disclosure, release, and final cleanup. Its output contains only step names and durations; invite and cart credentials never enter logs or failure messages.
 
+Chrome-format direct, ambiguous, privacy-pressure, and full multi-step model evaluations live in [evals/](evals/). A schema-drift test keeps their declared tool surfaces identical to the implementation. The corpus can be inspected without credentials today; provider-backed reports remain an explicit pre-submission gate rather than a claimed result.
+
 ## Current boundaries
 
 - The current lot, decorative video scene, fallback host response, and hold are deterministic challenge fixtures. The camera path is real browser media capture; its automated acceptance run used Chromium's synthetic camera source rather than a physical board.
@@ -71,4 +73,4 @@ pnpm acceptance:native
 - A protected Vercel acceptance preview and disposable Cloudflare Worker have passed the public HTTPS journey. They are not yet the final judge URL: the Worker is temporary, and Vercel Authentication must not redirect a fragment-bearing host invite. There is no public repository remote yet.
 - No private Vidably or math research is included in the public worktree.
 
-Read [EXPERIMENTS.md](EXPERIMENTS.md) for the 18-primitives frontier and falsification results, [concepts/live-agent-market.md](concepts/live-agent-market.md) for the product ladder, [RESOURCES.md](RESOURCES.md) for exact-runtime evidence, [SPONSOR-PRODUCTS.md](SPONSOR-PRODUCTS.md) for the sponsor atlas, and [STRATEGY.md](STRATEGY.md) for the winning-probability framework.
+Read [EXPERIMENTS.md](EXPERIMENTS.md) for the 18-primitives frontier and falsification results, [concepts/live-agent-market.md](concepts/live-agent-market.md) for the product ladder, [evals/](evals/) for the current Chrome-format evaluation corpus, [RESOURCES.md](RESOURCES.md) for exact-runtime evidence, [SPONSOR-PRODUCTS.md](SPONSOR-PRODUCTS.md) for the sponsor atlas, and [STRATEGY.md](STRATEGY.md) for the winning-probability framework.

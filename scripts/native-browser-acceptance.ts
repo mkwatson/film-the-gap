@@ -123,8 +123,8 @@ const setRequirementsScript = invokeToolScript(
     forbidPriorBaseRepair: true,
   },
   `return parsedValues.some((value) => value.ok === true) &&
-    serialized.includes('"minLengthCm":154') &&
-    serialized.includes('"maxLengthCm":158') &&
+    serialized.includes('"evidenceOutcome":"unresolved"') &&
+    serialized.includes('"action":"request_host_evidence"') &&
     !serialized.includes('$450');`,
 );
 

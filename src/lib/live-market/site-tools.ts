@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import { historicalEvidenceLimitation } from './evidence-proposal';
 import {
   evidenceRequirementsSchema,
   evaluateEvidence,
@@ -110,8 +109,10 @@ function validationFailure(error: z.ZodError): {
 function snapshot(state: LiveMarketState): object {
   const evaluation = evaluateEvidence(state);
   const frontier = getActionFrontier(state);
+  const demand = getEvidenceDemandSummary(state, 'repair_history');
   const evidenceFrame = state.lot.evidence.repairEvidenceFrame;
   const visualReview = state.lot.evidence.visualReview;
+  const held = state.reservation !== null;
 
   return {
     show: {
@@ -122,78 +123,84 @@ function snapshot(state: LiveMarketState): object {
       title: state.lot.title,
       lengthCm: state.lot.lengthCm,
       exactAllInQuote: getAllInPrice(state.lot),
-      closesInSeconds: state.lot.closesInSeconds,
     },
     decisionEvidence: {
       requirements: state.evidenceRequirements,
       outcome: evaluation.outcome,
-      conditions: evaluation.conditions.map(({ id, status, detail, source }) => ({
-        id,
-        status,
-        detail,
-        source,
-      })),
-      unresolved: evaluation.unresolved,
-      violated: evaluation.violated,
+      ...(evaluation.unresolved.length === 0 ? {} : { unresolved: evaluation.unresolved }),
+      ...(evaluation.violated.length === 0 ? {} : { violated: evaluation.violated }),
     },
     publishedEvidence: {
       edge: {
         condition: state.lot.evidence.edgeCondition,
-        source: state.lot.evidence.edgeEvidenceSource,
+        ...(held ? {} : { source: state.lot.evidence.edgeEvidenceSource }),
       },
       repairHistory: state.lot.evidence.repairHistory,
-      repairHistorySource: state.lot.evidence.repairEvidenceSource,
-      selectedFrame:
-        evidenceFrame === null
-          ? null
-          : {
+      ...(held || state.lot.evidence.repairEvidenceSource === null
+        ? {}
+        : { repairHistorySource: state.lot.evidence.repairEvidenceSource }),
+      ...(held || evidenceFrame === null
+        ? {}
+        : {
+            selectedFrame: {
               kind: evidenceFrame.kind,
               frameId: evidenceFrame.frameId,
               capturedAt: evidenceFrame.capturedAt,
-              showOffsetSeconds: evidenceFrame.showOffsetSeconds,
               sha256: evidenceFrame.sha256,
               widthPx: evidenceFrame.widthPx,
               heightPx: evidenceFrame.heightPx,
             },
+          }),
       selectedFramePubliclyVisible: state.lot.evidence.repairEvidenceImage !== null,
-      reviewedObservation:
-        visualReview === null
-          ? null
-          : {
+      ...(held || visualReview === null
+        ? {}
+        : {
+            reviewedObservation: {
               source: visualReview.source,
               modelId: visualReview.modelId,
               hostDecision: visualReview.hostDecision,
               baseVisibility: visualReview.reviewedFinding.baseVisibility,
               surfaceFinding: visualReview.reviewedFinding.surfaceFinding,
-              confidence: visualReview.reviewedFinding.confidence,
-              summary: visualReview.reviewedFinding.summary,
             },
-      limitation: historicalEvidenceLimitation,
+          }),
+      ...(held
+        ? {}
+        : { repairHistoryProof: 'Host attestation; a frame proves only visible surface.' }),
     },
-    hostRequest: getEvidenceDemandSummary(state, 'repair_history'),
-    hold: state.reservation,
+    hostRequest: {
+      kind: demand.kind,
+      totalAgentCount: demand.totalAgentCount,
+      status: demand.status,
+    },
+    hold:
+      state.reservation === null
+        ? null
+        : {
+            heldBy: state.reservation.heldBy,
+            acceptedAllInPrice: state.reservation.acceptedAllInPrice,
+          },
     commerce: {
       protocol: state.commerce.available ? 'UCP' : null,
       protocolVersion: state.commerce.protocolVersion,
       merchantOrigin: state.commerce.merchantOrigin,
       cartStatus: state.commerce.cartStatus,
-      receipt:
-        state.commerce.receipt === null
-          ? null
-          : {
+      ...(state.commerce.receipt === null
+        ? {}
+        : {
+            receipt: {
               currency: state.commerce.receipt.currency,
               lineItems: state.commerce.receipt.lineItems,
-              totals: state.commerce.receipt.totals,
-              messages: state.commerce.receipt.messages,
+              totals: state.commerce.receipt.totals.map(({ type, amount }) => ({ type, amount })),
+              messages: state.commerce.receipt.messages.map(({ content }) => ({ content })),
               continuationAvailable: state.commerce.receipt.continuationAvailable,
             },
-      lastError: state.commerce.lastError,
-      privateCredential: 'server-held; never returned in shared room state',
+          }),
+      ...(state.commerce.lastError === null ? {} : { lastError: state.commerce.lastError }),
+      privateCredential: 'withheld',
     },
     next: {
       actor: frontier.next.actor,
       action: frontier.next.action,
-      instruction: frontier.next.instruction,
       availableTools: getAvailableToolNames(state),
     },
     privacyReceipt: {
@@ -201,23 +208,57 @@ function snapshot(state: LiveMarketState): object {
         state.evidenceRequirements === null ? [] : Object.keys(state.evidenceRequirements),
       withheldFields: [
         'maximum price',
-        'buyer identity',
-        'urgency',
-        'preference weights',
+        'identity',
         'address',
-        'payment data',
+        'payment',
         'merchant cart credential',
       ],
-      holdBinding: 'exact current page quote only',
+      holdBinding: 'exactAllInQuote only',
     },
   };
 }
 
 function transitionOutput(result: TransitionResult): object {
+  const evaluation = evaluateEvidence(result.state);
+  const demand = getEvidenceDemandSummary(result.state, 'repair_history');
+  const frontier = getActionFrontier(result.state);
   return {
     ok: result.ok,
     message: result.message,
-    state: snapshot(result.state),
+    state: {
+      evidenceOutcome: evaluation.outcome,
+      hostRequest: {
+        totalAgentCount: demand.totalAgentCount,
+        status: demand.status,
+      },
+      hold:
+        result.state.reservation === null
+          ? null
+          : {
+              heldBy: result.state.reservation.heldBy,
+              acceptedAllInPrice: result.state.reservation.acceptedAllInPrice,
+            },
+      commerce: {
+        cartStatus: result.state.commerce.cartStatus,
+        ...(result.state.commerce.receipt === null
+          ? {}
+          : {
+              receipt: {
+                currency: result.state.commerce.receipt.currency,
+                totals: result.state.commerce.receipt.totals.map(({ type, amount }) => ({
+                  type,
+                  amount,
+                })),
+                continuationAvailable: result.state.commerce.receipt.continuationAvailable,
+              },
+            }),
+      },
+      next: {
+        action: frontier.next.action,
+        availableTools: getAvailableToolNames(result.state),
+      },
+      privateBuyerContext: 'withheld',
+    },
     ...(result.privateResult === undefined ? {} : { privateAction: result.privateResult }),
   };
 }

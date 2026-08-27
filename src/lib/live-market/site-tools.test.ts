@@ -107,7 +107,7 @@ describe('WebMCP Site Tools', () => {
     expect(inspectOutput).toMatchObject({
       privacyReceipt: {
         sharedFields: [],
-        holdBinding: 'exact current page quote only',
+        holdBinding: 'exactAllInQuote only',
       },
     });
   });
@@ -269,7 +269,7 @@ describe('WebMCP Site Tools', () => {
     expect(createSiteTools(runtime).map(({ name }) => name)).not.toContain('reserve_current_lot');
   });
 
-  it('keeps common tool results within a compact agent context budget', async () => {
+  it("keeps common tool results within Chrome's recommended 1.5K budget", async () => {
     const runtime = createRuntime();
     const outputs: unknown[] = [];
 
@@ -288,9 +288,16 @@ describe('WebMCP Site Tools', () => {
     );
     await runtime.dispatch({ kind: 'answer-repair-history', repairHistory: 'none' });
     outputs.push(await getTool(runtime, 'inspect_live_show').execute({}, executeOptions));
+    outputs.push(
+      await getTool(runtime, 'reserve_current_lot').execute(
+        { expectedAllInPrice: getAllInPrice(runtime.getState().lot) },
+        executeOptions,
+      ),
+    );
+    outputs.push(await getTool(runtime, 'release_current_lot').execute({}, executeOptions));
 
     for (const output of outputs) {
-      expect(JSON.stringify(output).length).toBeLessThanOrEqual(3_500);
+      expect(JSON.stringify(output).length).toBeLessThanOrEqual(1_500);
     }
   });
 
@@ -350,16 +357,152 @@ describe('WebMCP Site Tools', () => {
         cartStatus: 'active',
         receipt: {
           totals: [
-            { type: 'subtotal', displayText: 'Subtotal', amount: 37500 },
-            { type: 'total', displayText: 'Total', amount: 37500 },
+            { type: 'subtotal', amount: 37500 },
+            { type: 'total', amount: 37500 },
           ],
           continuationAvailable: true,
         },
-        privateCredential: 'server-held; never returned in shared room state',
+        privateCredential: 'withheld',
       },
     });
     expect(JSON.stringify(output)).not.toMatch(/Cart\/|continue_url|private-test-cart/);
-    expect(JSON.stringify(output).length).toBeLessThanOrEqual(3_500);
+    expect(JSON.stringify(output).length).toBeLessThanOrEqual(1_500);
+  });
+
+  it('keeps every dynamic tool contract within Chrome metadata budgets', async () => {
+    const runtime = createRuntime(
+      createInitialState({ ucpMerchantOrigin: 'https://merchant.example' }),
+    );
+    const tools = new Map<string, WebMCP.ModelContextTool>();
+    const rememberAvailableTools = (): void => {
+      for (const tool of createSiteTools(runtime)) {
+        tools.set(tool.name, tool);
+      }
+    };
+
+    rememberAvailableTools();
+    await getTool(runtime, 'set_evidence_requirements').execute(
+      defaultEvidenceRequirements,
+      executeOptions,
+    );
+    rememberAvailableTools();
+    await runtime.dispatch({ kind: 'answer-repair-history', repairHistory: 'none' });
+    rememberAvailableTools();
+    await getTool(runtime, 'reserve_current_lot').execute(
+      { expectedAllInPrice: getAllInPrice(runtime.getState().lot) },
+      executeOptions,
+    );
+    rememberAvailableTools();
+    runtime.setStateForTest(
+      (state) =>
+        recordPreparedMerchantCart(state, 'agent', {
+          protocolVersion: '2026-04-08',
+          currency: 'USD',
+          lineItems: [],
+          totals: [],
+          messages: [],
+          continuationAvailable: true,
+          createdAt: 1_787_787_200_000,
+        }).state,
+    );
+    rememberAvailableTools();
+
+    expect([...tools.keys()].sort()).toEqual(
+      [
+        'cancel_merchant_cart',
+        'inspect_live_show',
+        'prepare_merchant_cart',
+        'release_current_lot',
+        'request_host_evidence',
+        'reserve_current_lot',
+        'set_evidence_requirements',
+      ].sort(),
+    );
+    for (const tool of tools.values()) {
+      expect(tool.name.length, `${tool.name} name`).toBeLessThanOrEqual(30);
+      expect(tool.description.length, `${tool.name} description`).toBeLessThanOrEqual(500);
+      if (!isRecord(tool.inputSchema) || !isRecord(tool.inputSchema.properties)) {
+        continue;
+      }
+      for (const [parameterName, parameterSchema] of Object.entries(tool.inputSchema.properties)) {
+        expect(parameterName.length, `${tool.name}.${parameterName} name`).toBeLessThanOrEqual(30);
+        if (isRecord(parameterSchema) && typeof parameterSchema.description === 'string') {
+          expect(
+            parameterSchema.description.length,
+            `${tool.name}.${parameterName} description`,
+          ).toBeLessThanOrEqual(150);
+        }
+      }
+    }
+  });
+
+  it('keeps a buyer-only cart handoff within the 1.5K result budget', async () => {
+    const heldRuntime = createRuntime(
+      createInitialState({ ucpMerchantOrigin: 'https://merchant.example' }),
+    );
+    await getTool(heldRuntime, 'set_evidence_requirements').execute(
+      defaultEvidenceRequirements,
+      executeOptions,
+    );
+    await heldRuntime.dispatch({ kind: 'answer-repair-history', repairHistory: 'none' });
+    await getTool(heldRuntime, 'reserve_current_lot').execute(
+      { expectedAllInPrice: getAllInPrice(heldRuntime.getState().lot) },
+      executeOptions,
+    );
+
+    let state = heldRuntime.getState();
+    const remoteRuntime: SiteToolRuntime = {
+      readState: () => state,
+      dispatch: async (command) => {
+        if (command.kind !== 'prepare-merchant-cart') {
+          throw new Error('Expected the merchant preparation command.');
+        }
+        const result = recordPreparedMerchantCart(state, 'agent', {
+          protocolVersion: '2026-04-08',
+          currency: 'USD',
+          lineItems: [
+            {
+              title: 'Evidence Market 156 · Live-inspected board',
+              unitPrice: 37500,
+              quantity: 1,
+              subtotal: 37500,
+            },
+          ],
+          totals: [{ type: 'total', displayText: 'Total', amount: 37500 }],
+          messages: [
+            {
+              type: 'warning',
+              content: 'No checkout or payment capability.',
+              severity: 'warning',
+            },
+          ],
+          continuationAvailable: true,
+          createdAt: 1_787_787_200_000,
+        });
+        state = result.state;
+        return {
+          ...result,
+          privateResult: {
+            kind: 'ucp-cart-handoff',
+            continueUrl: `https://merchant.example/cart/c/${'a'.repeat(32)}`,
+            instruction: 'Open only after explicit buyer approval; no order or payment is allowed.',
+          },
+        };
+      },
+    };
+
+    const output = await getTool(remoteRuntime, 'prepare_merchant_cart').execute(
+      {},
+      executeOptions,
+    );
+
+    expect(output).toMatchObject({
+      ok: true,
+      state: { commerce: { cartStatus: 'active' } },
+      privateAction: { kind: 'ucp-cart-handoff' },
+    });
+    expect(JSON.stringify(output).length).toBeLessThanOrEqual(1_500);
+    expectNoPrivateBuyerFields(output);
   });
 
   it('tolerates judged runtime callback shapes without a usable signal', async () => {

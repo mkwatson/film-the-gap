@@ -453,7 +453,7 @@ Status: **deterministic and native-Chrome pass; exact ChatGPT rerun pending.**
 - Re-read the current OpenAI Site Tools page, Chrome best practices/evals, and rendered WebMCP draft on 2026-08-26 PT.
 - Removed `inspect_current_lot`, whose implementation and output duplicated `inspect_live_show`. The initial surface is now one read plus one bounded write.
 - Rewrote tool descriptions around the positive action and state in which it is useful.
-- Replaced the verbose audit snapshot with a decision packet capped at 3,500 serialized characters in every common tested state. Full activity and pixel presentation remain visible in the human UI; the tool packet retains only information needed for the next agent action.
+- Replaced the verbose audit snapshot with a decision packet capped at 3,500 serialized characters in every common tested state. Full activity and pixel presentation remain visible in the human UI; the tool packet retains only information needed for the next agent action. E9.4 later tightens this to Chrome's newer 1.5K recommendation.
 - Native isolated Chrome passed discovery and execution across `2 → 3 → 2 → 3 → 2 → 3` tools, including dynamic request disappearance, stale-quote refusal, exact hold, and release. The browser showed every state change with no page errors.
 - Formatting, zero-warning lint, strict TypeScript, 42 tests across 9 files, and the Next.js production build pass.
 - Do not graduate E9 from this sub-result: the current two-tool initial surface still needs direct and ambiguous model-driven prompts in the exact ChatGPT client, plus cancellation/duplicate/reconnect datasets and public-origin clean-room testing.
@@ -489,6 +489,22 @@ Status: **native Chrome pass over tailnet HTTPS; final public-origin and ChatGPT
 - The first complete run passed all nine phases in roughly five seconds on Chrome `151.0.7922.174`. It covered native registration churn across buyer and merchant pages rather than calling application functions or HTTP APIs directly.
 
 This graduates the repeatable local/tailnet portion of E9. It does not claim the final judge path is ready: the same command must pass on stable unprotected public origins, and ChatGPT's model—not the deterministic harness—must complete the compact prompt without rescue. A physical phone and rights-cleared camera capture remain separate E7 gates.
+
+#### E9.4 — Current Chrome context budget and eval contract
+
+Frozen claim:
+
+> Every currently reachable Site Tool fits Chrome's current metadata and 1.5K-result guidance, while a versioned evaluation corpus can detect schema drift and test direct, ambiguous, privacy-pressure, and ordered multi-step behavior.
+
+Status: **deterministic and native-Chrome pass; provider-backed model reports pending.**
+
+- Re-read the live challenge resources, the rendered August 26 WebMCP draft, Chrome's secure-tools and evaluation guidance, and the latest Chrome Labs evaluation repository on August 27 PT rather than relying on earlier notes or package names.
+- Enforced Chrome's current recommended maxima in tests: 30 characters for tool and parameter names, 500 for tool descriptions, 150 for parameter descriptions, and 1,500 serialized characters for each tool result.
+- Tightened the decision packet in every common state: initial inspection, requirements set, host request queued, evidence ready, hold created, hold released, active merchant cart, and buyer-only merchant continuation. The agent receives complete provenance before making the hold decision and a compact receipt afterward; the full audit trail remains visible in the human UI.
+- Applied the metadata checks to all seven dynamic tool definitions. The credential-suppressed native Chrome journey still passed the complete two-client, two-origin lifecycle after compaction.
+- Added a Chrome-format corpus with direct and ambiguous reads, direct and ambiguous requirement updates, an adversarial private-ceiling prompt whose expected arguments contain only four product-evidence fields, and the full stop-before-hold chain. A strict test compares the corpus's initial schemas with the live implementation and rejects private budget material in expected arguments.
+- The upstream Chrome Labs repository now documents a newer `smoke` workflow, while the latest published npm package remains `webmcp-evals@0.0.3` and does not include that command. The repository records both facts and pins only commands available in the published package.
+- No provider-backed score is claimed: the current shell has no configured supported model credential. Run and preserve those reports, then repeat the exact model-driven path in the final ChatGPT client before submission.
 
 ### E10 — Frontier receipt (optional)
 

@@ -1,6 +1,6 @@
 # Official rules — operational checklist
 
-Sources checked directly on 2026-08-26: [Devpost official rules](https://webmcp.devpost.com/rules) and the [official resources and FAQ](https://webmcp.devpost.com/resources). This is a working compliance summary, not legal advice. The official rules control and may change; recheck the live pages before every submission milestone.
+Sources checked directly on 2026-08-27: [Devpost official rules](https://webmcp.devpost.com/rules) and the [official resources and FAQ](https://webmcp.devpost.com/resources). This is a working compliance summary, not legal advice. The official rules control and may change; recheck the live pages before every submission milestone.
 
 ## Hard dates — Pacific Time
 
