@@ -1,14 +1,14 @@
 # Public release and rollback runbook
 
-Updated 2026-08-27 PT. The public MIT repository is live at [github.com/mkwatson/webmcp-evidence-market](https://github.com/mkwatson/webmcp-evidence-market). Account/terms acceptance and the first permanent production deployment remain explicit external actions.
+Updated 2026-08-27 PT. The public MIT repository and permanent production topology are live. The `challenge-live-2026-08-27` tag identifies the reviewed source release; every runtime exposes its exact commit receipt for independent verification.
 
 ## Release topology
 
-| Surface        | Runtime                                            | Stable-origin responsibility                                                                             |
-| -------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Buyer and host | Vercel / Next.js                                   | Human experience, native buyer Site Tools, platform UCP profile, optional AI Gateway vision proposal     |
-| Evidence room  | Cloudflare Worker + SQLite Durable Object          | Separate buyer/host authority, revisions, idempotency, private merchant credential, recovery             |
-| Merchant       | Cloudflare Worker + separate SQLite Durable Object | Released UCP discovery and Cart lifecycle, exact totals, buyer-only continuation and merchant Site Tools |
+| Surface        | Runtime                                            | Stable origin                                                                            | Responsibility                                                                                           |
+| -------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Buyer and host | Vercel / Next.js                                   | `https://webmcp-evidence-market-vidably.vercel.app`                                      | Human experience, native buyer Site Tools, platform UCP profile, optional AI Gateway vision proposal     |
+| Evidence room  | Cloudflare Worker + SQLite Durable Object          | `https://webmcp-evidence-rooms.webmcp-challenge-evidence-merchant-worker.workers.dev`    | Separate buyer/host authority, revisions, idempotency, private merchant credential, recovery             |
+| Merchant       | Cloudflare Worker + separate SQLite Durable Object | `https://webmcp-evidence-merchant.webmcp-challenge-evidence-merchant-worker.workers.dev` | Released UCP discovery and Cart lifecycle, exact totals, buyer-only continuation and merchant Site Tools |
 
 The two Workers intentionally use separate origins and separate Durable Object authorities. This is useful sponsor leverage, but more importantly it makes the product claim real: the evidence page cannot manufacture the merchant's authoritative Cart.
 
@@ -24,7 +24,7 @@ Every public surface exposes a non-secret build receipt. Vercel reports the Git-
 
 Verified local release clients on 2026-08-27: Wrangler `4.127.0` in both Worker packages and Vercel CLI `59.7.0` via `pnpm dlx vercel@59.7.0`. The package registry reports those as the current releases; recheck the first-party docs and exact command help again on release day.
 
-The August 27 protected-Preview rehearsal reached `READY` from clean commit `676ca66aac0b47cd5b65446eca5be54425119d1d`, and authenticated inspection rendered the buyer, host, UCP discovery, and health routes. It deliberately did **not** graduate the release: Preview protection remains enabled, the stable production alias has no live deployment, the Preview room variable is present but empty, and Wrangler is not authenticated to the intended account. See E12 in `EXPERIMENTS.md`.
+The August 27 permanent release graduated the earlier protected-preview rehearsal. The stable Vercel alias is unauthenticated, both Workers use production variables and version metadata, `release:verify` passes all six public boundary checks, and the complete native browser commerce lifecycle passes against the permanent origins. Final model-driven ChatGPT and physical-phone capture remain submission gates, not infrastructure gates.
 
 ## One-time account setup — Mark present
 
@@ -32,9 +32,9 @@ These steps mutate external systems and must not be performed unattended.
 
 1. Confirm the approved MIT `LICENSE` remains detectable at the repository root.
 2. **Complete:** the public GitHub repository contains the challenge-period `main` history, and its URL is recorded in `SUBMISSION.md`.
-3. Import that repository into one Vercel project. Record its stable production origin as `APP_ORIGIN`. Enable automatic system environment variables and confirm `VERCEL_GIT_COMMIT_SHA` is available. Leave the final production domain completely unprotected.
-4. Authenticate Wrangler to the intended Cloudflare account and accept any required terms. Confirm the stable `workers.dev` or custom origins for `webmcp-evidence-rooms` and `webmcp-evidence-merchant`; record them as `ROOM_ORIGIN` and `MERCHANT_ORIGIN`.
-5. In the Vercel Production environment, set `NEXT_PUBLIC_EVIDENCE_ROOM_URL` to `ROOM_ORIGIN`. Enable Vercel OIDC for AI Gateway if available; do not add a long-lived model key merely to remove the judge-safe manual review path.
+3. **Complete:** the repository is linked to the Vercel project and the stable production origin is unprotected.
+4. **Complete:** Wrangler is authorized and the two distinct permanent `workers.dev` origins are recorded above.
+5. **Complete:** Vercel Production compiles the permanent room origin, and OIDC remains available for AI Gateway without a long-lived model key.
 
 The final origins must be distinct, credential-free HTTPS origins. Do not use a protected Vercel Preview URL or a temporary Tailscale URL in the submission.
 

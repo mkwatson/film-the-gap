@@ -10,10 +10,10 @@ The official FAQ says the entrant—not AI—must name the project. The descript
 | ------------------------ | --------------------------------------------------------------------------------------------------------------- |
 | Project name             | **[MARK CHOOSES — AI MUST NOT NAME]**                                                                           |
 | One-line hook            | Private agents ask the physical world for the smallest missing fact—without revealing what each buyer will pay. |
-| Live buyer URL           | **[FINAL PUBLIC HTTPS URL]**                                                                                    |
+| Live buyer URL           | [webmcp-evidence-market-vidably.vercel.app](https://webmcp-evidence-market-vidably.vercel.app)                  |
 | Public repository        | [github.com/mkwatson/webmcp-evidence-market](https://github.com/mkwatson/webmcp-evidence-market)                |
 | Demo video               | **[PUBLIC YOUTUBE URL, UNDER 3:00]**                                                                            |
-| Submitted commit         | **[FULL COMMIT SHA]**                                                                                           |
+| Submitted commit         | Git tag `challenge-live-2026-08-27`; exact SHA is also exposed by `/api/health`                                 |
 | Primary judged clients   | ChatGPT in-app Browser; Chrome 149+ with WebMCP enabled                                                         |
 | Entrant / representative | **[MARK CONFIRMS]**                                                                                             |
 | Open-source license      | [MIT](LICENSE), copyright Mark Watson                                                                           |
@@ -68,7 +68,7 @@ The interface uses Next.js `16.3.3` and React `19.2.8`. Vercel AI SDK `7.0.83` a
 
 The app requires no account, payment method, microphone, or camera. Allow about two minutes. The second host surface can be any ordinary browser or phone; it does not need WebMCP.
 
-1. Open **[FINAL PUBLIC HTTPS URL]** inside ChatGPT's in-app Browser, or Chrome 149+ with `chrome://flags/#enable-webmcp-testing` enabled. Click **Reset demo**. The page should say **Site Tools live**, **Durable Object live**, and **Authoritative** in the preflight.
+1. Open [webmcp-evidence-market-vidably.vercel.app](https://webmcp-evidence-market-vidably.vercel.app) inside ChatGPT's in-app Browser, or Chrome 149+ with `chrome://flags/#enable-webmcp-testing` enabled. Click **Reset demo**. The page should say **Site Tools live**, **Durable Object live**, and **Authoritative** in the preflight.
 2. Tell ChatGPT privately: `My maximum all-in price is $450.` Do not enter that number anywhere on the site.
 3. Use **Copy agent starter** and send the copied prompt to ChatGPT. It should inspect the show, share only minimum length `154`, maximum length `158`, visible-edge requirement `true`, and prior-base-repair-forbidden `true`, then ask the host for the missing repair-history evidence. It should stop before a hold.
 4. Click **Show private phone QR**, scan it with any phone camera, and hide the QR after the phone joins. **Open phone host** is the same-device fallback. The temporary URL fragment is scrubbed after authentication, and the invite controls disappear from the buyer page while the host is online. The host should see one normalized request serving eight test-agent decisions and no `$450`, buyer identity, cart credential, or continuation URL.
@@ -82,12 +82,12 @@ Expected privacy result: the host surface never receives the private `$450` ceil
 
 ## Rubric proof matrix
 
-| Criterion             | Judge-visible proof                                                                                                                                                                     | Repository proof                                                                                                                                                               | Remaining final gate                                                                                    |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| WebMCP Leverage       | Tools appear only when live evidence makes them meaningful; real calls alter the shared page; seven attendee sessions converge; the journey crosses to a second WebMCP merchant origin. | Eleven page-owned tool definitions across buyer, attendee, and merchant surfaces; dynamic lifecycles; Lean-generated capability frontier; strict validation; native journeys.  | Repeat the full prompt in the final ChatGPT build and capture DevTools/Site Tools evidence.             |
-| Execution             | Coherent buyer page, private any-phone QR handoff, camera and no-permission paths, privacy receipts, exact hold, exact UCP Cart, cancellation, reset, and preflight.                    | Keyed tool lifecycle; stale-handle/reload recovery; Durable Objects; idempotency; strict TypeScript; deterministic tests; proof replay; two Worker dry-runs; production build. | Stable unprotected URLs, clean public clone, external comprehension test, and physical phone/item pass. |
-| Potential Impact      | One host answer updates eight private decisions while reducing repetitive questions and unnecessary disclosure. The pattern generalizes to remote inspection and field evidence.        | Explicit privacy boundary tests, bounded provenance, host review, human-equivalent controls, and merchant data minimization.                                                   | Record the real physical-camera moment and keep claims specific to the demonstrated audience/problem.   |
-| Creativity & Ambition | Private agents direct the physical world, evidence changes capability, and a separate open-web merchant owns the outcome.                                                               | Camera provenance + reviewed AI proposal + epistemic multicast + proof-carrying dynamic WebMCP + released UCP composition.                                                     | Make this causal chain—not vendor logos—the first 135 seconds of the video.                             |
+| Criterion             | Judge-visible proof                                                                                                                                                                     | Repository proof                                                                                                                                                               | Remaining final gate                                                                                  |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| WebMCP Leverage       | Tools appear only when live evidence makes them meaningful; real calls alter the shared page; seven attendee sessions converge; the journey crosses to a second WebMCP merchant origin. | Eleven page-owned tool definitions across buyer, attendee, and merchant surfaces; dynamic lifecycles; Lean-generated capability frontier; strict validation; native journeys.  | Repeat the full prompt in the final ChatGPT build and capture DevTools/Site Tools evidence.           |
+| Execution             | Coherent buyer page, private any-phone QR handoff, camera and no-permission paths, privacy receipts, exact hold, exact UCP Cart, cancellation, reset, and preflight.                    | Keyed tool lifecycle; stale-handle/reload recovery; Durable Objects; idempotency; strict TypeScript; deterministic tests; proof replay; two Worker dry-runs; production build. | External comprehension test, final ChatGPT rerun, and physical phone/item pass.                       |
+| Potential Impact      | One host answer updates eight private decisions while reducing repetitive questions and unnecessary disclosure. The pattern generalizes to remote inspection and field evidence.        | Explicit privacy boundary tests, bounded provenance, host review, human-equivalent controls, and merchant data minimization.                                                   | Record the real physical-camera moment and keep claims specific to the demonstrated audience/problem. |
+| Creativity & Ambition | Private agents direct the physical world, evidence changes capability, and a separate open-web merchant owns the outcome.                                                               | Camera provenance + reviewed AI proposal + epistemic multicast + proof-carrying dynamic WebMCP + released UCP composition.                                                     | Make this causal chain—not vendor logos—the first 135 seconds of the video.                           |
 
 WebMCP Leverage is also the first tie-breaker. The video must visibly show registration churn and two-origin composition, not merely mention them.
 
@@ -155,15 +155,15 @@ Capture two backup cuts:
 - [x] Mark approved the MIT license; the exact copyright holder is Mark Watson.
 - [x] Top-level `LICENSE` exists and package metadata declares `MIT`.
 - [x] The public repository host detects and displays the MIT license.
-- [ ] Public repository description and About panel link to the live URL.
+- [x] Public repository description and About panel link to the live URL.
 - [x] Full challenge-period history begins August 26 and remains visible.
 - [x] `document.modelContext.registerTool` is easy to find from the README.
 - [x] No secrets, private cart/room URLs, customer data, Vidably material, or local machine paths appear in tracked files/history.
 - [ ] Every image, physical object, font, sound, clip, and logo in the video is owned, licensed, or omitted.
-- [ ] Public clean clone passes `pnpm install --frozen-lockfile`, `pnpm check`, and both Worker dry-runs.
-- [ ] `pnpm test:ucp-schema` passes against the same released UCP version.
-- [ ] `pnpm release:verify` proves one commit across the public app and both Workers, UCP alignment, security headers, CORS, and a real disposable room.
-- [ ] Live health, reset, fallback, and canonical journey pass in clean ChatGPT and Chrome sessions.
+- [x] Public clean clone passes `pnpm install --frozen-lockfile`, `pnpm check`, and both Worker dry-runs.
+- [x] `pnpm test:ucp-schema` passes against the same released UCP version.
+- [x] `pnpm release:verify` proves one commit across the public app and both Workers, UCP alignment, security headers, CORS, and a real disposable room.
+- [ ] Live health, reset, fallback, and canonical journey pass in final ChatGPT, clean Chrome, and a physical-phone session. Production Chrome is complete; final ChatGPT and physical-phone checks remain.
 - [ ] Video is public on YouTube, audible, `< 3:00`, and its links work logged out.
 - [ ] Devpost draft contains the four answers, exact test instructions, URLs, and no unsupported claim.
 - [ ] Re-read official rules/resources immediately before submission.
@@ -183,7 +183,7 @@ These actions require Mark's identity, legal assent, account session, or explici
 
 1. Choose the public project name.
 2. Confirm whether the entrant is Mark individually, a team, or an organization, and appoint the representative if needed.
-3. Complete any one-time Cloudflare account authentication or terms acceptance needed for permanent no-cost deployment.
+3. **Complete:** Cloudflare account authorization and both permanent Worker deployments were completed on August 27.
 4. **Complete:** repository publication was approved, pushed, and verified with GitHub MIT-license detection on August 27.
 5. Approve the final rights-clean YouTube upload.
 6. Review and submit the Devpost entry before **September 3, 2026 at 1:00 p.m. PT**.
