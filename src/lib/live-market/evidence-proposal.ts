@@ -10,11 +10,8 @@ import {
   type VisualEvidenceReview,
 } from './model';
 
-export const evidenceVisionPrimaryModel = 'openai/gpt-5.6-sol';
-export const evidenceVisionFallbackModels = [
-  'openai/gpt-5.6-terra',
-  'openai/gpt-5.6-luna',
-] as const;
+export const evidenceVisionPrimaryModel = 'alibaba/qwen3.7-flash';
+export const evidenceVisionFallbackModels = ['alibaba/qwen3.8-flash'] as const;
 
 export const historicalEvidenceLimitation =
   'A frame can show visible surface evidence; it cannot establish whether a board was repaired in the past. Repair history always requires a separate host attestation.';

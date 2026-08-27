@@ -91,8 +91,12 @@ async function parseEvidenceFrameRequest(
   return { frame, frameId, frameSha256, widthPx, heightPx };
 }
 
-function gatewayIsConfigured(): boolean {
-  return Boolean(process.env.AI_GATEWAY_API_KEY?.trim() || process.env.VERCEL_OIDC_TOKEN?.trim());
+function gatewayCanBeAttempted(): boolean {
+  return Boolean(
+    process.env.AI_GATEWAY_API_KEY?.trim() ||
+    process.env.VERCEL_OIDC_TOKEN?.trim() ||
+    process.env.VERCEL === '1',
+  );
 }
 
 function manualReviewResponse(
@@ -117,7 +121,7 @@ export async function POST(request: Request): Promise<Response> {
     return responseJson({ error: 'invalid_evidence_frame', message: parsed.error }, 400);
   }
 
-  if (!gatewayIsConfigured()) {
+  if (!gatewayCanBeAttempted()) {
     return manualReviewResponse(parsed, 'gateway-unconfigured');
   }
 
@@ -156,6 +160,7 @@ export async function POST(request: Request): Promise<Response> {
           ],
         },
       ],
+      reasoning: 'none',
       maxOutputTokens: 500,
       providerOptions: {
         gateway: {

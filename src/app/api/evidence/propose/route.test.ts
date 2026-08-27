@@ -19,6 +19,7 @@ import { maximumCapturedEvidenceFrameBytes } from '@/lib/live-market/model';
 const frameHash = '9dff50df08c635815f4b19da10f756605a34a79a48d4ba48712782502975a70e';
 const originalGatewayKey = process.env.AI_GATEWAY_API_KEY;
 const originalOidcToken = process.env.VERCEL_OIDC_TOKEN;
+const originalVercelRuntime = process.env.VERCEL;
 
 function evidenceRequest(sha256 = frameHash): Request {
   const formData = new FormData();
@@ -62,12 +63,18 @@ function restoreEnvironment(): void {
   } else {
     process.env.VERCEL_OIDC_TOKEN = originalOidcToken;
   }
+  if (originalVercelRuntime === undefined) {
+    delete process.env.VERCEL;
+  } else {
+    process.env.VERCEL = originalVercelRuntime;
+  }
 }
 
 describe('POST /api/evidence/propose', () => {
   beforeEach(() => {
     delete process.env.AI_GATEWAY_API_KEY;
     delete process.env.VERCEL_OIDC_TOKEN;
+    delete process.env.VERCEL;
     generateTextMock.mockReset();
   });
 
@@ -110,7 +117,7 @@ describe('POST /api/evidence/propose', () => {
     expect(generateTextMock).not.toHaveBeenCalled();
   });
 
-  it('uses the current OpenAI vision model through Gateway with bounded structured output', async () => {
+  it('uses the measured live vision route through Gateway with bounded structured output', async () => {
     process.env.AI_GATEWAY_API_KEY = 'test-only-key';
     const finding = {
       baseVisibility: 'clear',
@@ -122,7 +129,7 @@ describe('POST /api/evidence/propose', () => {
     };
     generateTextMock.mockResolvedValue({
       output: finding,
-      finalStep: { response: { modelId: 'openai/gpt-5.6-sol' } },
+      finalStep: { response: { modelId: 'alibaba/qwen3.7-flash' } },
     });
 
     const response = await POST(evidenceRequest());
@@ -130,15 +137,16 @@ describe('POST /api/evidence/propose', () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
       kind: 'proposal',
-      modelId: 'openai/gpt-5.6-sol',
+      modelId: 'alibaba/qwen3.7-flash',
       finding,
     });
     expect(generateTextMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: 'openai/gpt-5.6-sol',
+        model: 'alibaba/qwen3.7-flash',
+        reasoning: 'none',
         providerOptions: {
           gateway: {
-            models: ['openai/gpt-5.6-terra', 'openai/gpt-5.6-luna'],
+            models: ['alibaba/qwen3.8-flash'],
             zeroDataRetention: true,
           },
         },
@@ -149,6 +157,19 @@ describe('POST /api/evidence/propose', () => {
         },
       }),
     );
+  });
+
+  it('attempts OIDC-backed Gateway generation in a Vercel runtime', async () => {
+    process.env.VERCEL = '1';
+    generateTextMock.mockRejectedValue(new Error('test-only gateway refusal'));
+
+    const response = await POST(evidenceRequest());
+
+    await expect(response.json()).resolves.toMatchObject({
+      kind: 'manual-review-required',
+      reason: 'gateway-unavailable',
+    });
+    expect(generateTextMock).toHaveBeenCalledOnce();
   });
 
   it('falls back to manual review without exposing provider errors', async () => {

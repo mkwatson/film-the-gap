@@ -22,19 +22,19 @@ Do not discard the working evidence-directed live market. No clean-sheet challen
 
 The strongest concrete embodiment remains live/secondhand commerce because the pain, audience, economic value, and final action are immediately legible. The submission must not be framed as “ChatGPT shops a livestream.” Its novel primitive is many private agents coordinating scarce human attention without disclosing private ceilings or profiles.
 
-The current app is a strong **working research rung**, not yet a winning submission. Native dynamic WebMCP, seller-minimal schemas, exact-quote refusal, camera provenance, reviewed visual proposals, a reversible hold, strict TypeScript, tests, and the exact ChatGPT client have been demonstrated locally. The largest unclaimed score gains are now real-world credibility and submission communication—not more simulated intelligence.
+The current app is a strong **public acceptance rung**, not yet a winning submission. Native dynamic WebMCP, seller-minimal schemas, exact-quote refusal, a separately authenticated room, camera provenance, live abstaining visual proposals, a reversible hold, strict TypeScript, tests, and the exact ChatGPT client have all been demonstrated, though not yet together on the final unprotected origin with a physical phone. The largest unclaimed score gains are now real-world credibility, authoritative commerce, and submission communication—not more simulated intelligence.
 
 ### Current honest scorecard
 
 Scores are directional estimates on a ten-point scale, not claims about future judges.
 
-| State                                             | WebMCP | Execution | Impact | Creativity | Why it is or is not competitive                                                                                |
-| ------------------------------------------------- | -----: | --------: | -----: | ---------: | -------------------------------------------------------------------------------------------------------------- |
-| Current local artifact                            |    8.5 |       6.0 |    5.5 |        8.5 | Deep native lifecycle and a novel thesis; fixture-heavy crowd, item, room, model, hold, and no public artifact |
-| Public, resettable, concise golden path           |    9.0 |       8.0 |    6.5 |        8.5 | Judges can run and understand it; physical-world and commerce claims remain staged                             |
-| Real networked seller phone + owned physical item |    9.3 |       9.0 |    8.5 |        9.5 | The agent visibly causes a remote human to acquire fresh evidence                                              |
-| Authoritative UCP catalog/cart handoff            |    9.5 |       9.2 |    9.0 |        9.5 | The evidence event advances a real, standards-based merchant state                                             |
-| Submission-grade polish, evals, and fallback      |    9.7 |       9.6 |    9.2 |        9.5 | The magic is legible in 30 seconds and survives unattended judging                                             |
+| State                                             | WebMCP | Execution | Impact | Creativity | Why it is or is not competitive                                                                               |
+| ------------------------------------------------- | -----: | --------: | -----: | ---------: | ------------------------------------------------------------------------------------------------------------- |
+| Current public acceptance artifact                |    9.1 |       8.2 |    7.0 |        9.0 | Public native lifecycle, remote authority, and live abstaining vision pass; permanent origin and phone remain |
+| Public, resettable, concise golden path           |    9.3 |       8.8 |    7.5 |        9.1 | Judges can run and understand it; physical-world and commerce claims remain staged                            |
+| Real networked seller phone + owned physical item |    9.3 |       9.0 |    8.5 |        9.5 | The agent visibly causes a remote human to acquire fresh evidence                                             |
+| Authoritative UCP catalog/cart handoff            |    9.5 |       9.2 |    9.0 |        9.5 | The evidence event advances a real, standards-based merchant state                                            |
+| Submission-grade polish, evals, and fallback      |    9.7 |       9.6 |    9.2 |        9.5 | The magic is legible in 30 seconds and survives unattended judging                                            |
 
 ### Winning causality moment
 
