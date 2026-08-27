@@ -15,6 +15,43 @@ import {
   setEvidenceRequirements,
 } from './model';
 
+const cameraFrame = {
+  kind: 'camera-keyframe',
+  frameId: 'camera-9dff50df08c6',
+  label: 'Host camera keyframe · camera-9dff50df08c6',
+  capturedAt: '2026-08-26T19:22:31.000Z',
+  showOffsetSeconds: null,
+  sha256: '9dff50df08c635815f4b19da10f756605a34a79a48d4ba48712782502975a70e',
+  widthPx: 960,
+  heightPx: 540,
+} as const;
+
+const cameraVisualReview = {
+  source: 'ai-gateway',
+  modelId: 'openai/gpt-5.6-sol',
+  frameId: cameraFrame.frameId,
+  frameSha256: cameraFrame.sha256,
+  proposal: {
+    baseVisibility: 'clear',
+    surfaceFinding: 'no-obvious-repair',
+    confidence: 'medium',
+    visibleDetails: ['The full base is visible in even light.'],
+    summary: 'The full base is visible with no obvious repair marker.',
+    suggestedNextView: null,
+  },
+  reviewedFinding: {
+    baseVisibility: 'clear',
+    surfaceFinding: 'no-obvious-repair',
+    confidence: 'medium',
+    visibleDetails: ['The full base is visible in even light.'],
+    summary: 'The full base is visible with no obvious repair marker.',
+    suggestedNextView: null,
+  },
+  hostDecision: 'accepted',
+} as const;
+
+const publicEvidenceImage = 'data:image/jpeg;base64,ZnJhbWU=';
+
 describe('live market state machine', () => {
   it('publishes only tools that are meaningful in the current state', () => {
     const initial = createInitialState();
@@ -207,6 +244,74 @@ describe('live market state machine', () => {
       'agentCount',
       'status',
     ]);
+  });
+
+  it('binds a camera attestation to structured public frame provenance', () => {
+    const initial = createInitialState();
+    const scoped = setEvidenceRequirements(initial, defaultEvidenceRequirements, 'agent').state;
+    const requested = requestRepairHistory(scoped, 'agent').state;
+    const answered = answerRepairHistory(
+      requested,
+      'none',
+      cameraFrame,
+      cameraVisualReview,
+      publicEvidenceImage,
+    );
+
+    expect(answered.ok).toBe(true);
+    expect(answered.state.lot.evidence).toMatchObject({
+      repairHistory: 'none',
+      repairEvidenceSource: cameraFrame.label,
+      repairEvidenceFrame: cameraFrame,
+      repairEvidenceImage: publicEvidenceImage,
+      visualReview: cameraVisualReview,
+    });
+    expect(answered.state.activity.at(-1)?.summary).toContain('camera-keyframe');
+  });
+
+  it('refuses unreviewed, mismatched, or visually conflicting camera attestations', () => {
+    const scoped = setEvidenceRequirements(
+      createInitialState(),
+      defaultEvidenceRequirements,
+      'agent',
+    ).state;
+    const requested = requestRepairHistory(scoped, 'agent').state;
+
+    expect(answerRepairHistory(requested, 'none', cameraFrame)).toMatchObject({
+      ok: false,
+      message: expect.stringContaining('Review the selected camera frame'),
+    });
+    expect(
+      answerRepairHistory(
+        requested,
+        'none',
+        cameraFrame,
+        { ...cameraVisualReview, frameId: 'camera-000000000000' },
+        publicEvidenceImage,
+      ),
+    ).toMatchObject({
+      ok: false,
+      message: expect.stringContaining('exact selected evidence frame'),
+    });
+    expect(
+      answerRepairHistory(
+        requested,
+        'none',
+        cameraFrame,
+        {
+          ...cameraVisualReview,
+          reviewedFinding: {
+            ...cameraVisualReview.reviewedFinding,
+            surfaceFinding: 'possible-repair',
+          },
+          hostDecision: 'corrected',
+        },
+        publicEvidenceImage,
+      ),
+    ).toMatchObject({
+      ok: false,
+      message: expect.stringContaining('possible visible repair signal'),
+    });
   });
 
   it('keeps the next capability frontier consistent through the hero flow', () => {

@@ -12,6 +12,93 @@ The official challenge asks for an app that becomes meaningfully better when peo
 
 Sources: [challenge page](https://openai.com/webmcp-challenge/), [Devpost](https://webmcp.devpost.com/), [resources and FAQ](https://webmcp.devpost.com/resources), [WebMCP draft](https://webmachinelearning.github.io/webmcp/), [OpenAI showcase](https://developers.openai.com/showcase?view=webmcp-apps), the living [resource ledger](RESOURCES.md), [sponsor-product atlas](SPONSOR-PRODUCTS.md), [platform decision record](PLATFORMS.md), and [judge intelligence map](JUDGES.md).
 
+## Strategic reset — 2026-08-26
+
+### Decision
+
+Do not discard the working evidence-directed live market. No clean-sheet challenger currently beats it on risk-adjusted winning probability. Reframe and extend it as a broader **live evidence exchange**—an early “Reality API” for agents:
+
+> Private agents ask the physical world for the smallest missing fact. A human points a camera, one reviewed observation resolves many decisions, and WebMCP changes what each agent can do next. Commerce is one consequential outcome, not the headline.
+
+The strongest concrete embodiment remains live/secondhand commerce because the pain, audience, economic value, and final action are immediately legible. The submission must not be framed as “ChatGPT shops a livestream.” Its novel primitive is many private agents coordinating scarce human attention without disclosing private ceilings or profiles.
+
+The current app is a strong **working research rung**, not yet a winning submission. Native dynamic WebMCP, seller-minimal schemas, exact-quote refusal, camera provenance, reviewed visual proposals, a reversible hold, strict TypeScript, tests, and the exact ChatGPT client have been demonstrated locally. The largest unclaimed score gains are now real-world credibility and submission communication—not more simulated intelligence.
+
+### Current honest scorecard
+
+Scores are directional estimates on a ten-point scale, not claims about future judges.
+
+| State                                             | WebMCP | Execution | Impact | Creativity | Why it is or is not competitive                                                                                |
+| ------------------------------------------------- | -----: | --------: | -----: | ---------: | -------------------------------------------------------------------------------------------------------------- |
+| Current local artifact                            |    8.5 |       6.0 |    5.5 |        8.5 | Deep native lifecycle and a novel thesis; fixture-heavy crowd, item, room, model, hold, and no public artifact |
+| Public, resettable, concise golden path           |    9.0 |       8.0 |    6.5 |        8.5 | Judges can run and understand it; physical-world and commerce claims remain staged                             |
+| Real networked seller phone + owned physical item |    9.3 |       9.0 |    8.5 |        9.5 | The agent visibly causes a remote human to acquire fresh evidence                                              |
+| Authoritative UCP catalog/cart handoff            |    9.5 |       9.2 |    9.0 |        9.5 | The evidence event advances a real, standards-based merchant state                                             |
+| Submission-grade polish, evals, and fallback      |    9.7 |       9.6 |    9.2 |        9.5 | The magic is legible in 30 seconds and survives unattended judging                                             |
+
+### Winning causality moment
+
+The moment we are building toward must work without architecture narration:
+
+1. A buyer tells ChatGPT a private ceiling and product conditions.
+2. The live page structurally receives only the minimum evidence requirements; its schema has nowhere to place the ceiling or profile.
+3. Several test/private agents need overlapping missing evidence, which becomes one bounded cue on a real seller phone.
+4. The seller captures one rights-cleared physical view. AI may propose a pixel-grounded observation; the seller reviews it and separately attests any non-visual history.
+5. The same visible page state changes for every participant, and WebMCP registers the newly valid action only then.
+6. A real UCP/Shopify cart or permalink is created at the authoritative public terms, with explicit human handoff before purchase.
+
+The retellable line is: **“The market learns what proof to show—not what each buyer will pay.”**
+
+### Cumulative build order
+
+Every rung must preserve the previous complete path and add a resettable deterministic fallback.
+
+1. **Submission skeleton now:** public-ready repository structure, license, one-click reset, test prompt, limitations, deployment health, and a no-login path. External deployment/account mutations still require Mark's approval.
+2. **Agent-experience hardening:** compact non-overlapping tool results, recovery guidance, cancellation and stale-revision behavior, Chrome DevTools traces, adversarial WebMCP evals, and plain-language UI copy.
+3. **Real two-device evidence event:** a QR-joined buyer/host room, ordered/recoverable state, a real phone camera, and one owned physical item. Compare Vercel WebSockets with Cloudflare Durable Objects; retain Vercel unless Cloudflare creates a materially better and equally reliable interaction.
+4. **Real visual intelligence:** authenticate the existing Vercel AI Gateway route, blind-check it on the physical frame, keep the model non-authoritative, and preserve manual review.
+5. **Authoritative commerce:** dynamically negotiate the merchant's advertised UCP version, use owned/dev-store inventory, create a real Cart MCP cart or permalink, and show the merchant continuation URL. Do not invent “UCP-shaped” local JSON.
+6. **Submission as product:** simplify the interface, record the causal hero in under three minutes, make the README and Devpost text independently persuasive, and freeze a clean reproducible revision early.
+7. **Frontier rungs only after the above:** voice input, a portable evidence extension, a Lean-checked runtime receipt, paid evidence bounties, or a larger real crowd.
+
+The strongest genuinely different challenger is a proof-carrying Site Tool constitution. Give it only a 45-second storyboard or tiny isolated spike. Pivot only if the real two-client camera event fails to feel magical without explanatory narration.
+
+### Coherent sponsor roles
+
+The hero may span several sponsors only because each owns a different boundary:
+
+- **OpenAI/ChatGPT:** native Site Tools, private conversational context, exact judged-client behavior, and optional current vision/voice intelligence.
+- **Chrome:** second native runtime, WebMCP DevTools lifecycle proof, security annotations, and behavior eval methodology.
+- **Vercel:** current Next.js 16 application, AI SDK 7, one AI Gateway, deployment, and possibly WebSockets/Eve if they pass a real spike.
+- **Cloudflare:** a Durable Object room and optional RealtimeKit/Kitesurf only if they materially improve real-time coordination or verification; not a redundant second frontend host or model gateway.
+- **Shopify/UCP:** authoritative discovery, capability negotiation, catalog/cart state, and human checkout handoff.
+- **Netlify:** AXIS as an inspectable build-time Agent Experience report, not a second deployment or gateway.
+- **MCP-B:** optional cross-client interoperability evidence, never required judge setup.
+- **Render:** only if native video/Lean work becomes load-bearing enough to justify a specialist service.
+
+### Vidably and formal-method boundaries
+
+Vidably's reusable advantage is the product judgment behind evidence acquisition: explicit unknowns, targeted next-view requests, frame/timestamp citations, source separation, abstention, human review, and evidence-to-conversion state. The challenge implementation must be clean-room and newly built. Do not copy private benchmarks, unpublished algorithms, unlicensed research artifacts, third-party media, or patent-sensitive material from the video-foundational repository.
+
+Lean enters only if a non-mathematician can understand its visible consequence in under ten seconds—for example, a runtime-connected receipt that refuses a stale quote/evidence digest or a transition outside a formally modeled mandate. It can prove an abstract transition invariant; it cannot prove that pixels are true, a seller is honest, the runtime matches the model, or private information never leaks outside the modeled payload.
+
+### Submission story is part of execution
+
+The first 30 seconds must show the problem, private mandate, remote camera cue, and state change—not sponsor logos or protocol diagrams. A target 2:45 edit is:
+
+- `0:00–0:15` — human problem and one-sentence promise;
+- `0:15–0:40` — private buyer mandate; show exactly what the seller does and does not receive;
+- `0:40–1:10` — missing evidence and dynamically absent action;
+- `1:10–1:40` — real seller phone receives the aggregate cue and captures the physical evidence;
+- `1:40–2:00` — reviewed observation resolves multiple decisions and WebMCP exposes the next action;
+- `2:00–2:20` — authoritative UCP cart/continuation with explicit human control;
+- `2:20–2:35` — Chrome DevTools/tool lifecycle, recovery, and compact eval evidence;
+- `2:35–2:45` — measured impact and the one-sentence future.
+
+Recent OpenAI Build Week winners reinforce this pattern: they started from problems their builders knew, made one sensory or consequential transformation vivid, bounded AI behind deterministic systems and human control, reported honest limitations, and treated evals and interaction details as product work rather than appendix material.
+
+The official [opening livestream](https://x.com/i/broadcasts/1qGoNYbWdkvKv) is even more direct: WebMCP should be effective and thorough in the app's **main workflow**; execution should feel production-ready rather than like a hackathon demo; impact should solve a specific pain people will repeatedly use and love; and builders should push beyond adding tools to familiar sites toward interactions that were not previously possible. The presenters also emphasized progressive discovery, inspectable tool calls, private-information review, confirmation for irreversible actions, prompt-injection red teaming, and evals. Their spoken `5 p.m.` deadline conflicts with the official rules; continue to operate against the rules' earlier `1 p.m. PT` cutoff.
+
 ## Winning-probability model — all factors in play
 
 The optimization target is expected winning probability under a hard deadline, not maximum ambition, maximum reliability, or maximum build speed independently.
@@ -48,7 +135,7 @@ The terms are not statistically independent. The model is useful because it prev
 | Submission cutoff and freeze                         | Late or post-deadline changes cannot rescue a broken submission.                                                       | Establish internal buffers for deployment, YouTube processing, Devpost verification, rights review, and rollback.                                           |
 | IP, privacy, authorization, and trademark compliance | A rights or terms violation can disqualify the entry or force damaging edits.                                          | Use owned/cleared media and data, current SDK/API terms, minimal personal data, and explicit provenance.                                                    |
 
-The official page showed **1,563 registered participants on 2026-08-26**. Registrations are not completed submissions, but the field is large enough that competence alone will not be memorable.
+The official page rose from **1,563 to roughly 2,010 registered participants during 2026-08-26**. Registrations are not completed submissions and the gallery is still unpublished, but the field is large enough that competence alone will not be memorable.
 
 ### Strategic score multipliers
 

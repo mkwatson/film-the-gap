@@ -1,13 +1,14 @@
 # Innovation frontier and experiment register
 
-Research state: 2026-08-26 PT. Hypotheses in this register were frozen before the Rung 2 implementation. Descriptive labels are not proposed submission names.
+Research state: 2026-08-26 PT. H1-H4 were frozen before the Rung 2 implementation; H5 was scoped before its camera UI implementation; H6 was frozen before the visual-proposal implementation. Descriptive labels are not proposed submission names.
 
 ## Authoritative starting point
 
-- Recoverable golden path: commit `41ab726` (`feat: add native WebMCP live market rung`).
-- Working behavior: one buyer or agent discloses five constraints, requests missing physical evidence from the host, receives a visible answer, and creates or releases a reversible hold through dynamically registered native Site Tools.
-- Known limitation: the page receives, stores, displays, and returns `maxAllInPrice`. It therefore gives the seller the buyer's exact ceiling while claiming to minimize disclosure.
-- Runtime boundary: isolated Chrome 151 native discovery and execution are proven for the research fixture. Exact ChatGPT Site Tools and normal-profile Chrome acceptance remain open gates.
+- Recoverable historical control: commit `41ab726` (`feat: add native WebMCP live market rung`) preserves the original five-constraint flow.
+- Current working behavior: a buyer or agent shares four seller-visible evidence requirements but no ceiling or profile, joins a normalized request for one missing physical fact, receives a host answer, and creates or releases a reversible exact-quote hold through dynamically registered native Site Tools.
+- Progressive host behavior: `/host` receives the same request in a second same-origin browser context, exposes only the normalized evidence demand, and returns one answer to the buyer view. The single-page host control remains the deterministic fallback.
+- Historical limitation: `41ab726` received, stored, displayed, and returned `maxAllInPrice`. That is now a positive leakage control, not the current contract.
+- Runtime boundary: the complete typed native sequence passes in isolated Chrome and ChatGPT desktop 26.820.60940 with GPT-5.6 Sol. Realtime voice transport/transcription/delegation passes, but the delegated task did not inherit the UI-owned Browser binding. Opt-in host camera capture, server digest verification, explicit review/manual fallback, selected-frame publication, native audit inspection, exact hold, and release pass in Chromium with a synthetic camera. A live authenticated Gateway inference, Mark's normal Chrome profile, physical-camera clean-room acceptance, public deployment, and real cross-device room transport remain open gates.
 
 ## What changed in the evidence
 
@@ -83,6 +84,26 @@ The earlier strategy pass enumerated product domains. This pass deliberately cha
 
 **Fail:** Cross-context behavior is flaky in judged clients, duplicates the already-visible host control, or consumes more demo time than the added credibility earns.
 
+### H5 — A consented keyframe can make the human-sensor claim concrete
+
+Scoped in-session before the camera UI implementation.
+
+**Claim:** An explicitly started, video-only host camera can capture one bounded keyframe, attach structured provenance and a human repair-history attestation, and unlock the same WebMCP decision without making raw media part of shared room state.
+
+**Pass:** Camera access is off by default; denial preserves a deterministic fallback; tracks stop after capture/unmount; the synchronized and WebMCP-visible record contains only frame ID, timestamp, dimensions, SHA-256, source kind, and label; one host confirmation updates the buyer and dynamic tool surface; and desktop/mobile layouts remain coherent.
+
+**Fail:** Permission is implicit, raw media enters the room snapshot, the digest is presented as authenticity proof, the judged path requires a camera, or the new state breaks native tool registration.
+
+### H6 — A model proposal can improve evidence without becoming the authority
+
+Frozen in-session before the visual-proposal route and review UI implementation.
+
+**Claim:** Sending one explicitly selected, digest-bound keyframe through Vercel AI Gateway can produce a useful pixel-grounded proposal, while an explicit host accept/correct step and a separate historical attestation prevent the model from becoming the purchase authority.
+
+**Pass:** The server recomputes the JPEG digest before inference; the proposal is strict structured output bound to the exact frame; current OpenAI vision models route through AI Gateway with model fallback and zero-data-retention preference; an unavailable or unconfigured Gateway becomes an honest manual-review path; the selected frame is published only after review; the hold remains unavailable until a clear base view and non-unclear visible-surface finding coexist with the host attestation; and native WebMCP exposes the audit chain without embedding image bytes in tool output.
+
+**Fail:** A model output alone unlocks the hold, pixels are described as proof of repair history or authenticity, a provider error breaks the judged path, a proposal can be replayed against another frame, the camera feed is uploaded automatically, or the new review step makes the short product story incoherent.
+
 ## Frozen experiment protocols
 
 ### E1 — Preference-leakage boundary
@@ -116,13 +137,35 @@ Decision rule: keep only if the aggregate is stateful, truthful about being a fi
 
 Implement only after E1-E3. Compare an in-page host control against a `BroadcastChannel` two-view spike using the same request/answer sequence. Kill the branch if it does not materially improve the short demo or exact-client reliability.
 
+### E5 — Consented camera keyframe and provenance
+
+1. Keep the permission-free host buttons as the judge-safe control.
+2. Request `getUserMedia` only from an explicit host click, with `audio: false` and an environment-facing video preference.
+3. Capture one bounded JPEG frame locally, compute SHA-256, discard the continuous stream, and synchronize only a strict provenance descriptor.
+4. Require the host to bind either `none` or `repaired` to that frame; never infer authenticity from the digest.
+5. Verify the descriptor through the native `document.modelContext` consumer API, then perform and release an exact-quote hold.
+
+Decision rule: graduate only if the native tool surface remains dynamic, the raw frame never enters synchronized/WebMCP state, camera denial leaves the deterministic path intact, and the visual experience survives desktop and phone widths.
+
+### E6 — Frame-cited visual proposal with human review
+
+1. Preserve H5's explicit capture gate. Add a second explicit “Analyze” action that sends only the selected JPEG and its declared provenance.
+2. Recompute SHA-256 server-side and reject mismatched bytes, malformed media, or oversized frames before any provider call.
+3. Generate a strict observation with AI SDK 7 through Vercel AI Gateway, using `openai/gpt-5.6-sol` with Terra and Luna fallbacks and zero-data-retention routing preference.
+4. Forbid claims about identity, intent, authenticity, price, ownership, safety, or historical repair. Require the host to accept or correct the proposed base visibility and visible surface signal.
+5. If Gateway authentication or inference is unavailable, expose a typed manual-review path rather than a synthetic model answer.
+6. Publish the one selected JPEG only after review, but keep its bytes out of Site Tool results. Require a separate host history attestation before the exact-quote hold appears.
+7. Verify route validation, model configuration, manual fallback, cross-frame refusal, conflict refusal, two-tab propagation, selected-frame rendering, dynamic native tools, exact hold, and release.
+
+Decision rule: graduate only if the model is useful but non-authoritative, the no-model path remains complete, and the resulting evidence chain is more legible—not merely more complicated—than the provenance-only rung.
+
 ## Current evidence-directed call
 
-Run E1-E3 together as the next cumulative rung. They reinforce one sentence:
+Keep the E1-E3 core plus the H4 host surface, H5 camera provenance, and H6 reviewed visual proposal as the current cumulative rung. They reinforce one sentence:
 
 > The live market learns what proof to show, not what each buyer is willing to pay.
 
-This is not a final concept lock. The original rung remains recoverable, H4 and the other primitives stay live, and a stronger observed branch can still displace the market thesis.
+The original rung remains recoverable. The Voice experiment isolated a platform-ownership seam rather than a product defect: audio reaches a delegated Codex task, but that task does not inherit the UI-owned Browser. Camera transport/provenance and the reviewed visual-evidence path now pass locally. The next acceptance gate is one authenticated live AI Gateway call against a real product frame; the next product/infrastructure choice is between real cross-device room transport and the first authoritative UCP commerce object. Neither may replace the typed, one-screen golden path.
 
 ## Experiment results — 2026-08-26
 
@@ -137,7 +180,7 @@ This is not a final concept lock. The original rung remains recoverable, H4 and 
 
 Limitation: withholding direct profile and ceiling fields minimizes disclosure; it does not prove that a seller can never infer preferences from behavior. The product and documentation now state that explicitly.
 
-### E2 and H2 — Pass in the available native scope
+### E2 and H2 — Pass in isolated Chrome and the exact ChatGPT client
 
 - Isolated Headless Chrome 150 discovered exactly the three initial tools, executed `set_evidence_requirements`, observed `request_host_evidence` appear, executed it, and observed it disappear.
 - One visible host answer unlocked `reserve_current_lot`. Native execution rejected stale `$400`, accepted exact `$423`, replaced reserve with release, and restored the prior surface after release.
@@ -145,7 +188,7 @@ Limitation: withholding direct profile and ceiling fields minimizes disclosure; 
 - Fresh isolated profiles in the installed Chrome 151.0.7922.174 rendered `Site Tools live` with `--enable-features=WebMCP` and `Browser fallback` with the feature disabled.
 - The ordinary-browser human flow completed share → request → host answer → hold → release. Desktop and 390 px layouts had no framework overlay or horizontal overflow.
 
-These are narrow runtime results, not a compatibility claim for ChatGPT's in-app browser, model-driven tool choice, Mark's normal Chrome profile, or Voice-to-Site-Tools composition. Those remain release gates.
+The exact ChatGPT evidence is recorded separately below. These results do not establish Voice-to-Site-Tools composition, Mark's normal Chrome profile, or every future ChatGPT/Chrome release; those remain explicit gates.
 
 ### E3 — Pass as a transparent deterministic room fixture
 
@@ -158,6 +201,64 @@ These are narrow runtime results, not a compatibility claim for ChatGPT's in-app
 
 This proves the interaction and state contract, not real multi-user networking. H4 is the experiment that can turn the visible crowd from a deterministic fixture into a separate live host surface.
 
+### Exact ChatGPT in-app Browser — Pass for the complete typed core flow
+
+- ChatGPT desktop 26.820.60940 with GPT-5.6 Sol connected its built-in Browser to the visible local production page and discovered exactly the three valid initial Site Tools.
+- A model-driven native call to `set_evidence_requirements` sent only the four public product fields. The returned receipt listed the buyer ceiling, willingness to pay, profile, and urgency as not collected.
+- The native tool surface followed the live state exactly: three initial tools → four with `request_host_evidence` → three after the request queued → four with `reserve_current_lot` after the host answer → three with `release_current_lot` while held → four again after release.
+- `request_host_evidence` changed the aggregate from seven fixture signals to eight private decisions represented by one normalized question. One visible host answer supplied timestamped provenance and made the lot eligible.
+- A native exact-quote hold attempt at stale `$400` was refused against the current `$423` quote. Retrying with `$423` created a reversible local hold without payment; release succeeded and restored the reserve surface.
+- No browser warnings or errors appeared. No confirmation UI surfaced for this local, non-payment hold; that is an observed result for this action, not a claim that purchases or other consequential actions bypass normal confirmation.
+- Machine-local screenshots are retained outside the repository from initial discovery through release.
+
+This closes the most important typed judge-client compatibility gate. Voice transport/delegation is now measured separately below; a supported Browser handoff, repeated navigation/reconnect behavior, and a clean-room run on Mark's MBP remain acceptance work.
+
+### E4 and H4 — Pass locally; keep as a progressive hero layer
+
+- Separate buyer `/` and host `/host` pages completed request-to-answer propagation through a same-origin `BroadcastChannel` room.
+- A late-joining host recovered current state, and refreshing the buyer recovered the resolved state while the host remained open.
+- The host saw only four normalized evidence fields and “8 private decisions need one fact”; no price, ceiling, profile, or urgency crossed the seller surface.
+- Desktop and 390 px two-view checks passed without browser errors, framework overlays, or horizontal overflow.
+- The in-page host answer remains available, so a judge can complete the exact same domain transition without a second tab or device.
+
+Decision: **keep H4 as progressive enhancement.** It materially improves the collaboration story without weakening the deterministic path. Its current transport proves same-browser coordination, not a real networked room; a public phone/desktop room must compare a narrowly scoped realtime transport before making cross-device claims.
+
+### Voice composition — Transport passes; Browser handoff remains unproven
+
+- A signed-in, headless ChatGPT Realtime WebRTC session received the spoken mandate over real Opus/RTP, produced the correct transcript, and delegated it to native Codex.
+- The delegated task initialized a browser runtime but did not inherit the existing UI-owned in-app Browser binding. It therefore performed no Site Tool call and sent no buyer ceiling or other state to the page.
+- Attempts to seize or silently reroute the UI-owned task were stopped. This is the correct security/ownership boundary, not a reason to build an unsupported bypass.
+- The typed Site Tools path remains the reliable acceptance path. A one-click human Voice/browser handoff is acceptable unless the first-party client exposes supported composition during the challenge.
+
+Decision: **keep Voice as a progressive input, not a submission dependency.** Re-test when the exact ChatGPT client changes; do not claim autonomous spoken completion yet.
+
+### E5 and H5 — Pass locally with synthetic camera input
+
+- The host camera is off by default and starts only from `Start camera`; constraints request video only and prefer the environment-facing camera.
+- The successful browser run used Chromium's synthetic camera source. It captured a real 960×540 JPEG through `getUserMedia`/canvas, computed SHA-256 locally, stopped the stream, and displayed the selected keyframe for host review.
+- Publishing `no prior repair` synchronized only strict provenance: `camera-keyframe`, frame ID, UTC capture time, dimensions, digest, and label. Raw bytes/blob URLs were absent from room snapshots and WebMCP results.
+- The buyer immediately changed to 3/3 supported and exposed `reserve_current_lot`. Native `document.modelContext.executeTool` returned the camera descriptor, created the exact `$423` reversible hold, changed the registered surface to `release_current_lot`, and released successfully.
+- The permission-denial/retry path and track cleanup pass component tests; the permission-free fixture remains beside the camera controls.
+- Desktop camera/captured/buyer-ready views and a 390×844 host view had meaningful content, no framework overlay, no console/page errors, and no horizontal overflow.
+- Five machine-local acceptance screenshots are retained outside the repository from host request through mobile resolved state.
+- The then-current full gate passed: formatting, zero-warning ESLint, strict TypeScript, 31 Vitest behaviors, and a Next.js 16.3.3 production build.
+
+Decision: **graduate H5 as the current camera/provenance rung.** A SHA-256 digest is a content fingerprint, not authenticity evidence. The next rung must propose a cited visual fact for human acceptance; it must not claim that the model watched continuous video or independently proved repair history.
+
+### E6 and H6 — Product path passes; authenticated model call remains open
+
+- The app now installs AI SDK 7.0.79 and uses a plain Gateway model ID, which makes Vercel AI Gateway the default provider. The route selects `openai/gpt-5.6-sol`, then configures `gpt-5.6-terra` and `gpt-5.6-luna` as model fallbacks with `zeroDataRetention: true`. These IDs and image-input capabilities were re-read from the unauthenticated live Gateway model catalog on 2026-08-26 rather than assumed from memory.
+- `POST /api/evidence/propose` accepts one JPEG no larger than 1.5 MB, validates its bounded dimensions and derived frame ID, recomputes SHA-256 from the received bytes, and refuses a mismatch before inference.
+- The AI prompt and Zod output schema permit only base visibility, visible surface signals, confidence, pixel-grounded details, a short summary, and a suggested next view. The server excludes image-bearing request messages/bodies from AI SDK result retention.
+- A model response remains a proposal. The host must accept or correct it; the audit record preserves the model ID, original proposal, reviewed finding, decision, frame ID, and digest. Manual review records `modelId: null` and never masquerades as an AI result.
+- The state machine refuses an unreviewed camera attestation, a review bound to another frame, an unclear/unusable view, a no-repair attestation that conflicts with a visible possible-repair signal, or a camera answer that omits the intentionally public selected JPEG.
+- The local machine has neither `AI_GATEWAY_API_KEY` nor `VERCEL_OIDC_TOKEN`, so the real browser run correctly exercised `gateway-unconfigured` → manual review. Unit/API tests inject a typed model result and verify the exact Sol → Terra → Luna Gateway configuration without making a network-billed call.
+- The browser run completed capture → server digest verification → typed manual fallback → host selections → review receipt → selected-frame publication → buyer 4/4 evidence → native WebMCP inspect → exact `$423` reserve → dynamic release → release. Tool output exposed the full provenance/review chain and `selectedFramePubliclyVisible: true`, but contained no `data:image` payload.
+- The live feed remained local. Only one explicitly analyzed/published JPEG crossed the boundary. The buyer view visibly rendered that JPEG alongside the reviewed observation and the warning that pixels cannot establish historical repair.
+- Formatting, zero-warning ESLint, strict TypeScript, 41 Vitest behaviors across 9 files, and the Next.js 16.3.3 production build pass. Browser console and page-error logs are empty. Desktop host/buyer and 390×844 buyer screenshots are retained outside the repository.
+
+Decision: **graduate H6 as the current product path, with one narrow acceptance caveat.** The manual fallback, review authority, published-frame UX, and WebMCP lifecycle are real and pass. Do not claim a live GPT-5.6 visual result until this project receives Gateway auth and the same flow passes against a staged physical product frame.
+
 ## Graduation decision
 
 Graduate this privacy membrane + counterfactual frontier + epistemic multicast combination as Rung 2. It improves every judging dimension without weakening the recoverable Rung 1 golden path:
@@ -167,4 +268,68 @@ Graduate this privacy membrane + counterfactual frontier + epistemic multicast c
 - **Potential impact:** buyers reveal less while one human observation serves many private decisions.
 - **Creativity and ambition:** the agent is a privacy boundary and attention coordinator, not a shopping macro.
 
-The highest-information next experiment is H4: a local-first two-context host spike using the same domain transitions. Keep it only if the separate surface makes the 45-second story more credible and stays deterministic. If it passes, compare one real cross-client room implementation rather than adopting infrastructure by affiliation: Vercel's current realtime path versus Cloudflare Durable Objects/RealtimeKit. UCP should then own authoritative catalog, offer, cart, checkout, consent, and permalink state after the live-evidence interaction has earned that complexity. A Lean certificate should enter only when it gates a consequential, judge-visible invariant rather than decorating the architecture.
+H4-H6 and the typed exact-ChatGPT path pass, subject to the authenticated Gateway caveat above. Voice transport passes but exact Voice-to-UI-owned-Browser composition does not. The next sequence is now: authenticate and blind-check the visual proposal on a staged physical frame; rehearse the 45-second two-surface story; then choose the next product rung by information value—real phone/desktop room transport or an authoritative UCP product/offer/checkout seam. UCP should own catalog, offer, cart, checkout, consent, and permalink state rather than being reduced to a logo-bearing API call. A Lean certificate should enter only when it gates a consequential, judge-visible invariant rather than decorating the architecture.
+
+## Strategic reset and next frozen experiments — 2026-08-26
+
+The broad challenge, field, sponsor, Vidably, UCP, math, and clean-sheet concept audits converge on one update: keep the completed core, but reframe the ambition as a **live evidence exchange / Reality API**. Commerce remains the clearest first outcome; it is not the primitive itself.
+
+The preceding graduation decision remains valid evidence of the local rung. This reset supersedes only its proposed next-step ordering. A simulated crowd, same-browser `BroadcastChannel`, synthetic camera, unauthenticated model fallback, and local reversible hold are not enough to support the final impact/execution story, even though each is an honest and useful fallback.
+
+### E7 — Real two-client physical-world event
+
+Frozen claim:
+
+> A buyer-side WebMCP request can cause a separately connected seller phone to acquire one fresh physical observation, and the reviewed result can update the buyer's visible state without sharing private price/profile fields.
+
+Protocol:
+
+1. Preserve the current local resettable fallback unchanged.
+2. Join buyer and seller through a short room code or QR URL on separate devices and networks.
+3. Use revisioned server-authoritative state with ordered updates, reconnect recovery, idempotent request handling, expiry, and a bounded room lifetime.
+4. Use one owned, rights-cleared physical object. Capture a real phone-camera frame only after an explicit host gesture.
+5. Synchronize only the reviewed frame/evidence packet intended for publication; never synchronize the private ceiling or raw continuous feed.
+6. Complete the native Site Tools flow in the exact ChatGPT client and current Chrome build, then repeat after buyer refresh and host reconnect.
+7. Record first-connect latency, request-to-cue latency, evidence-to-state latency, duplicate behavior, recovery, and every transmitted field.
+
+Decision rule: graduate only if the remote event is visibly causal, survives reconnect, has no silent stale state, and remains understandable without explaining the transport. Compare a minimal Vercel WebSocket implementation with a Cloudflare Durable Object room; choose the one that is more reliable and legible, not the one with more sponsor logos.
+
+### E8 — Authoritative UCP commerce boundary
+
+Frozen claim:
+
+> Reviewed evidence can unlock a real merchant cart/handoff whose price, product, and continuation state are authoritative outside the demo app.
+
+Protocol:
+
+1. Use an owned Shopify development-store product and cleared media for the judged path.
+2. Fetch the merchant/platform profile and negotiate the actually advertised UCP version/capabilities. Do not assume the canonical `2026-08-25` schema when Shopify advertises `2026-04-08`.
+3. Use Global/Storefront Catalog or Cart MCP as documented; preserve the merchant's exact live schema and continuation URL.
+4. Let WebMCP own only the situated live evidence/request/action frontier. Do not duplicate Shopify's generic catalog/cart tools.
+5. Create the cart or permalink only after evidence requirements are supported and after normal ChatGPT confirmation behavior. Do not complete payment in the hero path.
+6. Test expiry, stock/price change, unsupported capability, merchant failure, and fallback to the local reversible hold.
+
+Decision rule: graduate only if the resulting cart/handoff is externally authoritative, dynamically negotiated, visible to the user, and clearer than the local hold it replaces.
+
+### E9 — Submission-grade Agent Experience
+
+Frozen claim:
+
+> An unfamiliar judge can understand and complete the core flow in the current ChatGPT/Chrome clients without setup rescue, while the video and repository prove the same lifecycle even if the judge never runs it.
+
+Protocol:
+
+1. Reduce overlapping read tools and keep common tool results near Chrome's recommended context budgets; move verbose audit material behind a separate read path or visible UI.
+2. Run direct, ambiguous, corrective, canceled, duplicate, stale-state, confirmation, reconnect, and full-journey prompts using Chrome's WebMCP eval guidance.
+3. Capture Chrome DevTools registration/invocation history and, when available, an independent Netlify AXIS report.
+4. Add one-click reset, preflight status, camera/model/UCP fallbacks, no-login testing instructions, and a copyable canonical prompt.
+5. Rehearse the 45-second causal story and a `2:45` video cut. The first 30 seconds must show private mandate → remote cue → physical evidence, not architecture.
+6. Run clean profiles on the judged clients, mobile/desktop accessibility checks, production build, public-link health, license/repository checks, and rights review.
+
+Decision rule: graduate only if the golden path passes repeatedly from a clean state and the description/video/README each make the project independently understandable.
+
+### E10 — Frontier receipt (optional)
+
+Only after E7-E9 pass, test whether a runtime-connected Lean receipt can communicate in under ten seconds that a stale quote/evidence revision or unauthorized transition is refused. The theorem may cover the formal state model and payload projection only. It must not claim to prove image truth, seller honesty, browser conformance, or implementation equivalence.
+
+Decision rule: integrate only if a non-technical viewer understands the consequence immediately and the proof service cannot destabilize the hero flow. Otherwise preserve the proof-carrying Site Tool constitution as a post-challenge branch.

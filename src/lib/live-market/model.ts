@@ -15,6 +15,24 @@ export type ActivityActor = (typeof activityActors)[number];
 export const repairHistoryValues = ['unknown', 'none', 'repaired'] as const;
 export type RepairHistory = (typeof repairHistoryValues)[number];
 
+export const evidenceFrameKinds = ['fixture-frame', 'camera-keyframe'] as const;
+export type EvidenceFrameKind = (typeof evidenceFrameKinds)[number];
+
+export const baseVisibilityValues = ['clear', 'partial', 'not-visible', 'unclear'] as const;
+export type BaseVisibility = (typeof baseVisibilityValues)[number];
+
+export const surfaceFindingValues = ['no-obvious-repair', 'possible-repair', 'unclear'] as const;
+export type SurfaceFinding = (typeof surfaceFindingValues)[number];
+
+export const visualConfidenceValues = ['low', 'medium', 'high'] as const;
+export type VisualConfidence = (typeof visualConfidenceValues)[number];
+
+export const visualReviewSources = ['ai-gateway', 'manual-review', 'fixture'] as const;
+export type VisualReviewSource = (typeof visualReviewSources)[number];
+
+export const hostReviewDecisions = ['accepted', 'corrected', 'manual', 'fixture'] as const;
+export type HostReviewDecision = (typeof hostReviewDecisions)[number];
+
 export const evidenceRequestKinds = ['repair_history'] as const;
 export type EvidenceRequestKind = (typeof evidenceRequestKinds)[number];
 
@@ -44,11 +62,59 @@ export const defaultEvidenceRequirements = {
   forbidPriorBaseRepair: true,
 } as const satisfies EvidenceRequirements;
 
+interface EvidenceFrameIdentity {
+  readonly frameId: string;
+  readonly label: string;
+}
+
+export interface FixtureEvidenceFrameProvenance extends EvidenceFrameIdentity {
+  readonly kind: 'fixture-frame';
+  readonly capturedAt: null;
+  readonly showOffsetSeconds: number;
+  readonly sha256: null;
+  readonly widthPx: null;
+  readonly heightPx: null;
+}
+
+export interface CameraEvidenceFrameProvenance extends EvidenceFrameIdentity {
+  readonly kind: 'camera-keyframe';
+  readonly capturedAt: string;
+  readonly showOffsetSeconds: null;
+  readonly sha256: string;
+  readonly widthPx: number;
+  readonly heightPx: number;
+}
+
+export type EvidenceFrameProvenance =
+  FixtureEvidenceFrameProvenance | CameraEvidenceFrameProvenance;
+
+export interface VisualEvidenceFinding {
+  readonly baseVisibility: BaseVisibility;
+  readonly surfaceFinding: SurfaceFinding;
+  readonly confidence: VisualConfidence;
+  readonly visibleDetails: readonly string[];
+  readonly summary: string;
+  readonly suggestedNextView: string | null;
+}
+
+export interface VisualEvidenceReview {
+  readonly source: VisualReviewSource;
+  readonly modelId: string | null;
+  readonly frameId: string;
+  readonly frameSha256: string | null;
+  readonly proposal: VisualEvidenceFinding | null;
+  readonly reviewedFinding: VisualEvidenceFinding;
+  readonly hostDecision: HostReviewDecision;
+}
+
 export interface LotEvidence {
   readonly edgeCondition: 'visible-closeup';
   readonly edgeEvidenceSource: string;
   readonly repairHistory: RepairHistory;
   readonly repairEvidenceSource: string | null;
+  readonly repairEvidenceFrame: EvidenceFrameProvenance | null;
+  readonly repairEvidenceImage: string | null;
+  readonly visualReview: VisualEvidenceReview | null;
 }
 
 export interface LiveLot {
@@ -102,7 +168,7 @@ export interface LiveMarketState {
 }
 
 export interface ConditionEvaluation {
-  readonly id: 'length' | 'edge_evidence' | 'repair_history';
+  readonly id: 'length' | 'edge_evidence' | 'base_visual' | 'repair_history';
   readonly label: string;
   readonly status: EvidenceStatus;
   readonly detail: string;
@@ -161,8 +227,60 @@ const initialLot: LiveLot = {
     edgeEvidenceSource: 'Host clip · edge close-up at 00:08',
     repairHistory: 'unknown',
     repairEvidenceSource: null,
+    repairEvidenceFrame: null,
+    repairEvidenceImage: null,
+    visualReview: null,
   },
 };
+
+function createFixtureEvidenceFrame(
+  repairHistory: Exclude<RepairHistory, 'unknown'>,
+): FixtureEvidenceFrameProvenance {
+  return {
+    kind: 'fixture-frame',
+    frameId: 'fixture-host-frame-0031',
+    label:
+      repairHistory === 'none'
+        ? 'Host fixture disclosure · source frame 00:31'
+        : 'Host fixture disclosure · repaired area at 00:31',
+    capturedAt: null,
+    showOffsetSeconds: 31,
+    sha256: null,
+    widthPx: null,
+    heightPx: null,
+  };
+}
+
+function createFixtureVisualReview(
+  repairHistory: Exclude<RepairHistory, 'unknown'>,
+  evidenceFrame: FixtureEvidenceFrameProvenance,
+): VisualEvidenceReview {
+  const repaired = repairHistory === 'repaired';
+  const reviewedFinding: VisualEvidenceFinding = {
+    baseVisibility: 'clear',
+    surfaceFinding: repaired ? 'possible-repair' : 'no-obvious-repair',
+    confidence: 'high',
+    visibleDetails: [
+      repaired
+        ? 'The deterministic fixture highlights the disclosed repaired area.'
+        : 'The deterministic fixture shows the full base without an obvious repair marker.',
+    ],
+    summary: repaired
+      ? 'Fixture frame shows the base and the host-identified repaired area.'
+      : 'Fixture frame shows a clear base view with no obvious visible repair marker.',
+    suggestedNextView: null,
+  };
+
+  return {
+    source: 'fixture',
+    modelId: null,
+    frameId: evidenceFrame.frameId,
+    frameSha256: null,
+    proposal: null,
+    reviewedFinding,
+    hostDecision: 'fixture',
+  };
+}
 
 export function createInitialState(): LiveMarketState {
   return {
@@ -218,6 +336,22 @@ export function evaluateEvidence(state: LiveMarketState): EvidenceEvaluation {
       ? 'supported'
       : 'unresolved';
 
+  const visualReview = state.lot.evidence.visualReview;
+  const baseVisualStatus: EvidenceStatus =
+    visualReview !== null &&
+    visualReview.reviewedFinding.baseVisibility === 'clear' &&
+    visualReview.reviewedFinding.surfaceFinding !== 'unclear'
+      ? 'supported'
+      : 'unresolved';
+  const baseVisualDetail =
+    visualReview === null
+      ? 'A reviewed view of the board base is still required.'
+      : visualReview.reviewedFinding.summary;
+  const baseVisualSource =
+    visualReview === null
+      ? 'No reviewed base frame yet'
+      : `${visualReview.source} · host ${visualReview.hostDecision}`;
+
   let repairStatus: EvidenceStatus = 'supported';
   let repairDetail = 'Prior repair is allowed by the shared evidence requirements.';
   let repairSource = 'Buyer evidence requirements';
@@ -255,6 +389,17 @@ export function evaluateEvidence(state: LiveMarketState): EvidenceEvaluation {
           : 'A visible close-up is still required.',
       source: state.lot.evidence.edgeEvidenceSource,
     },
+    ...(evidenceRequirements.forbidPriorBaseRepair
+      ? [
+          {
+            id: 'base_visual' as const,
+            label: 'Reviewed base view',
+            status: baseVisualStatus,
+            detail: baseVisualDetail,
+            source: baseVisualSource,
+          },
+        ]
+      : []),
     {
       id: 'repair_history',
       label: 'No prior base repair',
@@ -440,6 +585,9 @@ export function requestRepairHistory(
 export function answerRepairHistory(
   state: LiveMarketState,
   repairHistory: Exclude<RepairHistory, 'unknown'>,
+  evidenceFrame: EvidenceFrameProvenance = createFixtureEvidenceFrame(repairHistory),
+  visualReview: VisualEvidenceReview | null = null,
+  publicEvidenceImage: string | null = null,
 ): TransitionResult {
   if (state.showStatus !== 'live') {
     return refuse(
@@ -454,11 +602,70 @@ export function answerRepairHistory(
     return refuse(state, 'host', 'evidence_answered', 'Repair history is already resolved.');
   }
 
+  const resolvedVisualReview =
+    visualReview ??
+    (evidenceFrame.kind === 'fixture-frame'
+      ? createFixtureVisualReview(repairHistory, evidenceFrame)
+      : null);
+
+  if (resolvedVisualReview === null) {
+    return refuse(
+      state,
+      'host',
+      'evidence_answered',
+      'Review the selected camera frame before publishing the repair-history attestation.',
+    );
+  }
+
+  if (
+    resolvedVisualReview.frameId !== evidenceFrame.frameId ||
+    resolvedVisualReview.frameSha256 !== evidenceFrame.sha256
+  ) {
+    return refuse(
+      state,
+      'host',
+      'evidence_answered',
+      'The visual review must be bound to the exact selected evidence frame.',
+    );
+  }
+
+  if (
+    resolvedVisualReview.reviewedFinding.baseVisibility !== 'clear' ||
+    resolvedVisualReview.reviewedFinding.surfaceFinding === 'unclear'
+  ) {
+    return refuse(
+      state,
+      'host',
+      'evidence_answered',
+      'The selected frame does not yet provide a clear, reviewable base view.',
+    );
+  }
+
+  if (
+    repairHistory === 'none' &&
+    resolvedVisualReview.reviewedFinding.surfaceFinding === 'possible-repair'
+  ) {
+    return refuse(
+      state,
+      'host',
+      'evidence_answered',
+      'Resolve the possible visible repair signal before attesting that there was no prior repair.',
+    );
+  }
+
+  if (
+    evidenceFrame.kind === 'camera-keyframe' &&
+    (publicEvidenceImage === null || !publicEvidenceImage.startsWith('data:image/jpeg;base64,'))
+  ) {
+    return refuse(
+      state,
+      'host',
+      'evidence_answered',
+      'Publish the selected JPEG with its provenance so buyers can inspect the same frame.',
+    );
+  }
+
   const resolvedAgentCount = getEvidenceDemandSummary(state, 'repair_history').totalAgentCount;
-  const source =
-    repairHistory === 'none'
-      ? 'Host live disclosure · source frame 00:31'
-      : 'Host live disclosure · repaired area at 00:31';
   const nextState = addActivity(
     {
       ...state,
@@ -467,7 +674,10 @@ export function answerRepairHistory(
         evidence: {
           ...state.lot.evidence,
           repairHistory,
-          repairEvidenceSource: source,
+          repairEvidenceSource: evidenceFrame.label,
+          repairEvidenceFrame: evidenceFrame,
+          repairEvidenceImage: publicEvidenceImage,
+          visualReview: resolvedVisualReview,
         },
       },
       evidenceRequests: state.evidenceRequests.map((request) =>
@@ -484,8 +694,8 @@ export function answerRepairHistory(
       outcome: 'accepted',
       summary:
         repairHistory === 'none'
-          ? `One host answer supplied no-repair evidence to ${resolvedAgentCount} private agents.`
-          : `One host answer disclosed a repair to ${resolvedAgentCount} private agents.`,
+          ? `One host answer supplied no-repair evidence to ${resolvedAgentCount} private agents from ${evidenceFrame.kind}.`
+          : `One host answer disclosed a repair to ${resolvedAgentCount} private agents from ${evidenceFrame.kind}.`,
     },
   );
 

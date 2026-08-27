@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { historicalEvidenceLimitation } from './evidence-proposal';
 import {
   evidenceRequirementsSchema,
   evaluateEvidence,
@@ -121,6 +122,16 @@ function snapshot(state: LiveMarketState): object {
       currentBid: state.lot.currentBid,
       shipping: state.lot.shipping,
       allInPrice: getAllInPrice(state.lot),
+      publicEvidence: {
+        edgeCondition: state.lot.evidence.edgeCondition,
+        edgeEvidenceSource: state.lot.evidence.edgeEvidenceSource,
+        repairHistory: state.lot.evidence.repairHistory,
+        repairEvidenceSource: state.lot.evidence.repairEvidenceSource,
+        repairEvidenceFrame: state.lot.evidence.repairEvidenceFrame,
+        selectedFramePubliclyVisible: state.lot.evidence.repairEvidenceImage !== null,
+        visualReview: state.lot.evidence.visualReview,
+        historicalEvidenceLimitation,
+      },
     },
     sellerVisibleEvidenceRequirements: state.evidenceRequirements,
     evidenceEvaluation: evaluateEvidence(state),
@@ -154,7 +165,7 @@ function transitionOutput(result: TransitionResult): object {
 }
 
 function checkAbort(options?: WebMCP.ToolExecuteCallbackOptions): void {
-  options?.signal.throwIfAborted();
+  options?.signal?.throwIfAborted();
 }
 
 function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextTool[] {

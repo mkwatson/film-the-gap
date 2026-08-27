@@ -159,6 +159,77 @@ describe('WebMCP Site Tools', () => {
     );
   });
 
+  it('exposes camera provenance and host review without embedding the JPEG in tool output', async () => {
+    const runtime = createRuntime();
+    await getTool(runtime, 'set_evidence_requirements').execute(
+      defaultEvidenceRequirements,
+      executeOptions,
+    );
+    await getTool(runtime, 'request_host_evidence').execute(
+      { kind: 'repair_history' },
+      executeOptions,
+    );
+    const frame = {
+      kind: 'camera-keyframe',
+      frameId: 'camera-9dff50df08c6',
+      label: 'Host camera keyframe · camera-9dff50df08c6',
+      capturedAt: '2026-08-26T19:22:31.000Z',
+      showOffsetSeconds: null,
+      sha256: '9dff50df08c635815f4b19da10f756605a34a79a48d4ba48712782502975a70e',
+      widthPx: 960,
+      heightPx: 540,
+    } as const;
+    const finding = {
+      baseVisibility: 'clear',
+      surfaceFinding: 'no-obvious-repair',
+      confidence: 'medium',
+      visibleDetails: ['The full base is visible.'],
+      summary: 'The full base is visible with no obvious repair marker.',
+      suggestedNextView: null,
+    } as const;
+    runtime.transition((state) =>
+      answerRepairHistory(
+        state,
+        'none',
+        frame,
+        {
+          source: 'ai-gateway',
+          modelId: 'openai/gpt-5.6-sol',
+          frameId: frame.frameId,
+          frameSha256: frame.sha256,
+          proposal: finding,
+          reviewedFinding: finding,
+          hostDecision: 'accepted',
+        },
+        'data:image/jpeg;base64,ZnJhbWU=',
+      ),
+    );
+
+    const output = await getTool(runtime, 'inspect_current_lot').execute({}, executeOptions);
+
+    expect(output).toMatchObject({
+      currentLot: {
+        publicEvidence: {
+          repairHistory: 'none',
+          repairEvidenceFrame: {
+            kind: 'camera-keyframe',
+            frameId: 'camera-9dff50df08c6',
+            widthPx: 960,
+            heightPx: 540,
+          },
+          selectedFramePubliclyVisible: true,
+          visualReview: {
+            source: 'ai-gateway',
+            modelId: 'openai/gpt-5.6-sol',
+            hostDecision: 'accepted',
+          },
+        },
+      },
+    });
+    expect(JSON.stringify(output)).not.toContain('data:image');
+    expectNoPrivateBuyerFields(output);
+  });
+
   it('rejects an exact quote after page price changes and tells the agent how to recover', async () => {
     const runtime = createRuntime();
     await getTool(runtime, 'set_evidence_requirements').execute(
@@ -207,16 +278,21 @@ describe('WebMCP Site Tools', () => {
     expect(createSiteTools(runtime).map(({ name }) => name)).not.toContain('reserve_current_lot');
   });
 
-  it('tolerates the current Chrome callback shape without execution options', async () => {
+  it('tolerates judged runtime callback shapes without a usable signal', async () => {
     const runtime = createRuntime();
     const inspectTool = getTool(runtime, 'inspect_live_show');
 
-    const output = await inspectTool.execute(
+    const outputWithoutOptions = await inspectTool.execute(
       {},
       undefined as unknown as WebMCP.ToolExecuteCallbackOptions,
     );
+    const outputWithoutSignal = await inspectTool.execute(
+      {},
+      {} as unknown as WebMCP.ToolExecuteCallbackOptions,
+    );
 
-    expect(output).toMatchObject({ showStatus: 'live' });
+    expect(outputWithoutOptions).toMatchObject({ showStatus: 'live' });
+    expect(outputWithoutSignal).toMatchObject({ showStatus: 'live' });
   });
 
   it('propagates cancellation before performing a mutation', async () => {

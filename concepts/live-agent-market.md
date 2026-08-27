@@ -20,27 +20,31 @@ The social video remains primary. The agent does the vigilance, constraint track
 
 If the experiment works just as well with a remote backend tool while the page is closed, the concept has failed its WebMCP test.
 
-## Current Rung 2: a seller-blind evidence market
+## Current cumulative rung: a seller-blind evidence market with a reviewed human camera
 
-The current implementation combines three tested interaction primitives:
+The current implementation combines four core interaction primitives and two progressive presentation layers:
 
 1. **Private-counterparty membrane:** the seller-facing page receives four product-evidence requirements but no buyer profile or numeric ceiling. ChatGPT compares the public quote privately and passes only the exact quote it is accepting.
 2. **Counterfactual capability frontier:** every state exposes the smallest valid next agent and human transition. Mutations that are not yet safe are absent from the native tool surface.
 3. **Epistemic multicast:** seven transparently labeled anonymous demo-agent signals join the current agent's real request. One host answer resolves the shared fact for all eight private decisions.
+4. **Two-surface human sensor:** a separate `/host` view receives the normalized request and returns one attributed answer while the one-page fallback remains intact.
+5. **Consented keyframe provenance:** the host explicitly starts a video-only camera and captures one bounded frame. The continuous feed stays local; the selected JPEG receives a timestamp, dimensions, frame ID, and SHA-256 fingerprint.
+6. **Reviewed visual proposal:** AI SDK 7 can route that selected frame through Vercel AI Gateway for a strict pixel-grounded proposal. The host must accept or correct it, then add a separate repair-history attestation. An explicit manual path remains complete when no model is available. Only after review is the selected JPEG intentionally published to the buyer; Site Tool output exposes the audit chain but omits image bytes.
 
 The active tool sequence is:
 
 ```text
 inspect + set evidence requirements
   -> request missing host evidence
-  -> one host answer resolves eight requests
+  -> capture one frame; AI proposes; host accepts/corrects
+  -> separate host history attestation resolves eight requests
   -> reserve only against the exact current quote
   -> release restores the reversible state
 ```
 
-Native Headless Chrome 150 completed that whole sequence, including stale-quote refusal and observed tool replacement. Fresh isolated Chrome 151 profiles proved the app's positive and negative feature gates. The same flow remains complete through ordinary human controls. Strict TypeScript, formatting, lint, 18 Vitest behaviors, production build, desktop layout, and 390 px layout passed.
+Native Headless Chrome 150 completed the original sequence, including stale-quote refusal and observed tool replacement. ChatGPT desktop 26.820.60940 with GPT-5.6 Sol then completed the model-driven native sequence through request, stale refusal, exact-quote hold, and release. The camera rung passed in a native WebMCP-enabled Chromium run using its synthetic camera source. The reviewed-evidence rung then passed capture → server digest verification → typed no-auth manual fallback → host review → selected-frame publication → buyer 4/4 → native inspect → exact-quote hold → release. Fresh isolated Chrome 151 profiles proved the app's positive and negative feature gates. Strict TypeScript, formatting, lint, 41 Vitest behaviors across 9 files, production build, two-tab desktop layout, and 390 px layout pass.
 
-This is a data-minimization boundary, not a proof of zero statistical inference. The other seven agents are a deterministic room fixture, not a live multi-user backend. ChatGPT's in-app browser, model-driven calls, Voice-to-Site-Tools composition, and Mark's normal Chrome profile remain explicit acceptance gates.
+This is a data-minimization boundary, not a proof of zero statistical inference. A keyframe digest identifies bytes; it does not prove authenticity or repair history. A model can describe visible pixels but cannot establish a historical “never repaired” fact, so the host attestation remains separate. The local project has no Gateway credential, so a live authenticated GPT-5.6 vision response remains an explicit acceptance gate even though the route and model-result path are tested. The other seven agents are a deterministic room fixture, not a live multi-user backend. The host surface currently synchronizes same-origin browser contexts rather than real devices. Voice transport/transcription/delegation works, but the delegated task did not inherit the UI-owned Browser, so autonomous Voice-to-Site-Tools remains unproven. Physical-camera, repeated navigation/reconnect, Mark's normal Chrome profile, and MBP clean-room runs remain explicit acceptance gates.
 
 See [../EXPERIMENTS.md](../EXPERIMENTS.md) for the 18-primitives frontier, frozen hypotheses, protocols, results, and next recommendation.
 
@@ -164,7 +168,7 @@ Implemented and verified locally on 2026-08-26:
 - Desktop and 390 px visual checks with no page errors or horizontal overflow.
 - Prettier, ESLint, strict TypeScript, 12 Vitest behaviors, and a Next.js 16.3.3 production build.
 
-Still unverified: the connected latest Chrome 151 profile, ChatGPT's in-app Browser and model-driven calls, Voice-to-Site-Tools composition, public deployment, and long-lived navigation/reconnect behavior.
+At this historical Rung 1 checkpoint, the connected Chrome 151 profile, ChatGPT client, Voice composition, public deployment, and long-lived navigation/reconnect behavior were still unverified. The current Rung 2 record above supersedes the ChatGPT portion: its complete typed native flow now passes.
 
 ## Human interface
 
@@ -196,12 +200,12 @@ spoken intent
 
 There are four distinct modality layers. They must not be collapsed into one unsupported "works on any device" claim.
 
-| Layer                       | Product role                                                                                                                                                                        | Current boundary                                                                                                                                                                                                                                                          | Reliable fallback                                                            |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| ChatGPT Voice -> Site Tools | The buyer speaks naturally to the same ChatGPT agent that is co-attending the page. This is the cleanest hero input if the exact desktop runtime supports the composition.          | Current OpenAI documentation separately supports Voice in Chat, Work, and Codex and Site Tools in the built-in browser, but does not explicitly promise that one Voice session can invoke Site Tools. Treat this as an urgent runtime experiment, not a submission claim. | Type or dictate the identical prompt to ChatGPT.                             |
-| Page-owned voice            | A push-to-talk control uses OpenAI Realtime or transcription to produce a visible transcript and structured draft. It makes the human UI hands-free on ordinary web/mobile clients. | This is an application feature, not proof of WebMCP leverage. It must feed the same domain state that page tools expose and must not replace the ChatGPT Site Tools path.                                                                                                 | Text input and deterministic parsing for the golden fixture.                 |
-| Human live media            | Cloudflare RealtimeKit can connect host and buyer audio/video across web and mobile clients. The page, not ChatGPT, owns the room and permissions.                                  | Human media participation can span supported phones and browsers; the judged WebMCP agent path is still ChatGPT desktop or compatible Chrome.                                                                                                                             | Prerecorded rights-cleared video, transcript, and host-response controls.    |
-| Agent visual evidence       | A host or buyer explicitly shares a snapshot or sampled keyframe that an image-capable model turns into a cited evidence proposal for human review.                                 | GPT-Realtime-2.1 accepts image and audio input but not continuous video. Do not claim that the model watches a raw video stream.                                                                                                                                          | Precomputed evidence artifact with its source frame and uncertainty visible. |
+| Layer                       | Product role                                                                                                                                                                        | Current boundary                                                                                                                                                                                                                                                                                                           | Reliable fallback                                                         |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| ChatGPT Voice -> Site Tools | The buyer speaks naturally to the same ChatGPT agent that is co-attending the page. This is the cleanest hero input if the exact desktop runtime supports the composition.          | Real WebRTC audio, transcription, and Voice-to-Codex delegation passed. The delegated task did not inherit the UI-owned in-app Browser binding, so no autonomous Site Tool call occurred. This is a measured client-ownership boundary, not a submission claim.                                                            | Type or dictate the identical prompt to the Browser-owning ChatGPT task.  |
+| Page-owned voice            | A push-to-talk control uses OpenAI Realtime or transcription to produce a visible transcript and structured draft. It makes the human UI hands-free on ordinary web/mobile clients. | This is an application feature, not proof of WebMCP leverage. It must feed the same domain state that page tools expose and must not replace the ChatGPT Site Tools path.                                                                                                                                                  | Text input and deterministic parsing for the golden fixture.              |
+| Human live media            | Cloudflare RealtimeKit can connect host and buyer audio/video across web and mobile clients. The page, not ChatGPT, owns the room and permissions.                                  | Human media participation can span supported phones and browsers; the judged WebMCP agent path is still ChatGPT desktop or compatible Chrome.                                                                                                                                                                              | Prerecorded rights-cleared video, transcript, and host-response controls. |
+| Agent visual evidence       | A host or buyer explicitly shares a snapshot or sampled keyframe that an image-capable model turns into a cited evidence proposal for human review.                                 | Opt-in capture, local JPEG encoding, SHA-256 provenance, server digest verification, structured proposal routing, explicit host correction, selected-frame publication, and WebMCP exposure pass. The authenticated live Gateway inference remains open; do not claim that a model watches a raw stream or proves history. | Typed manual review tied to the same frame; no synthetic model answer.    |
 
 Two-way video earns its complexity only when both cameras contribute physical context. A buyer might show a damaged part, room, outfit, or board already owned; the seller might then show compatibility, scale, condition, or provenance. The agent directs the next discriminating view and ties the resulting observation to the decision. For the snowboard fixture, buyer video is an optional later rung; host video is sufficient for the first complete loop.
 
@@ -213,9 +217,9 @@ Each rung must remain a complete demo when every later rung is disabled.
 
 1. **Seller-blind deterministic loop:** typed ChatGPT prompt, real dynamic WebMCP tools, visible evidence transition, exact-quote reversible hold, and no buyer ceiling crossing the page boundary.
 2. **Epistemic multicast:** one normalized host answer resolves the same missing fact for eight private decisions; the current deterministic room proves the contract.
-3. **Hands-free buyer:** one spoken prompt through ChatGPT Voice if the combined runtime passes; otherwise page push-to-talk with the same public evidence envelope and typed fallback.
-4. **Live host:** a second browser or phone joins a real room and receives the agent's structured evidence request; the deterministic host control remains available.
-5. **Camera-to-evidence:** the host submits one consented snapshot/keyframe; a model proposes a fact with source, timestamp, and uncertainty; a human accepts it before eligibility changes.
+3. **Hands-free buyer:** realtime speech and delegation pass; a supported handoff into the UI-owned Browser remains pending, with the identical typed prompt as the dependable path.
+4. **Live host:** the tested second-browser surface graduates from same-origin synchronization to a real phone/desktop room; the deterministic host control remains available.
+5. **Camera-to-evidence:** opt-in capture, bounded provenance, server digest verification, frame-cited proposal contract, host accept/correct, manual fallback, and intentional selected-frame publication pass. One authenticated physical-frame model run remains the acceptance gate.
 6. **Two-way physical context:** the buyer's camera supplies a second observation and the agent directs a short cross-camera inspection.
 7. **Transactional trust:** Shopify/UCP owns authoritative offer, cart, checkout, consent, permalink, and post-purchase state after the evidence interaction earns the complexity.
 8. **Proof-carrying authority:** a Lean-checked invariant controls a consequential capability only when the proof is judge-visible and stronger than ordinary runtime validation.
@@ -225,9 +229,9 @@ Each rung must remain a complete demo when every later rung is disabled.
 
 1. Show a live snowboard lot and an empty public evidence envelope.
 2. Say—or type if voice is unavailable—that the buyer needs a 154 to 158 cm board, under a private limit, with visible edge evidence and no prior base repair.
-3. ChatGPT keeps the limit private, shares the four product requirements, and inspects the lot. The page turns three conditions green and leaves repair history unresolved.
+3. ChatGPT keeps the limit private, shares the four product requirements, and inspects the lot. Length and edge evidence turn green; reviewed base view and repair history remain unresolved.
 4. ChatGPT joins seven anonymous demo agents requesting repair-history evidence. The aggregate changes from seven open to eight queued.
-5. The host answers once. Eight requests resolve, the final condition turns green, and `reserve_current_lot` appears.
+5. The host explicitly starts the camera and captures one keyframe. AI Gateway proposes only what the pixels support; the host accepts or corrects it, then separately attests repair history. The selected frame becomes public, eight requests resolve, all four conditions turn green, and `reserve_current_lot` appears. Manual review and the fixture button are judge-safe fallbacks.
 6. ChatGPT privately compares the public `$423` quote with the buyer's limit and reserves against exactly `$423`. The page shows the attributed hold and offers release without ever receiving the ceiling.
 
 The line to land: "The page did not give the agent a buy button. It gave the agent exactly the actions that became safe as the live evidence changed."
@@ -279,13 +283,14 @@ Drop or substantially reframe this concept if any of these survive a real browse
 
 ## Later rungs, only if Rung 2 earns them
 
-1. Separate host and buyer pages sharing realtime show state.
-2. Near-live transcription and timestamped Vidably evidence extraction.
-3. Real cross-client evidence aggregation with minority-safety handling.
-4. UCP-backed catalog, offer, cart, checkout, consent, permalink, and post-win order state.
-5. A formally verified quote/authority invariant that visibly gates a consequential tool.
-6. Live broadcast through the transport that wins a focused comparison.
-7. Multiple real participants and agents in one show.
+1. Add a frame-cited visual evidence proposal with explicit host acceptance and deterministic recovery.
+2. Network the tested host and buyer pages across a real phone/desktop room while retaining deterministic recovery.
+3. Near-live transcription and timestamped Vidably evidence extraction.
+4. Real cross-client evidence aggregation with minority-safety handling.
+5. UCP-backed catalog, offer, cart, checkout, consent, permalink, and post-win order state.
+6. A formally verified quote/authority invariant that visibly gates a consequential tool.
+7. Live broadcast through the transport that wins a focused comparison.
+8. Multiple real participants and agents in one show.
 
 ## Explicit non-goals for the walking skeleton
 

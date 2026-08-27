@@ -1,10 +1,13 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useMemo } from 'react';
+
+import { historicalEvidenceLimitation } from '@/lib/live-market/evidence-proposal';
 
 import {
   answerRepairHistory,
-  createInitialState,
   defaultEvidenceRequirements,
   evaluateEvidence,
   getActionFrontier,
@@ -16,10 +19,9 @@ import {
   reserveCurrentLot,
   setEvidenceRequirements,
   type EvidenceStatus,
-  type LiveMarketState,
-  type TransitionResult,
 } from '@/lib/live-market/model';
-import { type MarketTransition, type SiteToolRuntime } from '@/lib/live-market/site-tools';
+import { type SiteToolRuntime } from '@/lib/live-market/site-tools';
+import { useLiveRoom, type RoomConnectionPhase } from '@/lib/live-market/use-live-room';
 import { useSiteTools } from '@/lib/live-market/use-site-tools';
 
 const usd = new Intl.NumberFormat('en-US', {
@@ -41,20 +43,22 @@ function actorLabel(actor: string): string {
   return actor.charAt(0).toUpperCase() + actor.slice(1);
 }
 
+function roomConnectionCopy(phase: RoomConnectionPhase): string {
+  if (phase === 'linked') {
+    return 'Host linked';
+  }
+  if (phase === 'waiting') {
+    return 'Waiting for host';
+  }
+  if (phase === 'solo') {
+    return 'Single-screen mode';
+  }
+  return 'Connecting room';
+}
+
 export function LiveMarket(): React.JSX.Element {
-  const [state, setState] = useState<LiveMarketState>(createInitialState);
-  const [lastMessage, setLastMessage] = useState('Waiting for public evidence requirements.');
-  const stateRef = useRef(state);
-
-  const transition = useCallback((next: MarketTransition): TransitionResult => {
-    const result = next(stateRef.current);
-    stateRef.current = result.state;
-    setState(result.state);
-    setLastMessage(result.message);
-    return result;
-  }, []);
-
-  const readState = useCallback((): LiveMarketState => stateRef.current, []);
+  const { state, lastMessage, connectionPhase, readState, resetDemo, transition } =
+    useLiveRoom('buyer');
   const siteToolRuntime = useMemo<SiteToolRuntime>(
     () => ({ readState, transition }),
     [readState, transition],
@@ -69,13 +73,6 @@ export function LiveMarket(): React.JSX.Element {
   const queuedRepairRequest = state.evidenceRequests.some(
     ({ kind, status }) => kind === 'repair_history' && status === 'queued',
   );
-
-  const resetDemo = useCallback((): void => {
-    const initialState = createInitialState();
-    stateRef.current = initialState;
-    setState(initialState);
-    setLastMessage('Demo reset. Waiting for public evidence requirements.');
-  }, []);
 
   const evaluationTitle =
     evaluation.outcome === 'no-requirements'
@@ -99,6 +96,10 @@ export function LiveMarket(): React.JSX.Element {
           </span>
         </div>
         <div className="topbar-actions">
+          <span className={`room-pill room-${connectionPhase}`}>
+            <span aria-hidden="true" />
+            {roomConnectionCopy(connectionPhase)}
+          </span>
           <span className={`runtime-pill runtime-${siteToolStatus.phase}`}>
             <span className="runtime-dot" aria-hidden="true" />
             {siteToolStatus.phase === 'ready'
@@ -109,6 +110,9 @@ export function LiveMarket(): React.JSX.Element {
                   ? 'Tools need attention'
                   : 'Connecting tools'}
           </span>
+          <Link className="quiet-button quiet-link" href="/host" target="_blank" rel="noreferrer">
+            Open host view ↗
+          </Link>
           <button className="quiet-button" type="button" onClick={resetDemo}>
             Reset demo
           </button>
@@ -195,6 +199,7 @@ export function LiveMarket(): React.JSX.Element {
                 </span>
                 <p>Show the base and disclose whether it has ever been repaired.</p>
                 <div className="host-controls" aria-label="Deterministic host response controls">
+                  <small>Single-screen fallback</small>
                   <button
                     type="button"
                     onClick={() => transition((current) => answerRepairHistory(current, 'none'))}
@@ -216,8 +221,10 @@ export function LiveMarket(): React.JSX.Element {
               <div className="multicast-result">
                 <strong>One answer → {demand.totalAgentCount} private decisions</strong>
                 <p>
-                  The fixture recorded one host source frame. No profile or price crossed the
-                  boundary.
+                  {state.lot.evidence.repairEvidenceFrame?.kind === 'camera-keyframe'
+                    ? `Camera keyframe ${state.lot.evidence.repairEvidenceFrame.frameId} was fingerprinted, reviewed, and intentionally published.`
+                    : 'The fixture recorded one host source frame.'}{' '}
+                  No profile, private ceiling, or live camera feed crossed the boundary.
                 </p>
               </div>
             ) : (
@@ -322,27 +329,57 @@ export function LiveMarket(): React.JSX.Element {
                 Evidence will be evaluated when public requirements are shared.
               </p>
             ) : (
-              <ul className="evidence-list">
-                {evaluation.conditions.map((condition) => (
-                  <li key={condition.id} className={`evidence-${condition.status}`}>
-                    <span className="evidence-symbol" aria-hidden="true">
-                      {condition.status === 'supported'
-                        ? '✓'
-                        : condition.status === 'violated'
-                          ? '×'
-                          : '?'}
-                    </span>
-                    <span className="evidence-copy">
-                      <span>
-                        <strong>{condition.label}</strong>
-                        <em>{statusCopy[condition.status]}</em>
+              <>
+                <ul className="evidence-list">
+                  {evaluation.conditions.map((condition) => (
+                    <li key={condition.id} className={`evidence-${condition.status}`}>
+                      <span className="evidence-symbol" aria-hidden="true">
+                        {condition.status === 'supported'
+                          ? '✓'
+                          : condition.status === 'violated'
+                            ? '×'
+                            : '?'}
                       </span>
-                      <small>{condition.detail}</small>
-                      <cite>{condition.source}</cite>
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                      <span className="evidence-copy">
+                        <span>
+                          <strong>{condition.label}</strong>
+                          <em>{statusCopy[condition.status]}</em>
+                        </span>
+                        <small>{condition.detail}</small>
+                        <cite>{condition.source}</cite>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                {state.lot.evidence.repairEvidenceImage !== null &&
+                state.lot.evidence.repairEvidenceFrame?.kind === 'camera-keyframe' &&
+                state.lot.evidence.visualReview !== null ? (
+                  <figure className="published-evidence-frame">
+                    <Image
+                      src={state.lot.evidence.repairEvidenceImage}
+                      width={state.lot.evidence.repairEvidenceFrame.widthPx}
+                      height={state.lot.evidence.repairEvidenceFrame.heightPx}
+                      alt="Host-published evidence frame showing the snowboard base"
+                      unoptimized
+                    />
+                    <figcaption>
+                      <span>
+                        <small>Selected public frame</small>
+                        <code>{state.lot.evidence.repairEvidenceFrame.frameId}</code>
+                      </span>
+                      <span>
+                        <small>Visual review</small>
+                        <strong>
+                          {state.lot.evidence.visualReview.source} · host{' '}
+                          {state.lot.evidence.visualReview.hostDecision}
+                        </strong>
+                      </span>
+                      <p>{state.lot.evidence.visualReview.reviewedFinding.summary}</p>
+                      <p className="published-evidence-limit">{historicalEvidenceLimitation}</p>
+                    </figcaption>
+                  </figure>
+                ) : null}
+              </>
             )}
           </section>
 
