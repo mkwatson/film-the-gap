@@ -64,6 +64,15 @@ describe('GET /api/health', () => {
     });
   });
 
+  it('uses the reviewed fallback when Vercel exposes an invalid Git identity', async () => {
+    process.env.VERCEL_GIT_COMMIT_SHA = '';
+    process.env.WEBMCP_RELEASE_COMMIT_SHA = 'e'.repeat(40);
+
+    await expect(GET().json()).resolves.toMatchObject({
+      commit: 'e'.repeat(40),
+    });
+  });
+
   it('prefers Vercel Git identity over an explicit release fallback', async () => {
     process.env.VERCEL_GIT_COMMIT_SHA = 'c'.repeat(40);
     process.env.WEBMCP_RELEASE_COMMIT_SHA = 'd'.repeat(40);

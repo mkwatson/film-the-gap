@@ -29,9 +29,9 @@ function commitSha(value: string | undefined): string | null {
 
 export function GET(): Response {
   const evidenceRoomOrigin = normalizedOrigin(process.env.NEXT_PUBLIC_EVIDENCE_ROOM_URL);
-  const commit = commitSha(
-    process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.WEBMCP_RELEASE_COMMIT_SHA,
-  );
+  const commit =
+    commitSha(process.env.VERCEL_GIT_COMMIT_SHA) ??
+    commitSha(process.env.WEBMCP_RELEASE_COMMIT_SHA);
   return Response.json(
     {
       ok: true,
