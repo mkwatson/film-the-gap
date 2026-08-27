@@ -52,6 +52,31 @@ The local artifact has now added a judge preflight, an atomic three-origin relea
 
 The resulting overnight order is: strengthen the impact proof; attempt the bounded proof-carrying capability experiment; keep it only on evidence; then spend remaining autonomous cycles on hostile tests, cold-read clarity, and release rehearsal. The order changes immediately if stable public access becomes available.
 
+### Post-rehearsal strategic audit — 2026-08-27 PT
+
+The protected Vercel build and temporary public three-origin rehearsal have now completed the authenticated crowd, camera/evidence, dynamic capability, exact UCP Cart, cancellation, and recovery lifecycle. Three independent challenger reviews reached the same decision: **do not pivot.** No clean-sheet idea found so far has enough conceptual advantage to repay the loss of this working depth before the deadline.
+
+That does not mean the present artifact maximizes winning probability. It is technically finalist-caliber but not yet submission-caliber. A protected Vercel URL, development-only Quick Tunnels, synthetic camera source, and unreleased repository are hard-gate failures no amount of additional architecture can offset. From this checkpoint onward, continuing to optimize implementation depth before judge access, physical causality, and communication would be strategically wrong.
+
+The strongest product mutation is to make the decisive missing fact directly camera-observable. “Prior repair history” is economically meaningful, but a camera cannot prove history; the seller can only attest it. Preserve the honest separation between visual evidence and seller attestation, while making a visible property—damage, a missing component, a connector, a dimension, a seal, or a functional test—the observation that visibly changes the capability frontier. Prefer an owned, rights-clean, instantly legible object. Do not change from the snowboard merely to signal Vidably; change only if a creator-gear object makes the physical proof substantially clearer in a cold test.
+
+The winning north star remains deliberately larger than commerce:
+
+> A Reality API for agents: private agents aggregate the smallest unanswered questions about the physical world; humans and creators capture exactly the missing evidence; one reviewed observation updates many private decisions and safely changes what the open web can do next.
+
+The concrete live/used-commerce wedge stays because it makes the audience, pain, value, and consequential outcome understandable in seconds. The host already embodies Vidably's strongest public idea: audience uncertainty becomes a creator brief; selected media becomes bounded, reviewed evidence; evidence changes conversion state. The best later Vidably-shaped additions are a visible creator-brief/retake loop, a portable evidence passport shown at the merchant boundary, and only then a bounded four-to-six-second evidence clip. None outranks the release and physical gates.
+
+Immediate work order:
+
+1. Graduate one permanent, unprotected, exact three-origin release and public, licensed repository.
+2. Reframe the missing observation around a fact the real phone camera visibly establishes; keep any historical assertion explicitly separate.
+3. Pass one uninterrupted physical-phone/owned-item journey in the current ChatGPT client, with the deterministic/manual review path as fallback.
+4. Build the video around a cold-open twenty-second causal slice: `8 private decisions / 0 ceilings shared` → phone publishes one fact → evidence resolves → the WebMCP hold tool appears → ChatGPT privately accepts the public quote.
+5. Cold-test the live URL, silent video, README, and testing instructions with someone unfamiliar with the project.
+6. Only after those gates are green, run one bounded high-upside experiment: creator brief/retake first, evidence passport second, short clip third.
+
+Explicitly defer voice-owned page flows, continuous livestreaming, payment/AP2, more crowd sessions, more Lean surface, another model gateway, cross-origin iframe federation, a second frontend host, and a prominent Shopify-native cart. Buyer voice through ChatGPT may improve the recording, but it is presentation transport rather than a new product branch. Sponsor products remain load-bearing only at distinct boundaries; adding one because a judge is associated with it is useful only when it strengthens the visible causal chain or independent verification.
+
 ### Authenticated-crowd frontier decision — 2026-08-27 PT
 
 **Keep it, but never make seven-tab setup part of the canonical judge path.** The solo path still starts with seven visibly labeled deterministic signals and works immediately. The ambitious proof layer replaces them one-for-one with seven unique, least-authority attendee credentials; Chrome 151 then invoked all seven joins through native page-owned Site Tools and converged on `8 live · 0 fixture`.
