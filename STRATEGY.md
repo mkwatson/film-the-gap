@@ -12,6 +12,26 @@ The official challenge asks for an app that becomes meaningfully better when peo
 
 Sources: [challenge page](https://openai.com/webmcp-challenge/), [Devpost](https://webmcp.devpost.com/), [resources and FAQ](https://webmcp.devpost.com/resources), [WebMCP draft](https://webmachinelearning.github.io/webmcp/), [OpenAI showcase](https://developers.openai.com/showcase?view=webmcp-apps), the living [resource ledger](RESOURCES.md), [sponsor-product atlas](SPONSOR-PRODUCTS.md), [platform decision record](PLATFORMS.md), and [judge intelligence map](JUDGES.md).
 
+## Strategic reset — generic product-evidence network — 2026-08-27
+
+The current build target is no longer a used-product marketplace or a Whatnot-style live-shopping app. It is a standalone evidence layer for **any product**:
+
+> Ask whether a product really does something. The system searches permitted product pages, social video, and the open web for claim-specific proof. If the proof is missing, WebMCP turns the exact gap into a short filming mission for a person who has the product. Their reviewed video becomes reusable evidence, and the agent's answer visibly changes with a timestamped citation.
+
+This reset broadens the audience from sellers and secondhand buyers to every shopper, manufacturer, retailer, reviewer, creator, product owner, and shopping agent. New products are the default framing. Commerce is an optional downstream consumer, not the product's identity. The submission remains independent: no Vidably name, private code, data, or runtime is required, although the public product direction is naturally adjacent to Vidably's video intelligence work.
+
+The product contract is data-driven: a judge can enter an unseen product name, optional public URL, and observable question without adding code. Sources carry explicit rights, provenance, continuity, confidence, and timestamp citations. Marketing text can identify a claim but cannot prove a physical behavior. Only reviewed, claim-specific evidence with usable rights changes the answer.
+
+The judge path must support three honest rungs:
+
+1. **Immediate:** a resettable, deterministic, rights-clean replay completes the whole causal loop with no login or external dependency.
+2. **Memorable:** a QR or share link lets a second person use a phone to record, review, and publish a real bounded observation into the same case.
+3. **Ambitious:** permitted source discovery and claim extraction find what the web already shows before interrupting a human; missing proof becomes a reusable public request.
+
+Every rung must preserve the earlier one. Dynamic WebMCP is central rather than decorative: the missing-proof state exposes mission creation; an open mission removes duplicate creation; reviewed evidence adds an answer-change inspection tool. Private shopper context stays in ChatGPT because the website's schema has no identity, budget, history, or private-preference field.
+
+The current default fixture is a rights-clean travel-bottle leak test because a continuous ten-second inversion is instantly understandable, physically observable, and impossible to establish from “leak resistant” copy alone. It is a fixture, not a product-specific architecture or proposed project name.
+
 ## Strategic reset — 2026-08-26
 
 ### Decision

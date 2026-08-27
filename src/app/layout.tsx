@@ -4,8 +4,9 @@ import type { ReactNode } from 'react';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Agent-attended live market',
-  description: 'A WebMCP walking skeleton for evidence-directed live commerce.',
+  title: 'Product evidence network · WebMCP Challenge',
+  description:
+    'Ask any product question, find the missing proof, and let people with the product record the evidence an agent needs.',
 };
 
 interface RootLayoutProps {

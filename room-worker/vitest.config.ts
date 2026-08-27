@@ -135,6 +135,31 @@ async function mockUcpMerchant(request: Request): Promise<Response> {
   });
 }
 
+async function mockCloudflareStream(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  if (request.method === 'POST' && url.pathname === '/direct-upload') {
+    return json({
+      uploadId: '0123456789abcdef0123456789abcdef',
+      uploadUrl: 'https://upload.videodelivery.net/0123456789abcdef0123456789abcdef',
+    });
+  }
+  if (request.method === 'GET' && url.pathname === '/videos/0123456789abcdef0123456789abcdef') {
+    return json({
+      uploaded: true,
+      readyToStream: true,
+      status: 'ready',
+      durationSeconds: 10,
+      previewUrl:
+        'https://customer-demo.cloudflarestream.com/0123456789abcdef0123456789abcdef/watch',
+      thumbnailUrl:
+        'https://customer-demo.cloudflarestream.com/0123456789abcdef0123456789abcdef/thumbnails/thumbnail.jpg',
+      hlsPlaybackUrl:
+        'https://customer-demo.cloudflarestream.com/0123456789abcdef0123456789abcdef/manifest/video.m3u8',
+    });
+  }
+  return json({ error: 'not_found' }, 404);
+}
+
 export default defineConfig({
   plugins: [
     cloudflareTest({
@@ -147,6 +172,7 @@ export default defineConfig({
         },
         serviceBindings: {
           UCP_OUTBOUND: mockUcpMerchant,
+          STREAM_OUTBOUND: mockCloudflareStream,
         },
       },
     }),

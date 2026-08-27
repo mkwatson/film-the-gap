@@ -10,6 +10,25 @@ Research state: 2026-08-27 PT. H1-H4 were frozen before the Rung 2 implementatio
 - Historical limitation: `41ab726` received, stored, displayed, and returned `maxAllInPrice`. That is now a positive leakage control, not the current contract.
 - Runtime boundary: the complete typed native sequence passes in isolated Chrome and ChatGPT desktop 26.820.60940 with GPT-5.6 Sol. The current compact contract additionally passes Chrome 151 over public HTTPS with a separately authenticated host tab, live OIDC-backed structured vision, truthful negative-evidence gating, stale refusal, exact hold, and release. Realtime voice transport/transcription/delegation passes, but the delegated task did not inherit the UI-owned Browser binding. A permanent room origin, current-contract ChatGPT rerun, Mark's normal Chrome profile, rights-cleared physical-camera acceptance, and a real phone on a second network remain open gates.
 
+## E16 — Generic proof-demand loop
+
+**Frozen claim:** A product-independent question → source gap → bounded filming mission → reviewed observation → changed answer loop will be clearer, broader, and more competitive than centering the submission on a used-product live market, while retaining the strongest WebMCP, privacy, provenance, and human-agent collaboration primitives already developed.
+
+**Pass criteria:**
+
+- an unfamiliar judge can open a case for an unseen product without a code change;
+- the initial answer distinguishes an indexed claim from sufficient observable proof;
+- native WebMCP exposes only state-valid actions and keeps identity, budget, purchase history, and private preferences out of every input schema;
+- a mission specifies a bounded recording instruction, acceptance criterion, minimum duration, and continuity requirement;
+- reviewed evidence records rights, provenance, confidence, attribution, and a timestamped claim citation;
+- publishing a supporting or contradicting observation visibly changes the answer and adds an inspectable answer-diff tool;
+- the deterministic replay is explicitly labeled, while the same transition can be fulfilled from a real phone through a no-login link; and
+- the complete core remains reliable when source search, model inference, video hosting, or commerce is unavailable.
+
+**Fail criteria:** The arbitrary-product input merely changes labels around hard-coded logic; a model or marketing claim becomes authoritative without reviewed evidence; the phone handoff is fragile or required for baseline judging; WebMCP tools do not materially change with evidence state; or the broader story becomes harder to understand than the live-market control.
+
+**Current result:** The local first rung passes strict model and Site Tool tests, component tests, real Chrome tool registration, desktop and 390 px visual checks, and the complete 3 → 2 → 3 dynamic tool lifecycle. The replay is honestly labeled. Persistence, the remote phone link, media storage, and source discovery remain open and must be implemented in that order.
+
 ## What changed in the evidence
 
 1. The [official challenge page](https://openai.com/webmcp-challenge/) asks for an app that becomes meaningfully better when people and agents use it together. The [Devpost gallery](https://webmcp.devpost.com/project-gallery) was still unpublished on August 26, while the last same-day refresh showed 1,717 participants. We cannot novelty-check private entries, so the interaction itself must be structurally memorable.

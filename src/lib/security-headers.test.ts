@@ -52,4 +52,19 @@ describe('app security headers', () => {
     expect(hostHeaders).toContainEqual({ key: 'Referrer-Policy', value: 'no-referrer' });
     expect(hostHeaders).toContainEqual({ key: 'X-Content-Type-Options', value: 'nosniff' });
   });
+
+  it('allows creator uploads and Stream playback only on explicitly enabled surfaces', () => {
+    const defaultPolicy = buildContentSecurityPolicy({ development: false });
+    const contributorPolicy = buildContentSecurityPolicy({
+      development: false,
+      allowCreatorUpload: true,
+      allowStreamPlayback: true,
+    });
+
+    expect(defaultPolicy).not.toContain('upload.videodelivery.net');
+    expect(defaultPolicy).not.toContain('cloudflarestream.com');
+    expect(contributorPolicy).toContain("connect-src 'self' https://upload.videodelivery.net");
+    expect(contributorPolicy).toContain("frame-src 'self' https://*.cloudflarestream.com");
+    expect(contributorPolicy).toContain("media-src 'self' blob: https://*.cloudflarestream.com");
+  });
 });

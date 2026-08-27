@@ -27,8 +27,11 @@ import {
   readUcpRoomConfiguration,
   ucpIdempotencyKey,
 } from './commerce';
+import { routeProductEvidenceRequest, type ProductEvidenceWorkerEnv } from './product-evidence';
 
-export interface WorkerEnv {
+export { ProductEvidenceCaseObject } from './product-evidence';
+
+export interface WorkerEnv extends ProductEvidenceWorkerEnv {
   readonly ROOMS: DurableObjectNamespace<EvidenceRoom>;
   readonly CF_VERSION_METADATA: WorkerVersionMetadata;
   readonly ALLOWED_ORIGINS: string;
@@ -232,7 +235,7 @@ function corsHeaders(request: Request, env: WorkerEnv): HeadersInit {
   }
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     Vary: 'Origin',
   };
@@ -894,6 +897,14 @@ async function route(request: Request, env: WorkerEnv): Promise<Response> {
   }
   if (!requestOriginAllowed(request, env)) {
     return jsonResponse({ error: 'origin_not_allowed' }, 403);
+  }
+  const evidenceResponse = await routeProductEvidenceRequest(
+    request,
+    env,
+    corsHeaders(request, env),
+  );
+  if (evidenceResponse !== null) {
+    return evidenceResponse;
   }
   if (request.method === 'OPTIONS' && url.pathname === '/rooms') {
     return new Response(null, { status: 204, headers: corsHeaders(request, env) });

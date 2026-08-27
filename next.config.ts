@@ -18,11 +18,28 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/',
-        headers: [...buildAppSecurityHeaders({ ...commonOptions, allowCamera: false })],
+        headers: [
+          ...buildAppSecurityHeaders({
+            ...commonOptions,
+            allowCamera: false,
+            allowStreamPlayback: true,
+          }),
+        ],
       },
       {
         source: '/host',
         headers: [...buildAppSecurityHeaders({ ...commonOptions, allowCamera: true })],
+      },
+      {
+        source: '/contribute/:path*',
+        headers: [
+          ...buildAppSecurityHeaders({
+            ...commonOptions,
+            allowCamera: true,
+            allowCreatorUpload: true,
+            allowStreamPlayback: true,
+          }),
+        ],
       },
     ];
   },

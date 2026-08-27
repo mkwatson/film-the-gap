@@ -1,5 +1,5 @@
-import { LiveMarket } from '@/components/live-market';
+import { ProductEvidenceNetwork } from '@/components/product-evidence-network';
 
 export default function Page(): React.JSX.Element {
-  return <LiveMarket />;
+  return <ProductEvidenceNetwork />;
 }

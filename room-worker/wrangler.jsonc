@@ -9,6 +9,10 @@
         "name": "ROOMS",
         "class_name": "EvidenceRoom",
       },
+      {
+        "name": "CASES",
+        "class_name": "ProductEvidenceCaseObject",
+      },
     ],
   },
   "exports": {
@@ -16,13 +20,21 @@
       "type": "durable-object",
       "storage": "sqlite",
     },
+    "ProductEvidenceCaseObject": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
   },
   "version_metadata": {
     "binding": "CF_VERSION_METADATA",
   },
+  "stream": {
+    "binding": "STREAM",
+  },
   "vars": {
     "ALLOWED_ORIGINS": "http://localhost:3000,http://127.0.0.1:3000",
     "ROOM_TTL_SECONDS": "7200",
+    "EVIDENCE_CASE_TTL_SECONDS": "86400",
   },
   "observability": {
     "enabled": true,

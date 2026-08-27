@@ -6,6 +6,8 @@ export interface AppSecurityHeader {
 interface ContentSecurityPolicyOptions {
   readonly evidenceRoomUrl?: string;
   readonly development: boolean;
+  readonly allowCreatorUpload?: boolean;
+  readonly allowStreamPlayback?: boolean;
 }
 
 interface AppSecurityHeaderOptions extends ContentSecurityPolicyOptions {
@@ -37,18 +39,23 @@ function evidenceRoomConnectSources(value: string | undefined): readonly string[
 export function buildContentSecurityPolicy({
   evidenceRoomUrl,
   development,
+  allowCreatorUpload = false,
+  allowStreamPlayback = false,
 }: ContentSecurityPolicyOptions): string {
   const connectSources = [
     "'self'",
     ...evidenceRoomConnectSources(evidenceRoomUrl),
+    ...(allowCreatorUpload ? ['https://upload.videodelivery.net'] : []),
     ...(development ? ['ws:'] : []),
   ];
+  const streamSource = 'https://*.cloudflarestream.com';
   const directives = [
     "default-src 'self'",
     `script-src 'self' 'unsafe-inline'${development ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' blob: data:",
-    "media-src 'self' blob:",
+    `img-src 'self' blob: data:${allowStreamPlayback ? ` ${streamSource}` : ''}`,
+    `media-src 'self' blob:${allowStreamPlayback ? ` ${streamSource}` : ''}`,
+    `frame-src 'self'${allowStreamPlayback ? ` ${streamSource}` : ''}`,
     "font-src 'self' data:",
     `connect-src ${connectSources.join(' ')}`,
     "worker-src 'self' blob:",
@@ -62,6 +69,8 @@ export function buildContentSecurityPolicy({
 
 export function buildAppSecurityHeaders({
   allowCamera,
+  allowCreatorUpload,
+  allowStreamPlayback,
   evidenceRoomUrl,
   development,
 }: AppSecurityHeaderOptions): readonly AppSecurityHeader[] {
@@ -71,6 +80,8 @@ export function buildAppSecurityHeaders({
       value: buildContentSecurityPolicy({
         ...(evidenceRoomUrl === undefined ? {} : { evidenceRoomUrl }),
         development,
+        ...(allowCreatorUpload === undefined ? {} : { allowCreatorUpload }),
+        ...(allowStreamPlayback === undefined ? {} : { allowStreamPlayback }),
       }),
     },
     {
