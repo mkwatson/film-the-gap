@@ -8,6 +8,7 @@ export default defineConfig([
   ...nextTypeScript,
   prettier,
   globalIgnores([
+    '.vercel/**',
     '.next/**',
     'coverage/**',
     'node_modules/**',

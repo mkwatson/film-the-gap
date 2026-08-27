@@ -12,7 +12,7 @@ Updated 2026-08-27 PT. This runbook prepares—but does not authorize—the exte
 
 The two Workers intentionally use separate origins and separate Durable Object authorities. This is useful sponsor leverage, but more importantly it makes the product claim real: the evidence page cannot manufacture the merchant's authoritative Cart.
 
-Every public surface exposes a non-secret build receipt. Vercel reports the Git-triggered `VERCEL_GIT_COMMIT_SHA`; each Worker reports Cloudflare's version ID, version tag, and timestamp through the current [version metadata binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/version-metadata/). `pnpm release:verify` refuses to certify a release unless all three surfaces match one reviewed 40-character commit.
+Every public surface exposes a non-secret build receipt. Vercel reports the Git-triggered `VERCEL_GIT_COMMIT_SHA`; an intentionally prebuilt artifact may instead receive the exact reviewed commit as `WEBMCP_RELEASE_COMMIT_SHA`. The platform value wins if both exist. Each Worker reports Cloudflare's version ID, version tag, and timestamp through the current [version metadata binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/version-metadata/). `pnpm release:verify` refuses to certify a release unless all three surfaces match one reviewed 40-character commit.
 
 ## Current platform facts that affect this release
 
@@ -20,9 +20,11 @@ Every public surface exposes a non-secret build receipt. Vercel reports the Git-
 - Cloudflare's current [Preview URLs documentation](https://developers.cloudflare.com/workers/versions-and-deployments/preview-urls/) explicitly says preview URLs are not generated for Workers that implement Durable Objects. These Workers therefore do not claim a preview-promotion path.
 - A Vercel production build can be staged without assigning the production domain by using `vercel --prod --skip-domain`, then promoted. Vercel also documents that promoting a Preview-environment deployment creates a new Production deployment, so a Preview build is not treated as the identical production artifact. See [Deploying from CLI](https://vercel.com/docs/cli/deploying-from-cli) and [`vercel promote`](https://vercel.com/docs/cli/promote).
 - Vercel generated URLs are public by default but may be protected by project settings. The final judge origin must not require Vercel Authentication, a share parameter, password, trusted IP, or automation-bypass header. See [Generated URLs](https://vercel.com/docs/deployments/generated-urls) and [Deployment Protection](https://vercel.com/docs/deployment-protection/methods-to-protect-deployments).
-- Vercel only supplies `VERCEL_GIT_COMMIT_SHA` for a Git-associated deployment when system environment variables are exposed. Confirm that project setting before release. See [System environment variables](https://vercel.com/docs/environment-variables/system-environment-variables).
+- Vercel only supplies `VERCEL_GIT_COMMIT_SHA` for a Git-associated deployment when system environment variables are exposed. It is not automatically available to `--prebuilt` deployments. Confirm the project setting before release and use the explicit fallback only for an artifact built from a separately verified clean commit. See [System environment variables](https://vercel.com/docs/environment-variables/system-environment-variables) and [prebuilt deployments](https://vercel.com/docs/deployments/configure-a-build#prebuilt-deployments).
 
 Verified local release clients on 2026-08-27: Wrangler `4.127.0` in both Worker packages and Vercel CLI `54.14.2`. Recheck the current first-party docs and installed versions on release day.
+
+The August 27 protected-Preview rehearsal reached `READY` from clean commit `676ca66aac0b47cd5b65446eca5be54425119d1d`, and authenticated inspection rendered the buyer, host, UCP discovery, and health routes. It deliberately did **not** graduate the release: Preview protection remains enabled, the stable production alias has no live deployment, the Preview room variable is present but empty, and Wrangler is not authenticated to the intended account. See E12 in `EXPERIMENTS.md`.
 
 ## One-time account setup — Mark present
 
@@ -67,7 +69,7 @@ There is no existing judge traffic during the initial release, so deploy depende
 
    Record the room Worker version ID. Never deploy the checked-in localhost-only room variables as production configuration.
 
-3. Create a Production-environment Vercel deployment from `RELEASE_SHA` with `--skip-domain`, or from that exact Git reference in the dashboard. Inspect the unique deployment and `/api/health`; its `commit` must equal `RELEASE_SHA` and `evidenceRoomOrigin` must equal `ROOM_ORIGIN`.
+3. Create a Production-environment Vercel deployment from `RELEASE_SHA` with `--skip-domain`, or from that exact Git reference in the dashboard. Prefer the Git-associated path. If a reviewed prebuilt artifact is deliberately used, make the public room origin available during `vercel build` because `NEXT_PUBLIC_` values are compiled into the client, and pass the exact SHA to the deployed runtime. Inspect the unique deployment and `/api/health`; its `commit` must equal `RELEASE_SHA` and `evidenceRoomOrigin` must equal `ROOM_ORIGIN`.
 4. Promote the staged Production build to `APP_ORIGIN`. Do not promote a Preview-environment build under the assumption that it is the identical artifact; current Vercel behavior creates a new Production deployment in that case.
 
 An equivalent initial Worker command shape is shown below. Fill the variables in the shell first and inspect them; do not paste placeholders into a deployment:
@@ -84,6 +86,16 @@ pnpm --dir room-worker exec wrangler deploy \
   --var "UCP_VARIANT_ID:urn:webmcp-evidence-market:product-variant:live-inspected-board-156" \
   --var "UCP_PLATFORM_PROFILE_URL:$APP_ORIGIN/.well-known/ucp"
 ```
+
+If and only if the reviewed release uses a prebuilt Vercel artifact, the corresponding command shape is:
+
+```bash
+vercel env run -e production -- vercel build --prod
+vercel deploy --prebuilt --prod --skip-domain \
+  -e "WEBMCP_RELEASE_COMMIT_SHA=$RELEASE_SHA"
+```
+
+Before building, confirm that the Production value of `NEXT_PUBLIC_EVIDENCE_ROOM_URL` is non-empty and exactly equals `ROOM_ORIGIN`. A local production-start experiment proved that changing this variable after `next build` changes neither the client bundle nor `/api/health`; both retain the build-time origin. The explicit release SHA remains runtime-readable. Rebuild—never add a deploy-time room override—if the health origin is wrong.
 
 ## Mandatory public verification
 

@@ -619,3 +619,30 @@ Results:
 - The resulting ten-phase native journey passes in roughly 8.5 seconds, including the new stale-handle and reload assertions. The call that removed its own capability still returned successfully, and the stale second call did not reach the domain mutation.
 
 Decision: keep the keyed lifecycle and structured free-text omission. They directly strengthen WebMCP Leverage and Execution, align with current Chrome guidance, add no visible hero complexity, and reduce a class of framework-specific failures a judge could encounter. Preserve the broader claim boundary: prompt injection cannot be guaranteed away by a page, and final behavior still needs the exact judged ChatGPT client on stable origins.
+
+### E12 — Protected Vercel release rehearsal
+
+Frozen claim:
+
+> One clean reviewed commit can become an inspectable Vercel artifact with truthful commit and evidence-room receipts, without weakening deployment protection or pretending a fallback build is the final three-origin release.
+
+Status: **protected-artifact pass; stable three-origin production release remains user-gated.**
+
+Protocol:
+
+1. Link the existing Vercel project, build the clean `676ca66aac0b47cd5b65446eca5be54425119d1d` checkpoint with the current project environment, and deploy it only as a protected Preview.
+2. Use authenticated Vercel inspection—not a share token or disabled protection—to verify `/`, `/host`, `/.well-known/ucp`, and `/api/health` on the immutable artifact.
+3. Require the health receipt to distinguish an absent Git-associated system SHA from an explicitly supplied reviewed release SHA, and require an empty or malformed room origin to stay visibly unconfigured.
+4. Audit the production alias, Preview room variable, and Cloudflare authentication state before claiming a public release.
+
+Results:
+
+- Two clean protected Preview artifacts reached `READY`; the app, host, UCP discovery, and health routes rendered through authenticated `vercel curl`.
+- The first prebuilt artifact correctly exposed `commit: null`: Vercel documents that system Git metadata is unavailable to prebuilt deployments unless supplied before the build/deploy boundary. It also exposed `evidenceRoomConfigured: false` rather than inventing an authority.
+- A second artifact received the exact reviewed SHA as explicit runtime release metadata and reported the full `676ca66aac0b47cd5b65446eca5be54425119d1d` receipt. The Preview `NEXT_PUBLIC_EVIDENCE_ROOM_URL` exists but is empty, so the buyer honestly retains its local fallback instead of claiming the remote room path.
+- The stable Vercel production alias currently has no live deployment, both Preview artifacts remain protected, and Wrangler is not authenticated to the intended Cloudflare account. Those are real user-only release gates, not implementation failures to bypass with temporary accounts, protection exceptions, or tailnet origins.
+- The app health contract now accepts `WEBMCP_RELEASE_COMMIT_SHA` only as a fallback when Vercel's Git SHA is absent. Tests prove the platform SHA wins when both exist and malformed metadata cannot silently become a valid receipt.
+- A production-start probe built with `https://build-room.example`, then started with `https://runtime-room.example`; `/api/health` retained the build origin while adopting the runtime release SHA. This proves the health receipt attests to the room origin compiled into the Next.js bundle and that a bad public origin requires a rebuild, not a deploy-time override.
+- The rehearsal exposed a local quality-gate leak: Vercel's ignored `.vercel/output` bundle was still traversed by ESLint. The flat lint configuration now ignores that generated tree explicitly; `pnpm check` passes from the post-deployment workspace rather than only before a Vercel build.
+
+Decision: keep protected Preview deployment as build evidence only. Before the final release, set a non-empty Production room origin at build time, use a Git-associated artifact when possible (or the explicit reviewed SHA fallback for a deliberate prebuilt release), authenticate Cloudflare with Mark present, and run the complete public verifier plus native/ChatGPT/phone gates on three permanent unprotected origins. Never submit the protected Preview or a Tailscale URL.
