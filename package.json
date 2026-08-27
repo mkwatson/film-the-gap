@@ -16,10 +16,10 @@
     "test:merchant": "pnpm --dir merchant-worker test",
     "test:ucp-schema": "UCP_RELEASE_SCHEMA_LIVE=1 vitest run src/lib/ucp/released-schema.live.test.ts",
     "test:watch": "vitest",
-    "acceptance:native": "node --experimental-strip-types scripts/native-browser-acceptance.ts",
-    "release:verify": "node --experimental-strip-types scripts/release-preflight-cli.ts",
-    "proof:generate": "node --experimental-strip-types scripts/proof-receipt-cli.ts --write",
-    "proof:verify": "node --experimental-strip-types scripts/proof-receipt-cli.ts --check",
+    "acceptance:native": "tsx scripts/native-browser-acceptance.ts",
+    "release:verify": "tsx scripts/release-preflight-cli.ts",
+    "proof:generate": "tsx scripts/proof-receipt-cli.ts --write",
+    "proof:verify": "tsx scripts/proof-receipt-cli.ts --check",
     "room:dev": "pnpm --dir room-worker dev",
     "room:build": "pnpm --dir room-worker build",
     "merchant:dev": "pnpm --dir merchant-worker dev",
@@ -56,6 +56,7 @@
     "jsdom": "^30.0.1",
     "prettier": "^3.9.6",
     "typescript": "^5.9.3",
+    "tsx": "4.23.12",
     "vitest": "^4.1.11",
     "webmcp-types": "0.1.5"
   }
