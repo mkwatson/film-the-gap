@@ -1,6 +1,6 @@
 # Public release and rollback runbook
 
-Updated 2026-08-27 PT. This runbook prepares—but does not authorize—the external release. Mark has approved the repository's MIT license; repository publication, account/terms acceptance, and the first production deployment remain explicit external actions.
+Updated 2026-08-27 PT. The public MIT repository is live at [github.com/mkwatson/webmcp-evidence-market](https://github.com/mkwatson/webmcp-evidence-market). Account/terms acceptance and the first permanent production deployment remain explicit external actions.
 
 ## Release topology
 
@@ -31,7 +31,7 @@ The August 27 protected-Preview rehearsal reached `READY` from clean commit `676
 These steps mutate external systems and must not be performed unattended.
 
 1. Confirm the approved MIT `LICENSE` remains detectable at the repository root.
-2. Create the public GitHub, GitLab, or Bitbucket repository and push the complete challenge-period history. Record its URL in `SUBMISSION.md`.
+2. **Complete:** the public GitHub repository contains the challenge-period `main` history, and its URL is recorded in `SUBMISSION.md`.
 3. Import that repository into one Vercel project. Record its stable production origin as `APP_ORIGIN`. Enable automatic system environment variables and confirm `VERCEL_GIT_COMMIT_SHA` is available. Leave the final production domain completely unprotected.
 4. Authenticate Wrangler to the intended Cloudflare account and accept any required terms. Confirm the stable `workers.dev` or custom origins for `webmcp-evidence-rooms` and `webmcp-evidence-merchant-preview`; record them as `ROOM_ORIGIN` and `MERCHANT_ORIGIN`.
 5. In the Vercel Production environment, set `NEXT_PUBLIC_EVIDENCE_ROOM_URL` to `ROOM_ORIGIN`. Enable Vercel OIDC for AI Gateway if available; do not add a long-lived model key merely to remove the judge-safe manual review path.

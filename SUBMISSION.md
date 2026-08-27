@@ -11,7 +11,7 @@ The official FAQ says the entrant—not AI—must name the project. The descript
 | Project name             | **[MARK CHOOSES — AI MUST NOT NAME]**                                                                           |
 | One-line hook            | Private agents ask the physical world for the smallest missing fact—without revealing what each buyer will pay. |
 | Live buyer URL           | **[FINAL PUBLIC HTTPS URL]**                                                                                    |
-| Public repository        | **[FINAL PUBLIC REPOSITORY URL]**                                                                               |
+| Public repository        | [github.com/mkwatson/webmcp-evidence-market](https://github.com/mkwatson/webmcp-evidence-market)                |
 | Demo video               | **[PUBLIC YOUTUBE URL, UNDER 3:00]**                                                                            |
 | Submitted commit         | **[FULL COMMIT SHA]**                                                                                           |
 | Primary judged clients   | ChatGPT in-app Browser; Chrome 149+ with WebMCP enabled                                                         |
@@ -154,11 +154,11 @@ Capture two backup cuts:
 - [ ] Mark confirms entrant/team/representative and eligibility facts.
 - [x] Mark approved the MIT license; the exact copyright holder is Mark Watson.
 - [x] Top-level `LICENSE` exists and package metadata declares `MIT`.
-- [ ] The public repository host detects and displays the MIT license.
+- [x] The public repository host detects and displays the MIT license.
 - [ ] Public repository description and About panel link to the live URL.
-- [ ] Full challenge-period history begins August 26 and remains visible.
-- [ ] `document.modelContext.registerTool` is easy to find from the README.
-- [ ] No secrets, private cart/room URLs, customer data, Vidably material, or local machine paths appear in tracked files/history.
+- [x] Full challenge-period history begins August 26 and remains visible.
+- [x] `document.modelContext.registerTool` is easy to find from the README.
+- [x] No secrets, private cart/room URLs, customer data, Vidably material, or local machine paths appear in tracked files/history.
 - [ ] Every image, physical object, font, sound, clip, and logo in the video is owned, licensed, or omitted.
 - [ ] Public clean clone passes `pnpm install --frozen-lockfile`, `pnpm check`, and both Worker dry-runs.
 - [ ] `pnpm test:ucp-schema` passes against the same released UCP version.
@@ -172,10 +172,10 @@ Capture two backup cuts:
 
 Local repository audit, 2026-08-27 PT:
 
-- The dated history begins August 26, the challenge start date, and the current branch has no remote.
+- The dated history begins August 26, the challenge start date, and `main` is public at [github.com/mkwatson/webmcp-evidence-market](https://github.com/mkwatson/webmcp-evidence-market).
 - The current tracked tree contains zero high-confidence API-key/private-key signatures, no absolute user path, and no private tailnet hostname. Native WebMCP registration is linked directly from the README.
 - Two historical patch lines contain the development tailnet hostname. Before publishing, either preserve them as non-secret dated acceptance evidence or redact them with a recoverable history rewrite; do not accidentally squash away the challenge-period history.
-- MIT is present at the repository root with Mark Watson as copyright holder. Public-host license detection remains part of the publication gate.
+- MIT is present at the repository root with Mark Watson as copyright holder, and GitHub detects it as an MIT repository license.
 
 ## User-only final actions
 
@@ -184,6 +184,6 @@ These actions require Mark's identity, legal assent, account session, or explici
 1. Choose the public project name.
 2. Confirm whether the entrant is Mark individually, a team, or an organization, and appoint the representative if needed.
 3. Complete any one-time Cloudflare account authentication or terms acceptance needed for permanent no-cost deployment.
-4. Approve creation/push of the public repository and verify its license detection.
+4. **Complete:** repository publication was approved, pushed, and verified with GitHub MIT-license detection on August 27.
 5. Approve the final rights-clean YouTube upload.
 6. Review and submit the Devpost entry before **September 3, 2026 at 1:00 p.m. PT**.
