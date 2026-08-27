@@ -200,7 +200,8 @@ describe('evidence room worker', () => {
       revision: 3,
       state: { lot: { evidence: { repairHistory: 'none' } } },
     });
-    expect(JSON.stringify(resolved)).not.toContain('450');
+    expect(JSON.stringify(resolved)).not.toContain('$450');
+    expect(JSON.stringify(resolved)).not.toContain('maxAllInPrice');
   });
 
   it('rejects role escalation, stale writes, and replays duplicates idempotently', async () => {
@@ -243,6 +244,20 @@ describe('evidence room worker', () => {
     send(buyer.socket, scopeMessage);
     expect(await commandResult(buyer)).toMatchObject({ duplicate: true, revision: 1 });
     expect(await roomSnapshot(buyer)).toMatchObject({ revision: 1 });
+
+    send(buyer.socket, {
+      type: 'command',
+      commandId: 'scope-once',
+      expectedRevision: 1,
+      command: { kind: 'request-repair-history', actor: 'buyer' },
+    });
+    expect(await buyer.next('room-error')).toMatchObject({
+      type: 'room-error',
+      code: 'invalid-message',
+      recoverable: false,
+      currentRevision: 1,
+      commandId: 'scope-once',
+    });
 
     send(buyer.socket, {
       type: 'command',
@@ -296,5 +311,158 @@ describe('evidence room worker', () => {
       headers: { Upgrade: 'websocket' },
     });
     expect(response.status).toBe(404);
+  });
+
+  it('gates an anonymous UCP cart behind evidence and keeps its credential server-private', async () => {
+    const outbound = workerEnv.UCP_OUTBOUND;
+    if (outbound === undefined) {
+      throw new Error('Expected the test UCP service binding.');
+    }
+    const credentials = await createRoom();
+    const buyer = await connect(credentials, 'buyer');
+    const host = await connect(credentials, 'host');
+    await buyer.next('room-snapshot');
+
+    send(buyer.socket, {
+      type: 'command',
+      commandId: 'ucp-scope',
+      expectedRevision: 0,
+      command: {
+        kind: 'set-evidence-requirements',
+        actor: 'agent',
+        requirements: defaultEvidenceRequirements,
+      },
+    });
+    await commandResult(buyer);
+    await roomSnapshot(buyer);
+    await roomSnapshot(host);
+
+    send(buyer.socket, {
+      type: 'command',
+      commandId: 'ucp-request',
+      expectedRevision: 1,
+      command: { kind: 'request-repair-history', actor: 'agent' },
+    });
+    await commandResult(buyer);
+    await roomSnapshot(buyer);
+    await roomSnapshot(host);
+
+    send(host.socket, {
+      type: 'command',
+      commandId: 'ucp-answer',
+      expectedRevision: 2,
+      command: { kind: 'answer-repair-history', repairHistory: 'none' },
+    });
+    await commandResult(host);
+    await roomSnapshot(host);
+    await roomSnapshot(buyer);
+
+    send(buyer.socket, {
+      type: 'command',
+      commandId: 'ucp-hold',
+      expectedRevision: 3,
+      command: { kind: 'reserve-current-lot', actor: 'agent', expectedAllInPrice: 423 },
+    });
+    await commandResult(buyer);
+    await roomSnapshot(buyer);
+    await roomSnapshot(host);
+
+    const prepareMessage = {
+      type: 'command',
+      commandId: 'ucp-prepare-once',
+      expectedRevision: 4,
+      command: { kind: 'prepare-merchant-cart', actor: 'agent' },
+    } as const satisfies RemoteRoomClientMessage;
+    send(buyer.socket, prepareMessage);
+    const prepareResult = await commandResult(buyer);
+    expect(prepareResult.ok, prepareResult.message).toBe(true);
+    expect(prepareResult).toMatchObject({
+      duplicate: false,
+      revision: 5,
+      privateResult: {
+        kind: 'ucp-cart-handoff',
+        continueUrl: 'https://merchant.example/cart/c/private-test-cart',
+      },
+    });
+    const prepared = await roomSnapshot(buyer);
+    await roomSnapshot(host);
+    expect(prepared).toMatchObject({
+      revision: 5,
+      state: {
+        commerce: {
+          available: true,
+          protocolVersion: '2026-04-08',
+          merchantOrigin: 'https://merchant.example',
+          cartStatus: 'active',
+          receipt: {
+            currency: 'USD',
+            totals: [
+              { type: 'subtotal', displayText: 'Subtotal', amount: 37500 },
+              { type: 'total', displayText: 'Total', amount: 37500 },
+            ],
+            continuationAvailable: true,
+          },
+        },
+      },
+    });
+    expect(JSON.stringify(prepared)).not.toContain('private-test-cart');
+
+    send(host.socket, {
+      type: 'command',
+      commandId: 'ucp-prepare-once',
+      expectedRevision: 5,
+      command: { kind: 'answer-repair-history', repairHistory: 'none' },
+    });
+    expect(await host.next('room-error')).toMatchObject({
+      type: 'room-error',
+      code: 'invalid-message',
+      recoverable: false,
+      currentRevision: 5,
+      commandId: 'ucp-prepare-once',
+    });
+
+    send(buyer.socket, prepareMessage);
+    expect(await commandResult(buyer)).toMatchObject({
+      ok: true,
+      duplicate: true,
+      revision: 5,
+      privateResult: { kind: 'ucp-cart-handoff' },
+    });
+    await roomSnapshot(buyer);
+
+    send(buyer.socket, {
+      type: 'command',
+      commandId: 'ucp-cancel',
+      expectedRevision: 5,
+      command: { kind: 'cancel-merchant-cart', actor: 'agent' },
+    });
+    expect(await commandResult(buyer)).toMatchObject({ ok: true, revision: 6 });
+    expect(await roomSnapshot(buyer)).toMatchObject({
+      revision: 6,
+      state: { commerce: { cartStatus: 'cancelled' } },
+    });
+    await roomSnapshot(host);
+
+    send(buyer.socket, prepareMessage);
+    expect(await commandResult(buyer)).toMatchObject({
+      ok: true,
+      duplicate: true,
+      revision: 5,
+      privateResult: null,
+    });
+    await roomSnapshot(buyer);
+
+    send(buyer.socket, {
+      type: 'command',
+      commandId: 'ucp-release',
+      expectedRevision: 6,
+      command: { kind: 'release-current-lot', actor: 'agent' },
+    });
+    expect(await commandResult(buyer)).toMatchObject({ ok: true, revision: 7 });
+    expect(await roomSnapshot(buyer)).toMatchObject({
+      revision: 7,
+      state: { reservation: null, commerce: { cartStatus: 'none', receipt: null } },
+    });
+    await roomSnapshot(host);
   });
 });

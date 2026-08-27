@@ -73,8 +73,8 @@ const toolCallResultSchema = z.looseObject({
 });
 
 const merchantTotalSchema = z.looseObject({
-  type: z.string().min(1),
-  display_text: z.string().optional(),
+  type: z.string().min(1).max(160),
+  display_text: z.string().min(1).max(240).optional(),
   amount: z.number().int().safe(),
   lines: z
     .array(
@@ -87,13 +87,13 @@ const merchantTotalSchema = z.looseObject({
 });
 
 const merchantMessageSchema = z.looseObject({
-  type: z.string().min(1),
-  content: z.string(),
+  type: z.string().min(1).max(160),
+  content: z.string().max(2_000),
   code: z.string().optional(),
   path: z.string().optional(),
   image_url: z.string().url().optional(),
   url: z.string().url().optional(),
-  severity: z.string().optional(),
+  severity: z.string().min(1).max(160).optional(),
   presentation: z.string().optional(),
 });
 
@@ -103,21 +103,24 @@ const cartResponseSchema = z.looseObject({
     capabilities: z.record(z.string().min(1), z.array(z.looseObject({ version: z.string() }))),
   }),
   id: z.string().min(1).max(2_000),
-  line_items: z.array(
-    z.looseObject({
-      id: z.string().min(1).max(2_000),
-      item: z.looseObject({
+  line_items: z
+    .array(
+      z.looseObject({
         id: z.string().min(1).max(2_000),
-        title: z.string().min(1).max(1_000),
-        price: z.number().int().safe(),
+        item: z.looseObject({
+          id: z.string().min(1).max(2_000),
+          title: z.string().min(1).max(1_000),
+          price: z.number().int().safe(),
+        }),
+        quantity: z.number().int().positive().safe(),
+        subtotal: z.number().int().safe().optional(),
       }),
-      quantity: z.number().int().positive().safe(),
-      subtotal: z.number().int().safe().optional(),
-    }),
-  ),
+    )
+    .min(1)
+    .max(20),
   currency: z.string().regex(/^[A-Z]{3}$/),
-  totals: z.array(merchantTotalSchema).min(1),
-  messages: z.array(merchantMessageSchema).optional(),
+  totals: z.array(merchantTotalSchema).min(1).max(30),
+  messages: z.array(merchantMessageSchema).max(30).optional(),
   continue_url: z.string().url().optional(),
   expires_at: z.string().datetime({ offset: true }).optional(),
 });
@@ -270,7 +273,7 @@ async function fetchBusinessProfile(options: UcpClientOptions): Promise<{
   try {
     response = await (options.fetch ?? fetch)(profileUrl, {
       headers: { Accept: 'application/json' },
-      redirect: 'error',
+      redirect: 'manual',
       signal: requestSignal(options.signal, options.timeoutMs),
     });
   } catch {
@@ -311,7 +314,7 @@ async function mcpRpc(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ jsonrpc: '2.0', id, method, params }),
-      redirect: 'error',
+      redirect: 'manual',
       signal: requestSignal(options.signal, options.timeoutMs),
     });
   } catch {
@@ -508,6 +511,15 @@ export async function createUcpCart(options: CreateUcpCartOptions): Promise<Crea
     options,
   );
   const cart = cartFromToolResult(result);
+  if (
+    cart.continue_url !== undefined &&
+    new URL(cart.continue_url).origin !== negotiation.businessOrigin
+  ) {
+    throw new UcpClientError(
+      'cart-invalid',
+      'The merchant cart continuation left the negotiated merchant origin.',
+    );
+  }
 
   return {
     negotiation,

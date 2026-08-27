@@ -25,6 +25,8 @@ interface RecordedRequest {
 interface MockMerchantOptions {
   readonly includeCreateCart?: boolean;
   readonly cartProtocolVersion?: string;
+  readonly continueUrl?: string;
+  readonly cartResponse?: object;
 }
 
 function businessProfile(): object {
@@ -61,7 +63,10 @@ function toolSchema(): object {
   };
 }
 
-function cartResponse(protocolVersion: string = ucpProtocolVersion): object {
+function cartResponse(
+  protocolVersion: string = ucpProtocolVersion,
+  continueUrl = 'https://merchant.example/cart/c/test-cart',
+): object {
   return {
     ucp: {
       version: protocolVersion,
@@ -94,7 +99,7 @@ function cartResponse(protocolVersion: string = ucpProtocolVersion): object {
         content: 'Shipping is finalized during checkout.',
       },
     ],
-    continue_url: 'https://merchant.example/cart/c/test-cart',
+    continue_url: continueUrl,
   };
 }
 
@@ -150,7 +155,9 @@ function mockMerchant(options: MockMerchantOptions = {}): {
         id: request.id,
         result: {
           structuredContent: {
-            cart: cartResponse(options.cartProtocolVersion),
+            cart:
+              options.cartResponse ??
+              cartResponse(options.cartProtocolVersion, options.continueUrl),
           },
         },
       });
@@ -249,8 +256,58 @@ describe('UCP Cart client', () => {
     ).rejects.toMatchObject({ code: 'tool-missing' } satisfies Partial<UcpClientError>);
   });
 
+  it('uses portable manual redirect handling and refuses redirected discovery', async () => {
+    const fetch: UcpFetch = async (_input, init) => {
+      expect(init?.redirect).toBe('manual');
+      return new Response(null, {
+        status: 302,
+        headers: { Location: 'https://attacker.example/.well-known/ucp' },
+      });
+    };
+
+    await expect(
+      discoverUcpCartMerchant({ businessUrl, platformProfileUrl, fetch }),
+    ).rejects.toMatchObject({ code: 'profile-unavailable' } satisfies Partial<UcpClientError>);
+  });
+
   it('refuses a cart response that changes the negotiated protocol version', async () => {
     const merchant = mockMerchant({ cartProtocolVersion: '2026-01-23' });
+
+    await expect(
+      createUcpCart({
+        businessUrl,
+        platformProfileUrl,
+        fetch: merchant.fetch,
+        input: { variantId },
+      }),
+    ).rejects.toMatchObject({ code: 'cart-invalid' } satisfies Partial<UcpClientError>);
+  });
+
+  it('refuses a cart continuation that leaves the negotiated merchant origin', async () => {
+    const merchant = mockMerchant({
+      continueUrl: 'https://attacker.example/cart/c/stolen-cart',
+    });
+
+    await expect(
+      createUcpCart({
+        businessUrl,
+        platformProfileUrl,
+        fetch: merchant.fetch,
+        input: { variantId },
+      }),
+    ).rejects.toMatchObject({ code: 'cart-invalid' } satisfies Partial<UcpClientError>);
+  });
+
+  it('refuses merchant-authored receipts that exceed the public room bounds', async () => {
+    const merchant = mockMerchant({
+      cartResponse: {
+        ...cartResponse(),
+        messages: Array.from({ length: 31 }, (_, index) => ({
+          type: 'warning',
+          content: `Merchant message ${index + 1}`,
+        })),
+      },
+    });
 
     await expect(
       createUcpCart({

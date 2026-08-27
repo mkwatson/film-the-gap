@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 import { roomCommandSchema, type RoomCommand } from './room-command';
-import type { LiveMarketState } from './model';
+import type { LiveMarketState, PrivateActionResult } from './model';
 import { liveMarketStateSchema } from './room-sync';
 
-export const remoteRoomProtocolVersion = '1' as const;
+export const remoteRoomProtocolVersion = '2' as const;
 export const remoteRoomIdPattern = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/;
 
 export const roomCredentialsSchema = z.strictObject({
@@ -90,6 +90,15 @@ const roomSnapshotMessageSchema = z.strictObject({
   serverTime: z.number().int().positive(),
 });
 
+export const privateActionResultSchema = z.strictObject({
+  kind: z.literal('ucp-cart-handoff'),
+  continueUrl: z
+    .string()
+    .url()
+    .refine((value) => new URL(value).protocol === 'https:', 'Handoff must use HTTPS.'),
+  instruction: z.string().min(1).max(500),
+});
+
 const commandResultMessageSchema = z.strictObject({
   type: z.literal('command-result'),
   commandId: z.string().min(1).max(160),
@@ -97,6 +106,7 @@ const commandResultMessageSchema = z.strictObject({
   duplicate: z.boolean(),
   revision: z.number().int().nonnegative(),
   message: z.string().min(1).max(500),
+  privateResult: privateActionResultSchema.nullable(),
 });
 
 export const remoteRoomErrorCodes = [
@@ -150,6 +160,7 @@ export interface RoomCommandResultMessage {
   readonly duplicate: boolean;
   readonly revision: number;
   readonly message: string;
+  readonly privateResult: PrivateActionResult | null;
 }
 
 export interface RoomErrorMessage {

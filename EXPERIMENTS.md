@@ -366,6 +366,32 @@ Status: **current Shopify wire path proven twice; owned merchant and judged-flow
 
 This does **not** graduate E8. The public merchant was an integration control only; its trademarks/media will not enter the submission. The judged path still needs an owned development-store product with cleared media, a publicly reachable profile, Durable Object ownership of the private cart credential, visible merchant-authored receipt state, failure/expiry tests, and a human checkout handoff.
 
+#### E8.2 — Authoritative-room cart checkpoint
+
+Status: **private UCP cart authority and buyer-only handoff proven in the Workers runtime; owned merchant and public browser acceptance pending.**
+
+- The buyer's configured evidence requirements and exact-price hold now gate two new dynamic WebMCP actions: `prepare_merchant_cart` and `cancel_merchant_cart`. Neither action exists before the evidence frontier is satisfied and the reversible hold is active. An active merchant cart blocks both duplicate preparation and local hold release; cancellation restores the safe release path.
+- The Cloudflare Durable Object—not either browser—owns the UCP cart ID, idempotency, lifecycle, and merchant calls. Public room snapshots contain only a bounded merchant-authored receipt: protocol version, merchant origin, status, line labels/quantities, ordered totals, messages, and expiry. They never contain the cart ID or continuation URL.
+- A successful preparation returns the continuation URL only in the invoking buyer's command result. Host and buyer broadcasts receive the same sanitized snapshot. Duplicate replay can recover the private result only when the role, browser-client ID, and SHA-256 command digest all match; cross-role and changed-payload reuse is refused. Cancellation, reset, and expiry purge it. The URL must remain on the negotiated merchant origin.
+- The merchant request contains only the configured variant, quantity, currency/language context, public platform profile, intent, and a deterministic idempotency key. Tests reject named buyer, budget, address, payment, and credential fields. The private `$450` ceiling remains local to ChatGPT and is not an application input.
+- Browser protocol version `2` makes the new private-result envelope an explicit compatibility boundary. Local demo mode continues to refuse merchant-cart commands rather than simulate authority; the UCP panel appears only when the authoritative room is configured.
+- Cloudflare Workers rejects Fetch's `redirect: "error"` mode even though Node accepts it. The client now uses portable `redirect: "manual"` and explicitly refuses every 3xx response. The same-origin continuation check provides the second redirect/handoff guard.
+- Re-read Cloudflare's current `@cloudflare/vitest-plugin` 1.1 testing guidance on 2026-08-27 PT. The new `@msw/cloudflare` path did not intercept a fetch originating inside this Durable Object in our direct evaluation, so it was removed. A documented Miniflare service binding supplies a strict fake UCP merchant inside the same workerd process instead; production config contains no fake binding.
+- The Workers integration test completes evidence → exact hold → real UCP-shaped create → cross-role replay refusal → same-client duplicate replay → cancel → private-result purge → release. Merchant receipt cardinality and activity history are bounded to the synchronized room schema. The full gate passes 69 application tests and 7 Workers-runtime tests, zero-warning ESLint, strict TypeScript, a Wrangler 4.126.0 dry-run, and a Next.js 16.3.3 production build.
+
+This still does **not** graduate E8. The configured browser panel has not yet passed against a public owned merchant, and a private continuation must never be demonstrated with another merchant's product or media. The next acceptance rung is an isolated Shopify development-store item with original/cleared presentation, followed by public buyer/host browser execution and immediate cart cancellation. Checkout completion remains outside the hero path.
+
+#### E8.3 — Browser and native-Site-Tools checkpoint
+
+Status: **the complete configured experience passes in native Chrome against a labeled HTTPS fixture; owned Shopify replacement pending.**
+
+- Added a deliberately non-checkout UCP fixture for local browser acceptance. It advertises the current `2026-04-08` Cart profile, emits one original demo-board receipt and a same-origin handoff warning, refuses named private fields, and cannot charge or purchase. It is test-only, is absent from production Worker bindings, and is not the proposed judged merchant.
+- The human UI passed in two browser tabs backed by the actual Durable Object: buyer shares evidence requirements → requests the missing fact → separate host answers → buyer creates the exact `$423` hold → prepares the merchant cart → sees ordered `$375` merchant totals and the buyer-only handoff → cancels → releases. The host DOM contained neither the cart ID nor continuation path; both disappeared from the buyer DOM after cancellation.
+- The native Chrome consumer then executed the same transitions through the page contract. Dynamic registration progressed from scope/request to `reserve_current_lot`, then `prepare_merchant_cart`, then only `cancel_merchant_cart`, then `release_current_lot`. The prepare result contained a private HTTPS handoff for the invoking buyer while its nested shared state contained neither cart credential nor continuation path.
+- Desktop and 390×844 acceptance captures show the UCP receipt, privacy receipt, dynamic tool frontier, and attributed ChatGPT actions without horizontal overflow. Browser console/page-error checks were clean apart from development notices.
+
+This is intentionally a stepping stone, not E8 graduation. It removes browser integration, UI, dynamic-registration, and privacy plumbing from the risk register. The remaining decisive substitution is an owned, publicly reachable Shopify product with cleared presentation, followed by the same native-Site-Tools run and immediate cancellation on the unprotected judged origins.
+
 ### E9 — Submission-grade Agent Experience
 
 Frozen claim:

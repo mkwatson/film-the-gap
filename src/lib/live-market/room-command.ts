@@ -5,6 +5,8 @@ import {
   createInitialState,
   evidenceRequirementsSchema,
   maximumPublishedEvidenceImageCharacters,
+  merchantCartPreparationBlocker,
+  recordMerchantCartFailure,
   releaseCurrentLot,
   repairHistoryValues,
   requestRepairHistory,
@@ -59,6 +61,16 @@ const releaseCurrentLotCommandSchema = z.strictObject({
   actor: z.enum(buyerActors),
 });
 
+const prepareMerchantCartCommandSchema = z.strictObject({
+  kind: z.literal('prepare-merchant-cart'),
+  actor: z.enum(buyerActors),
+});
+
+const cancelMerchantCartCommandSchema = z.strictObject({
+  kind: z.literal('cancel-merchant-cart'),
+  actor: z.enum(buyerActors),
+});
+
 const resetRoomCommandSchema = z.strictObject({
   kind: z.literal('reset-room'),
 });
@@ -69,6 +81,8 @@ export const roomCommandSchema = z.discriminatedUnion('kind', [
   answerRepairHistoryCommandSchema,
   reserveCurrentLotCommandSchema,
   releaseCurrentLotCommandSchema,
+  prepareMerchantCartCommandSchema,
+  cancelMerchantCartCommandSchema,
   resetRoomCommandSchema,
 ]);
 
@@ -102,6 +116,16 @@ export interface ReleaseCurrentLotCommand {
   readonly actor: 'agent' | 'buyer';
 }
 
+export interface PrepareMerchantCartCommand {
+  readonly kind: 'prepare-merchant-cart';
+  readonly actor: 'agent' | 'buyer';
+}
+
+export interface CancelMerchantCartCommand {
+  readonly kind: 'cancel-merchant-cart';
+  readonly actor: 'agent' | 'buyer';
+}
+
 export interface ResetRoomCommand {
   readonly kind: 'reset-room';
 }
@@ -112,6 +136,8 @@ export type RoomCommand =
   | AnswerRepairHistoryCommand
   | ReserveCurrentLotCommand
   | ReleaseCurrentLotCommand
+  | PrepareMerchantCartCommand
+  | CancelMerchantCartCommand
   | ResetRoomCommand;
 
 export function parseRoomCommand(value: unknown): RoomCommand | null {
@@ -147,10 +173,29 @@ export function applyRoomCommand(state: LiveMarketState, command: RoomCommand): 
       return reserveCurrentLot(state, command.actor, command.expectedAllInPrice);
     case 'release-current-lot':
       return releaseCurrentLot(state, command.actor);
+    case 'prepare-merchant-cart':
+      return recordMerchantCartFailure(
+        state,
+        command.actor,
+        'merchant_cart_prepared',
+        merchantCartPreparationBlocker(state) ??
+          'Preparing a merchant cart requires the authoritative room service.',
+      );
+    case 'cancel-merchant-cart':
+      return recordMerchantCartFailure(
+        state,
+        command.actor,
+        'merchant_cart_cancelled',
+        'Cancelling a merchant cart requires the authoritative room service.',
+      );
     case 'reset-room':
       return {
         ok: true,
-        state: createInitialState(),
+        state: createInitialState(
+          state.commerce.merchantOrigin === null
+            ? {}
+            : { ucpMerchantOrigin: state.commerce.merchantOrigin },
+        ),
         message: 'Room reset. Waiting for public evidence requirements.',
       };
   }

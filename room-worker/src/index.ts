@@ -11,6 +11,7 @@ import {
 } from '../../src/lib/live-market/room-command';
 import {
   parseRemoteRoomClientMessage,
+  privateActionResultSchema,
   remoteRoomIdPattern,
   remoteRoomProtocolVersion,
   type RemoteRoomErrorCode,
@@ -18,18 +19,33 @@ import {
   type RoomPresence,
 } from '../../src/lib/live-market/remote-room-protocol';
 import { liveMarketStateSchema } from '../../src/lib/live-market/room-sync';
+import type { UcpFetch } from '../../src/lib/ucp/client';
+import {
+  cancelRoomMerchantCart,
+  prepareRoomMerchantCart,
+  readUcpRoomConfiguration,
+  ucpIdempotencyKey,
+} from './commerce';
 
 export interface WorkerEnv {
   readonly ROOMS: DurableObjectNamespace<EvidenceRoom>;
   readonly ALLOWED_ORIGINS: string;
   readonly ROOM_TTL_SECONDS: string;
+  readonly UCP_BUSINESS_URL?: string;
+  readonly UCP_VARIANT_ID?: string;
+  readonly UCP_PLATFORM_PROFILE_URL?: string;
+  readonly UCP_OUTBOUND?: Fetcher;
 }
 
 interface ProcessedCommand {
   readonly commandId: string;
+  readonly role: RemoteRoomRole;
+  readonly clientId: string;
+  readonly commandDigest: string;
   readonly revision: number;
   readonly ok: boolean;
   readonly message: string;
+  readonly privateResult: z.infer<typeof privateActionResultSchema> | null;
 }
 
 interface StoredRoom {
@@ -42,6 +58,7 @@ interface StoredRoom {
   readonly state: ReturnType<typeof createInitialState>;
   readonly lastMessage: string;
   readonly processedCommands: readonly ProcessedCommand[];
+  readonly privateUcpCartId: string | null;
 }
 
 interface SocketAttachment {
@@ -52,9 +69,13 @@ interface SocketAttachment {
 
 const processedCommandSchema = z.strictObject({
   commandId: z.string().min(1).max(160),
+  role: z.enum(remoteRoomRoles),
+  clientId: z.string().min(1).max(160),
+  commandDigest: z.string().regex(/^[a-f0-9]{64}$/),
   revision: z.number().int().nonnegative(),
   ok: z.boolean(),
   message: z.string().min(1).max(500),
+  privateResult: privateActionResultSchema.nullable(),
 });
 
 const storedRoomSchema = z.strictObject({
@@ -67,6 +88,7 @@ const storedRoomSchema = z.strictObject({
   state: liveMarketStateSchema,
   lastMessage: z.string().min(1).max(500),
   processedCommands: z.array(processedCommandSchema).max(128),
+  privateUcpCartId: z.string().min(1).max(2_000).nullable(),
 });
 
 const initializeRoomSchema = z
@@ -210,9 +232,11 @@ function roomError(
 export class EvidenceRoom extends DurableObject<WorkerEnv> {
   private room: StoredRoom | null = null;
   private commandQueue: Promise<void> = Promise.resolve();
+  private readonly workerEnv: WorkerEnv;
 
   constructor(context: DurableObjectState, env: WorkerEnv) {
     super(context, env);
+    this.workerEnv = env;
     void context.blockConcurrencyWhile(async () => {
       const stored: unknown = await context.storage.get(storedRoomKey);
       if (stored === undefined) {
@@ -282,9 +306,15 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
       protocolVersion: remoteRoomProtocolVersion,
       ...parsed.data,
       revision: 0,
-      state: createInitialState(),
+      state: createInitialState(
+        (() => {
+          const configuration = readUcpRoomConfiguration(this.workerEnv);
+          return configuration === null ? {} : { ucpMerchantOrigin: configuration.merchantOrigin };
+        })(),
+      ),
       lastMessage: 'Room created. Waiting for public evidence requirements.',
       processedCommands: [],
+      privateUcpCartId: null,
     };
     await this.saveRoom(room);
     await this.ctx.storage.setAlarm(room.expiresAt);
@@ -342,7 +372,7 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
       roomError(
         socket,
         'invalid-message',
-        'The room message did not match protocol v1.',
+        `The room message did not match protocol v${remoteRoomProtocolVersion}.`,
         true,
         room.revision,
       );
@@ -381,7 +411,11 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
       );
       return;
     }
-    if (attachment.role === null || !roomRoleCanDispatch(attachment.role, message.command)) {
+    if (
+      attachment.role === null ||
+      attachment.clientId === null ||
+      !roomRoleCanDispatch(attachment.role, message.command)
+    ) {
       roomError(
         socket,
         'unauthorized-command',
@@ -392,7 +426,14 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
       );
       return;
     }
-    await this.applyCommand(socket, message.commandId, message.expectedRevision, message.command);
+    await this.applyCommand(
+      socket,
+      attachment.role,
+      attachment.clientId,
+      message.commandId,
+      message.expectedRevision,
+      message.command,
+    );
   }
 
   private async authenticate(
@@ -428,6 +469,8 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
 
   private async applyCommand(
     socket: WebSocket,
+    role: RemoteRoomRole,
+    clientId: string,
     commandId: string,
     expectedRevision: number,
     command: RoomCommand,
@@ -438,8 +481,24 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
       return;
     }
 
+    const commandDigest = await sha256Hex(JSON.stringify(command));
     const previous = room.processedCommands.find((candidate) => candidate.commandId === commandId);
     if (previous !== undefined) {
+      if (
+        previous.role !== role ||
+        previous.clientId !== clientId ||
+        !constantTimeEqual(previous.commandDigest, commandDigest)
+      ) {
+        roomError(
+          socket,
+          'invalid-message',
+          'A command ID cannot be reused by another client, role, or payload.',
+          false,
+          room.revision,
+          commandId,
+        );
+        return;
+      }
       send(socket, {
         type: 'command-result',
         commandId,
@@ -447,6 +506,7 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
         duplicate: true,
         revision: previous.revision,
         message: previous.message,
+        privateResult: previous.privateResult,
       });
       this.sendSnapshot(socket, false);
       return;
@@ -464,20 +524,30 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
       return;
     }
 
-    const result = applyRoomCommand(room.state, command);
+    const execution = await this.executeRoomCommand(room, command, commandId);
+    const result = execution.result;
     const revision = room.revision + 1;
     const processed: ProcessedCommand = {
       commandId,
+      role,
+      clientId,
+      commandDigest,
       revision,
       ok: result.ok,
       message: result.message,
+      privateResult: result.privateResult ?? null,
     };
+    const priorProcessedCommands =
+      result.ok && (command.kind === 'cancel-merchant-cart' || command.kind === 'reset-room')
+        ? room.processedCommands.map((candidate) => ({ ...candidate, privateResult: null }))
+        : room.processedCommands;
     const nextRoom: StoredRoom = {
       ...room,
       revision,
       state: result.state,
       lastMessage: result.message,
-      processedCommands: [...room.processedCommands, processed].slice(-maxProcessedCommands),
+      processedCommands: [...priorProcessedCommands, processed].slice(-maxProcessedCommands),
+      privateUcpCartId: execution.privateUcpCartId,
     };
     await this.saveRoom(nextRoom);
     send(socket, {
@@ -487,8 +557,84 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
       duplicate: false,
       revision,
       message: result.message,
+      privateResult: result.privateResult ?? null,
     });
     await this.broadcastSnapshot(false);
+  }
+
+  private async executeRoomCommand(
+    room: StoredRoom,
+    command: RoomCommand,
+    commandId: string,
+  ): Promise<{
+    readonly result: ReturnType<typeof applyRoomCommand>;
+    readonly privateUcpCartId: string | null;
+  }> {
+    const configuration = readUcpRoomConfiguration(this.workerEnv);
+    const roomId = this.ctx.id.name ?? 'UNKNOWN';
+
+    if (command.kind === 'prepare-merchant-cart') {
+      const prepared = await prepareRoomMerchantCart(
+        room.state,
+        command.actor,
+        configuration,
+        await ucpIdempotencyKey(`${roomId}:${commandId}:prepare`),
+        this.ucpFetch(),
+      );
+      return {
+        result:
+          prepared.privateResult === null
+            ? prepared.result
+            : { ...prepared.result, privateResult: prepared.privateResult },
+        privateUcpCartId: prepared.privateCartId ?? room.privateUcpCartId,
+      };
+    }
+
+    if (command.kind === 'cancel-merchant-cart') {
+      const result = await cancelRoomMerchantCart(
+        room.state,
+        command.actor,
+        configuration,
+        room.privateUcpCartId,
+        await ucpIdempotencyKey(`${roomId}:${commandId}:cancel`),
+        this.ucpFetch(),
+      );
+      return {
+        result,
+        privateUcpCartId: result.ok ? null : room.privateUcpCartId,
+      };
+    }
+
+    if (
+      command.kind === 'reset-room' &&
+      room.state.commerce.cartStatus === 'active' &&
+      room.privateUcpCartId !== null
+    ) {
+      const cancelled = await cancelRoomMerchantCart(
+        room.state,
+        'buyer',
+        configuration,
+        room.privateUcpCartId,
+        await ucpIdempotencyKey(`${roomId}:${commandId}:reset-cancel`),
+        this.ucpFetch(),
+      );
+      if (!cancelled.ok) {
+        return { result: cancelled, privateUcpCartId: room.privateUcpCartId };
+      }
+    }
+
+    return {
+      result: applyRoomCommand(room.state, command),
+      privateUcpCartId: command.kind === 'reset-room' ? null : room.privateUcpCartId,
+    };
+  }
+
+  private ucpFetch(): UcpFetch {
+    const outbound = this.workerEnv.UCP_OUTBOUND;
+    if (outbound === undefined) {
+      return fetch;
+    }
+    return async (input, init) => outbound.fetch(input, init);
   }
 
   private async saveRoom(room: StoredRoom): Promise<void> {
@@ -541,6 +687,24 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
   }
 
   private async expireRoom(): Promise<void> {
+    const room = this.room;
+    if (
+      room !== null &&
+      room.state.commerce.cartStatus === 'active' &&
+      room.privateUcpCartId !== null
+    ) {
+      const configuration = readUcpRoomConfiguration(this.workerEnv);
+      await cancelRoomMerchantCart(
+        room.state,
+        'buyer',
+        configuration,
+        room.privateUcpCartId,
+        crypto.randomUUID(),
+        this.ucpFetch(),
+      ).catch((error: unknown) => {
+        console.error('Evidence room could not cancel its expiring merchant cart', error);
+      });
+    }
     for (const socket of this.ctx.getWebSockets()) {
       send(socket, {
         type: 'room-expired',
@@ -596,7 +760,11 @@ async function createRoom(request: Request, env: WorkerEnv): Promise<Response> {
 async function route(request: Request, env: WorkerEnv): Promise<Response> {
   const url = new URL(request.url);
   if (request.method === 'GET' && url.pathname === '/healthz') {
-    return jsonResponse({ ok: true, protocolVersion: remoteRoomProtocolVersion });
+    return jsonResponse({
+      ok: true,
+      protocolVersion: remoteRoomProtocolVersion,
+      ucpCommerceConfigured: readUcpRoomConfiguration(env) !== null,
+    });
   }
   if (!requestOriginAllowed(request, env)) {
     return jsonResponse({ error: 'origin_not_allowed' }, 403);

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { ucpProtocolVersion } from '../ucp/profile';
+
 export const showStatuses = ['preview', 'live', 'closed'] as const;
 export type ShowStatus = (typeof showStatuses)[number];
 
@@ -151,6 +153,47 @@ export interface Reservation {
   readonly acceptedAllInPrice: number;
 }
 
+export const ucpCartStatuses = ['none', 'active', 'cancelled'] as const;
+export type UcpCartStatus = (typeof ucpCartStatuses)[number];
+
+export interface UcpMerchantCartLineReceipt {
+  readonly title: string;
+  readonly unitPrice: number;
+  readonly quantity: number;
+  readonly subtotal: number | null;
+}
+
+export interface UcpMerchantTotalReceipt {
+  readonly type: string;
+  readonly displayText: string;
+  readonly amount: number;
+}
+
+export interface UcpMerchantMessageReceipt {
+  readonly type: string;
+  readonly content: string;
+  readonly severity: string | null;
+}
+
+export interface UcpMerchantCartReceipt {
+  readonly protocolVersion: typeof ucpProtocolVersion;
+  readonly currency: string;
+  readonly lineItems: readonly UcpMerchantCartLineReceipt[];
+  readonly totals: readonly UcpMerchantTotalReceipt[];
+  readonly messages: readonly UcpMerchantMessageReceipt[];
+  readonly continuationAvailable: boolean;
+  readonly createdAt: number;
+}
+
+export interface UcpCommerceState {
+  readonly available: boolean;
+  readonly protocolVersion: typeof ucpProtocolVersion | null;
+  readonly merchantOrigin: string | null;
+  readonly cartStatus: UcpCartStatus;
+  readonly receipt: UcpMerchantCartReceipt | null;
+  readonly lastError: string | null;
+}
+
 export interface ActivityEvent {
   readonly id: number;
   readonly actor: ActivityActor;
@@ -166,6 +209,7 @@ export interface LiveMarketState {
   readonly evidenceRequests: readonly EvidenceRequest[];
   readonly anonymousEvidenceDemand: readonly AnonymousEvidenceDemand[];
   readonly reservation: Reservation | null;
+  readonly commerce: UcpCommerceState;
   readonly activity: readonly ActivityEvent[];
   readonly nextActivityId: number;
 }
@@ -201,7 +245,12 @@ export interface ActionFrontierStep {
 }
 
 export interface BlockedCapability {
-  readonly name: 'request_host_evidence' | 'reserve_current_lot';
+  readonly name:
+    | 'request_host_evidence'
+    | 'reserve_current_lot'
+    | 'prepare_merchant_cart'
+    | 'cancel_merchant_cart'
+    | 'release_current_lot';
   readonly reason: string;
   readonly recovery: string;
 }
@@ -215,7 +264,16 @@ export interface TransitionResult {
   readonly ok: boolean;
   readonly state: LiveMarketState;
   readonly message: string;
+  readonly privateResult?: PrivateActionResult;
 }
+
+export interface UcpCartHandoffResult {
+  readonly kind: 'ucp-cart-handoff';
+  readonly continueUrl: string;
+  readonly instruction: string;
+}
+
+export type PrivateActionResult = UcpCartHandoffResult;
 
 const initialLot: LiveLot = {
   id: 'lot-snowboard-156',
@@ -235,6 +293,8 @@ const initialLot: LiveLot = {
     visualReview: null,
   },
 };
+
+const maximumActivityEvents = 100;
 
 function createFixtureEvidenceFrame(
   repairHistory: Exclude<RepairHistory, 'unknown'>,
@@ -285,7 +345,32 @@ function createFixtureVisualReview(
   };
 }
 
-export function createInitialState(): LiveMarketState {
+export interface InitialStateOptions {
+  readonly ucpMerchantOrigin?: string;
+}
+
+function createInitialCommerceState(ucpMerchantOrigin?: string): UcpCommerceState {
+  if (ucpMerchantOrigin === undefined) {
+    return {
+      available: false,
+      protocolVersion: null,
+      merchantOrigin: null,
+      cartStatus: 'none',
+      receipt: null,
+      lastError: null,
+    };
+  }
+  return {
+    available: true,
+    protocolVersion: ucpProtocolVersion,
+    merchantOrigin: ucpMerchantOrigin,
+    cartStatus: 'none',
+    receipt: null,
+    lastError: null,
+  };
+}
+
+export function createInitialState(options: InitialStateOptions = {}): LiveMarketState {
   return {
     showStatus: 'live',
     lot: initialLot,
@@ -299,6 +384,7 @@ export function createInitialState(): LiveMarketState {
       },
     ],
     reservation: null,
+    commerce: createInitialCommerceState(options.ucpMerchantOrigin),
     activity: [
       {
         id: 1,
@@ -453,7 +539,9 @@ export function getEvidenceDemandSummary(
 function addActivity(state: LiveMarketState, event: Omit<ActivityEvent, 'id'>): LiveMarketState {
   return {
     ...state,
-    activity: [...state.activity, { ...event, id: state.nextActivityId }],
+    activity: [...state.activity, { ...event, id: state.nextActivityId }].slice(
+      -maximumActivityEvents,
+    ),
     nextActivityId: state.nextActivityId + 1,
   };
 }
@@ -758,7 +846,19 @@ export function reserveCurrentLot(
     acceptedAllInPrice: currentAllInPrice,
   };
   const nextState = addActivity(
-    { ...state, reservation },
+    {
+      ...state,
+      reservation,
+      commerce:
+        state.commerce.cartStatus === 'cancelled'
+          ? {
+              ...state.commerce,
+              cartStatus: 'none',
+              receipt: null,
+              lastError: null,
+            }
+          : state.commerce,
+    },
     {
       actor,
       action: 'reservation_created',
@@ -787,8 +887,26 @@ export function releaseCurrentLot(
     );
   }
 
+  if (state.commerce.cartStatus === 'active') {
+    return refuse(
+      state,
+      actor,
+      'reservation_released',
+      'Cancel the active merchant cart before releasing its local evidence hold.',
+    );
+  }
+
   const nextState = addActivity(
-    { ...state, reservation: null },
+    {
+      ...state,
+      reservation: null,
+      commerce: {
+        ...state.commerce,
+        cartStatus: 'none',
+        receipt: null,
+        lastError: null,
+      },
+    },
     {
       actor,
       action: 'reservation_released',
@@ -801,6 +919,129 @@ export function releaseCurrentLot(
     ok: true,
     state: nextState,
     message: 'Reservation released.',
+  };
+}
+
+export function merchantCartPreparationBlocker(state: LiveMarketState): string | null {
+  if (!state.commerce.available) {
+    return 'This room has no authoritative UCP merchant configured.';
+  }
+  if (state.showStatus !== 'live') {
+    return 'The lot is not live.';
+  }
+  if (state.reservation === null) {
+    return 'Create the exact-quote evidence hold before preparing a merchant cart.';
+  }
+  if (state.commerce.cartStatus === 'active') {
+    return 'An authoritative merchant cart is already active.';
+  }
+  if (state.commerce.cartStatus === 'cancelled') {
+    return 'Release this hold before starting a new merchant cart.';
+  }
+  if (evaluateEvidence(state).outcome !== 'ready') {
+    return 'Public evidence must remain ready before preparing a merchant cart.';
+  }
+  return null;
+}
+
+export function recordPreparedMerchantCart(
+  state: LiveMarketState,
+  actor: 'agent' | 'buyer',
+  receipt: UcpMerchantCartReceipt,
+): TransitionResult {
+  const blocker = merchantCartPreparationBlocker(state);
+  if (blocker !== null) {
+    return refuse(state, actor, 'merchant_cart_prepared', blocker);
+  }
+  if (receipt.protocolVersion !== state.commerce.protocolVersion) {
+    return refuse(
+      state,
+      actor,
+      'merchant_cart_prepared',
+      'The merchant cart changed the negotiated UCP protocol version.',
+    );
+  }
+
+  const nextState = addActivity(
+    {
+      ...state,
+      commerce: {
+        ...state.commerce,
+        cartStatus: 'active',
+        receipt,
+        lastError: null,
+      },
+    },
+    {
+      actor,
+      action: 'merchant_cart_prepared',
+      outcome: 'accepted',
+      summary:
+        'Prepared a reversible anonymous UCP cart from merchant-authored terms. No buyer identity, ceiling, address, or payment was sent.',
+    },
+  );
+  return {
+    ok: true,
+    state: nextState,
+    message: 'Merchant cart prepared from authoritative UCP terms. Checkout was not started.',
+  };
+}
+
+export function recordCancelledMerchantCart(
+  state: LiveMarketState,
+  actor: 'agent' | 'buyer',
+): TransitionResult {
+  if (state.commerce.cartStatus !== 'active' || state.commerce.receipt === null) {
+    return refuse(state, actor, 'merchant_cart_cancelled', 'There is no active merchant cart.');
+  }
+
+  const nextState = addActivity(
+    {
+      ...state,
+      commerce: {
+        ...state.commerce,
+        cartStatus: 'cancelled',
+        lastError: null,
+      },
+    },
+    {
+      actor,
+      action: 'merchant_cart_cancelled',
+      outcome: 'accepted',
+      summary: 'Cancelled the anonymous UCP cart and discarded its private merchant credential.',
+    },
+  );
+  return {
+    ok: true,
+    state: nextState,
+    message: 'Merchant cart cancelled. No checkout or payment occurred.',
+  };
+}
+
+export function recordMerchantCartFailure(
+  state: LiveMarketState,
+  actor: 'agent' | 'buyer',
+  action: 'merchant_cart_prepared' | 'merchant_cart_cancelled',
+  message: string,
+): TransitionResult {
+  return {
+    ok: false,
+    message,
+    state: addActivity(
+      {
+        ...state,
+        commerce: {
+          ...state.commerce,
+          lastError: message,
+        },
+      },
+      {
+        actor,
+        action,
+        outcome: 'refused',
+        summary: message,
+      },
+    ),
   };
 }
 
@@ -831,7 +1072,14 @@ export function getAvailableToolNames(state: LiveMarketState): readonly string[]
   }
 
   if (state.reservation !== null) {
-    names.push('release_current_lot');
+    if (state.commerce.cartStatus === 'active') {
+      names.push('cancel_merchant_cart');
+    } else {
+      names.push('release_current_lot');
+      if (state.commerce.available && state.commerce.cartStatus === 'none') {
+        names.push('prepare_merchant_cart');
+      }
+    }
   }
 
   return names;
@@ -844,6 +1092,40 @@ export function getActionFrontier(state: LiveMarketState): ActionFrontier {
   );
   const blocked: BlockedCapability[] = [];
   let next: ActionFrontierStep;
+
+  if (state.reservation !== null && state.commerce.cartStatus === 'active') {
+    next = {
+      actor: 'agent-or-buyer',
+      action: 'cancel_merchant_cart',
+      instruction:
+        'Review the merchant-authored cart receipt, then cancel it or continue through an explicit human checkout handoff.',
+    };
+    blocked.push({
+      name: 'release_current_lot',
+      reason: 'The server still holds an active merchant cart credential.',
+      recovery: 'Cancel the merchant cart before releasing the local evidence hold.',
+    });
+    blocked.push({
+      name: 'prepare_merchant_cart',
+      reason: 'An authoritative merchant cart is already active.',
+      recovery: 'Use the current cart or cancel it; do not create a duplicate.',
+    });
+    return { next, blocked };
+  }
+
+  if (
+    state.reservation !== null &&
+    state.commerce.available &&
+    state.commerce.cartStatus === 'none'
+  ) {
+    next = {
+      actor: 'agent-or-buyer',
+      action: 'prepare_merchant_cart',
+      instruction:
+        'Prepare a reversible anonymous UCP cart from merchant-authored terms; stop before checkout.',
+    };
+    return { next, blocked };
+  }
 
   if (state.reservation !== null) {
     next = {

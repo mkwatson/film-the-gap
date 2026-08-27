@@ -51,6 +51,13 @@ function roomConnectionCopy(phase: RoomConnectionPhase): string {
   return 'Connecting room';
 }
 
+function formatMinorAmount(amount: number, currency: string): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+  }).format(amount / 100);
+}
+
 export function LiveMarket(): React.JSX.Element {
   const {
     state,
@@ -65,6 +72,7 @@ export function LiveMarket(): React.JSX.Element {
     dispatch,
   } = useLiveRoom('buyer');
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [checkoutHandoff, setCheckoutHandoff] = useState<string | null>(null);
   const siteToolRuntime = useMemo<SiteToolRuntime>(
     () => ({ readState, dispatch }),
     [dispatch, readState],
@@ -79,6 +87,8 @@ export function LiveMarket(): React.JSX.Element {
   const queuedRepairRequest = state.evidenceRequests.some(
     ({ kind, status }) => kind === 'repair_history' && status === 'queued',
   );
+  const merchantHost =
+    state.commerce.merchantOrigin === null ? null : new URL(state.commerce.merchantOrigin).hostname;
 
   async function copyHostInvite(): Promise<void> {
     if (hostInviteUrl === null || navigator.clipboard === undefined) {
@@ -90,6 +100,25 @@ export function LiveMarket(): React.JSX.Element {
     } catch {
       setInviteCopied(false);
     }
+  }
+
+  async function prepareMerchantCart(): Promise<void> {
+    const result = await dispatch({ kind: 'prepare-merchant-cart', actor: 'buyer' });
+    if (result.privateResult?.kind === 'ucp-cart-handoff') {
+      setCheckoutHandoff(result.privateResult.continueUrl);
+    }
+  }
+
+  async function cancelMerchantCart(): Promise<void> {
+    const result = await dispatch({ kind: 'cancel-merchant-cart', actor: 'buyer' });
+    if (result.ok) {
+      setCheckoutHandoff(null);
+    }
+  }
+
+  function resetMarket(): void {
+    setCheckoutHandoff(null);
+    resetDemo();
   }
 
   const evaluationTitle =
@@ -156,7 +185,7 @@ export function LiveMarket(): React.JSX.Element {
               Open phone host ↗
             </a>
           )}
-          <button className="quiet-button" type="button" onClick={resetDemo}>
+          <button className="quiet-button" type="button" onClick={resetMarket}>
             Reset demo
           </button>
         </div>
@@ -455,16 +484,26 @@ export function LiveMarket(): React.JSX.Element {
               <div className="action-content">
                 <div>
                   <strong>
-                    Reversible hold active at {usd.format(state.reservation.acceptedAllInPrice)}
+                    {state.commerce.cartStatus === 'active'
+                      ? 'Authoritative merchant cart active'
+                      : `Reversible hold active at ${usd.format(state.reservation.acceptedAllInPrice)}`}
                   </strong>
-                  <p>Attributed to {actorLabel(state.reservation.heldBy)}. No payment was taken.</p>
+                  <p>
+                    {state.commerce.cartStatus === 'active'
+                      ? 'The cart must be cancelled before the local evidence hold can be released.'
+                      : `Attributed to ${actorLabel(state.reservation.heldBy)}. No payment was taken.`}
+                  </p>
                 </div>
                 <button
                   className="primary-button"
                   type="button"
-                  onClick={() => void dispatch({ kind: 'release-current-lot', actor: 'buyer' })}
+                  onClick={() =>
+                    state.commerce.cartStatus === 'active'
+                      ? void cancelMerchantCart()
+                      : void dispatch({ kind: 'release-current-lot', actor: 'buyer' })
+                  }
                 >
-                  Release hold
+                  {state.commerce.cartStatus === 'active' ? 'Cancel merchant cart' : 'Release hold'}
                 </button>
               </div>
             ) : evaluation.outcome === 'ready' ? (
@@ -518,6 +557,114 @@ export function LiveMarket(): React.JSX.Element {
               </div>
             )}
           </section>
+
+          {state.commerce.available ? (
+            <section
+              className={`commerce-card commerce-${state.commerce.cartStatus}`}
+              aria-labelledby="commerce-title"
+            >
+              <div className="section-heading">
+                <span>
+                  <small>04</small>
+                  <strong id="commerce-title">Authoritative UCP merchant boundary</strong>
+                </span>
+                <em>
+                  {state.commerce.protocolVersion} · {state.commerce.cartStatus}
+                </em>
+              </div>
+              <div className="commerce-summary">
+                <div>
+                  <span className="ucp-mark" aria-hidden="true">
+                    UCP
+                  </span>
+                  <p>
+                    <strong>{merchantHost}</strong>
+                    {state.commerce.cartStatus === 'none'
+                      ? state.reservation === null
+                        ? 'Evidence and an exact-quote hold must unlock merchant cart authority.'
+                        : 'The exact-quote hold unlocked a reversible anonymous merchant cart.'
+                      : state.commerce.cartStatus === 'active'
+                        ? 'Merchant-authored terms are active. Checkout has not started.'
+                        : 'The merchant cart was cancelled; its private credential was discarded.'}
+                  </p>
+                </div>
+                {state.commerce.cartStatus === 'none' && state.reservation !== null ? (
+                  <button
+                    className="primary-button"
+                    type="button"
+                    onClick={() => void prepareMerchantCart()}
+                  >
+                    Prepare UCP cart
+                  </button>
+                ) : null}
+              </div>
+              {state.commerce.receipt === null ? null : (
+                <div className="merchant-receipt">
+                  <div className="merchant-receipt-lines">
+                    {state.commerce.receipt.lineItems.map((line, index) => (
+                      <span key={`${line.title}-${index}`}>
+                        <small>
+                          {line.quantity} × {line.title}
+                        </small>
+                        <strong>
+                          {formatMinorAmount(
+                            line.subtotal ?? line.unitPrice * line.quantity,
+                            state.commerce.receipt?.currency ?? 'USD',
+                          )}
+                        </strong>
+                      </span>
+                    ))}
+                  </div>
+                  <dl>
+                    {state.commerce.receipt.totals.map((total, index) => (
+                      <div key={`${total.type}-${index}`}>
+                        <dt>{total.displayText}</dt>
+                        <dd>
+                          {formatMinorAmount(
+                            total.amount,
+                            state.commerce.receipt?.currency ?? 'USD',
+                          )}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                  {state.commerce.receipt.messages.map((message, index) => (
+                    <p className="merchant-message" key={`${message.type}-${index}`}>
+                      {message.content}
+                    </p>
+                  ))}
+                  <div className="merchant-privacy-receipt">
+                    <span aria-hidden="true">✓</span>
+                    <p>
+                      <strong>Server-held cart credential</strong>
+                      Shared state contains totals and messages—not the cart ID, continuation URL,
+                      buyer identity, ceiling, address, or payment.
+                    </p>
+                  </div>
+                  {state.commerce.cartStatus === 'active' ? (
+                    checkoutHandoff === null ? (
+                      <p className="merchant-handoff-copy">
+                        The private checkout handoff is returned only to the invoking buyer or
+                        ChatGPT tool call; it is not broadcast to the host room.
+                      </p>
+                    ) : (
+                      <a
+                        className="merchant-handoff-button"
+                        href={checkoutHandoff}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Continue at merchant ↗
+                      </a>
+                    )
+                  ) : null}
+                </div>
+              )}
+              {state.commerce.lastError === null ? null : (
+                <p className="commerce-error">{state.commerce.lastError}</p>
+              )}
+            </section>
+          ) : null}
 
           <p className="result-message" role="status" aria-live="polite">
             {lastMessage}

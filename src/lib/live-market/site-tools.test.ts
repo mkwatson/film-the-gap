@@ -4,6 +4,7 @@ import {
   createInitialState,
   defaultEvidenceRequirements,
   getAllInPrice,
+  recordPreparedMerchantCart,
   type LiveMarketState,
 } from './model';
 import { applyRoomCommand, type RoomCommand } from './room-command';
@@ -14,8 +15,8 @@ interface MutableRuntime extends SiteToolRuntime {
   readonly setStateForTest: (next: (state: LiveMarketState) => LiveMarketState) => void;
 }
 
-function createRuntime(): MutableRuntime {
-  let state = createInitialState();
+function createRuntime(initialState: LiveMarketState = createInitialState()): MutableRuntime {
+  let state = initialState;
 
   return {
     readState: () => state,
@@ -291,6 +292,74 @@ describe('WebMCP Site Tools', () => {
     for (const output of outputs) {
       expect(JSON.stringify(output).length).toBeLessThanOrEqual(3_500);
     }
+  });
+
+  it('returns a compact merchant receipt while withholding the UCP cart credential', async () => {
+    const runtime = createRuntime(
+      createInitialState({ ucpMerchantOrigin: 'https://merchant.example' }),
+    );
+    await getTool(runtime, 'set_evidence_requirements').execute(
+      defaultEvidenceRequirements,
+      executeOptions,
+    );
+    await runtime.dispatch({ kind: 'answer-repair-history', repairHistory: 'none' });
+    await getTool(runtime, 'reserve_current_lot').execute(
+      { expectedAllInPrice: getAllInPrice(runtime.getState().lot) },
+      executeOptions,
+    );
+    expect(createSiteTools(runtime).map(({ name }) => name)).toContain('prepare_merchant_cart');
+
+    runtime.setStateForTest(
+      (state) =>
+        recordPreparedMerchantCart(state, 'agent', {
+          protocolVersion: '2026-04-08',
+          currency: 'USD',
+          lineItems: [
+            {
+              title: 'Rights-cleared 156 cm demo board',
+              unitPrice: 37500,
+              quantity: 1,
+              subtotal: 37500,
+            },
+          ],
+          totals: [
+            { type: 'subtotal', displayText: 'Subtotal', amount: 37500 },
+            { type: 'total', displayText: 'Total', amount: 37500 },
+          ],
+          messages: [
+            {
+              type: 'warning',
+              content: 'Shipping is finalized during human checkout.',
+              severity: null,
+            },
+          ],
+          continuationAvailable: true,
+          createdAt: 1_787_787_200_000,
+        }).state,
+    );
+
+    expect(createSiteTools(runtime).map(({ name }) => name)).toContain('cancel_merchant_cart');
+    expect(createSiteTools(runtime).map(({ name }) => name)).not.toContain('prepare_merchant_cart');
+    expect(createSiteTools(runtime).map(({ name }) => name)).not.toContain('release_current_lot');
+    const output = await getTool(runtime, 'inspect_live_show').execute({}, executeOptions);
+    expect(output).toMatchObject({
+      commerce: {
+        protocol: 'UCP',
+        protocolVersion: '2026-04-08',
+        merchantOrigin: 'https://merchant.example',
+        cartStatus: 'active',
+        receipt: {
+          totals: [
+            { type: 'subtotal', displayText: 'Subtotal', amount: 37500 },
+            { type: 'total', displayText: 'Total', amount: 37500 },
+          ],
+          continuationAvailable: true,
+        },
+        privateCredential: 'server-held; never returned in shared room state',
+      },
+    });
+    expect(JSON.stringify(output)).not.toMatch(/Cart\/|continue_url|private-test-cart/);
+    expect(JSON.stringify(output).length).toBeLessThanOrEqual(3_500);
   });
 
   it('tolerates judged runtime callback shapes without a usable signal', async () => {

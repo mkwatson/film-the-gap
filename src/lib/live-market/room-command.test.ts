@@ -29,11 +29,18 @@ describe('room commands', () => {
       kind: 'answer-repair-history',
       repairHistory: 'none',
     };
+    const commerceCommand: RoomCommand = {
+      kind: 'prepare-merchant-cart',
+      actor: 'agent',
+    };
 
     expect(roomRoleCanDispatch('buyer', buyerCommand)).toBe(true);
     expect(roomRoleCanDispatch('buyer', hostCommand)).toBe(false);
     expect(roomRoleCanDispatch('host', buyerCommand)).toBe(false);
     expect(roomRoleCanDispatch('host', hostCommand)).toBe(true);
+    expect(roomRoleCanDispatch('buyer', commerceCommand)).toBe(true);
+    expect(roomRoleCanDispatch('host', commerceCommand)).toBe(false);
+    expect(parseRoomCommand({ ...commerceCommand, maximumPrice: 450 })).toBeNull();
     expect(roomRoleCanDispatch('buyer', { kind: 'reset-room' })).toBe(true);
     expect(roomRoleCanDispatch('host', { kind: 'reset-room' })).toBe(true);
   });

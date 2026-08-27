@@ -9,6 +9,8 @@ import {
   getAllInPrice,
   getAvailableToolNames,
   getEvidenceDemandSummary,
+  recordCancelledMerchantCart,
+  recordPreparedMerchantCart,
   releaseCurrentLot,
   requestRepairHistory,
   reserveCurrentLot,
@@ -331,5 +333,79 @@ describe('live market state machine', () => {
 
     const reserved = reserveCurrentLot(answered, 'agent', getAllInPrice(answered.lot)).state;
     expect(getActionFrontier(reserved).next.action).toBe('release_current_lot');
+  });
+
+  it('exposes UCP cart authority only after evidence and an exact-quote hold', () => {
+    const initial = createInitialState({ ucpMerchantOrigin: 'https://merchant.example' });
+    expect(initial.commerce).toMatchObject({
+      available: true,
+      protocolVersion: '2026-04-08',
+      cartStatus: 'none',
+    });
+    expect(getAvailableToolNames(initial)).not.toContain('prepare_merchant_cart');
+
+    const scoped = setEvidenceRequirements(initial, defaultEvidenceRequirements, 'agent').state;
+    const supported = answerRepairHistory(scoped, 'none').state;
+    const reserved = reserveCurrentLot(supported, 'agent', getAllInPrice(supported.lot)).state;
+    expect(getAvailableToolNames(reserved)).toEqual(
+      expect.arrayContaining(['release_current_lot', 'prepare_merchant_cart']),
+    );
+    expect(getActionFrontier(reserved).next.action).toBe('prepare_merchant_cart');
+
+    const prepared = recordPreparedMerchantCart(reserved, 'agent', {
+      protocolVersion: '2026-04-08',
+      currency: 'USD',
+      lineItems: [
+        {
+          title: 'Rights-cleared 156 cm demo board',
+          unitPrice: 37500,
+          quantity: 1,
+          subtotal: 37500,
+        },
+      ],
+      totals: [
+        { type: 'subtotal', displayText: 'Subtotal', amount: 37500 },
+        { type: 'total', displayText: 'Total', amount: 37500 },
+      ],
+      messages: [],
+      continuationAvailable: true,
+      createdAt: 1_787_787_200_000,
+    }).state;
+    expect(getAvailableToolNames(prepared)).toContain('cancel_merchant_cart');
+    expect(getAvailableToolNames(prepared)).not.toContain('release_current_lot');
+    expect(releaseCurrentLot(prepared, 'agent')).toMatchObject({
+      ok: false,
+      message: expect.stringContaining('Cancel the active merchant cart'),
+    });
+
+    const cancelled = recordCancelledMerchantCart(prepared, 'agent').state;
+    expect(cancelled.commerce.cartStatus).toBe('cancelled');
+    expect(getAvailableToolNames(cancelled)).toContain('release_current_lot');
+    expect(getAvailableToolNames(cancelled)).not.toContain('prepare_merchant_cart');
+
+    const released = releaseCurrentLot(cancelled, 'agent').state;
+    expect(released.commerce).toMatchObject({ cartStatus: 'none', receipt: null });
+    expect(released.reservation).toBeNull();
+  });
+
+  it('keeps the activity audit inside the synchronized room bound', () => {
+    let state = setEvidenceRequirements(
+      createInitialState(),
+      defaultEvidenceRequirements,
+      'buyer',
+    ).state;
+    state = requestRepairHistory(state, 'buyer').state;
+
+    for (let index = 0; index < 150; index += 1) {
+      state = requestRepairHistory(state, 'agent').state;
+    }
+
+    expect(state.activity).toHaveLength(100);
+    expect(state.activity[0]?.id).toBeGreaterThan(1);
+    expect(state.activity.at(-1)).toMatchObject({
+      actor: 'agent',
+      action: 'evidence_requested',
+      outcome: 'refused',
+    });
   });
 });

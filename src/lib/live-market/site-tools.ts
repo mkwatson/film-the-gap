@@ -172,6 +172,24 @@ function snapshot(state: LiveMarketState): object {
     },
     hostRequest: getEvidenceDemandSummary(state, 'repair_history'),
     hold: state.reservation,
+    commerce: {
+      protocol: state.commerce.available ? 'UCP' : null,
+      protocolVersion: state.commerce.protocolVersion,
+      merchantOrigin: state.commerce.merchantOrigin,
+      cartStatus: state.commerce.cartStatus,
+      receipt:
+        state.commerce.receipt === null
+          ? null
+          : {
+              currency: state.commerce.receipt.currency,
+              lineItems: state.commerce.receipt.lineItems,
+              totals: state.commerce.receipt.totals,
+              messages: state.commerce.receipt.messages,
+              continuationAvailable: state.commerce.receipt.continuationAvailable,
+            },
+      lastError: state.commerce.lastError,
+      privateCredential: 'server-held; never returned in shared room state',
+    },
     next: {
       actor: frontier.next.actor,
       action: frontier.next.action,
@@ -181,7 +199,15 @@ function snapshot(state: LiveMarketState): object {
     privacyReceipt: {
       sharedFields:
         state.evidenceRequirements === null ? [] : Object.keys(state.evidenceRequirements),
-      withheldFields: ['maximum price', 'buyer identity', 'urgency', 'preference weights'],
+      withheldFields: [
+        'maximum price',
+        'buyer identity',
+        'urgency',
+        'preference weights',
+        'address',
+        'payment data',
+        'merchant cart credential',
+      ],
       holdBinding: 'exact current page quote only',
     },
   };
@@ -192,6 +218,7 @@ function transitionOutput(result: TransitionResult): object {
     ok: result.ok,
     message: result.message,
     state: snapshot(result.state),
+    ...(result.privateResult === undefined ? {} : { privateAction: result.privateResult }),
   };
 }
 
@@ -309,6 +336,52 @@ function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextT
         }
         const result = await runtime.dispatch({
           kind: 'release-current-lot',
+          actor: 'agent',
+        });
+        return transitionOutput(result);
+      },
+    },
+    {
+      name: 'prepare_merchant_cart',
+      title: 'Prepare authoritative merchant cart',
+      description:
+        'After public evidence and an exact-quote hold are ready, create a reversible anonymous UCP cart from the merchant’s current terms. Sends product/context only—never buyer identity, private ceiling, address, or payment—and stops before checkout.',
+      inputSchema: emptyInputSchema,
+      annotations: {
+        readOnlyHint: false,
+        untrustedContentHint: true,
+      },
+      execute: async (input, options?: WebMCP.ToolExecuteCallbackOptions): Promise<object> => {
+        checkAbort(options);
+        const parsed = emptyObjectSchema.safeParse(input);
+        if (!parsed.success) {
+          return validationFailure(parsed.error);
+        }
+        const result = await runtime.dispatch({
+          kind: 'prepare-merchant-cart',
+          actor: 'agent',
+        });
+        return transitionOutput(result);
+      },
+    },
+    {
+      name: 'cancel_merchant_cart',
+      title: 'Cancel authoritative merchant cart',
+      description:
+        'Cancel the active anonymous UCP merchant cart and discard its private server-held credential. This does not start checkout or take payment.',
+      inputSchema: emptyInputSchema,
+      annotations: {
+        readOnlyHint: false,
+        untrustedContentHint: true,
+      },
+      execute: async (input, options?: WebMCP.ToolExecuteCallbackOptions): Promise<object> => {
+        checkAbort(options);
+        const parsed = emptyObjectSchema.safeParse(input);
+        if (!parsed.success) {
+          return validationFailure(parsed.error);
+        }
+        const result = await runtime.dispatch({
+          kind: 'cancel-merchant-cart',
           actor: 'agent',
         });
         return transitionOutput(result);

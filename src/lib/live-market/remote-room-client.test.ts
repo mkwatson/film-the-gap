@@ -150,6 +150,7 @@ describe('RemoteRoomClient', () => {
       duplicate: false,
       revision: 1,
       message: 'Requirements recorded.',
+      privateResult: null,
     });
     socket.receive(snapshot(1, nextState));
 
@@ -197,9 +198,49 @@ describe('RemoteRoomClient', () => {
       duplicate: true,
       revision: 1,
       message: 'Requirements recorded.',
+      privateResult: null,
     });
 
     await expect(resultPromise).resolves.toMatchObject({ ok: true });
+    client.close();
+  });
+
+  it('returns a buyer-private cart handoff without placing it in the room snapshot', async () => {
+    const { client, sockets } = createHarness();
+    client.connect();
+    const socket = sockets[0];
+    if (socket === undefined) {
+      throw new Error('Expected a socket.');
+    }
+    socket.open();
+    const state = createInitialState();
+    socket.receive(snapshot(0, state));
+
+    const resultPromise = client.dispatch({ kind: 'prepare-merchant-cart', actor: 'agent' });
+    const command = commandFrom(socket);
+    socket.receive({
+      type: 'command-result',
+      commandId: command.commandId,
+      ok: true,
+      duplicate: false,
+      revision: 1,
+      message: 'Cart prepared.',
+      privateResult: {
+        kind: 'ucp-cart-handoff',
+        continueUrl: 'https://merchant.example/cart/c/private-test-cart',
+        instruction: 'Open only with explicit buyer approval.',
+      },
+    });
+    socket.receive(snapshot(1, state));
+
+    await expect(resultPromise).resolves.toMatchObject({
+      ok: true,
+      privateResult: {
+        kind: 'ucp-cart-handoff',
+        continueUrl: 'https://merchant.example/cart/c/private-test-cart',
+      },
+    });
+    expect(JSON.stringify(snapshot(1, state))).not.toContain('private-test-cart');
     client.close();
   });
 

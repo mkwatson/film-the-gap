@@ -9,9 +9,11 @@ import {
   maximumPublishedEvidenceImageCharacters,
   repairHistoryValues,
   showStatuses,
+  ucpCartStatuses,
   visualReviewSources,
   type LiveMarketState,
 } from './model';
+import { ucpProtocolVersion } from '../ucp/profile';
 
 export const roomRoles = ['buyer', 'host'] as const;
 export type RoomRole = (typeof roomRoles)[number];
@@ -194,6 +196,95 @@ const lotEvidenceSchema = z
     }
   });
 
+const ucpMerchantCartReceiptSchema = z.strictObject({
+  protocolVersion: z.literal(ucpProtocolVersion),
+  currency: z.string().regex(/^[A-Z]{3}$/),
+  lineItems: z
+    .array(
+      z.strictObject({
+        title: z.string().min(1).max(1_000),
+        unitPrice: z.number().int().safe(),
+        quantity: z.number().int().positive().safe(),
+        subtotal: z.number().int().safe().nullable(),
+      }),
+    )
+    .min(1)
+    .max(20),
+  totals: z
+    .array(
+      z.strictObject({
+        type: z.string().min(1).max(160),
+        displayText: z.string().min(1).max(240),
+        amount: z.number().int().safe(),
+      }),
+    )
+    .min(1)
+    .max(30),
+  messages: z
+    .array(
+      z.strictObject({
+        type: z.string().min(1).max(160),
+        content: z.string().max(2_000),
+        severity: z.string().min(1).max(160).nullable(),
+      }),
+    )
+    .max(30),
+  continuationAvailable: z.boolean(),
+  createdAt: z.number().int().positive(),
+});
+
+const ucpCommerceStateSchema = z
+  .strictObject({
+    available: z.boolean(),
+    protocolVersion: z.literal(ucpProtocolVersion).nullable(),
+    merchantOrigin: z
+      .string()
+      .url()
+      .refine((value) => new URL(value).protocol === 'https:', 'Merchant origin must use HTTPS.')
+      .nullable(),
+    cartStatus: z.enum(ucpCartStatuses),
+    receipt: ucpMerchantCartReceiptSchema.nullable(),
+    lastError: z.string().min(1).max(500).nullable(),
+  })
+  .superRefine((commerce, context) => {
+    if (
+      !commerce.available &&
+      (commerce.protocolVersion !== null ||
+        commerce.merchantOrigin !== null ||
+        commerce.cartStatus !== 'none' ||
+        commerce.receipt !== null)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Unavailable commerce cannot carry merchant or cart state.',
+      });
+    }
+    if (
+      commerce.available &&
+      (commerce.protocolVersion === null || commerce.merchantOrigin === null)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Available commerce requires a negotiated version and merchant origin.',
+      });
+    }
+    if (
+      (commerce.cartStatus === 'active' || commerce.cartStatus === 'cancelled') &&
+      commerce.receipt === null
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'A created merchant cart requires its public receipt.',
+      });
+    }
+    if (commerce.cartStatus === 'none' && commerce.receipt !== null) {
+      context.addIssue({
+        code: 'custom',
+        message: 'An absent merchant cart cannot carry a receipt.',
+      });
+    }
+  });
+
 export const liveMarketStateSchema = z.strictObject({
   showStatus: z.enum(showStatuses),
   lot: z.strictObject({
@@ -234,6 +325,7 @@ export const liveMarketStateSchema = z.strictObject({
       acceptedAllInPrice: z.number().finite().positive(),
     })
     .nullable(),
+  commerce: ucpCommerceStateSchema,
   activity: z
     .array(
       z.strictObject({

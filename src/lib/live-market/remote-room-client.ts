@@ -28,6 +28,7 @@ interface PendingCommand {
     readonly ok: boolean;
     readonly revision: number;
     readonly message: string;
+    readonly privateResult: TransitionResult['privateResult'] | null;
   } | null;
   failure: {
     readonly revision: number | null;
@@ -294,9 +295,10 @@ export class RemoteRoomClient {
         ok: message.ok,
         revision: message.revision,
         message: message.message,
+        privateResult: message.privateResult,
       };
       if (this.revision >= message.revision) {
-        this.resolvePending(message.commandId, message.ok, message.message);
+        this.resolvePending(message.commandId, message.ok, message.message, message.privateResult);
       }
       return;
     }
@@ -318,7 +320,12 @@ export class RemoteRoomClient {
 
     for (const [commandId, pending] of this.pending) {
       if (pending.acknowledgement !== null && this.revision >= pending.acknowledgement.revision) {
-        this.resolvePending(commandId, pending.acknowledgement.ok, pending.acknowledgement.message);
+        this.resolvePending(
+          commandId,
+          pending.acknowledgement.ok,
+          pending.acknowledgement.message,
+          pending.acknowledgement.privateResult,
+        );
       } else if (
         pending.failure !== null &&
         (pending.failure.revision === null || this.revision >= pending.failure.revision)
@@ -333,14 +340,24 @@ export class RemoteRoomClient {
     }
   }
 
-  private resolvePending(commandId: string, ok: boolean, message: string): void {
+  private resolvePending(
+    commandId: string,
+    ok: boolean,
+    message: string,
+    privateResult: TransitionResult['privateResult'] | null = null,
+  ): void {
     const pending = this.pending.get(commandId);
     if (pending === undefined) {
       return;
     }
     clearTimeout(pending.timeout);
     this.pending.delete(commandId);
-    pending.resolve({ ok, state: this.state, message });
+    pending.resolve({
+      ok,
+      state: this.state,
+      message,
+      ...(privateResult === null || privateResult === undefined ? {} : { privateResult }),
+    });
   }
 
   private scheduleReconnect(): void {

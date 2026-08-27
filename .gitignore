@@ -9,6 +9,7 @@
 coverage/
 room-worker/dist/
 room-worker/.wrangler/
+room-worker/test/fixtures/.wrangler/
 node_modules/
 out/
 tmp/
