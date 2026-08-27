@@ -16,7 +16,7 @@ The official FAQ says the entrant—not AI—must name the project. The descript
 | Submitted commit         | **[FULL COMMIT SHA]**                                                                                           |
 | Primary judged clients   | ChatGPT in-app Browser; Chrome 149+ with WebMCP enabled                                                         |
 | Entrant / representative | **[MARK CONFIRMS]**                                                                                             |
-| Open-source license      | **[MARK APPROVES A DETECTABLE LICENSE]**                                                                        |
+| Open-source license      | [MIT](LICENSE), copyright Mark Watson                                                                           |
 
 Recommended submission tagline:
 
@@ -152,8 +152,9 @@ Capture two backup cuts:
 
 - [ ] Mark chooses the project name.
 - [ ] Mark confirms entrant/team/representative and eligibility facts.
-- [ ] Mark approves the open-source license and exact copyright holder.
-- [ ] `LICENSE` exists and the public repository host detects it.
+- [x] Mark approved the MIT license; the exact copyright holder is Mark Watson.
+- [x] Top-level `LICENSE` exists and package metadata declares `MIT`.
+- [ ] The public repository host detects and displays the MIT license.
 - [ ] Public repository description and About panel link to the live URL.
 - [ ] Full challenge-period history begins August 26 and remains visible.
 - [ ] `document.modelContext.registerTool` is easy to find from the README.
@@ -174,7 +175,7 @@ Local repository audit, 2026-08-27 PT:
 - The dated history begins August 26, the challenge start date, and the current branch has no remote.
 - The current tracked tree contains zero high-confidence API-key/private-key signatures, no absolute user path, and no private tailnet hostname. Native WebMCP registration is linked directly from the README.
 - Two historical patch lines contain the development tailnet hostname. Before publishing, either preserve them as non-secret dated acceptance evidence or redact them with a recoverable history rewrite; do not accidentally squash away the challenge-period history.
-- `LICENSE` is intentionally absent until Mark approves the license and copyright holder. This is a hard submission blocker because the rules require the repository host to detect the license.
+- MIT is present at the repository root with Mark Watson as copyright holder. Public-host license detection remains part of the publication gate.
 
 ## User-only final actions
 
@@ -182,8 +183,7 @@ These actions require Mark's identity, legal assent, account session, or explici
 
 1. Choose the public project name.
 2. Confirm whether the entrant is Mark individually, a team, or an organization, and appoint the representative if needed.
-3. Approve the open-source license/copyright holder.
-4. Complete any one-time Cloudflare account authentication or terms acceptance needed for permanent no-cost deployment.
-5. Approve creation/push of the public repository and verify its license detection.
-6. Approve the final rights-clean YouTube upload.
-7. Review and submit the Devpost entry before **September 3, 2026 at 1:00 p.m. PT**.
+3. Complete any one-time Cloudflare account authentication or terms acceptance needed for permanent no-cost deployment.
+4. Approve creation/push of the public repository and verify its license detection.
+5. Approve the final rights-clean YouTube upload.
+6. Review and submit the Devpost entry before **September 3, 2026 at 1:00 p.m. PT**.
