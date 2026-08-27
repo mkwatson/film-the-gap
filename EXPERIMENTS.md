@@ -1,6 +1,6 @@
 # Innovation frontier and experiment register
 
-Research state: 2026-08-26 PT. H1-H4 were frozen before the Rung 2 implementation; H5 was scoped before its camera UI implementation; H6 was frozen before the visual-proposal implementation. Descriptive labels are not proposed submission names.
+Research state: 2026-08-27 PT. H1-H4 were frozen before the Rung 2 implementation; H5 was scoped before its camera UI implementation; H6 was frozen before the visual-proposal implementation. Descriptive labels are not proposed submission names.
 
 ## Authoritative starting point
 
@@ -702,3 +702,29 @@ Results:
 Frontier check: Netlify's current open-source evaluator is `@netlify/axis` `1.17.5`, with goal, environment, service, and agent scores aimed at coding-agent/API/MCP task episodes. Package and adapter inspection found no browser/WebMCP surface. Integrating it now would score the repository-development workflow rather than the judged page experience, so it is rejected from the hero path unless a later browser adapter makes the score itself a useful product receipt.
 
 Decision: keep the QR handoff. It turns the already-real two-client architecture into a judge-usable physical-device transition with almost no narrative burden, strengthens execution, and preserves the privacy story. It does not graduate the remaining real-phone gate: an actual device on the final public origins must still scan, authenticate, capture, publish, disconnect, and reconnect successfully.
+
+### E15 — Bounded camera evidence episode
+
+Frozen claim:
+
+> Three deliberately sampled moments can make a short physical test more legible than one keyframe while keeping the continuous camera feed local and preserving the proven fallback.
+
+Status: **engineering spike preserved; rejected from the current hero.**
+
+Protocol:
+
+1. Preserve the existing keyframe path while sampling three camera moments near 0, 2, and 4 seconds into one reviewed JPEG contact sheet.
+2. Bind the contact sheet to ordered offsets, capture/completion times, dimensions, a digest, and an explicit `rawVideoPublished: false` receipt.
+3. Carry the provenance through the authoritative room and Site Tool result, then attempt the same reviewed-evidence-to-capability journey with a synthetic rights-clean camera source.
+4. Compare the actual decision information, WebMCP leverage, physical-phone reliability, and cold-view clarity with the committed keyframe path before graduation.
+
+Results:
+
+- The implementation is isolated on local branch `experiment/camera-episode-spike` at `568bd84`; the committed `main` path remains unchanged.
+- The spike kept raw video local, published only one reviewed contact sheet, failed malformed episode metadata closed, preserved the keyframe fallback, and passed the focused strict-TypeScript and Vitest gates.
+- It did not change the buyer decision semantics. The current static snowboard condition still resolves from the same aggregate visibility/surface finding plus a separate seller history attestation, so the extra samples violate the “smallest missing fact” principle.
+- It did not add or deepen a WebMCP capability. The dynamic frontier and consequential action remained exactly the proven keyframe lifecycle.
+- A typical landscape capture produced a 1,440×270 contact sheet while the proposal route rejects either dimension above 960. The proposal contract also called the sheet one frame and had no ordered-sample citations. The synthetic/manual lane therefore did not establish physical-phone or episode-aware AI reliability.
+- Three still samples cannot honestly prove continuous stabilization. A future gimbal or motion test would need a condition whose outcome actually depends on multiple ordered moments and must preserve that claim boundary.
+
+Decision: do not make the episode the default or include it in the first release. Reconsider only if the evidence rule consumes at least two distinct samples, the model boundary understands and cites ordered offsets, portrait and landscape physical-phone runs pass ten times consecutively, capture-to-review stays under 5.5 seconds p95, and three cold viewers understand both why the samples were necessary and that raw video was not uploaded. Permanent origins, the exact ChatGPT run, and the final submission cut outrank this experiment.

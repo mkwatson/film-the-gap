@@ -77,6 +77,14 @@ Immediate work order:
 
 Explicitly defer voice-owned page flows, continuous livestreaming, payment/AP2, more crowd sessions, more Lean surface, another model gateway, cross-origin iframe federation, a second frontend host, and a prominent Shopify-native cart. Buyer voice through ChatGPT may improve the recording, but it is presentation transport rather than a new product branch. Sponsor products remain load-bearing only at distinct boundaries; adding one because a judge is associated with it is useful only when it strengthens the visible causal chain or independent verification.
 
+### Bounded-camera spike decision — 2026-08-27 PT
+
+The optional three-sample/four-second camera episode is preserved on local branch `experiment/camera-episode-spike` at `568bd84`, but it does **not** graduate into the hero. Three sampled moments added no decision information to the current static base-condition question, left the WebMCP frontier unchanged, and made the primary camera action less reliable and harder to explain. The spike also exposed a concrete contract mismatch: a common landscape contact sheet was 1,440 pixels wide while the AI proposal route accepts at most 960 pixels and still described the image as one frame.
+
+The committed keyframe path remains primary. Reconsider the episode only for a physical condition that genuinely requires multiple ordered moments, with an episode-aware proposal schema and offset citations, portrait/landscape support, ten consecutive physical-phone passes, and cold-view evidence that it explains the causal unlock better than the keyframe. If it delays permanent origins, the exact ChatGPT run, or the submission cut, it stays experimental.
+
+After shelving the spike, the committed path again passed the complete native Chrome journey. A deliberately mismatched expected merchant origin first failed closed; aligning the runner with the room Worker's actual temporary merchant origin then passed buyer/host privacy, dynamic tool lifecycle, reload recovery, reviewed evidence, exact hold, UCP Cart, merchant cancellation, room reconciliation, and cleanup. This is a useful rehearsal receipt, not a substitute for one exact permanent three-origin release.
+
 ### Authenticated-crowd frontier decision — 2026-08-27 PT
 
 **Keep it, but never make seven-tab setup part of the canonical judge path.** The solo path still starts with seven visibly labeled deterministic signals and works immediately. The ambitious proof layer replaces them one-for-one with seven unique, least-authority attendee credentials; Chrome 151 then invoked all seven joins through native page-owned Site Tools and converged on `8 live · 0 fixture`.
