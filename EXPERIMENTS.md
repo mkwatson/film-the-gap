@@ -473,6 +473,23 @@ Status: **local native-Chrome and responsive presentation pass; final-origin bli
 
 This is a comprehension rung, not E9 graduation. A fresh person must still be timed on the final public URL, and the exact model-driven ChatGPT journey must demonstrate that the copied starter causes the intended sequence without rescue.
 
+#### E9.3 — Credential-suppressed native acceptance matrix
+
+Frozen claim:
+
+> A clean Chrome session can repeat the complete two-person, two-origin WebMCP lifecycle without a human operator, while the acceptance artifact itself cannot disclose the buyer's private ceiling or either bearer credential.
+
+Status: **native Chrome pass over tailnet HTTPS; final public-origin and ChatGPT model-driven passes pending.**
+
+- Pinned the current `agent-browser` `0.35.1` release after reading its version-matched core skill. The runner uses a unique browser session, the system Chrome binary with WebMCP enabled, a three-host network allowlist, `eval --stdin`, stable tab IDs, bounded polling, and guaranteed session cleanup.
+- The acceptance path starts from a reset buyer room and asserts the exact dynamic Site Tool frontier at every stage. It performs native inspection, shares only the four evidence fields, joins the normalized repair-history request, switches to a separately authenticated host surface, publishes the deterministic no-repair answer, re-inspects the resulting public proof, and creates the hold only at the exact current `$423` quote.
+- The same run negotiates the owned merchant's UCP `2026-04-08` surface, creates the original `$375` cart, follows the buyer-only continuation without returning its URL to Node, invokes the merchant page's native inspect and cancel tools, verifies the cancel tool disappears, returns to the evidence room, reconciles the already-cancelled cart, purges the private handoff, releases the hold, and resets the room.
+- The host address fragment is scrubbed before the host is considered connected. A final host-side DOM assertion rejects the private `$450` test ceiling, `token=` material, and every `/cart/c/` path after the entire commerce journey.
+- Browser subprocess failures are deliberately reduced to fixed operation labels. A separate sanitizer removes arbitrary URLs and suppresses any error containing a ceiling or bearer pattern. The only successful report fields are `ok`, the pinned runner version, step names, and durations.
+- The first complete run passed all nine phases in roughly five seconds on Chrome `151.0.7922.174`. It covered native registration churn across buyer and merchant pages rather than calling application functions or HTTP APIs directly.
+
+This graduates the repeatable local/tailnet portion of E9. It does not claim the final judge path is ready: the same command must pass on stable unprotected public origins, and ChatGPT's model—not the deterministic harness—must complete the compact prompt without rescue. A physical phone and rights-cleared camera capture remain separate E7 gates.
+
 ### E10 — Frontier receipt (optional)
 
 Only after E7-E9 pass, test whether a runtime-connected Lean receipt can communicate in under ten seconds that a stale quote/evidence revision or unauthorized transition is refused. The theorem may cover the formal state model and payload projection only. It must not claim to prove image truth, seller honesty, browser conformance, or implementation equivalence.
