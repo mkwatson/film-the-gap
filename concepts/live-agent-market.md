@@ -1,6 +1,6 @@
 # Live agent market: working concept
 
-Status: frontier experiment, not final selection. Updated 2026-08-26.
+Status: selected product thesis and design history. Updated 2026-08-27. Current submission claims and demo sequencing live in [../SUBMISSION.md](../SUBMISSION.md); falsification evidence lives in [../EXPERIMENTS.md](../EXPERIMENTS.md).
 
 ## Wild north star
 
@@ -20,16 +20,17 @@ The social video remains primary. The agent does the vigilance, constraint track
 
 If the experiment works just as well with a remote backend tool while the page is closed, the concept has failed its WebMCP test.
 
-## Current cumulative rung: a seller-blind evidence market with a reviewed human camera
+## Current cumulative rung: evidence-directed action across two open-web origins
 
-The current implementation combines four core interaction primitives and two progressive presentation layers:
+The current implementation combines seven cumulative primitives:
 
 1. **Private-counterparty membrane:** the seller-facing page receives four product-evidence requirements but no buyer profile or numeric ceiling. ChatGPT compares the public quote privately and passes only the exact quote it is accepting.
 2. **Counterfactual capability frontier:** every state exposes the smallest valid next agent and human transition. Mutations that are not yet safe are absent from the native tool surface.
 3. **Epistemic multicast:** seven transparently labeled anonymous demo-agent signals join the current agent's real request. One host answer resolves the shared fact for all eight private decisions.
-4. **Two-surface human sensor:** a separate `/host` view receives the normalized request and returns one attributed answer while the one-page fallback remains intact.
+4. **Authoritative two-surface human sensor:** separately authenticated buyer and host clients share a revisioned Cloudflare Durable Object room with idempotency, reconnect, stale-state refusal, and an ordinary-browser fallback.
 5. **Consented keyframe provenance:** the host explicitly starts a video-only camera and captures one bounded frame. The continuous feed stays local; the selected JPEG receives a timestamp, dimensions, frame ID, and SHA-256 fingerprint.
 6. **Reviewed visual proposal:** AI SDK 7 can route that selected frame through Vercel AI Gateway for a strict pixel-grounded proposal. The host must accept or correct it, then add a separate repair-history attestation. An explicit manual path remains complete when no model is available. Only after review is the selected JPEG intentionally published to the buyer; Site Tool output exposes the audit chain but omits image bytes.
+7. **Merchant-owned outcome:** an exact `$423` reversible hold unlocks a separately deployed UCP `2026-08-25` merchant. Its own Durable Object owns the Cart credential, `$375 + $48 = $423` terms, idempotency, expiry, and buyer-only continuation; neither origin can check out, order, or pay.
 
 The active tool sequence is:
 
@@ -39,12 +40,13 @@ inspect + set evidence requirements
   -> capture one frame; AI proposes; host accepts/corrects
   -> separate host history attestation resolves eight requests
   -> reserve only against the exact current quote
-  -> release restores the reversible state
+  -> prepare a merchant-owned UCP Cart on a second origin
+  -> cancel, reconcile, purge the private handoff, and release
 ```
 
-Native Headless Chrome 150 completed the original sequence, including stale-quote refusal and observed tool replacement. ChatGPT desktop 26.820.60940 with GPT-5.6 Sol then completed the model-driven native sequence through request, stale refusal, exact-quote hold, and release. The camera rung passed in a native WebMCP-enabled Chromium run using its synthetic camera source. The reviewed-evidence rung then passed capture → server digest verification → typed no-auth manual fallback → host review → selected-frame publication → buyer 4/4 → native inspect → exact-quote hold → release. Fresh isolated Chrome 151 profiles proved the app's positive and negative feature gates. Strict TypeScript, formatting, lint, 41 Vitest behaviors across 9 files, production build, two-tab desktop layout, and 390 px layout pass.
+ChatGPT's in-app Browser completed the earlier model-driven native sequence through request, stale refusal, exact-quote hold, and release. A fresh Chrome 151 runner now repeats the full buyer → separate host → authoritative room → owned merchant → room lifecycle through native WebMCP in roughly five seconds, including dynamic registration on both origins, cancellation, reconciliation, host non-disclosure, and credential-suppressed logs. Camera capture and reviewed evidence pass with Chromium's synthetic camera; Vercel AI Gateway returned a structured abstaining proposal for that non-product frame. The complete offline gate passes 82 app tests, 7 room-Worker tests, 12 merchant-Worker tests, strict TypeScript, formatting, lint, two Worker dry-runs, and a Next.js production build. The released UCP profile, direct Cart, and error outcome also pass an opt-in validation against the official `2026-08-25` schema graph.
 
-This is a data-minimization boundary, not a proof of zero statistical inference. A keyframe digest identifies bytes; it does not prove authenticity or repair history. A model can describe visible pixels but cannot establish a historical “never repaired” fact, so the host attestation remains separate. The local project has no Gateway credential, so a live authenticated GPT-5.6 vision response remains an explicit acceptance gate even though the route and model-result path are tested. The other seven agents are a deterministic room fixture, not a live multi-user backend. The host surface currently synchronizes same-origin browser contexts rather than real devices. Voice transport/transcription/delegation works, but the delegated task did not inherit the UI-owned Browser, so autonomous Voice-to-Site-Tools remains unproven. Physical-camera, repeated navigation/reconnect, Mark's normal Chrome profile, and MBP clean-room runs remain explicit acceptance gates.
+This is a data-minimization boundary, not a proof of zero statistical inference. A keyframe digest identifies bytes; it does not prove authenticity or repair history. A model can describe visible pixels but cannot establish a historical “never repaired” fact, so the host attestation remains separate. The other seven agents are deterministic test signals, not external buyers. Voice transport/transcription/delegation works, but the delegated task did not inherit the UI-owned Browser, so autonomous Voice-to-Site-Tools remains unproven. Stable public origins, a rights-cleared physical-item/phone run, the full current model-driven ChatGPT journey, and unfamiliar-person comprehension remain explicit final gates.
 
 See [../EXPERIMENTS.md](../EXPERIMENTS.md) for the 18-primitives frontier, frozen hypotheses, protocols, results, and next recommendation.
 
@@ -147,21 +149,22 @@ Available only when the current lot is eligible and unreserved:
 | --------------------- | --------------------------------------------------------- |
 | `reserve_current_lot` | Create a reversible hold, visibly attributed to the agent |
 
-Available only while a hold is active:
+Available only while a hold is active and no merchant Cart is active:
 
-| Tool                  | Effect                                              |
-| --------------------- | --------------------------------------------------- |
-| `release_current_lot` | Release the reversible hold and restore valid tools |
+| Tool                    | Effect                                                                                   |
+| ----------------------- | ---------------------------------------------------------------------------------------- |
+| `release_current_lot`   | Release the reversible hold and restore valid tools                                      |
+| `prepare_merchant_cart` | Ask the separately negotiated UCP merchant to create one reversible, anonymous Cart only |
+
+Available only while the evidence room owns an active merchant Cart credential:
+
+| Tool                   | Effect                                                                                 |
+| ---------------------- | -------------------------------------------------------------------------------------- |
+| `cancel_merchant_cart` | Cancel the authoritative Cart, purge its private handoff, and restore the release path |
 
 The earlier duplicate `inspect_current_lot` read tool was removed after E9 testing showed that it returned the same state as `inspect_live_show`. The current contract exposes one read tool plus only the mutations meaningful in the current page state.
 
-Available only while reserved:
-
-| Tool                  | Effect                                          |
-| --------------------- | ----------------------------------------------- |
-| `release_current_lot` | Release the hold and restore the eligible state |
-
-No tool will place a binding bid or purchase in Rung 1.
+The merchant continuation separately registers `inspect_merchant_cart` and, while active, `cancel_merchant_cart`. No tool can place a binding bid, check out, pay, or create an order.
 
 ## Rung 1 verification record
 
@@ -207,12 +210,12 @@ spoken intent
 
 There are four distinct modality layers. They must not be collapsed into one unsupported "works on any device" claim.
 
-| Layer                       | Product role                                                                                                                                                                        | Current boundary                                                                                                                                                                                                                                                                                                           | Reliable fallback                                                         |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| ChatGPT Voice -> Site Tools | The buyer speaks naturally to the same ChatGPT agent that is co-attending the page. This is the cleanest hero input if the exact desktop runtime supports the composition.          | Real WebRTC audio, transcription, and Voice-to-Codex delegation passed. The delegated task did not inherit the UI-owned in-app Browser binding, so no autonomous Site Tool call occurred. This is a measured client-ownership boundary, not a submission claim.                                                            | Type or dictate the identical prompt to the Browser-owning ChatGPT task.  |
-| Page-owned voice            | A push-to-talk control uses OpenAI Realtime or transcription to produce a visible transcript and structured draft. It makes the human UI hands-free on ordinary web/mobile clients. | This is an application feature, not proof of WebMCP leverage. It must feed the same domain state that page tools expose and must not replace the ChatGPT Site Tools path.                                                                                                                                                  | Text input and deterministic parsing for the golden fixture.              |
-| Human live media            | Cloudflare RealtimeKit can connect host and buyer audio/video across web and mobile clients. The page, not ChatGPT, owns the room and permissions.                                  | Human media participation can span supported phones and browsers; the judged WebMCP agent path is still ChatGPT desktop or compatible Chrome.                                                                                                                                                                              | Prerecorded rights-cleared video, transcript, and host-response controls. |
-| Agent visual evidence       | A host or buyer explicitly shares a snapshot or sampled keyframe that an image-capable model turns into a cited evidence proposal for human review.                                 | Opt-in capture, local JPEG encoding, SHA-256 provenance, server digest verification, structured proposal routing, explicit host correction, selected-frame publication, and WebMCP exposure pass. The authenticated live Gateway inference remains open; do not claim that a model watches a raw stream or proves history. | Typed manual review tied to the same frame; no synthetic model answer.    |
+| Layer                       | Product role                                                                                                                                                                        | Current boundary                                                                                                                                                                                                                                                                                                                                                                                | Reliable fallback                                                         |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| ChatGPT Voice -> Site Tools | The buyer speaks naturally to the same ChatGPT agent that is co-attending the page. This is the cleanest hero input if the exact desktop runtime supports the composition.          | Real WebRTC audio, transcription, and Voice-to-Codex delegation passed. The delegated task did not inherit the UI-owned in-app Browser binding, so no autonomous Site Tool call occurred. This is a measured client-ownership boundary, not a submission claim.                                                                                                                                 | Type or dictate the identical prompt to the Browser-owning ChatGPT task.  |
+| Page-owned voice            | A push-to-talk control uses OpenAI Realtime or transcription to produce a visible transcript and structured draft. It makes the human UI hands-free on ordinary web/mobile clients. | This is an application feature, not proof of WebMCP leverage. It must feed the same domain state that page tools expose and must not replace the ChatGPT Site Tools path.                                                                                                                                                                                                                       | Text input and deterministic parsing for the golden fixture.              |
+| Human live media            | Cloudflare RealtimeKit can connect host and buyer audio/video across web and mobile clients. The page, not ChatGPT, owns the room and permissions.                                  | Human media participation can span supported phones and browsers; the judged WebMCP agent path is still ChatGPT desktop or compatible Chrome.                                                                                                                                                                                                                                                   | Prerecorded rights-cleared video, transcript, and host-response controls. |
+| Agent visual evidence       | A host or buyer explicitly shares a snapshot or sampled keyframe that an image-capable model turns into a cited evidence proposal for human review.                                 | Opt-in capture, local JPEG encoding, SHA-256 provenance, server digest verification, structured proposal routing, explicit host correction, selected-frame publication, and WebMCP exposure pass. Authenticated Gateway inference correctly abstained on the synthetic camera frame; a physical-product frame remains pending. Never claim that a model watches a raw stream or proves history. | Typed manual review tied to the same frame; no synthetic model answer.    |
 
 Two-way video earns its complexity only when both cameras contribute physical context. A buyer might show a damaged part, room, outfit, or board already owned; the seller might then show compatibility, scale, condition, or provenance. The agent directs the next discriminating view and ties the resulting observation to the decision. For the snowboard fixture, buyer video is an optional later rung; host video is sufficient for the first complete loop.
 
@@ -225,10 +228,10 @@ Each rung must remain a complete demo when every later rung is disabled.
 1. **Seller-blind deterministic loop:** typed ChatGPT prompt, real dynamic WebMCP tools, visible evidence transition, exact-quote reversible hold, and no buyer ceiling crossing the page boundary.
 2. **Epistemic multicast:** one normalized host answer resolves the same missing fact for eight private decisions; the current deterministic room proves the contract.
 3. **Hands-free buyer:** realtime speech and delegation pass; a supported handoff into the UI-owned Browser remains pending, with the identical typed prompt as the dependable path.
-4. **Live host:** the tested second-browser surface graduates from same-origin synchronization to a real phone/desktop room; the deterministic host control remains available.
-5. **Camera-to-evidence:** opt-in capture, bounded provenance, server digest verification, frame-cited proposal contract, host accept/correct, manual fallback, and intentional selected-frame publication pass. One authenticated physical-frame model run remains the acceptance gate.
+4. **Live host:** the authoritative remote browser-to-browser room passes; a physical phone on the final public origin remains the final device gate. The deterministic host control remains available.
+5. **Camera-to-evidence:** opt-in capture, bounded provenance, server digest verification, frame-cited proposal contract, authenticated abstaining model call, host accept/correct, manual fallback, and intentional selected-frame publication pass. One rights-cleared physical-frame run remains the acceptance gate.
 6. **Two-way physical context:** the buyer's camera supplies a second observation and the agent directs a short cross-camera inspection.
-7. **Transactional trust:** Shopify/UCP owns authoritative offer, cart, checkout, consent, permalink, and post-purchase state after the evidence interaction earns the complexity.
+7. **Transactional trust:** the owned UCP merchant now owns authoritative Cart terms, lifecycle, and handoff. Shopify-native catalog/checkout/consent/permalink/post-purchase state remains an additive later boundary only if access and reliability strengthen the judged path.
 8. **Proof-carrying authority:** a Lean-checked invariant controls a consequential capability only when the proof is judge-visible and stronger than ordinary runtime validation.
 9. **Market-scale coordination:** real buyer agents aggregate unresolved demand and direct the highest-value demonstrations without overwhelming the host.
 
@@ -240,6 +243,7 @@ Each rung must remain a complete demo when every later rung is disabled.
 4. ChatGPT joins seven anonymous demo agents requesting repair-history evidence. The aggregate changes from seven open to eight queued.
 5. The host explicitly starts the camera and captures one keyframe. AI Gateway proposes only what the pixels support; the host accepts or corrects it, then separately attests repair history. The selected frame becomes public, eight requests resolve, all four conditions turn green, and `reserve_current_lot` appears. Manual review and the fixture button are judge-safe fallbacks.
 6. ChatGPT privately compares the public `$423` quote with the buyer's limit and reserves against exactly `$423`. The page shows the attributed hold and offers release without ever receiving the ceiling.
+7. The hold unlocks the second-origin UCP merchant; its `$375` item plus `$48` fulfillment matches `$423`, then cancellation removes the merchant capability and private handoff.
 
 The line to land: "The page did not give the agent a buy button. It gave the agent exactly the actions that became safe as the live evidence changed."
 
@@ -247,23 +251,14 @@ The line to land: "The page did not give the agent a buy button. It gave the age
 
 The product may be wildly ambitious; the judged story must be singular. The public video should demonstrate one thesis: **"Your agent does not merely watch a live market. It can ask the physical world for the exact evidence your decision requires."**
 
-Recommended capture: ChatGPT desktop's built-in browser and conversation are the primary screen. A host phone or second browser appears only when it answers the evidence request. The page keeps the public evidence envelope, privacy receipt, evidence graph, aggregate host queue, current dynamic tool set, and attributed activity visible enough that the audience can distinguish real WebMCP collaboration from a generic voice assistant.
+Recommended capture: ChatGPT desktop's built-in browser and conversation are the primary screen. A host phone appears only when it answers the evidence request; the second merchant origin appears only after evidence unlocks it. The page keeps the public evidence envelope, privacy receipt, aggregate host queue, current dynamic tool set, and attributed activity visible enough that the audience can distinguish real WebMCP collaboration from a generic voice assistant.
 
-| Time      | Beat                    | What must be visible                                                                                                                                                                                                                                         |
-| --------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 0:00-0:15 | Hook and pain           | A live item is moving faster than a buyer can track constraints and verify claims. State the one-sentence thesis before naming protocols.                                                                                                                    |
-| 0:15-0:35 | State private intent    | The buyer gives one concise voice prompt including a private limit. ChatGPT sends only the product-evidence requirements; the page visibly receipts that it received no ceiling. Use typed ChatGPT input unless Voice plus Site Tools has passed repeatedly. |
-| 0:35-1:05 | Reveal the gap          | ChatGPT inspects the live lot through WebMCP. Three conditions resolve; repair history remains unknown; the reservation tool is absent.                                                                                                                      |
-| 1:05-1:35 | Ask the physical world  | ChatGPT calls `request_host_evidence`. The request appears on the host device; the host supplies the exact angle or answer; a source frame/transcript visibly becomes evidence.                                                                              |
-| 1:35-1:55 | Unlock and act          | The final condition resolves, `reserve_current_lot` appears dynamically, the buyer approves, and the attributed reversible hold appears on the same page.                                                                                                    |
-| 1:55-2:15 | Prove control           | Revoke or contradict one condition, or release the hold. The consequential tool disappears or the unsafe attempt is refused. Turn the camera off visibly.                                                                                                    |
-| 2:15-2:40 | Show technical depth    | Briefly expose Site Tools/recent calls, the dynamic tool rail, and a compact architecture caption. Do not tour source files or sponsor logos.                                                                                                                |
-| 2:40-2:58 | Land impact and ceiling | State what humans and agents did together that was previously impractical, then show the credible next step: many agents directing evidence, with UCP settlement and proof-scoped authority. Leave two seconds of margin under the hard three-minute limit.  |
+The canonical current `2:45` shot-by-shot cut, narration purpose, fallback cut, and claims ledger live in [../SUBMISSION.md](../SUBMISSION.md). That packet supersedes earlier storyboards: the current video must show the authoritative UCP Cart and cancellation rather than describing commerce as a future step.
 
 The live URL should have three progressively enhanced paths behind one coherent experience:
 
 1. **Judge-safe path:** no sign-in, microphone, camera, second device, payment, or model latency required; a deterministic host fixture still exercises real WebMCP end to end.
-2. **Hero path:** ChatGPT Site Tools plus the tested voice and live-media layers.
+2. **Hero path:** ChatGPT Site Tools plus the tested host-phone, camera, review, and merchant-continuation layers. Use typed input unless Voice-to-Site-Tools passes in the exact final client.
 3. **Technical verification path:** visible feature detection, registered tools, recent calls, current state, version/revision, and a reset control so a judge can recover without our help.
 
 A QR code may let a phone join as the host or buyer, but scanning it can never be required. Permission prompts should happen before the timed hero sequence, realtime sessions should be prewarmed, and a deterministic host response must remain one click away. The public recording can show the real two-device path; the live app must survive a judge using only keyboard and one desktop.
@@ -288,16 +283,15 @@ Drop or substantially reframe this concept if any of these survive a real browse
 - The demo's most impressive moment is the video or auction UI rather than human-agent collaboration.
 - A simpler non-commerce concept produces the same WebMCP leverage with much lower risk.
 
-## Later rungs, only if Rung 2 earns them
+## Later rungs after the submitted core is secure
 
-1. Add a frame-cited visual evidence proposal with explicit host acceptance and deterministic recovery.
-2. Network the tested host and buyer pages across a real phone/desktop room while retaining deterministic recovery.
-3. Near-live transcription and timestamped Vidably evidence extraction.
-4. Real cross-client evidence aggregation with minority-safety handling.
-5. UCP-backed catalog, offer, cart, checkout, consent, permalink, and post-win order state.
-6. A formally verified quote/authority invariant that visibly gates a consequential tool.
-7. Live broadcast through the transport that wins a focused comparison.
-8. Multiple real participants and agents in one show.
+1. Run the existing camera/review path with a rights-cleared physical product and real phone on the final public origin.
+2. Aggregate several real external agents with minority-safety handling rather than deterministic test signals.
+3. Add near-live transcription and timestamped Vidably evidence extraction through a clean, licensed boundary.
+4. Let a buyer camera supply a second physical observation and have the agent direct a short cross-camera inspection.
+5. Add Shopify-native catalog/checkout/consent/permalink or post-purchase state only where an owned store can make it authoritative and judge-reliable.
+6. Let a Lean-checked quote/authority invariant visibly gate a consequential capability.
+7. Add a rights-cleared live broadcast transport and many real participants without weakening the deterministic judge path.
 
 ## Explicit non-goals for the walking skeleton
 

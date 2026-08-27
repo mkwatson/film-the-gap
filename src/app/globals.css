@@ -48,7 +48,9 @@ button {
   font: inherit;
 }
 
-button:focus-visible {
+button:focus-visible,
+a:focus-visible,
+select:focus-visible {
   outline: 2px solid var(--cyan);
   outline-offset: 3px;
 }
@@ -2115,6 +2117,8 @@ button:focus-visible {
 }
 
 .visual-review-fields select:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
   border-color: var(--cyan);
   box-shadow: 0 0 0 2px rgba(80, 203, 255, 0.12);
 }

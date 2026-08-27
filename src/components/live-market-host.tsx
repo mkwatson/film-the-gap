@@ -44,7 +44,7 @@ export function LiveMarketHost(): React.JSX.Element {
   return (
     <main className="host-shell">
       <header className="topbar host-topbar">
-        <div className="brand-lockup" aria-label="Live market host console">
+        <div className="brand-lockup">
           <span className="brand-mark host-mark" aria-hidden="true">
             H
           </span>
@@ -94,7 +94,11 @@ export function LiveMarketHost(): React.JSX.Element {
             <span className="host-live-chip">{demand.totalAgentCount} test agents present</span>
           </div>
 
-          <div className="video-stage host-video-stage" aria-label="Simulated host camera preview">
+          <div
+            className="video-stage host-video-stage"
+            role="img"
+            aria-label="Simulated host camera preview"
+          >
             <div className="camera-grid" aria-hidden="true" />
             <div className="board-shadow" aria-hidden="true" />
             <div className="snowboard" aria-hidden="true">
@@ -161,7 +165,11 @@ export function LiveMarketHost(): React.JSX.Element {
                 <span>Permission-free fallback</span>
                 <small>Deterministic, judge-safe path</small>
               </div>
-              <div className="host-response-grid" aria-label="Host evidence response controls">
+              <div
+                className="host-response-grid"
+                role="group"
+                aria-label="Host evidence response controls"
+              >
                 <button
                   className="primary-button"
                   type="button"

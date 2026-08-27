@@ -521,6 +521,23 @@ Status: **deterministic and native-Chrome pass; provider-backed model reports pe
 - The upstream Chrome Labs repository now documents a newer `smoke` workflow, while the latest published npm package remains `webmcp-evals@0.0.3` and does not include that command. The repository records both facts and pins only commands available in the published package.
 - No provider-backed score is claimed: the current shell has no configured supported model credential. Run and preserve those reports, then repeat the exact model-driven path in the final ChatGPT client before submission.
 
+#### E9.5 — Judge-facing visual and accessibility audit
+
+Frozen claim:
+
+> The buyer, host, and merchant surfaces remain coherent at desktop and phone widths, expose meaningful semantics and keyboard focus, and have no automated WCAG violations before the final public-origin review.
+
+Status: **local/tailnet visual and automated-accessibility pass; manual contrast and final-origin review pending.**
+
+- Inspected fresh desktop captures of the buyer, host, and merchant surfaces and full-page `390×844` captures of all three. Each viewport had zero horizontal overflow; the mobile host retained the causal order from live item to normalized request, disclosure receipt, and activity.
+- Replaced unsupported labels on generic containers with explicit image, timer, group, and region roles. Added a high-visibility keyboard outline for links, buttons, and review selects; the first buyer and merchant controls expose computed `2–3px` cyan/mint focus rings.
+- `agent-browser` `0.35.1` ran axe-core `4.12.1` against all three primary surfaces and reported zero violations. Its only incomplete result was color contrast because layered gradients prevent automatic background determination; this is recorded as a manual-review gate rather than silently treated as a pass.
+- Desktop merchant copy now keeps the released `UCP 2026-08-25` label intact, and buyer, host, and merchant pages all register native Site Tools without page errors. Development-only console output was limited to React DevTools and hot-reload notices.
+- The React review found no new state, effect, async, bundle, or rendering risk in this semantic-only pass. Focused tests and strict TypeScript passed immediately afterward.
+- The first post-config acceptance attempt created a room and passed a direct authenticated WebSocket probe but remained at the buyer's connecting preflight. A clean dev-process restart restored the full journey. A controlled `next build` while that fresh server was live, followed immediately by another clean native journey, also passed; Next 16.3.3 already isolates development output under `.next/dev`, so no unsupported build-directory workaround was added.
+
+This does not graduate E9. Repeat accessibility and visual review against production builds on the final public origins, manually verify key text/background contrast, and time an unfamiliar person completing the canonical path without coaching.
+
 ### E10 — Frontier receipt (optional)
 
 Only after E7-E9 pass, test whether a runtime-connected Lean receipt can communicate in under ten seconds that a stale quote/evidence revision or unauthorized transition is refused. The theorem may cover the formal state model and payload projection only. It must not claim to prove image truth, seller honesty, browser conformance, or implementation equivalence.

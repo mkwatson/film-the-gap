@@ -189,7 +189,7 @@ export function LiveMarket(): React.JSX.Element {
   return (
     <main className="market-shell">
       <header className="topbar">
-        <div className="brand-lockup" aria-label="Agent-attended evidence market">
+        <div className="brand-lockup">
           <span className="brand-mark" aria-hidden="true">
             WM
           </span>
@@ -316,13 +316,17 @@ export function LiveMarket(): React.JSX.Element {
               <h2>{state.lot.title}</h2>
               <p>{state.lot.subtitle}</p>
             </div>
-            <div className="countdown" aria-label="Lot closes in 72 seconds">
+            <div className="countdown" role="timer" aria-label="Lot closes in 72 seconds">
               <small>closes in</small>
               <strong>01:12</strong>
             </div>
           </div>
 
-          <div className="video-stage" aria-label="Simulated rights-clear live snowboard video">
+          <div
+            className="video-stage"
+            role="img"
+            aria-label="Simulated rights-clear live snowboard video"
+          >
             <div className="mountain mountain-back" aria-hidden="true" />
             <div className="mountain mountain-front" aria-hidden="true" />
             <div className="board-shadow" aria-hidden="true" />
@@ -379,7 +383,11 @@ export function LiveMarket(): React.JSX.Element {
                 </span>
                 <p>Show the base and disclose whether it has ever been repaired.</p>
                 {transport === 'local' ? (
-                  <div className="host-controls" aria-label="Deterministic host response controls">
+                  <div
+                    className="host-controls"
+                    role="group"
+                    aria-label="Deterministic host response controls"
+                  >
                     <small>Single-screen fallback</small>
                     <button
                       type="button"
