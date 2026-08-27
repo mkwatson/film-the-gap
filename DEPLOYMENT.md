@@ -33,7 +33,7 @@ These steps mutate external systems and must not be performed unattended.
 1. Confirm the approved MIT `LICENSE` remains detectable at the repository root.
 2. **Complete:** the public GitHub repository contains the challenge-period `main` history, and its URL is recorded in `SUBMISSION.md`.
 3. Import that repository into one Vercel project. Record its stable production origin as `APP_ORIGIN`. Enable automatic system environment variables and confirm `VERCEL_GIT_COMMIT_SHA` is available. Leave the final production domain completely unprotected.
-4. Authenticate Wrangler to the intended Cloudflare account and accept any required terms. Confirm the stable `workers.dev` or custom origins for `webmcp-evidence-rooms` and `webmcp-evidence-merchant-preview`; record them as `ROOM_ORIGIN` and `MERCHANT_ORIGIN`.
+4. Authenticate Wrangler to the intended Cloudflare account and accept any required terms. Confirm the stable `workers.dev` or custom origins for `webmcp-evidence-rooms` and `webmcp-evidence-merchant`; record them as `ROOM_ORIGIN` and `MERCHANT_ORIGIN`.
 5. In the Vercel Production environment, set `NEXT_PUBLIC_EVIDENCE_ROOM_URL` to `ROOM_ORIGIN`. Enable Vercel OIDC for AI Gateway if available; do not add a long-lived model key merely to remove the judge-safe manual review path.
 
 The final origins must be distinct, credential-free HTTPS origins. Do not use a protected Vercel Preview URL or a temporary Tailscale URL in the submission.
