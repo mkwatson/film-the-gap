@@ -84,19 +84,20 @@ The ready-to-capture, original `1920×1080` card is [public/demo-architecture.sv
 
 ## Reproducible continuity capture
 
-The native acceptance runner can emit twelve full-page milestone stills from the same journey it asserts. This is useful for edit planning, backup inserts, submission screenshots, and visual regression—not as a substitute for model-driven ChatGPT evidence.
+The native acceptance runner can emit thirteen full-page milestone stills from the same journey it asserts when its authenticated-crowd lane is enabled. This is useful for edit planning, backup inserts, submission screenshots, and visual regression—not as a substitute for model-driven ChatGPT evidence.
 
 ```bash
 EVIDENCE_ACCEPTANCE_APP_URL=https://app.example \
 EVIDENCE_ACCEPTANCE_ROOM_ORIGIN=https://room.example \
 EVIDENCE_ACCEPTANCE_MERCHANT_ORIGIN=https://merchant.example \
+EVIDENCE_ACCEPTANCE_AUTHENTICATED_CROWD=1 \
 EVIDENCE_ACCEPTANCE_ARTIFACT_DIR=tmp/final-demo-rehearsal \
 EVIDENCE_ACCEPTANCE_CAPTURE_PAUSE_MS=750 \
 EVIDENCE_ACCEPTANCE_RECORD_VIDEO=1 \
 pnpm acceptance:native
 ```
 
-The optional WebM records only the buyer-tab state progression; the twelve stills cover buyer, host, and merchant surfaces. `tmp/` is ignored. The host fragment is scrubbed before its first capture, and successful runner output still contains only phase timings. Before using any still, visually inspect it for a development hostname, personal data, third-party marks, and private credentials.
+The optional WebM records only the buyer-tab state progression; the thirteen stills cover buyer, authenticated-crowd, host, and merchant surfaces. Omit `EVIDENCE_ACCEPTANCE_AUTHENTICATED_CROWD` for the faster canonical journey and twelve stills. `tmp/` is ignored. All role fragments are scrubbed before capture, and successful runner output still contains only phase timings. Before using any still, visually inspect it for a development hostname, personal data, third-party marks, and private credentials.
 
 ## Take matrix
 

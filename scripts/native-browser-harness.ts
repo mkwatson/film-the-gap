@@ -9,6 +9,7 @@ export interface AcceptanceConfig {
   readonly browserExecutable: string;
   readonly commandTimeoutMs: number;
   readonly headed: boolean;
+  readonly authenticatedCrowd: boolean;
 }
 
 export interface AcceptanceStep {
@@ -97,6 +98,7 @@ export function readAcceptanceConfig(
     browserExecutable,
     commandTimeoutMs: readTimeout(environment),
     headed: environment.EVIDENCE_ACCEPTANCE_HEADED === '1',
+    authenticatedCrowd: environment.EVIDENCE_ACCEPTANCE_AUTHENTICATED_CROWD === '1',
   };
 }
 
@@ -135,6 +137,18 @@ export function parseBrowserJson(output: string): unknown {
 
 export function parseAcceptanceTabs(output: string): readonly AcceptanceTab[] {
   return [...output.matchAll(/\[t(\d+)\]/g)].map((match) => `t${match[1]}` as AcceptanceTab);
+}
+
+export function findSingleNewTab(
+  existingTabs: readonly AcceptanceTab[],
+  currentTabs: readonly AcceptanceTab[],
+): AcceptanceTab | null {
+  const existing = new Set(existingTabs);
+  const added = currentTabs.filter((tab) => !existing.has(tab));
+  if (added.length > 1) {
+    throw new Error('More than one browser tab appeared.');
+  }
+  return added.at(0) ?? null;
 }
 
 export function containsPrivateMaterial(value: string): boolean {
@@ -211,8 +225,8 @@ export class NativeBrowserDriver {
     return parseBrowserJson(this.execute(label, ['eval', '--stdin'], script));
   }
 
-  newTab(url: string): void {
-    this.execute('open isolated staging tab', ['tab', 'new', url], undefined);
+  openLinkInNewTab(selector: string, label = 'open page link in new tab'): void {
+    this.execute(label, ['click', selector, '--new-tab'], undefined);
   }
 
   back(): void {
@@ -269,7 +283,10 @@ export class NativeBrowserDriver {
       timeout: this.config.commandTimeoutMs,
     });
     if (result.error !== undefined || result.signal !== null || result.status !== 0) {
-      throw new Error(`Native browser command failed: ${label}.`);
+      const detail = result.stderr.trim();
+      const safeDetail =
+        detail.length === 0 ? '' : ` ${sanitizeAcceptanceFailure(new Error(detail))}`;
+      throw new Error(`Native browser command failed: ${label}.${safeDetail}`);
     }
     return result.stdout;
   }

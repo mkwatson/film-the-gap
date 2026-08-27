@@ -28,12 +28,12 @@ The current app is a strong **tailnet acceptance rung**, not yet a winning submi
 
 Scores are directional estimates on a ten-point scale, not claims about future judges.
 
-| State                                                        | WebMCP | Execution | Impact | Creativity | Why it is or is not competitive                                                                                           |
-| ------------------------------------------------------------ | -----: | --------: | -----: | ---------: | ------------------------------------------------------------------------------------------------------------------------- |
-| Current tailnet artifact + owned UCP merchant                |    9.5 |       8.8 |    8.1 |        9.4 | Full dynamic two-origin native flow works; stable public access, physical item, and concise judge onboarding remain       |
-| Public, resettable, concise golden path                      |    9.6 |       9.3 |    8.4 |        9.4 | Judges can run the authoritative flow unattended; the physical evidence moment is still deterministic                     |
-| Real networked seller phone + owned physical item            |    9.6 |       9.5 |    9.1 |        9.7 | The agent visibly causes a remote human to acquire fresh evidence before the real merchant state advances                 |
-| Submission-grade polish, blind evals, and resilient fallback |    9.8 |       9.7 |    9.3 |        9.7 | The new primitive is legible in 30 seconds, independently verifiable, and survives unattended judging and dependency loss |
+| State                                                        | WebMCP | Execution | Impact | Creativity | Why it is or is not competitive                                                                                                             |
+| ------------------------------------------------------------ | -----: | --------: | -----: | ---------: | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Current tailnet artifact + authenticated crowd + owned UCP   |    9.7 |       9.0 |    8.5 |        9.7 | Native Site Tools now converge across eight credentialed sessions; stable public access, physical item, and concise judge onboarding remain |
+| Public, resettable, concise golden path                      |    9.6 |       9.3 |    8.4 |        9.4 | Judges can run the authoritative flow unattended; the physical evidence moment is still deterministic                                       |
+| Real networked seller phone + owned physical item            |    9.6 |       9.5 |    9.1 |        9.7 | The agent visibly causes a remote human to acquire fresh evidence before the real merchant state advances                                   |
+| Submission-grade polish, blind evals, and resilient fallback |    9.8 |       9.7 |    9.3 |        9.7 | The new primitive is legible in 30 seconds, independently verifiable, and survives unattended judging and dependency loss                   |
 
 ### Overnight re-score — 2026-08-27 PT
 
@@ -51,6 +51,19 @@ The local artifact has now added a judge preflight, an atomic three-origin relea
 | Another frontend host or sponsor-logo integration          |            Negative |             Yes | Reject. Vercel, Cloudflare, Chrome, OpenAI, and UCP/Shopify already own distinct load-bearing boundaries; redundancy would weaken coherence.                           |
 
 The resulting overnight order is: strengthen the impact proof; attempt the bounded proof-carrying capability experiment; keep it only on evidence; then spend remaining autonomous cycles on hostile tests, cold-read clarity, and release rehearsal. The order changes immediately if stable public access becomes available.
+
+### Authenticated-crowd frontier decision — 2026-08-27 PT
+
+**Keep it, but never make seven-tab setup part of the canonical judge path.** The solo path still starts with seven visibly labeled deterministic signals and works immediately. The ambitious proof layer replaces them one-for-one with seven unique, least-authority attendee credentials; Chrome 151 then invoked all seven joins through native page-owned Site Tools and converged on `8 live · 0 fixture`.
+
+This clears the keep threshold because it improves every criterion without making the base journey brittle:
+
+- **WebMCP leverage:** seven separately registered attendee tool lifecycles now contribute to the shared state; the join mutation disappears from each page after use. This is materially deeper than drawing a larger synthetic number.
+- **Execution:** unique bearer fragments, per-role session storage, digest-only server persistence, no double-count after Durable Object hibernation, strict role denial, and zero-violation desktop/mobile surfaces all pass. The deterministic fallback remains untouched.
+- **Potential impact:** the host-attention compression claim is now visible as real authenticated session convergence, while still refusing to call those sessions external buyers or production demand.
+- **Creativity and ambition:** one public human answer unlocks eight private-agent capability frontiers without pooling the private rationales. That is the “future open web” primitive, not merely a livestream-shopping feature.
+
+The demo role is deliberately tiny: preload the seven sessions before recording, then show the buyer/host `8 live · 0 fixture` receipt for one or two seconds. Do not show bearer invites, spend time opening tabs, require judges to reproduce it, or imply model-driven independence until that separate eval exists. The next value comes from reproducible credential-suppressed acceptance and final-client/public-origin proof—not from increasing the crowd past eight.
 
 ### Winning causality moment
 

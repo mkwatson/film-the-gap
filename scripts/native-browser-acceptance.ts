@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import {
   containsPrivateMaterial,
+  findSingleNewTab,
   isStringArray,
   NativeBrowserDriver,
   readAcceptanceConfig,
@@ -38,6 +39,11 @@ const cartActiveBuyerTools = ['inspect_live_show', 'cancel_merchant_cart'] as co
 const cartCancelledBuyerTools = ['inspect_live_show', 'release_current_lot'] as const;
 const merchantActiveTools = ['inspect_merchant_cart', 'cancel_merchant_cart'] as const;
 const merchantCancelledTools = ['inspect_merchant_cart'] as const;
+const attendeeReadyTools = [
+  'inspect_shared_evidence_demand',
+  'join_shared_evidence_demand',
+] as const;
+const attendeeJoinedTools = ['inspect_shared_evidence_demand'] as const;
 
 const toolNamesScript = `
 (async () => {
@@ -64,11 +70,9 @@ function clickExactButtonScript(label: string): string {
   })()`;
 }
 
-const openPrivateHostScript = `(() => {
-  const link = document.querySelector('a[href*="/host"]');
-  if (!(link instanceof HTMLAnchorElement)) return false;
-  return window.open(link.href, 'webmcp-private-host') !== null;
-})()`;
+const revealPrivateAttendeeInvitesScript = clickExactButtonScript(
+  'Reveal 7 private attendee invites',
+);
 
 function invokeToolScript(
   name: string,
@@ -261,14 +265,92 @@ const releaseScript = invokeToolScript(
     !serialized.includes('$450');`,
 );
 
+const buyerPrivacyScript = `(() => {
+  const keys = Object.keys(sessionStorage).sort();
+  const html = document.documentElement?.innerHTML ?? '';
+  return location.hash === '' &&
+    keys.length === 1 &&
+    keys[0] === 'webmcp.evidence-room.buyer.v1' &&
+    !html.includes('$450') &&
+    !html.includes('/cart/c/');
+})()`;
+
 const hostPrivacyScript = `(() => {
   const text = document.body?.innerText ?? '';
   const html = document.documentElement?.innerHTML ?? '';
+  const keys = Object.keys(sessionStorage).sort();
   return location.hash === '' &&
+    window.opener === null &&
+    keys.length === 1 &&
+    keys[0] === 'webmcp.evidence-room.host.v1' &&
     !text.includes('$450') &&
     !html.includes('/cart/c/') &&
     !html.includes('token=');
 })()`;
+
+const hostPrivacyDiagnosticScript = `(() => {
+  const text = document.body?.innerText ?? '';
+  const html = document.documentElement?.innerHTML ?? '';
+  return {
+    pathname: location.pathname,
+    fragmentScrubbed: location.hash === '',
+    openerDetached: window.opener === null,
+    storageKeys: Object.keys(sessionStorage).sort(),
+    ceilingAbsent: !text.includes('$450'),
+    continuationAbsent: !html.includes('/cart/c/'),
+    bearerMarkupAbsent: !html.includes('token='),
+  };
+})()`;
+
+const attendeePrivacyScript = `(() => {
+  const text = document.body?.innerText ?? '';
+  const html = document.documentElement?.innerHTML ?? '';
+  const keys = Object.keys(sessionStorage).sort();
+  return location.hash === '' &&
+    window.opener === null &&
+    keys.length === 1 &&
+    keys[0] === 'webmcp.evidence-room.attendee.v1' &&
+    !text.includes('$450') &&
+    !html.includes('/cart/c/') &&
+    !html.includes('token=') &&
+    !/attendee-[1-7]/.test(html);
+})()`;
+
+const attendeeLinkDiagnosticScript = `(() => {
+  const text = document.body?.innerText ?? '';
+  return {
+    pathname: location.pathname,
+    fragmentScrubbed: location.hash === '',
+    storageKeys: Object.keys(sessionStorage).sort(),
+    attendeeSurface: text.includes('Evidence attendee'),
+    linked: text.includes('Evidence room linked'),
+    authenticated: text.includes('Credential authenticated'),
+    questionOpen: text.includes('One question is open'),
+    waitingForPrimary: text.includes('Waiting for the primary agent'),
+    leastAuthority: text.includes('least authority'),
+  };
+})()`;
+
+const joinAttendeeScript = invokeToolScript(
+  'join_shared_evidence_demand',
+  {},
+  `return parsedValues.some((value) => value.ok === true) &&
+    serialized.includes('"thisAttendeeJoined":true') &&
+    serialized.includes('"privateBuyerContext":"not collected"') &&
+    !serialized.includes('$450') &&
+    !serialized.includes('token=') &&
+    !/attendee-[1-7]/.test(serialized);`,
+);
+
+const inspectAuthenticatedCrowdScript = invokeToolScript(
+  'inspect_live_show',
+  {},
+  `return serialized.includes('"composition":{"live":8,"fixture":0,"total":8}') &&
+    serialized.includes('"status":"queued"') &&
+    !serialized.includes('$450') &&
+    !serialized.includes('token=') &&
+    !/attendee-[1-7]/.test(serialized);`,
+);
 
 function isTrue(value: unknown): value is true {
   return value === true;
@@ -294,6 +376,56 @@ async function waitForTools(
   timeoutMs: number,
 ): Promise<void> {
   await waitForBrowserValue(driver, label, toolNamesScript, hasExactToolSet(expected), timeoutMs);
+}
+
+async function waitForNewTab(
+  driver: NativeBrowserDriver,
+  label: string,
+  existingTabs: readonly AcceptanceTab[],
+  timeoutMs: number,
+): Promise<AcceptanceTab> {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    try {
+      const addedTab = findSingleNewTab(existingTabs, driver.listTabs());
+      if (addedTab !== null) {
+        return addedTab;
+      }
+    } catch {
+      throw new Error(`More than one browser tab appeared while waiting for ${label}.`);
+    }
+    await new Promise<void>((resolvePoll) => {
+      setTimeout(resolvePoll, 100);
+    });
+  }
+  throw new Error(`Timed out waiting for ${label}.`);
+}
+
+async function waitForHostPrivacy(
+  driver: NativeBrowserDriver,
+  label: string,
+  timeoutMs: number,
+): Promise<void> {
+  try {
+    await waitForTrue(driver, label, hostPrivacyScript, timeoutMs);
+  } catch {
+    const diagnostic = driver.eval(hostPrivacyDiagnosticScript, 'diagnose host privacy boundary');
+    throw new Error(`Host privacy invariant failed: ${JSON.stringify(diagnostic)}`);
+  }
+}
+
+async function waitForAttendeeLink(driver: NativeBrowserDriver, timeoutMs: number): Promise<void> {
+  try {
+    await waitForTrue(
+      driver,
+      'linked attendee surface',
+      pageIncludesScript('Evidence attendee', 'Evidence room linked', 'One question is open'),
+      timeoutMs,
+    );
+  } catch {
+    const diagnostic = driver.eval(attendeeLinkDiagnosticScript, 'diagnose attendee link');
+    throw new Error(`Attendee link invariant failed: ${JSON.stringify(diagnostic)}`);
+  }
 }
 
 async function captureMilestone(
@@ -390,6 +522,12 @@ async function main(): Promise<void> {
       );
       await waitForTrue(
         driver,
+        'buyer role credential isolation',
+        buyerPrivacyScript,
+        config.commandTimeoutMs,
+      );
+      await waitForTrue(
+        driver,
         'initial native inspection',
         inspectInitialScript,
         config.commandTimeoutMs,
@@ -398,19 +536,17 @@ async function main(): Promise<void> {
     });
 
     await recordAcceptanceStep(steps, 'link-private-host-surface', async () => {
-      driver.newTab(config.appUrl);
-      nameCurrentTab(driver, 'webmcp-private-host');
       driver.switchTab(buyerTab);
-      if (!isTrue(driver.eval(openPrivateHostScript, 'navigate private host surface'))) {
-        throw new Error('Could not navigate the private host surface.');
-      }
-      hostTab = findNamedTab(driver, 'webmcp-private-host');
-      await waitForTrue(
+      const existingTabs = driver.listTabs();
+      driver.openLinkInNewTab('.phone-invite-control a', 'open private host surface');
+      hostTab = await waitForNewTab(
         driver,
-        'host credential scrubbing',
-        hostPrivacyScript,
+        'private host surface',
+        existingTabs,
         config.commandTimeoutMs,
       );
+      driver.switchTab(hostTab);
+      await waitForHostPrivacy(driver, 'host credential scrubbing', config.commandTimeoutMs);
       await waitForTrue(
         driver,
         'linked seller surface',
@@ -501,6 +637,98 @@ async function main(): Promise<void> {
       );
     });
 
+    if (config.authenticatedCrowd) {
+      await recordAcceptanceStep(steps, 'replace-fixtures-with-native-attendees', async () => {
+        driver.switchTab(buyerTab);
+        if (
+          !isTrue(
+            driver.eval(revealPrivateAttendeeInvitesScript, 'reveal private attendee invitations'),
+          )
+        ) {
+          throw new Error('Could not reveal private attendee invitations.');
+        }
+        await waitForTrue(
+          driver,
+          'private attendee invitation panel',
+          pageIncludesScript('Temporary bearer links', 'Open attendee 7'),
+          config.commandTimeoutMs,
+        );
+
+        for (let index = 0; index < 7; index += 1) {
+          driver.switchTab(buyerTab);
+          const existingTabs = driver.listTabs();
+          driver.openLinkInNewTab(
+            `.crowd-invite-panel li:nth-child(${index + 1}) a`,
+            'open private attendee surface',
+          );
+          const attendeeTab = await waitForNewTab(
+            driver,
+            'private attendee surface',
+            existingTabs,
+            config.commandTimeoutMs,
+          );
+          driver.switchTab(attendeeTab);
+          await waitForTrue(
+            driver,
+            'attendee credential scrubbing and role isolation',
+            attendeePrivacyScript,
+            config.commandTimeoutMs,
+          );
+          await waitForAttendeeLink(driver, config.commandTimeoutMs);
+          await waitForTools(
+            driver,
+            'joinable attendee Site Tools',
+            attendeeReadyTools,
+            config.commandTimeoutMs,
+          );
+          await waitForTrue(
+            driver,
+            'native attendee join',
+            joinAttendeeScript,
+            config.commandTimeoutMs,
+          );
+          await waitForTools(
+            driver,
+            'post-join attendee Site Tools',
+            attendeeJoinedTools,
+            config.commandTimeoutMs,
+          );
+        }
+
+        driver.switchTab(buyerTab);
+        await waitForTrue(
+          driver,
+          'authenticated crowd receipt',
+          pageIncludesScript(
+            'All seven fixtures replaced by authenticated sessions.',
+            '8 live · 0 fixture',
+          ),
+          config.commandTimeoutMs,
+        );
+        await waitForTrue(
+          driver,
+          'buyer-native authenticated crowd inspection',
+          inspectAuthenticatedCrowdScript,
+          config.commandTimeoutMs,
+        );
+        await captureMilestone(driver, artifacts, '04b-buyer-authenticated-crowd.png');
+
+        driver.switchTab(hostTab);
+        await waitForTrue(
+          driver,
+          'host authenticated crowd receipt',
+          pageIncludesScript('8 live · 0 fixture'),
+          config.commandTimeoutMs,
+        );
+        await waitForHostPrivacy(
+          driver,
+          'host privacy boundary after attendee joins',
+          config.commandTimeoutMs,
+        );
+        driver.switchTab(buyerTab);
+      });
+    }
+
     await recordAcceptanceStep(steps, 'publish-one-host-answer', async () => {
       driver.switchTab(hostTab);
       await waitForTrue(
@@ -529,10 +757,9 @@ async function main(): Promise<void> {
         pageIncludesScript('decisions updated', 'Never sent to the host'),
         config.commandTimeoutMs,
       );
-      await waitForTrue(
+      await waitForHostPrivacy(
         driver,
         'host privacy boundary after publication',
-        hostPrivacyScript,
         config.commandTimeoutMs,
       );
       await captureMilestone(driver, artifacts, '06-host-one-answer.png');
@@ -645,12 +872,7 @@ async function main(): Promise<void> {
 
     await recordAcceptanceStep(steps, 'prove-host-never-received-private-material', async () => {
       driver.switchTab(hostTab);
-      await waitForTrue(
-        driver,
-        'final host privacy boundary',
-        hostPrivacyScript,
-        config.commandTimeoutMs,
-      );
+      await waitForHostPrivacy(driver, 'final host privacy boundary', config.commandTimeoutMs);
       await captureMilestone(driver, artifacts, '12-host-private-boundary.png');
       driver.switchTab(buyerTab);
       if (!isTrue(driver.eval(clickExactButtonScript('Reset demo'), 'clean acceptance room'))) {

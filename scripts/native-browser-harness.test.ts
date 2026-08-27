@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   containsPrivateMaterial,
+  findSingleNewTab,
   isStringArray,
   parseAcceptanceTabs,
   parseBrowserJson,
@@ -60,6 +61,28 @@ describe('native browser acceptance harness', () => {
     expect(config.merchantOrigin).toBe('https://merchant.example');
     expect(config.commandTimeoutMs).toBe(12_000);
     expect(config.headed).toBe(true);
+    expect(config.authenticatedCrowd).toBe(false);
+  });
+
+  it('enables the authenticated crowd lane only by explicit opt-in', () => {
+    const base = {
+      EVIDENCE_ACCEPTANCE_ROOM_ORIGIN: 'https://room.example',
+      EVIDENCE_ACCEPTANCE_MERCHANT_ORIGIN: 'https://merchant.example',
+    } as const;
+
+    expect(readAcceptanceConfig(base).authenticatedCrowd).toBe(false);
+    expect(
+      readAcceptanceConfig({
+        ...base,
+        EVIDENCE_ACCEPTANCE_AUTHENTICATED_CROWD: '1',
+      }).authenticatedCrowd,
+    ).toBe(true);
+    expect(
+      readAcceptanceConfig({
+        ...base,
+        EVIDENCE_ACCEPTANCE_AUTHENTICATED_CROWD: 'true',
+      }).authenticatedCrowd,
+    ).toBe(false);
   });
 
   it('rejects credentialed, path-bearing, or insecure service URLs', () => {
@@ -98,6 +121,14 @@ describe('native browser acceptance harness', () => {
         '  [t1] Buyer - https://app.example\n→ [t2] Recorder - https://app.example\n  [t7] Host',
       ),
     ).toEqual(['t1', 't2', 't7']);
+  });
+
+  it('identifies exactly one newly opened browser tab', () => {
+    expect(findSingleNewTab(['t1', 't2'], ['t1', 't2'])).toBeNull();
+    expect(findSingleNewTab(['t1', 't2'], ['t1', 't3', 't2'])).toBe('t3');
+    expect(() => findSingleNewTab(['t1'], ['t1', 't2', 't3'])).toThrow(
+      /more than one browser tab/i,
+    );
   });
 
   it('detects private ceilings and bearer paths without flagging generic privacy copy', () => {
