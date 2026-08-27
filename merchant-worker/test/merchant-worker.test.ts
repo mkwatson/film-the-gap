@@ -129,7 +129,7 @@ function structured(body: RpcResponse): Readonly<Record<string, unknown>> {
 }
 
 function cartFrom(body: RpcResponse): Readonly<Record<string, unknown>> {
-  return asRecord(structured(body).cart);
+  return structured(body);
 }
 
 function toolIsError(body: RpcResponse): boolean {
@@ -174,13 +174,21 @@ describe('public merchant surface', () => {
     const services = asRecord(ucp.services);
     const shopping = asArray(services['dev.ucp.shopping']);
     const service = asRecord(shopping[0]);
+    const capabilities = asRecord(ucp.capabilities);
+    const cartCapability = asRecord(asArray(capabilities['dev.ucp.shopping.cart'])[0]);
 
     expect(profileResponse.status).toBe(200);
     expect(ucp.version).toBe(ucpProtocolVersion);
     expect(service.endpoint).toBe(endpoint);
     expect(service.transport).toBe('mcp');
     expect(ucp.payment_handlers).toEqual({});
-    expect(Object.keys(asRecord(ucp.capabilities))).toEqual(['dev.ucp.shopping.cart']);
+    expect(Object.keys(capabilities)).toEqual(['dev.ucp.shopping.cart']);
+    expect(cartCapability).toMatchObject({
+      version: ucpProtocolVersion,
+      spec: `https://ucp.dev/${ucpProtocolVersion}/specification/shopping/cart`,
+      schema: `https://ucp.dev/${ucpProtocolVersion}/schemas/shopping/cart.json`,
+    });
+    expect(ucp).not.toHaveProperty('supported_versions');
 
     const versioned = await SELF.fetch(
       `https://merchant.example/.well-known/ucp/${ucpProtocolVersion}`,
@@ -195,6 +203,8 @@ describe('public merchant surface', () => {
     expect(html).toContain('inspect_merchant_product');
     expect(html).toContain('Dual-era MCP');
     expect(html).toContain('$375.00');
+    expect(html).toContain('$48.00');
+    expect(html).toContain('$423.00');
     expect(html).not.toContain('urn:webmcp-evidence-market:cart:');
   });
 
@@ -323,9 +333,18 @@ describe('authoritative reversible cart', () => {
       price: 37_500,
     });
     expect(line.quantity).toBe(1);
-    expect(totals).toContainEqual(
-      expect.objectContaining({ type: 'total', amount: demoProduct.price }),
-    );
+    expect(totals).toEqual([
+      expect.objectContaining({ type: 'subtotal', amount: demoProduct.price }),
+      expect.objectContaining({ type: 'fulfillment', amount: demoProduct.fulfillment }),
+      expect.objectContaining({ type: 'total', amount: demoProduct.total }),
+    ]);
+    const result = body.result;
+    if (result === undefined) {
+      throw new Error('Expected a complete merchant tool result.');
+    }
+    expect(result.content).toEqual([
+      { type: 'text', text: JSON.stringify(result.structuredContent) },
+    ]);
     expect(new URL(continueUrl).origin).toBe('https://merchant.example');
     expect(JSON.stringify(body)).not.toMatch(/maximum|budget|ceiling|buyer identity|\$450/i);
 
@@ -384,6 +403,17 @@ describe('authoritative reversible cart', () => {
       },
     });
     expect(toolIsError(privateAttempt.body)).toBe(true);
+    const privateResult = privateAttempt.body.result;
+    if (privateResult === undefined) {
+      throw new Error('Expected a UCP business outcome.');
+    }
+    expect(privateResult.content).toEqual([
+      { type: 'text', text: JSON.stringify(privateResult.structuredContent) },
+    ]);
+    expect(structured(privateAttempt.body)).toMatchObject({
+      ucp: { version: ucpProtocolVersion, status: 'error' },
+      messages: [{ type: 'error', code: 'invalid_request' }],
+    });
 
     const extraField = await callTool(
       'create_cart',
@@ -444,10 +474,13 @@ describe('authoritative reversible cart', () => {
       },
       id: cartId,
     });
-    expect(structured(cancellation.body)).toMatchObject({
-      cart: { id: cartId, status: 'cancelled' },
-      order_created: false,
-      payment_available: false,
+    expect(cartFrom(cancellation.body)).toMatchObject({
+      id: cartId,
+      merchant: {
+        cart_status: 'cancelled',
+        order_created: false,
+        payment_available: false,
+      },
     });
 
     const replay = await callTool('cancel_cart', {
@@ -466,7 +499,20 @@ describe('authoritative reversible cart', () => {
       },
       id: cartId,
     });
-    expect(toolIsError(secondKey.body)).toBe(false);
+    expect(toolIsError(secondKey.body)).toBe(true);
+    expect(structured(secondKey.body)).toMatchObject({
+      ucp: { version: ucpProtocolVersion, status: 'error' },
+      messages: [{ type: 'error', code: 'not_found' }],
+    });
+
+    const getAfterCancellation = await callTool('get_cart', {
+      meta: { 'ucp-agent': { profile: platformProfile } },
+      id: cartId,
+    });
+    expect(toolIsError(getAfterCancellation.body)).toBe(true);
+    expect(structured(getAfterCancellation.body)).toMatchObject({
+      messages: [{ code: 'not_found' }],
+    });
 
     const page = await SELF.fetch(continuationUrl(created));
     const html = await page.text();

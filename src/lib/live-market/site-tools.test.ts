@@ -319,7 +319,7 @@ describe('WebMCP Site Tools', () => {
     runtime.setStateForTest(
       (state) =>
         recordPreparedMerchantCart(state, 'agent', {
-          protocolVersion: '2026-04-08',
+          protocolVersion: '2026-08-25',
           currency: 'USD',
           lineItems: [
             {
@@ -331,7 +331,8 @@ describe('WebMCP Site Tools', () => {
           ],
           totals: [
             { type: 'subtotal', displayText: 'Subtotal', amount: 37500 },
-            { type: 'total', displayText: 'Total', amount: 37500 },
+            { type: 'fulfillment', displayText: 'Flat shipping', amount: 4800 },
+            { type: 'total', displayText: 'Exact total', amount: 42300 },
           ],
           messages: [
             {
@@ -352,13 +353,14 @@ describe('WebMCP Site Tools', () => {
     expect(output).toMatchObject({
       commerce: {
         protocol: 'UCP',
-        protocolVersion: '2026-04-08',
+        protocolVersion: '2026-08-25',
         merchantOrigin: 'https://merchant.example',
         cartStatus: 'active',
         receipt: {
           totals: [
             { type: 'subtotal', amount: 37500 },
-            { type: 'total', amount: 37500 },
+            { type: 'fulfillment', amount: 4800 },
+            { type: 'total', amount: 42300 },
           ],
           continuationAvailable: true,
         },
@@ -396,7 +398,7 @@ describe('WebMCP Site Tools', () => {
     runtime.setStateForTest(
       (state) =>
         recordPreparedMerchantCart(state, 'agent', {
-          protocolVersion: '2026-04-08',
+          protocolVersion: '2026-08-25',
           currency: 'USD',
           lineItems: [],
           totals: [],
@@ -458,7 +460,7 @@ describe('WebMCP Site Tools', () => {
           throw new Error('Expected the merchant preparation command.');
         }
         const result = recordPreparedMerchantCart(state, 'agent', {
-          protocolVersion: '2026-04-08',
+          protocolVersion: '2026-08-25',
           currency: 'USD',
           lineItems: [
             {
@@ -468,7 +470,11 @@ describe('WebMCP Site Tools', () => {
               subtotal: 37500,
             },
           ],
-          totals: [{ type: 'total', displayText: 'Total', amount: 37500 }],
+          totals: [
+            { type: 'subtotal', displayText: 'Item subtotal', amount: 37500 },
+            { type: 'fulfillment', displayText: 'Flat shipping', amount: 4800 },
+            { type: 'total', displayText: 'Exact total', amount: 42300 },
+          ],
           messages: [
             {
               type: 'warning',

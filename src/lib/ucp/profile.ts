@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const ucpProtocolVersion = '2026-04-08' as const;
+export const ucpProtocolVersion = '2026-08-25' as const;
 export const ucpShoppingServiceName = 'dev.ucp.shopping' as const;
 export const ucpCartCapabilityName = 'dev.ucp.shopping.cart' as const;
 
@@ -49,7 +49,7 @@ export const webMcpPlatformProfile = {
       [ucpCartCapabilityName]: [
         {
           version: ucpProtocolVersion,
-          spec: `https://ucp.dev/${ucpProtocolVersion}/specification/cart`,
+          spec: `https://ucp.dev/${ucpProtocolVersion}/specification/shopping/cart`,
           schema: `https://ucp.dev/${ucpProtocolVersion}/schemas/shopping/cart.json`,
         },
       ],

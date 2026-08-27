@@ -51,6 +51,8 @@ export function renderMerchantHome(origin: string, nonce: string): string {
     lengthCm: demoProduct.lengthCm,
     currency: demoProduct.currency,
     price: demoProduct.price,
+    fulfillment: demoProduct.fulfillment,
+    total: demoProduct.total,
     inventory: demoProduct.inventory,
     merchantOrigin: origin,
   });
@@ -60,7 +62,7 @@ export function renderMerchantHome(origin: string, nonce: string): string {
       <div>
         <div class="eyebrow">A merchant that waits for evidence</div>
         <h1>See it live.<br>Then let the agent act.</h1>
-        <p class="lede">One original product, one authoritative price, and no checkout. This merchant accepts a reversible UCP cart only after the live-show room has established the buyer’s evidence conditions.</p>
+        <p class="lede">One original product, one authoritative item-plus-shipping total, and no checkout. This merchant accepts a reversible UCP cart only after the live-show room has established the buyer’s evidence conditions.</p>
         <div class="grid">
           <div class="fact"><b>UCP ${ucpProtocolVersion}</b><span>Machine-discoverable cart service on the open web.</span></div>
           <div class="fact"><b>Dual-era MCP</b><span>Current stateless discovery plus the UCP-compatible binding.</span></div>
@@ -69,7 +71,7 @@ export function renderMerchantHome(origin: string, nonce: string): string {
       </div>
       <div class="panel" aria-label="${escapeHtml(demoProduct.title)}">
         <div class="board-wrap"><div class="board" aria-hidden="true"></div></div>
-        <div class="price-card"><div class="price">${money(demoProduct.price)}</div><div class="fine">1 available · 156 cm</div></div>
+        <div class="price-card"><div class="price">${money(demoProduct.price)}</div><div class="fine">+ ${money(demoProduct.fulfillment)} flat shipping = ${money(demoProduct.total)} exact · 156 cm</div></div>
       </div>
     </section>
     <p class="footer">The public product page exposes one read-only Site Tool. Cart credentials are never rendered here.</p>`;
@@ -80,7 +82,7 @@ export function renderMerchantHome(origin: string, nonce: string): string {
       void context.registerTool({
         name: 'inspect_merchant_product',
         title: 'Inspect merchant product',
-        description: 'Read the original Evidence Market product, fixed price, stock, and UCP merchant origin. This cannot create a cart, order, or payment.',
+        description: 'Read the original Evidence Market product, item price, flat shipping, exact total, stock, and UCP merchant origin. This cannot create a cart, order, or payment.',
         inputSchema: { type: 'object', properties: {}, additionalProperties: false },
         annotations: { readOnlyHint: true, untrustedContentHint: true },
         execute: async () => ({ product, next: 'Return to the evidence room to establish evidence and prepare a reversible cart.' }),
@@ -111,8 +113,9 @@ export function renderContinuation(
     },
     totals: {
       subtotal: demoProduct.price,
-      estimatedTotal: demoProduct.price,
-      shippingAndTaxIncluded: false,
+      flatShipping: demoProduct.fulfillment,
+      exactTotal: demoProduct.total,
+      tax: 0,
     },
     createdAt: new Date(cart.createdAt).toISOString(),
     expiresAt: new Date(cart.expiresAt).toISOString(),
@@ -128,8 +131,10 @@ export function renderContinuation(
       <p class="lede">The merchant received only a fixed product variant and public action context. The buyer’s identity, price ceiling, address, and payment data never crossed this boundary.</p>
       <div class="card" aria-label="Merchant cart receipt">
         <div class="row"><div><strong>${escapeHtml(demoProduct.title)}</strong><div class="muted">${demoProduct.variantTitle} · Quantity 1</div></div><strong>${money(demoProduct.price)}</strong></div>
-        <div class="row"><span class="muted">Estimated total</span><span class="total">${money(demoProduct.price)}</span></div>
-        <div class="notice">Shipping and tax are intentionally not estimated. This challenge merchant has no checkout, payment handler, or order-creation capability.</div>
+        <div class="row"><span class="muted">Item subtotal</span><span>${money(demoProduct.price)}</span></div>
+        <div class="row"><span class="muted">Flat shipping</span><span>${money(demoProduct.fulfillment)}</span></div>
+        <div class="row"><span class="muted">Exact total</span><span class="total">${money(demoProduct.total)}</span></div>
+        <div class="notice">This exactly matches the room’s all-in hold. No tax is collected, and this challenge merchant has no checkout, payment handler, or order-creation capability.</div>
         <div class="actions">
           <button id="cancel-cart" class="button" type="button" ${active ? '' : 'disabled'}>${active ? 'Cancel reversible cart' : 'Cart closed'}</button>
           <span id="tools-state" class="tools-state" role="status" aria-live="polite">Checking Site Tools…</span>

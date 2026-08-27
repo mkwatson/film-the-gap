@@ -391,14 +391,15 @@ describe('evidence room worker', () => {
       state: {
         commerce: {
           available: true,
-          protocolVersion: '2026-04-08',
+          protocolVersion: '2026-08-25',
           merchantOrigin: 'https://merchant.example',
           cartStatus: 'active',
           receipt: {
             currency: 'USD',
             totals: [
-              { type: 'subtotal', displayText: 'Subtotal', amount: 37500 },
-              { type: 'total', displayText: 'Total', amount: 37500 },
+              { type: 'subtotal', displayText: 'Item subtotal', amount: 37500 },
+              { type: 'fulfillment', displayText: 'Flat shipping', amount: 4800 },
+              { type: 'total', displayText: 'Exact total', amount: 42300 },
             ],
             continuationAvailable: true,
           },

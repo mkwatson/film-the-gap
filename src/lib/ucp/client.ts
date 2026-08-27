@@ -125,6 +125,20 @@ const cartResponseSchema = z.looseObject({
   expires_at: z.string().datetime({ offset: true }).optional(),
 });
 
+const ucpErrorResponseSchema = z.looseObject({
+  ucp: z.looseObject({
+    version: z.string().min(1),
+    status: z.literal('error'),
+  }),
+  messages: z.array(
+    z.looseObject({
+      type: z.literal('error'),
+      code: z.string().min(1),
+      content: z.string(),
+    }),
+  ),
+});
+
 const createCartInputSchema = z.strictObject({
   variantId: z.string().min(1).max(2_000),
   quantity: z.number().int().positive().max(10).default(1),
@@ -579,6 +593,13 @@ export async function cancelUcpCart(options: CancelUcpCartOptions): Promise<void
     options,
   );
   const parsed = toolCallResultSchema.safeParse(result);
+  if (parsed.success && parsed.data.isError === true) {
+    const structured = parsed.data.structuredContent ?? parseJsonTextContent(parsed.data);
+    const error = ucpErrorResponseSchema.safeParse(structured);
+    if (error.success && error.data.messages.some(({ code }) => code === 'not_found')) {
+      return;
+    }
+  }
   if (!parsed.success || parsed.data.isError === true) {
     throw new UcpClientError('rpc-error', 'The merchant did not cancel the cart.', true);
   }

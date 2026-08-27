@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const ucpProtocolVersion = '2026-04-08' as const;
+export const ucpProtocolVersion = '2026-08-25' as const;
 export const modernMcpProtocolVersion = '2026-07-28' as const;
 export const legacyMcpProtocolVersions = ['2025-11-25', '2025-06-18'] as const;
 export const merchantServerName = 'Evidence Market Merchant' as const;
@@ -14,6 +14,8 @@ export const demoProduct = {
   description:
     'An original challenge listing whose edge condition and repair history are reviewed live before a buyer agent prepares a reversible cart.',
   price: 37_500,
+  fulfillment: 4_800,
+  total: 42_300,
   currency: 'USD',
   lengthCm: 156,
   inventory: 1,
@@ -312,9 +314,6 @@ export function merchantProfile(origin: string): object {
   return {
     ucp: {
       version: ucpProtocolVersion,
-      supported_versions: {
-        [ucpProtocolVersion]: `${origin}/.well-known/ucp/${ucpProtocolVersion}`,
-      },
       services: {
         'dev.ucp.shopping': [
           {
@@ -330,7 +329,7 @@ export function merchantProfile(origin: string): object {
         'dev.ucp.shopping.cart': [
           {
             version: ucpProtocolVersion,
-            spec: `https://ucp.dev/${ucpProtocolVersion}/specification/cart`,
+            spec: `https://ucp.dev/${ucpProtocolVersion}/specification/shopping/cart`,
             schema: `https://ucp.dev/${ucpProtocolVersion}/schemas/shopping/cart.json`,
           },
         ],
@@ -342,49 +341,62 @@ export function merchantProfile(origin: string): object {
 
 export function cartStructuredContent(cart: StoredCart, origin: string): object {
   return {
-    cart: {
-      ucp: {
-        version: ucpProtocolVersion,
-        capabilities: {
-          'dev.ucp.shopping.cart': [
-            {
-              version: ucpProtocolVersion,
-              spec: `https://ucp.dev/${ucpProtocolVersion}/specification/cart`,
-            },
-          ],
-        },
-      },
-      id: cart.id,
-      line_items: [
-        {
-          id: cart.lineId,
-          item: {
-            id: demoProduct.variantId,
-            title: demoProduct.title,
-            price: demoProduct.price,
+    ucp: {
+      version: ucpProtocolVersion,
+      capabilities: {
+        'dev.ucp.shopping.cart': [
+          {
+            version: ucpProtocolVersion,
+            spec: `https://ucp.dev/${ucpProtocolVersion}/specification/shopping/cart`,
           },
-          quantity: 1,
-          subtotal: demoProduct.price,
-          totals: [{ type: 'subtotal', display_text: 'Line subtotal', amount: demoProduct.price }],
-        },
-      ],
-      currency: demoProduct.currency,
-      totals: [
-        { type: 'subtotal', display_text: 'Subtotal', amount: demoProduct.price },
-        { type: 'total', display_text: 'Estimated total', amount: demoProduct.price },
-      ],
-      messages: [
-        {
-          type: 'warning',
-          severity: 'warning',
-          code: 'demo_no_checkout',
-          content:
-            'Reversible challenge cart only. Shipping and tax are not estimated, and this merchant cannot accept payment or create an order.',
-        },
-      ],
-      continue_url: `${origin}/cart/c/${cart.continuationToken}`,
-      expires_at: new Date(cart.expiresAt).toISOString(),
+        ],
+      },
     },
+    id: cart.id,
+    line_items: [
+      {
+        id: cart.lineId,
+        item: {
+          id: demoProduct.variantId,
+          title: demoProduct.title,
+          price: demoProduct.price,
+        },
+        quantity: 1,
+        subtotal: demoProduct.price,
+        totals: [
+          { type: 'subtotal', display_text: 'Line subtotal', amount: demoProduct.price },
+          { type: 'total', display_text: 'Line total', amount: demoProduct.price },
+        ],
+      },
+    ],
+    currency: demoProduct.currency,
+    totals: [
+      { type: 'subtotal', display_text: 'Item subtotal', amount: demoProduct.price },
+      {
+        type: 'fulfillment',
+        display_text: 'Flat shipping',
+        amount: demoProduct.fulfillment,
+      },
+      { type: 'total', display_text: 'Exact total', amount: demoProduct.total },
+    ],
+    messages: [
+      {
+        type: 'warning',
+        presentation: 'disclosure',
+        code: 'demo_no_checkout',
+        content:
+          'The exact total includes flat shipping and no tax. This reversible challenge merchant cannot accept payment or create an order.',
+      },
+    ],
+    continue_url: `${origin}/cart/c/${cart.continuationToken}`,
+    expires_at: new Date(cart.expiresAt).toISOString(),
+  };
+}
+
+export function ucpErrorStructuredContent(message: string, code: string): object {
+  return {
+    ucp: { version: ucpProtocolVersion, status: 'error' },
+    messages: [{ type: 'error', code, content: message, severity: 'unrecoverable' }],
   };
 }
 

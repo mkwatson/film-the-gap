@@ -11,7 +11,7 @@ The current rung proves one complete, privacy-minimizing collaboration loop:
 5. The host can explicitly start a video-only camera and capture one bounded keyframe. Vercel AI Gateway can propose a pixel-grounded observation, but the host must accept or correct it; a manual review path remains available.
 6. The host deliberately publishes that one selected JPEG, its provenance, the reviewed visual observation, and a separate repair-history attestation. One answer resolves all eight requests without revealing profiles, budgets, or the continuous camera feed.
 7. A reversible reservation tool appears and accepts only the exact current all-in quote.
-8. In an authoritatively configured room, the hold unlocks a reversible anonymous UCP merchant cart. Shared state receives bounded merchant-authored terms; only the invoking buyer receives the private continuation.
+8. In an authoritatively configured room, the hold unlocks a reversible anonymous UCP `2026-08-25` merchant cart whose `$375` item plus `$48` flat fulfillment exactly matches the room's `$423` quote. Shared state receives bounded merchant-authored terms; only the invoking buyer receives the private continuation.
 9. The page can cancel the merchant cart, discard its credential, release the hold, and keeps equivalent human controls visible throughout.
 
 The seller-facing page does not receive a buyer ceiling. That is a concrete data-minimization boundary, not a claim that all statistical inference is impossible. The app uses direct native `document.modelContext.registerTool` calls. Human controls invoke the same domain transitions, so the experience remains complete in an ordinary browser.
@@ -47,6 +47,14 @@ pnpm check
 
 That checks formatting, ESLint, strict TypeScript, Vitest behavior, and the production build.
 
+The owned merchant also has an opt-in network conformance check against the official released UCP `2026-08-25` JSON Schemas:
+
+```bash
+pnpm test:ucp-schema
+```
+
+That check fetches the released schemas from `ucp.dev`, recursively registers their references, and validates both the merchant business profile and direct Cart result. It is intentionally separate from the offline default gate.
+
 ### Run the native WebMCP acceptance journey
 
 The repository pins `agent-browser` 0.35.1 and includes a credential-suppressing acceptance runner for the real system Chrome. Start the app, room Worker, and merchant Worker, expose the two Worker origins over credential-free HTTPS, then run:
@@ -67,7 +75,7 @@ Chrome-format direct, ambiguous, privacy-pressure, and full multi-step model eva
 - The seven other audience agents are a clearly labeled deterministic demo-room aggregate, not simulated individual buyers or a live backend.
 - The remote buyer and host pages use separately authenticated, revisioned, idempotent Cloudflare Durable Object sessions; local browser synchronization remains a fallback. The remote protocol and reconnect behavior pass between two browser clients, but a physical phone on a second network has not yet passed acceptance.
 - The hold is reversible. No tool can bid, charge, purchase, or move money.
-- The UCP Cart client, Durable Object credential boundary, dynamic Site Tools, human receipt UI, cancellation, and private-result purge now pass against an owned original-product merchant over local/tailnet HTTPS. Its separate SQLite Durable Object owns cart IDs, replay protection, expiry, totals, and a second-origin continuation whose native Site Tools can inspect or cancel but cannot order or pay. An isolated Shopify preview separately proves current Shopify UCP discovery and native WebMCP registration; its unsaved catalog/cart execution and password-gated stable origin keep it additive rather than critical-path. Public deployment of the owned merchant still needs one-time Cloudflare account/terms authorization and a fresh acceptance run.
+- The UCP Cart client, Durable Object credential boundary, dynamic Site Tools, human receipt UI, cancellation, and private-result purge now pass against an owned original-product merchant over local/tailnet HTTPS. The owned merchant negotiates the released UCP `2026-08-25` Cart contract and returns a schema-validated `$423` total (`$375` item + `$48` flat fulfillment); its separate SQLite Durable Object owns cart IDs, replay protection, expiry, totals, and a second-origin continuation whose native Site Tools can inspect or cancel but cannot order or pay. An isolated Shopify preview separately proves Shopify's currently observed UCP `2026-04-08` discovery and native WebMCP registration; its unsaved catalog/cart execution and password-gated stable origin keep it additive rather than critical-path. Public deployment of the owned merchant still needs one-time Cloudflare account/terms authorization and a fresh acceptance run.
 - The typed core flow is verified in isolated Chrome and ChatGPT desktop's native in-app Browser. A clean-room runner now repeats the complete two-client, cross-origin commerce lifecycle in native Chrome 151 with credential-suppressed logs; the final public origins still need a fresh model-driven ChatGPT rerun. Realtime voice transport, transcription, and Voice-to-Codex delegation work, but the delegated task did not inherit the UI-owned Browser binding, so autonomous Voice-to-Site-Tools remains unproven.
 - Host camera capture, cleanup, bounded keyframe provenance, selected-frame publication, explicit host review, remote propagation, native WebMCP inspection, stale-quote refusal, exact-quote hold, release, and Worker restart recovery pass. Vercel OIDC and AI Gateway also returned a real structured vision proposal from `alibaba/qwen3.7-flash` with zero-data-retention routing; it correctly classified Chromium's synthetic green test pattern as not showing a snowboard, and the saved review could not be published as qualifying evidence. Authenticity verification, continuous-video analysis, a rights-cleared physical product, and physical-phone acceptance are not claimed.
 - A protected Vercel acceptance preview and disposable Cloudflare Worker have passed the public HTTPS journey. They are not yet the final judge URL: the Worker is temporary, and Vercel Authentication must not redirect a fragment-bearing host invite. There is no public repository remote yet.

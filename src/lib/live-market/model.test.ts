@@ -339,7 +339,7 @@ describe('live market state machine', () => {
     const initial = createInitialState({ ucpMerchantOrigin: 'https://merchant.example' });
     expect(initial.commerce).toMatchObject({
       available: true,
-      protocolVersion: '2026-04-08',
+      protocolVersion: '2026-08-25',
       cartStatus: 'none',
     });
     expect(getAvailableToolNames(initial)).not.toContain('prepare_merchant_cart');
@@ -353,7 +353,7 @@ describe('live market state machine', () => {
     expect(getActionFrontier(reserved).next.action).toBe('prepare_merchant_cart');
 
     const prepared = recordPreparedMerchantCart(reserved, 'agent', {
-      protocolVersion: '2026-04-08',
+      protocolVersion: '2026-08-25',
       currency: 'USD',
       lineItems: [
         {
@@ -365,7 +365,8 @@ describe('live market state machine', () => {
       ],
       totals: [
         { type: 'subtotal', displayText: 'Subtotal', amount: 37500 },
-        { type: 'total', displayText: 'Total', amount: 37500 },
+        { type: 'fulfillment', displayText: 'Flat shipping', amount: 4800 },
+        { type: 'total', displayText: 'Exact total', amount: 42300 },
       ],
       messages: [],
       continuationAvailable: true,

@@ -194,6 +194,7 @@ const inspectMerchantScript = invokeToolScript(
   {},
   `return serialized.includes('Evidence Market 156') &&
     serialized.includes('"unitPrice":37500') &&
+    serialized.includes('"exactTotal":42300') &&
     serialized.includes('"status":"active"') &&
     serialized.includes('cannot create an order or accept payment') &&
     !serialized.includes('$450') &&

@@ -20,6 +20,7 @@ import {
   rpcRequestSchema,
   storedCartSchema,
   toolCallParamsSchema,
+  ucpErrorStructuredContent,
   ucpProtocolVersion,
   updateCartArgumentsSchema,
   validatePublicProfileUrl,
@@ -81,19 +82,21 @@ function rpcError(
   );
 }
 
-function toolResult(id: RpcId, structuredContent: object, message: string): Response {
+function toolResult(id: RpcId, structuredContent: object): Response {
   return rpcResult(id, {
     resultType: 'complete',
-    content: [{ type: 'text', text: JSON.stringify({ message, ...structuredContent }) }],
+    content: [{ type: 'text', text: JSON.stringify(structuredContent) }],
     structuredContent,
     isError: false,
   });
 }
 
-function toolFailure(id: RpcId, message: string): Response {
+function toolFailure(id: RpcId, message: string, code = 'invalid_request'): Response {
+  const structuredContent = ucpErrorStructuredContent(message, code);
   return rpcResult(id, {
     resultType: 'complete',
-    content: [{ type: 'text', text: message }],
+    content: [{ type: 'text', text: JSON.stringify(structuredContent) }],
+    structuredContent,
     isError: true,
   });
 }
@@ -324,15 +327,6 @@ function cartView(cart: StoredCart, origin: string): object {
   };
 }
 
-function mutationSuccess(cart: StoredCart): object {
-  return {
-    ucp: { version: ucpProtocolVersion, status: 'success' },
-    cart: { id: cart.id, status: cart.status },
-    order_created: false,
-    payment_available: false,
-  };
-}
-
 export class MerchantLedger extends DurableObject<MerchantEnv> {
   private readonly state: DurableObjectState;
   private readonly workerEnv: MerchantEnv;
@@ -453,7 +447,7 @@ export class MerchantLedger extends DurableObject<MerchantEnv> {
       case 'update_cart':
         return this.updateCart(rpc.id, call.data.arguments, request);
       case 'cancel_cart':
-        return this.cancelCart(rpc.id, call.data.arguments);
+        return this.cancelCart(rpc.id, call.data.arguments, request);
       default:
         return rpcError(rpc.id, -32_602, 'Unknown merchant tool.', 400);
     }
@@ -492,11 +486,7 @@ export class MerchantLedger extends DurableObject<MerchantEnv> {
       if (existing === null || this.status(existing) !== 'active') {
         return toolFailure(id, 'The original idempotent cart is no longer active.');
       }
-      return toolResult(
-        id,
-        cartView(existing, publicOrigin(request)),
-        'Existing cart returned idempotently.',
-      );
+      return toolResult(id, cartView(existing, publicOrigin(request)));
     }
 
     await this.pruneExpiredRecords();
@@ -533,11 +523,7 @@ export class MerchantLedger extends DurableObject<MerchantEnv> {
       [idempotencyKey(key)]: record,
     });
     await this.scheduleAlarm();
-    return toolResult(
-      id,
-      cartView(cart, publicOrigin(request)),
-      'Reversible merchant cart created.',
-    );
+    return toolResult(id, cartView(cart, publicOrigin(request)));
   }
 
   private async getCart(id: RpcId, value: unknown, request: Request): Promise<Response> {
@@ -547,16 +533,13 @@ export class MerchantLedger extends DurableObject<MerchantEnv> {
     }
     const cart = await this.readCart(parsed.data.id);
     if (cart === null) {
-      return toolFailure(id, 'Cart not found.');
+      return toolFailure(id, 'Cart not found.', 'not_found');
     }
     const status = this.status(cart);
-    if (status === 'expired') {
-      return toolFailure(id, 'This cart expired safely.');
+    if (status !== 'active') {
+      return toolFailure(id, 'Cart not found.', 'not_found');
     }
-    if (status === 'cancelled') {
-      return toolResult(id, mutationSuccess(cart), 'Cart is cancelled.');
-    }
-    return toolResult(id, cartView(cart, publicOrigin(request)), 'Authoritative cart returned.');
+    return toolResult(id, cartView(cart, publicOrigin(request)));
   }
 
   private async updateCart(id: RpcId, value: unknown, request: Request): Promise<Response> {
@@ -574,7 +557,7 @@ export class MerchantLedger extends DurableObject<MerchantEnv> {
     }
     const cart = await this.readCart(parsed.data.id);
     if (cart === null || this.status(cart) !== 'active') {
-      return toolFailure(id, 'Only an active private cart can be replaced.');
+      return toolFailure(id, 'Cart not found.', 'not_found');
     }
     const key = parsed.data.meta['idempotency-key'];
     const digest = await sha256Hex(
@@ -585,11 +568,7 @@ export class MerchantLedger extends DurableObject<MerchantEnv> {
       return replay.operation === 'update' &&
         replay.cartId === cart.id &&
         replay.requestDigest === digest
-        ? toolResult(
-            id,
-            cartView(cart, publicOrigin(request)),
-            'Existing update returned idempotently.',
-          )
+        ? toolResult(id, cartView(cart, publicOrigin(request)))
         : toolFailure(id, 'That idempotency key was already used for a different mutation.');
     }
     const updated: StoredCart = { ...cart, updatedAt: Date.now() };
@@ -603,17 +582,17 @@ export class MerchantLedger extends DurableObject<MerchantEnv> {
       [cartKey(cart.id)]: updated,
       [idempotencyKey(key)]: record,
     });
-    return toolResult(id, cartView(updated, publicOrigin(request)), 'Cart replaced idempotently.');
+    return toolResult(id, cartView(updated, publicOrigin(request)));
   }
 
-  private async cancelCart(id: RpcId, value: unknown): Promise<Response> {
+  private async cancelCart(id: RpcId, value: unknown, request: Request): Promise<Response> {
     const parsed = existingCartArgumentsSchema.safeParse(value);
     if (!parsed.success || !validatePublicProfileUrl(parsed.data.meta['ucp-agent'].profile)) {
       return toolFailure(id, 'Invalid cart cancellation.');
     }
     const cart = await this.readCart(parsed.data.id);
     if (cart === null) {
-      return toolFailure(id, 'Cart not found.');
+      return toolFailure(id, 'Cart not found.', 'not_found');
     }
     const key = parsed.data.meta['idempotency-key'];
     const digest = await sha256Hex(JSON.stringify({ operation: 'cancel', id: cart.id }));
@@ -622,15 +601,11 @@ export class MerchantLedger extends DurableObject<MerchantEnv> {
       return replay.operation === 'cancel' &&
         replay.cartId === cart.id &&
         replay.requestDigest === digest
-        ? toolResult(
-            id,
-            mutationSuccess({ ...cart, status: 'cancelled' }),
-            'Cancellation returned idempotently.',
-          )
+        ? toolResult(id, cartView({ ...cart, status: 'cancelled' }, publicOrigin(request)))
         : toolFailure(id, 'That idempotency key was already used for a different mutation.');
     }
-    if (this.status(cart) === 'expired') {
-      return toolFailure(id, 'This cart already expired safely.');
+    if (this.status(cart) !== 'active') {
+      return toolFailure(id, 'Cart not found.', 'not_found');
     }
     const now = Date.now();
     const cancelled: StoredCart =
@@ -648,7 +623,7 @@ export class MerchantLedger extends DurableObject<MerchantEnv> {
       [idempotencyKey(key)]: record,
     });
     await this.scheduleAlarm();
-    return toolResult(id, mutationSuccess(cancelled), 'Reversible merchant cart cancelled.');
+    return toolResult(id, cartView(cancelled, publicOrigin(request)));
   }
 
   private async continuation(request: Request, token: string): Promise<Response> {

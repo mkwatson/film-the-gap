@@ -27,6 +27,8 @@ interface MockMerchantOptions {
   readonly cartProtocolVersion?: string;
   readonly continueUrl?: string;
   readonly cartResponse?: object;
+  readonly cancelNotFound?: boolean;
+  readonly wrapCartResponse?: boolean;
 }
 
 function businessProfile(): object {
@@ -45,7 +47,13 @@ function businessProfile(): object {
         ],
       },
       capabilities: {
-        [ucpCartCapabilityName]: [{ version: ucpProtocolVersion }],
+        [ucpCartCapabilityName]: [
+          {
+            version: ucpProtocolVersion,
+            spec: `https://ucp.dev/${ucpProtocolVersion}/specification/shopping/cart`,
+            schema: `https://ucp.dev/${ucpProtocolVersion}/schemas/shopping/cart.json`,
+          },
+        ],
       },
       payment_handlers: {},
     },
@@ -150,15 +158,35 @@ function mockMerchant(options: MockMerchantOptions = {}): {
     }
     const params = request.params as { readonly name?: unknown };
     if (params.name === 'create_cart') {
+      const cart =
+        options.cartResponse ?? cartResponse(options.cartProtocolVersion, options.continueUrl);
       return Response.json({
         jsonrpc: '2.0',
         id: request.id,
         result: {
-          structuredContent: {
-            cart:
-              options.cartResponse ??
-              cartResponse(options.cartProtocolVersion, options.continueUrl),
+          structuredContent: options.wrapCartResponse === true ? { cart } : cart,
+        },
+      });
+    }
+    if (params.name === 'cancel_cart' && options.cancelNotFound === true) {
+      const structuredContent = {
+        ucp: { version: ucpProtocolVersion, status: 'error' },
+        messages: [
+          {
+            type: 'error',
+            code: 'not_found',
+            content: 'Cart not found.',
+            severity: 'unrecoverable',
           },
+        ],
+      };
+      return Response.json({
+        jsonrpc: '2.0',
+        id: request.id,
+        result: {
+          structuredContent,
+          content: [{ type: 'text', text: JSON.stringify(structuredContent) }],
+          isError: true,
         },
       });
     }
@@ -246,6 +274,22 @@ describe('UCP Cart client', () => {
         content: 'Shipping is finalized during checkout.',
       }),
     ]);
+  });
+
+  it('accepts the older wrapped Cart response during negotiated merchant migration', async () => {
+    const merchant = mockMerchant({ wrapCartResponse: true });
+
+    const created = await createUcpCart({
+      businessUrl,
+      platformProfileUrl,
+      fetch: merchant.fetch,
+      input: { variantId },
+    });
+
+    expect(created.cart).toMatchObject({
+      protocolVersion: ucpProtocolVersion,
+      continueUrl: 'https://merchant.example/cart/c/test-cart',
+    });
   });
 
   it('refuses a merchant that omits a safely cancelable Cart surface', async () => {
@@ -340,5 +384,24 @@ describe('UCP Cart client', () => {
     expect(callBody).toContain('cancel_cart');
     expect(callBody).toContain('cancel-test-idempotency-key');
     expect(callBody).not.toMatch(/buyer|email|payment|credential/i);
+  });
+
+  it('treats UCP not_found as an already-closed cancellation outcome', async () => {
+    const merchant = mockMerchant({ cancelNotFound: true });
+    const negotiation = await discoverUcpCartMerchant({
+      businessUrl,
+      platformProfileUrl,
+      fetch: merchant.fetch,
+    });
+
+    await expect(
+      cancelUcpCart({
+        businessUrl,
+        platformProfileUrl,
+        fetch: merchant.fetch,
+        cartId: 'gid://shopify/Cart/test-cart',
+        negotiation,
+      }),
+    ).resolves.toBeUndefined();
   });
 });

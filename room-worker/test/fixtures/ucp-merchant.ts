@@ -50,18 +50,18 @@ function publicOrigin(request: Request): string {
 function merchantProfile(origin: string): object {
   return {
     ucp: {
-      version: '2026-04-08',
+      version: '2026-08-25',
       services: {
         'dev.ucp.shopping': [
           {
-            version: '2026-04-08',
+            version: '2026-08-25',
             transport: 'mcp',
             endpoint: `${origin}/api/ucp/mcp`,
           },
         ],
       },
       capabilities: {
-        'dev.ucp.shopping.cart': [{ version: '2026-04-08' }],
+        'dev.ucp.shopping.cart': [{ version: '2026-08-25' }],
       },
       payment_handlers: {},
     },
@@ -92,39 +92,38 @@ function tools(): object {
 function createdCart(origin: string): object {
   return {
     structuredContent: {
-      cart: {
-        ucp: {
-          version: '2026-04-08',
-          capabilities: {
-            'dev.ucp.shopping.cart': [{ version: '2026-04-08' }],
-          },
+      ucp: {
+        version: '2026-08-25',
+        capabilities: {
+          'dev.ucp.shopping.cart': [{ version: '2026-08-25' }],
         },
-        id: 'gid://shopify/Cart/manual-browser-fixture',
-        line_items: [
-          {
-            id: 'gid://shopify/CartLine/manual-browser-fixture',
-            item: {
-              id: 'gid://shopify/ProductVariant/manual-browser-fixture',
-              title: 'Rights-cleared 156 cm demo board',
-              price: 37500,
-            },
-            quantity: 1,
-            subtotal: 37500,
-          },
-        ],
-        currency: 'USD',
-        totals: [
-          { type: 'subtotal', display_text: 'Subtotal', amount: 37500 },
-          { type: 'total', display_text: 'Estimated total', amount: 37500 },
-        ],
-        messages: [
-          {
-            type: 'warning',
-            content: 'Fixture only: shipping and tax would be finalized by an owned merchant.',
-          },
-        ],
-        continue_url: `${origin}/cart/c/manual-browser-fixture`,
       },
+      id: 'gid://shopify/Cart/manual-browser-fixture',
+      line_items: [
+        {
+          id: 'gid://shopify/CartLine/manual-browser-fixture',
+          item: {
+            id: 'gid://shopify/ProductVariant/manual-browser-fixture',
+            title: 'Rights-cleared 156 cm demo board',
+            price: 37500,
+          },
+          quantity: 1,
+          subtotal: 37500,
+        },
+      ],
+      currency: 'USD',
+      totals: [
+        { type: 'subtotal', display_text: 'Item subtotal', amount: 37500 },
+        { type: 'fulfillment', display_text: 'Flat shipping', amount: 4800 },
+        { type: 'total', display_text: 'Exact total', amount: 42300 },
+      ],
+      messages: [
+        {
+          type: 'warning',
+          content: 'Fixture only: no checkout or payment capability.',
+        },
+      ],
+      continue_url: `${origin}/cart/c/manual-browser-fixture`,
     },
   };
 }

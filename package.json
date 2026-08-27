@@ -13,6 +13,7 @@
     "test:app": "vitest run",
     "test:room": "pnpm --dir room-worker test",
     "test:merchant": "pnpm --dir merchant-worker test",
+    "test:ucp-schema": "UCP_RELEASE_SCHEMA_LIVE=1 vitest run src/lib/ucp/released-schema.live.test.ts",
     "test:watch": "vitest",
     "acceptance:native": "node --experimental-strip-types scripts/native-browser-acceptance.ts",
     "room:dev": "pnpm --dir room-worker dev",
@@ -35,6 +36,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@hyperjump/json-schema": "1.17.8",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.6",
