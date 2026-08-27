@@ -252,6 +252,31 @@ function requireMarker(body: string, marker: string, label: string): void {
   }
 }
 
+function requireAppSecurityPolicy(
+  response: Response,
+  label: string,
+  roomOrigin: string,
+  allowCamera: boolean,
+): void {
+  const websocketOrigin = roomOrigin.replace(/^https:/, 'wss:');
+  requireHeaderIncludes(response, 'Content-Security-Policy', "default-src 'self'", label);
+  requireHeaderIncludes(response, 'Content-Security-Policy', `connect-src 'self'`, label);
+  requireHeaderIncludes(response, 'Content-Security-Policy', roomOrigin, label);
+  requireHeaderIncludes(response, 'Content-Security-Policy', websocketOrigin, label);
+  requireHeaderIncludes(response, 'Content-Security-Policy', "object-src 'none'", label);
+  requireHeaderIncludes(response, 'Content-Security-Policy', "frame-ancestors 'none'", label);
+  requireHeaderIncludes(
+    response,
+    'Permissions-Policy',
+    allowCamera ? 'camera=(self)' : 'camera=()',
+    label,
+  );
+  requireHeaderIncludes(response, 'Permissions-Policy', 'microphone=()', label);
+  requireHeaderIncludes(response, 'Permissions-Policy', 'payment=()', label);
+  requireHeader(response, 'Referrer-Policy', 'no-referrer', label);
+  requireHeader(response, 'X-Content-Type-Options', 'nosniff', label);
+}
+
 function validateUcpProfile(value: unknown, expectedEndpoint: string | null, label: string): void {
   const profileResult = ucpDiscoveryProfileSchema.safeParse(value);
   if (!profileResult.success) {
@@ -374,11 +399,13 @@ export async function verifyPublicRelease(
     const appResponse = await probe(fetcher, config, appLabel, `${config.appOrigin}/`);
     requireStatus(appResponse, 200, appLabel);
     requireMarker(await htmlBody(appResponse, appLabel), 'Agent-attended market', appLabel);
+    requireAppSecurityPolicy(appResponse, appLabel, config.roomOrigin, false);
 
     const hostLabel = 'host page';
     const hostResponse = await probe(fetcher, config, hostLabel, `${config.appOrigin}/host`);
     requireStatus(hostResponse, 200, hostLabel);
     requireMarker(await htmlBody(hostResponse, hostLabel), 'Host evidence console', hostLabel);
+    requireAppSecurityPolicy(hostResponse, hostLabel, config.roomOrigin, true);
 
     const merchantLabel = 'merchant product page';
     const merchantResponse = await probe(

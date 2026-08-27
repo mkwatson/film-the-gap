@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { merchantServerName, merchantServerVersion } from '../merchant-worker/src/protocol.ts';
 import { remoteRoomProtocolVersion } from '../src/lib/live-market/remote-room-protocol.ts';
+import { buildAppSecurityHeaders } from '../src/lib/security-headers.ts';
 import { ucpProtocolVersion, ucpShoppingServiceName } from '../src/lib/ucp/profile.ts';
 import {
   readReleaseConfig,
@@ -29,14 +30,33 @@ function json(value: unknown, status = 200, headers: HeadersInit = {}): Response
   return Response.json(value, { status, headers: { 'Cache-Control': 'no-store', ...headers } });
 }
 
-function page(marker: string): Response {
+function page(marker: string, headers: HeadersInit): Response {
   return new Response(`<!doctype html><title>${marker}</title><main>${marker}</main>`, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
-      'Content-Security-Policy': "default-src 'none'; script-src 'nonce-test'",
-      'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
-      'Referrer-Policy': 'no-referrer',
+      ...headers,
     },
+  });
+}
+
+function appPage(marker: string, allowCamera: boolean): Response {
+  return page(
+    marker,
+    Object.fromEntries(
+      buildAppSecurityHeaders({
+        allowCamera,
+        development: false,
+        evidenceRoomUrl: config.roomOrigin,
+      }).map(({ key, value }) => [key, value]),
+    ),
+  );
+}
+
+function merchantPage(marker: string): Response {
+  return page(marker, {
+    'Content-Security-Policy': "default-src 'none'; script-src 'nonce-test'",
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+    'Referrer-Policy': 'no-referrer',
   });
 }
 
@@ -58,7 +78,13 @@ function ucpProfile(endpoint?: string): object {
   };
 }
 
-function releaseFetch(workerTag = commit): ReleaseFetch {
+interface ReleaseFetchOptions {
+  readonly workerTag?: string;
+  readonly hostCameraAllowed?: boolean;
+}
+
+function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
+  const workerTag = options.workerTag ?? commit;
   return async (input, init): Promise<Response> => {
     const url = new URL(input);
     const method = init?.method ?? 'GET';
@@ -98,13 +124,13 @@ function releaseFetch(workerTag = commit): ReleaseFetch {
       return json(ucpProfile(`${config.merchantOrigin}/api/ucp/mcp`));
     }
     if (url.href === `${config.appOrigin}/`) {
-      return page('Agent-attended market');
+      return appPage('Agent-attended market', false);
     }
     if (url.href === `${config.appOrigin}/host`) {
-      return page('Host evidence console');
+      return appPage('Host evidence console', options.hostCameraAllowed ?? true);
     }
     if (url.href === `${config.merchantOrigin}/products/live-inspected-board`) {
-      return page('Evidence Market');
+      return merchantPage('Evidence Market');
     }
     if (url.href === `${config.roomOrigin}/rooms` && method === 'OPTIONS') {
       return new Response(null, {
@@ -187,9 +213,15 @@ describe('public release preflight', () => {
   });
 
   it('fails closed when a worker is not the reviewed commit', async () => {
-    await expect(verifyPublicRelease(config, releaseFetch('b'.repeat(40)))).rejects.toThrow(
-      /worker tag does not match commit/i,
-    );
+    await expect(
+      verifyPublicRelease(config, releaseFetch({ workerTag: 'b'.repeat(40) })),
+    ).rejects.toThrow(/worker tag does not match commit/i);
+  });
+
+  it('fails closed when the deployed host page cannot request its camera', async () => {
+    await expect(
+      verifyPublicRelease(config, releaseFetch({ hostCameraAllowed: false })),
+    ).rejects.toThrow(/host page.*Permissions-Policy mismatch/i);
   });
 
   it('suppresses origins and credential-shaped strings from failures', () => {

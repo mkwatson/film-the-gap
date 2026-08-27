@@ -75,7 +75,7 @@ EVIDENCE_RELEASE_COMMIT_SHA=0123456789012345678901234567890123456789 \
 pnpm release:verify
 ```
 
-The verifier rejects redirects, split commits, miswired UCP discovery, protected or malformed pages, incorrect merchant security policy, broken room CORS, and a room service that cannot create a real disposable Durable Object. It never logs the room credentials. See [DEPLOYMENT.md](DEPLOYMENT.md) for the current Vercel/Cloudflare release, rollback, and final-origin procedure.
+The verifier rejects redirects, split commits, miswired UCP discovery, protected or malformed pages, incorrect buyer/host/merchant browser policy, a host page without camera authority, a buyer page with camera authority, broken room CORS, and a room service that cannot create a real disposable Durable Object. It never logs the room credentials. See [DEPLOYMENT.md](DEPLOYMENT.md) for the current Vercel/Cloudflare release, rollback, and final-origin procedure.
 
 ### Run the native WebMCP acceptance journey
 

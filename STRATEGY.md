@@ -151,7 +151,7 @@ The terms are not statistically independent. The model is useful because it prev
 | Submission cutoff and freeze                         | Late or post-deadline changes cannot rescue a broken submission.                                                       | Establish internal buffers for deployment, YouTube processing, Devpost verification, rights review, and rollback.                                           |
 | IP, privacy, authorization, and trademark compliance | A rights or terms violation can disqualify the entry or force damaging edits.                                          | Use owned/cleared media and data, current SDK/API terms, minimal personal data, and explicit provenance.                                                    |
 
-The official page rose from **1,563 registered participants on 2026-08-26 to 2,459 on 2026-08-27**. Registrations are not completed submissions and the gallery is still unpublished, but the field is large enough that competence alone will not be memorable.
+The official page rose from **1,563 registered participants on 2026-08-26 to more than 2,480 on 2026-08-27** (two same-minute Devpost renders showed 2,487 and 2,496). Registrations are not completed submissions and the gallery is not reliably inspectable through the research client, but the field is large enough that competence alone will not be memorable.
 
 ### Strategic score multipliers
 

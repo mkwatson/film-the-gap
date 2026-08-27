@@ -646,3 +646,31 @@ Results:
 - The rehearsal exposed a local quality-gate leak: Vercel's ignored `.vercel/output` bundle was still traversed by ESLint. The flat lint configuration now ignores that generated tree explicitly; `pnpm check` passes from the post-deployment workspace rather than only before a Vercel build.
 
 Decision: keep protected Preview deployment as build evidence only. Before the final release, set a non-empty Production room origin at build time, use a Git-associated artifact when possible (or the explicit reviewed SHA fallback for a deliberate prebuilt release), authenticate Cloudflare with Mark present, and run the complete public verifier plus native/ChatGPT/phone gates on three permanent unprotected origins. Never submit the protected Preview or a Tailscale URL.
+
+### E13 — Independent eval and browser tool-surface boundary
+
+Frozen claim:
+
+> The latest Chrome Labs evaluator can independently exercise the current dynamic Site Tools after the page narrows browser authority to its first-party app/room boundary, while provider infrastructure failures remain distinguishable from model behavior.
+
+Status: **Chrome-source smoke and native lifecycle pass; provider-backed selection remains infrastructure-blocked; final public/ChatGPT gates pending.**
+
+Protocol:
+
+1. Re-read the current Chrome evaluation guidance and inspect/build the exact latest Chrome Labs source rather than assuming the published npm package contains the same commands.
+2. Run the credential-free multi-step smoke against the real page in current system Chrome, including an explicit private-ceiling prompt whose expected tool arguments omit the ceiling.
+3. Attempt bounded model-driven selection through already-authorized Vercel AI Gateway OIDC without adding a long-lived key, buying credits, or retrying an upstream quota failure indefinitely. Classify infrastructure errors separately from wrong tool calls.
+4. Apply the new [WebMCP Tool Surface Poisoning](https://arxiv.org/abs/2606.06387) threat model at the page boundary: minimize registration churn, omit untrusted free text, allow only first-party script/resource origins, and grant camera authority only to the host route.
+5. Extend the public release verifier so a misbuilt CSP, missing room WebSocket origin, buyer camera grant, or host camera denial fails before the URL is submitted.
+
+Results:
+
+- The latest GoogleChromeLabs source was [`d39eae4bd51e8c12736b8cae840bd98f190f3179`](https://github.com/GoogleChromeLabs/webmcp-tools/commit/d39eae4bd51e8c12736b8cae840bd98f190f3179). Its repository directory is now `webmcp-evals` and includes multi-step trajectories, `smoke`, console-error capture, and `analyze`, while npm still publishes version `0.0.3` without `smoke`. The isolated upstream dependency install reported one high and one moderate audit finding, so no upstream tree was vendored.
+- Source-built `smoke` used Chrome 151 to open a fresh page for every case and passed all 5/5 expected steps across three cases: inspect → share product-only requirements → discover/join the newly registered host request; read-only arrival; and explicit-private-ceiling pressure with only evidence fields sent.
+- Three bounded provider-backed attempts used Vercel's OpenAI-compatible Gateway endpoint and existing Preview OIDC. GPT-5.4 was unavailable on the account's free tier; GPT-5.6 Luna and MiniMax M3 Free were rate-limited before inference after the evaluator's own retries. Every report contained `errorCount: 5`, `failCount: 0`, and no model response. These are not 0/5 model scores. No charge, top-up, secret, or repeated quota pressure was introduced.
+- Inspection found that the current `local` and `browser` commands write error reports without setting a failing process exit code; only the new `smoke` path explicitly does so. The eval runbook now requires inspection of `errorCount`, `failCount`, and `passCount`, preventing an infrastructure-only run from becoming false green evidence.
+- Next.js `16.3.3` now emits a first-party CSP for buyer and host pages. Production permits only self plus the exact configured room HTTP/WebSocket origins; development adds only its required eval/HMR allowances. Scripts, images, media, fonts, workers, objects, base navigation, forms, and framing are bounded. The buyer denies camera; `/host` permits camera from self; both deny microphone, geolocation, payment, and browsing topics and emit no-referrer/nosniff headers.
+- The release verifier now checks both app pages' CSP, exact room HTTPS and WSS origins, framing/object denial, route-specific camera authority, microphone/payment denial, no-referrer, and nosniff before testing the merchant and disposable room.
+- With those headers live, the ten-phase native Chrome buyer → host → reload/stale rejection → evidence → Lean-gated hold → UCP merchant → cancel/reconcile journey passed in 6.3 seconds. The independent Chrome Labs smoke then passed 5/5 with no browser-console failure.
+
+Decision: keep the browser boundary and stricter release gate because they directly harden WebMCP's unique lifecycle without adding a visible demo concept. Preserve the claim boundary: a static CSP that permits Next.js inline bootstrapping is defense in depth, not proof against a compromised same-origin application; the browser/spec must ultimately bind origin and tool identity. Defer further security theater such as decorative tool hashes or C2PA parsing unless it changes an actual trust decision. Re-run model selection only when existing Gateway capacity is available, and require the exact final ChatGPT path regardless of any evaluator score.
