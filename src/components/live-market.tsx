@@ -31,6 +31,9 @@ const statusCopy: Readonly<Record<EvidenceStatus, string>> = {
   violated: 'Does not qualify',
 };
 
+const privateAgentStarter =
+  'Inspect this live show using its Site Tools. Keep the private maximum I gave you in our conversation and never send it to the website. I need a 154–158 cm board, visible edge evidence, and no prior base repair. Share only those four product-evidence fields, ask the host for any missing evidence, and stop before creating a hold.';
+
 function actorLabel(actor: string): string {
   if (actor === 'agent') {
     return 'ChatGPT';
@@ -72,6 +75,7 @@ export function LiveMarket(): React.JSX.Element {
     dispatch,
   } = useLiveRoom('buyer');
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [starterCopyStatus, setStarterCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const [checkoutHandoff, setCheckoutHandoff] = useState<string | null>(null);
   const siteToolRuntime = useMemo<SiteToolRuntime>(
     () => ({ readState, dispatch }),
@@ -102,6 +106,19 @@ export function LiveMarket(): React.JSX.Element {
     }
   }
 
+  async function copyAgentStarter(): Promise<void> {
+    if (navigator.clipboard === undefined) {
+      setStarterCopyStatus('error');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(privateAgentStarter);
+      setStarterCopyStatus('copied');
+    } catch {
+      setStarterCopyStatus('error');
+    }
+  }
+
   async function prepareMerchantCart(): Promise<void> {
     const result = await dispatch({ kind: 'prepare-merchant-cart', actor: 'buyer' });
     if (result.privateResult?.kind === 'ucp-cart-handoff') {
@@ -118,6 +135,7 @@ export function LiveMarket(): React.JSX.Element {
 
   function resetMarket(): void {
     setCheckoutHandoff(null);
+    setStarterCopyStatus('idle');
     resetDemo();
   }
 
@@ -130,16 +148,54 @@ export function LiveMarket(): React.JSX.Element {
           ? 'Public evidence ready'
           : 'Evidence conflicts';
 
+  const launchReadiness = [
+    {
+      label: 'Native WebMCP',
+      value:
+        siteToolStatus.phase === 'ready'
+          ? `${siteToolStatus.registeredNames.length} tools live`
+          : siteToolStatus.phase === 'error'
+            ? 'Needs attention'
+            : 'Human fallback',
+      phase:
+        siteToolStatus.phase === 'ready'
+          ? 'ready'
+          : siteToolStatus.phase === 'error'
+            ? 'attention'
+            : 'fallback',
+    },
+    {
+      label: 'Evidence room',
+      value: transport === 'remote' ? 'Durable Object live' : 'Same-screen fallback',
+      phase: transport === 'remote' ? 'ready' : 'fallback',
+    },
+    {
+      label: 'Seller phone',
+      value:
+        presence.host > 0
+          ? 'Connected'
+          : hostInviteUrl === null
+            ? 'Local view ready'
+            : 'Invite ready',
+      phase: presence.host > 0 ? 'ready' : 'waiting',
+    },
+    {
+      label: 'UCP merchant',
+      value: state.commerce.available ? 'Authoritative' : 'Demo hold only',
+      phase: state.commerce.available ? 'ready' : 'fallback',
+    },
+  ] as const;
+
   return (
     <main className="market-shell">
       <header className="topbar">
-        <div className="brand-lockup" aria-label="Agent-attended market prototype">
+        <div className="brand-lockup" aria-label="Agent-attended evidence market">
           <span className="brand-mark" aria-hidden="true">
             WM
           </span>
           <span>
             <strong>Agent-attended market</strong>
-            <small>Privacy membrane · working rung</small>
+            <small>Private intent · public proof</small>
           </span>
         </div>
         <div className="topbar-actions">
@@ -200,6 +256,56 @@ export function LiveMarket(): React.JSX.Element {
         </p>
       </section>
 
+      <section className="agent-launchpad" aria-labelledby="agent-launchpad-title">
+        <div className="agent-starter">
+          <div className="agent-starter-heading">
+            <span className="launchpad-mark" aria-hidden="true">
+              AI
+            </span>
+            <span>
+              <small>Agent launchpad</small>
+              <strong id="agent-launchpad-title">
+                Keep the secret in ChatGPT. Send only the proof request.
+              </strong>
+            </span>
+          </div>
+          <p>
+            Tell ChatGPT your maximum privately, then paste this product-only starter. The page has
+            no field for your budget or identity.
+          </p>
+          <blockquote>{privateAgentStarter}</blockquote>
+          <div className="agent-starter-actions">
+            <button
+              className="secondary-button agent-starter-button"
+              type="button"
+              onClick={() => void copyAgentStarter()}
+            >
+              {starterCopyStatus === 'copied' ? 'Starter copied ✓' : 'Copy agent starter'}
+            </button>
+            <span role="status" aria-live="polite">
+              {starterCopyStatus === 'error'
+                ? 'Clipboard unavailable—select the text above.'
+                : 'Approve a hold only after fresh evidence.'}
+            </span>
+          </div>
+        </div>
+        <div className="launch-readiness">
+          <div className="launch-readiness-heading">
+            <small>Live preflight</small>
+            <strong>Four boundaries, one journey</strong>
+          </div>
+          <ul>
+            {launchReadiness.map((item) => (
+              <li className={`readiness-${item.phase}`} key={item.label}>
+                <span aria-hidden="true" />
+                <small>{item.label}</small>
+                <strong>{item.value}</strong>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
       <section className="experience-grid" aria-label="Live market collaboration">
         <article className="stream-panel panel">
           <div className="stream-heading">
@@ -228,7 +334,9 @@ export function LiveMarket(): React.JSX.Element {
               <span>Host</span>
               “Edges are clean. Ask me for any angle you need.”
             </div>
-            <div className="viewer-count">● deterministic demo room · 184 watching</div>
+            <div className="viewer-count">
+              ● live evidence room · {demand.totalAgentCount} test agents present
+            </div>
           </div>
 
           <div className="price-strip">

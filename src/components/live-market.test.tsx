@@ -49,12 +49,49 @@ function setModelContext(modelContext: WebMCP.ModelContext | undefined): void {
   });
 }
 
+function setClipboard(clipboard: Pick<Clipboard, 'writeText'> | undefined): void {
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: clipboard,
+  });
+}
+
 afterEach(() => {
   setModelContext(undefined);
+  setClipboard(undefined);
   vi.restoreAllMocks();
 });
 
 describe('LiveMarket', () => {
+  it('starts with a copyable product-only agent brief and honest fallback preflight', async () => {
+    const writeText = vi.fn(async (text: string): Promise<void> => {
+      void text;
+    });
+    setClipboard({ writeText });
+    setModelContext(undefined);
+    render(<LiveMarket />);
+
+    expect(
+      screen.getByText('Keep the secret in ChatGPT. Send only the proof request.'),
+    ).toBeTruthy();
+    expect(screen.getByText('Human fallback')).toBeTruthy();
+    expect(screen.getByText('Same-screen fallback')).toBeTruthy();
+    expect(screen.getByText('Local view ready')).toBeTruthy();
+    expect(screen.getByText('Demo hold only')).toBeTruthy();
+    expect(screen.queryByText('$450')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy agent starter' }));
+
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledOnce();
+    });
+    const copied = writeText.mock.calls[0]?.[0];
+    expect(copied).toContain('never send it to the website');
+    expect(copied).toContain('154–158 cm');
+    expect(copied).not.toContain('$');
+    expect(screen.getByRole('button', { name: 'Starter copied ✓' })).toBeTruthy();
+  });
+
   it('keeps the private-crowd hero flow usable in an ordinary browser', async () => {
     setModelContext(undefined);
     render(<LiveMarket />);

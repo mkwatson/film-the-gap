@@ -458,6 +458,21 @@ Status: **deterministic and native-Chrome pass; exact ChatGPT rerun pending.**
 - Formatting, zero-warning lint, strict TypeScript, 42 tests across 9 files, and the Next.js production build pass.
 - Do not graduate E9 from this sub-result: the current two-tool initial surface still needs direct and ambiguous model-driven prompts in the exact ChatGPT client, plus cancellation/duplicate/reconnect datasets and public-origin clean-room testing.
 
+#### E9.2 — First-screen agent launchpad
+
+Frozen claim:
+
+> A first-time judge can identify the private-agent boundary, start the canonical task, and distinguish live from fallback infrastructure in under 15 seconds without reading the repository.
+
+Status: **local native-Chrome and responsive presentation pass; final-origin blind timing pending.**
+
+- Added a product-native agent launchpad directly below the one-sentence thesis. Its copyable starter contains the four product-evidence fields and a stop-before-hold boundary, but no numeric maximum, identity, address, payment, or merchant credential. The user is told to give the actual maximum only to ChatGPT.
+- Added a live four-boundary preflight derived from runtime state: native WebMCP registration, authoritative Durable Object room vs same-screen fallback, seller-phone presence/invite readiness, and authoritative UCP merchant vs demo hold. It does not claim a service is live when the deterministic fallback is running.
+- Removed the decorative `184 watching` fiction from both buyer and host surfaces. The UI now reports the actual deterministic test-agent aggregate that drives the evidence queue.
+- Chrome 151 registered the expected two initial tools, copied the budget-free starter, and rendered the thesis, launchpad, live lot, UCP boundary, and dynamic tool contract in one coherent desktop screen. At `390×844`, the top journey remained readable with no horizontal overflow. Both widths had meaningful accessible structure, no framework overlay, and no console or page errors.
+
+This is a comprehension rung, not E9 graduation. A fresh person must still be timed on the final public URL, and the exact model-driven ChatGPT journey must demonstrate that the copied starter causes the intended sequence without rescue.
+
 ### E10 — Frontier receipt (optional)
 
 Only after E7-E9 pass, test whether a runtime-connected Lean receipt can communicate in under ten seconds that a stale quote/evidence revision or unauthorized transition is refused. The theorem may cover the formal state model and payload projection only. It must not claim to prove image truth, seller honesty, browser conformance, or implementation equivalence.

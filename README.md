@@ -16,6 +16,8 @@ The current rung proves one complete, privacy-minimizing collaboration loop:
 
 The seller-facing page does not receive a buyer ceiling. That is a concrete data-minimization boundary, not a claim that all statistical inference is impossible. The app uses direct native `document.modelContext.registerTool` calls. Human controls invoke the same domain transitions, so the experience remains complete in an ordinary browser.
 
+The first screen includes a budget-free agent starter and a live preflight for native WebMCP, the evidence room, seller-phone presence, and the UCP merchant. Give ChatGPT the actual maximum in conversation, then copy the product-only starter; the page has no budget or identity input.
+
 ## Run locally
 
 Requirements: Node.js 24 or newer and pnpm 11.24.0.

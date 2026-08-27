@@ -91,7 +91,7 @@ export function LiveMarketHost(): React.JSX.Element {
                 {state.lot.lengthCm} cm · exact public quote {usd.format(getAllInPrice(state.lot))}
               </p>
             </div>
-            <span className="host-live-chip">184 watching</span>
+            <span className="host-live-chip">{demand.totalAgentCount} test agents present</span>
           </div>
 
           <div className="video-stage host-video-stage" aria-label="Simulated host camera preview">

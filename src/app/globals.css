@@ -122,7 +122,9 @@ button:focus-visible {
 }
 
 .topbar-actions {
+  flex-wrap: wrap;
   gap: 10px;
+  justify-content: flex-end;
 }
 
 .runtime-pill {
@@ -266,6 +268,177 @@ button:focus-visible {
   color: var(--muted);
   font-size: clamp(13px, 1.15vw, 17px);
   line-height: 1.6;
+}
+
+.agent-launchpad {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.45fr);
+  margin: 0 0 14px;
+  overflow: hidden;
+  border: 1px solid rgba(109, 231, 235, 0.18);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 0 0, rgba(109, 231, 235, 0.08), transparent 38rem),
+    rgba(10, 21, 16, 0.9);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.16);
+}
+
+.agent-starter {
+  min-width: 0;
+  padding: 20px 22px;
+  border-right: 1px solid var(--line);
+}
+
+.agent-starter-heading,
+.agent-starter-actions,
+.launch-readiness-heading {
+  display: flex;
+  align-items: center;
+}
+
+.agent-starter-heading {
+  gap: 12px;
+}
+
+.launchpad-mark {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--cyan);
+  border: 1px solid rgba(109, 231, 235, 0.3);
+  border-radius: 10px;
+  background: rgba(109, 231, 235, 0.07);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.agent-starter-heading small,
+.agent-starter-heading strong,
+.launch-readiness-heading small,
+.launch-readiness-heading strong {
+  display: block;
+}
+
+.agent-starter-heading small,
+.launch-readiness-heading small {
+  color: var(--cyan);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.agent-starter-heading strong,
+.launch-readiness-heading strong {
+  margin-top: 3px;
+  font-size: 13px;
+}
+
+.agent-starter > p {
+  margin: 13px 0 10px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.agent-starter blockquote {
+  margin: 0;
+  padding: 11px 13px;
+  color: #c7d9d0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.agent-starter-actions {
+  gap: 12px;
+  margin-top: 11px;
+}
+
+.agent-starter-button {
+  min-height: 34px;
+  flex: 0 0 auto;
+  padding: 0 13px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.agent-starter-actions > span {
+  color: var(--dim);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.launch-readiness {
+  min-width: 0;
+  padding: 20px;
+}
+
+.launch-readiness-heading {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.launch-readiness ul {
+  display: grid;
+  gap: 7px;
+  margin: 13px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.launch-readiness li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 27px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+}
+
+.launch-readiness li > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.launch-readiness li > small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.launch-readiness li > strong {
+  color: currentColor;
+  font-size: 9px;
+  text-align: right;
+}
+
+.readiness-ready {
+  color: var(--mint);
+}
+
+.readiness-waiting {
+  color: var(--amber);
+}
+
+.readiness-fallback {
+  color: var(--dim);
+}
+
+.readiness-attention {
+  color: var(--coral);
 }
 
 .experience-grid {
@@ -2271,6 +2444,15 @@ button:focus-visible {
     flex-direction: column;
   }
 
+  .agent-launchpad {
+    grid-template-columns: 1fr;
+  }
+
+  .agent-starter {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
   .hero-copy {
     display: block;
     padding: 34px 3px 26px;
@@ -2426,6 +2608,15 @@ button:focus-visible {
   .commerce-summary {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .agent-starter-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .agent-starter-button {
+    width: 100%;
   }
 
   .primary-button,
