@@ -219,6 +219,10 @@ export class NativeBrowserDriver {
     this.execute('return to evidence room', ['back'], undefined);
   }
 
+  reload(): void {
+    this.execute('reload current page', ['reload'], undefined);
+  }
+
   setViewport(width: number, height: number): void {
     this.execute(
       'set capture viewport',

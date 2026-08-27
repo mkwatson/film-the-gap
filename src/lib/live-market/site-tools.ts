@@ -189,9 +189,15 @@ function snapshot(state: LiveMarketState): object {
         : {
             receipt: {
               currency: state.commerce.receipt.currency,
-              lineItems: state.commerce.receipt.lineItems,
+              lineItems: state.commerce.receipt.lineItems.map(
+                ({ unitPrice, quantity, subtotal }) => ({ unitPrice, quantity, subtotal }),
+              ),
               totals: state.commerce.receipt.totals.map(({ type, amount }) => ({ type, amount })),
-              messages: state.commerce.receipt.messages.map(({ content }) => ({ content })),
+              messages: state.commerce.receipt.messages.map(({ type, severity }) => ({
+                type,
+                severity,
+              })),
+              merchantFreeText: 'withheld from agent result; visible in human receipt',
               continuationAvailable: state.commerce.receipt.continuationAvailable,
             },
           }),

@@ -121,7 +121,7 @@ describe('LiveMarket', () => {
     expect(screen.getByText('Public evidence complete')).toBeTruthy();
   });
 
-  it('re-registers the native tool contract as evidence and exact-quote state changes', async () => {
+  it('reconciles the native frontier without re-registering stable tools', async () => {
     const modelContext = new RecordingModelContext();
     setModelContext(modelContext);
     render(<LiveMarket />);
@@ -132,6 +132,14 @@ describe('LiveMarket', () => {
         'set_evidence_requirements',
       ]);
     });
+    const initialInspect = modelContext.registrations.find(
+      ({ tool }) => tool.name === 'inspect_live_show',
+    );
+    const initialRequirements = modelContext.registrations.find(
+      ({ tool }) => tool.name === 'set_evidence_requirements',
+    );
+    expect(initialInspect?.signal?.aborted).toBe(false);
+    expect(initialRequirements?.signal?.aborted).toBe(false);
 
     await modelContext
       .latestTool('set_evidence_requirements')
@@ -156,6 +164,14 @@ describe('LiveMarket', () => {
       expect(modelContext.activeToolNames()).toContain('reserve_current_lot');
       expect(screen.getAllByText('reserve_current_lot')).toHaveLength(2);
     });
+    expect(
+      modelContext.registrations.filter(({ tool }) => tool.name === 'inspect_live_show'),
+    ).toHaveLength(1);
+    expect(
+      modelContext.registrations.filter(({ tool }) => tool.name === 'set_evidence_requirements'),
+    ).toHaveLength(1);
+    expect(initialInspect?.signal?.aborted).toBe(false);
+    expect(initialRequirements?.signal?.aborted).toBe(false);
 
     await modelContext
       .latestTool('reserve_current_lot')
@@ -167,5 +183,7 @@ describe('LiveMarket', () => {
       expect(modelContext.activeToolNames()).toContain('release_current_lot');
       expect(screen.getByText('Reversible hold active at $423')).toBeTruthy();
     });
+    expect(initialInspect?.signal?.aborted).toBe(false);
+    expect(initialRequirements?.signal?.aborted).toBe(true);
   });
 });

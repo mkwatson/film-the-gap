@@ -141,6 +141,34 @@ const requestEvidenceScript = invokeToolScript(
     !serialized.includes('$450');`,
 );
 
+const rememberRequestEvidenceToolScript = `
+(async () => {
+  const context = document.modelContext;
+  if (!context?.getTools) return false;
+  const tool = (await context.getTools()).find(
+    (candidate) => candidate.name === 'request_host_evidence',
+  );
+  if (!tool) return false;
+  window.__webmcpStaleRequestTool = tool;
+  return true;
+})()
+`;
+
+const rejectStaleRequestToolScript = `
+(async () => {
+  const context = document.modelContext;
+  const tool = window.__webmcpStaleRequestTool;
+  delete window.__webmcpStaleRequestTool;
+  if (!context?.executeTool || !tool) return false;
+  try {
+    await context.executeTool(tool, JSON.stringify({ kind: 'repair_history' }));
+    return false;
+  } catch {
+    return true;
+  }
+})()
+`;
+
 const inspectReadyScript = invokeToolScript(
   'inspect_live_show',
   {},
@@ -412,6 +440,12 @@ async function main(): Promise<void> {
         scopedBuyerTools,
         config.commandTimeoutMs,
       );
+      await waitForTrue(
+        driver,
+        'capture soon-to-be-stale request tool',
+        rememberRequestEvidenceToolScript,
+        config.commandTimeoutMs,
+      );
       await captureMilestone(driver, artifacts, '03-buyer-requirements-unresolved.png');
       await waitForTrue(
         driver,
@@ -426,6 +460,45 @@ async function main(): Promise<void> {
         config.commandTimeoutMs,
       );
       await captureMilestone(driver, artifacts, '04-buyer-evidence-requested.png');
+    });
+
+    await recordAcceptanceStep(steps, 'reject-stale-tool-and-recover-reload', async () => {
+      await waitForTrue(
+        driver,
+        'stale request tool rejection',
+        rejectStaleRequestToolScript,
+        config.commandTimeoutMs,
+      );
+      await waitForTools(
+        driver,
+        'unchanged queued buyer Site Tools',
+        queuedBuyerTools,
+        config.commandTimeoutMs,
+      );
+      driver.reload();
+      await waitForTrue(
+        driver,
+        'buyer room recovery after reload',
+        pageIncludesScript(
+          'Site Tools live',
+          'Durable Object live',
+          'Authoritative',
+          'Host linked',
+        ),
+        config.commandTimeoutMs,
+      );
+      await waitForTools(
+        driver,
+        'reloaded queued buyer Site Tools',
+        queuedBuyerTools,
+        config.commandTimeoutMs,
+      );
+      await waitForTrue(
+        driver,
+        'queued evidence survives reload',
+        pageIncludesScript('8 private agents waiting', 'Show the base and disclose'),
+        config.commandTimeoutMs,
+      );
     });
 
     await recordAcceptanceStep(steps, 'publish-one-host-answer', async () => {

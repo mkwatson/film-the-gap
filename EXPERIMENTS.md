@@ -591,3 +591,31 @@ Status: **technically graduated into the technical path; final cold-view communi
 Limits are part of the experiment result. Lean does not establish image authenticity, seller honesty, browser conformance, complete implementation equivalence, or zero statistical inference. The private-ceiling theorem applies to the modeled seller projection; separate application tests and native acceptance verify the implementation seam.
 
 Decision: keep the proof because it is compact, honest, runtime-connected, offline at request time, and materially strengthens the “capability appears only when safe” claim. Do not expand it into a proof service or let it displace the physical human-agent collaboration in the demo. The final graduation gate is an unfamiliar viewer correctly explaining within ten seconds that it controls authority rather than camera truth.
+
+### E11 — Adversarial tool lifecycle and untrusted-output boundary
+
+Frozen claim:
+
+> The dynamic WebMCP frontier can change without flickering unchanged tools, cancelling the mutation that caused the change, reviving a stale capability after reload/navigation, or turning merchant free text into agent instructions.
+
+Status: **graduated in Chrome 151; exact final ChatGPT rerun pending.**
+
+Current first-party evidence changes the implementation target. Chrome's imperative API docs, updated August 20, say Chrome 153 preserves in-flight executions when a registration is aborted; the judged baseline starts at Chrome 149 and the installed acceptance browser is Chrome 151. Sarah Drasner's WebMCP/frameworks meta-issue recommends registering as rarely as possible while reading state as freshly as possible, because wholesale React re-registration creates stale-closure, collision, and tool-flicker risks. Chrome's security guidance also says prompt injection cannot be solved inside the model and recommends accurate `untrustedContentHint` annotations plus small outputs.
+
+Protocol:
+
+1. Replace whole-frontier teardown with name-keyed reconciliation. A stable tool keeps its original registration and fresh `runtime.readState`; only tools entering or leaving the actual capability set register or abort.
+2. Prove in component tests that `inspect_live_show` survives every hero transition under one un-aborted registration while request/hold/commerce tools still appear and disappear exactly.
+3. In native Chrome 151, capture a tool handle, mutate the state that unregisters it, and prove the stale handle cannot produce a second mutation. Reload the queued buyer page, then verify authenticated room recovery and the exact tool frontier; retain the existing merchant-back-navigation recovery.
+4. Inject instruction-shaped free text into a merchant receipt and prove the Site Tool projection omits it while preserving typed totals, status, and the untrusted-content annotation.
+
+Fail if unchanged tools still churn, the tool call that changes state is reported cancelled, stale handles can mutate, reload loses the room/tool frontier, free-form merchant content reaches the agent result, or any hardening makes the canonical journey slower or less legible.
+
+Results:
+
+- Replaced whole-frontier teardown with a registration map keyed by tool name. `inspect_live_show` now keeps one registration and one fresh-state callback throughout the hero journey; tools that actually leave the frontier alone have their controllers aborted. Component coverage proves the stable inspect registration never aborts while evidence and hold capabilities still churn exactly.
+- Projected UCP line-item titles and message bodies out of the buyer Site Tool result. Typed prices, quantities, total types, message type/severity, status, and a visible `merchantFreeText: withheld from agent result` receipt remain. An instruction-shaped product title and merchant message do not survive this projection; every dynamic tool is also asserted to carry `untrustedContentHint: true`.
+- Extended the real Chrome `151.0.7922.174` runner to retain `request_host_evidence`, execute it after the state unregisters it, and require browser rejection. It then reloads the buyer page, recovers the authenticated Durable Object room and exact queued two-tool frontier, completes host publication/hold/UCP, navigates back from the cancelled merchant, reconciles, releases, and proves host non-disclosure.
+- The resulting ten-phase native journey passes in roughly 8.5 seconds, including the new stale-handle and reload assertions. The call that removed its own capability still returned successfully, and the stale second call did not reach the domain mutation.
+
+Decision: keep the keyed lifecycle and structured free-text omission. They directly strengthen WebMCP Leverage and Execution, align with current Chrome guidance, add no visible hero complexity, and reduce a class of framework-specific failures a judge could encounter. Preserve the broader claim boundary: prompt injection cannot be guaranteed away by a page, and final behavior still needs the exact judged ChatGPT client on stable origins.

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { createSiteTools, type SiteToolRuntime } from './site-tools';
 
@@ -19,12 +19,32 @@ const checkingStatus: SiteToolStatus = {
   message: 'Checking this browser for native Site Tools.',
 };
 
+interface SiteToolRegistration {
+  readonly controller: AbortController;
+  readonly settled: Promise<void>;
+}
+
+function unregisterAll(registrations: Map<string, SiteToolRegistration>): void {
+  for (const { controller } of registrations.values()) {
+    controller.abort();
+  }
+  registrations.clear();
+}
+
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
 export function useSiteTools(runtime: SiteToolRuntime, availabilityKey: string): SiteToolStatus {
   const [status, setStatus] = useState<SiteToolStatus>(checkingStatus);
+  const registrationsRef = useRef<Map<string, SiteToolRegistration>>(new Map());
+
+  useEffect(() => {
+    const registrations = registrationsRef.current;
+    return () => {
+      unregisterAll(registrations);
+    };
+  }, [runtime]);
 
   useEffect(() => {
     let active = true;
@@ -38,6 +58,7 @@ export function useSiteTools(runtime: SiteToolRuntime, availabilityKey: string):
 
     const modelContext = document.modelContext;
     if (modelContext === undefined) {
+      unregisterAll(registrationsRef.current);
       scheduleStatus({
         phase: 'unsupported',
         registeredNames: [],
@@ -48,18 +69,41 @@ export function useSiteTools(runtime: SiteToolRuntime, availabilityKey: string):
       };
     }
 
-    const controller = new AbortController();
     const tools = createSiteTools(runtime);
+    const desiredTools = new Map(tools.map((tool) => [tool.name, tool]));
+    const registrations = registrationsRef.current;
+
+    for (const [name, registration] of registrations) {
+      if (!desiredTools.has(name)) {
+        registration.controller.abort();
+        registrations.delete(name);
+      }
+    }
+
+    for (const [name, tool] of desiredTools) {
+      if (registrations.has(name)) {
+        continue;
+      }
+      const controller = new AbortController();
+      const settled = modelContext.registerTool(tool, { signal: controller.signal });
+      registrations.set(name, { controller, settled });
+    }
 
     scheduleStatus({
       phase: 'registering',
       registeredNames: [],
-      message: `Publishing ${tools.length} page-owned tools for the current live state.`,
+      message: `Reconciling ${tools.length} page-owned tools for the current live state.`,
     });
 
-    void Promise.all(
-      tools.map((tool) => modelContext.registerTool(tool, { signal: controller.signal })),
-    )
+    const pending = tools.map(({ name }) => {
+      const registration = registrations.get(name);
+      if (registration === undefined) {
+        return Promise.reject(new Error(`Missing Site Tool registration for ${name}.`));
+      }
+      return registration.settled;
+    });
+
+    void Promise.all(pending)
       .then(() => {
         if (!active) {
           return;
@@ -71,10 +115,10 @@ export function useSiteTools(runtime: SiteToolRuntime, availabilityKey: string):
         });
       })
       .catch((error: unknown) => {
-        controller.abort();
         if (!active) {
           return;
         }
+        unregisterAll(registrations);
         setStatus({
           phase: 'error',
           registeredNames: [],
@@ -84,7 +128,6 @@ export function useSiteTools(runtime: SiteToolRuntime, availabilityKey: string):
 
     return () => {
       active = false;
-      controller.abort();
     };
   }, [availabilityKey, runtime]);
 
