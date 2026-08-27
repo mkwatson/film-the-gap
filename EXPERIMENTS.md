@@ -551,9 +551,26 @@ Status: **local verifier, clean-clone rehearsal, and deployment dry-runs pass; a
 - The room's buyer and host credentials are validated and immediately discarded. A regression test serializes the entire successful report and proves neither credential survives; failure output suppresses arbitrary origins and credential-shaped material.
 - Read the current Cloudflare release docs before choosing a workflow. Version preview URLs are unavailable for Workers that implement Durable Objects, so the runbook uses reviewed local/native gates, commit-tagged direct deployments, immediate public verification, and recorded rollback IDs rather than claiming preview promotion that this architecture cannot use.
 - Read the current Vercel release docs before choosing a workflow. A Production build can be staged without assigning its domain, while promoting a Preview-environment build creates a new Production deployment. The runbook therefore verifies the commit after final promotion and separately rejects deployment protection.
-- A clean clone outside the working tree completed `pnpm install --frozen-lockfile`, the full offline gate, and released UCP schema validation without `.env.local`. The current focused gate passes 88 app tests, 8 room-Worker tests, 12 merchant-Worker tests, strict TypeScript, and both Wrangler `4.127.0` tagged dry-run bundles.
+- A clean clone outside the working tree completed `pnpm install --frozen-lockfile`, the full offline gate, and released UCP schema validation without `.env.local`. The release checkpoint's focused gate passed 88 app tests, 8 room-Worker tests, 12 merchant-Worker tests, strict TypeScript, and both Wrangler `4.127.0` tagged dry-run bundles.
 
 This materially reduces execution and submission risk, but it cannot graduate the final-origin gate without Mark's authorization for the public repository/license and permanent Vercel/Cloudflare release. After that one-time action, `pnpm release:verify`, native Chrome, model-driven ChatGPT, a clean unauthenticated browser, and a physical phone remain mandatory on the identical release.
+
+#### E9.7 — Timed demo contract and reproducible visual states
+
+Frozen claim:
+
+> Every visual beat in the under-three-minute submission can be sourced from the tested product lifecycle, while the final cut remains honest about which actions came from ChatGPT, a physical phone, a deterministic fallback, and the optional model.
+
+Status: **deterministic visual rehearsal passes; final ChatGPT/phone source capture pending.**
+
+- Added a production packet with the exact private/public prompts, approximately 330-word narration, second-by-second required visual proof, primary and permission-free takes, rights/privacy review, conditional Gateway narration, cold-view comprehension questions, and a strict prohibition on reordering or fabricating tool results.
+- The native acceptance runner now has an opt-in artifact mode. One passing run produced twelve full-page milestone captures across buyer, host, active/cancelled merchant, released room, and final host privacy receipt while preserving the same nine-phase native assertions and credential-suppressed report.
+- An optional buyer-state WebM exercises the visible capability changes for edit planning. It is explicitly supplementary: it neither depicts model selection nor substitutes for ChatGPT Site Tools, the physical host phone, or the final rights-cleared camera take.
+- Browser recording creates an additional page target in `agent-browser` `0.35.1`, falsifying the runner's earlier fixed `t1`/`t2`/`t3` assumption. The runner now names and rediscovers buyer/host tabs dynamically; unit coverage accepts arbitrary tab identifiers. Both ordinary and recording-enabled native journeys pass after the fix.
+- Visual inspection of the initial buyer, aggregate host request, and active merchant Cart states confirms that the key claims are readable without architecture narration: “not what you'll pay,” “8 private decisions need one fact,” and `$375 + $48 = $423` with no checkout/payment capability.
+- The current gate passes 91 app tests, 8 room-Worker tests, and 12 merchant-Worker tests. Generated captures live only under ignored `tmp/` because development hostnames and ephemeral state must not enter the public repository.
+
+This graduates repeatable visual continuity, not the submission video. The primary take still requires the exact final ChatGPT build, stable public origins, a real phone, an owned unbranded item, a reviewed physical-camera result, clean narration/captions, and one unfamiliar viewer who can explain the thesis after a silent watch.
 
 ### E10 — Frontier receipt (optional)
 

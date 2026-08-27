@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 export interface AcceptanceConfig {
   readonly appUrl: string;
@@ -15,11 +16,18 @@ export interface AcceptanceStep {
   readonly durationMs: number;
 }
 
-export type AcceptanceTab = 't1' | 't2' | 't3';
+export interface AcceptanceArtifactConfig {
+  readonly directory: string | null;
+  readonly pauseMs: number;
+  readonly recordVideo: boolean;
+}
+
+export type AcceptanceTab = `t${number}`;
 
 const defaultBrowserExecutable = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const minimumTimeoutMs = 5_000;
 const maximumTimeoutMs = 120_000;
+const maximumCapturePauseMs = 5_000;
 
 function readOrigin(
   environment: Readonly<Record<string, string | undefined>>,
@@ -92,12 +100,41 @@ export function readAcceptanceConfig(
   };
 }
 
+export function readAcceptanceArtifactConfig(
+  environment: Readonly<Record<string, string | undefined>>,
+): AcceptanceArtifactConfig {
+  const rawDirectory = environment.EVIDENCE_ACCEPTANCE_ARTIFACT_DIR?.trim();
+  const rawPause = environment.EVIDENCE_ACCEPTANCE_CAPTURE_PAUSE_MS?.trim();
+  const pauseMs = rawPause === undefined || rawPause.length === 0 ? 0 : Number(rawPause);
+  if (!Number.isSafeInteger(pauseMs) || pauseMs < 0 || pauseMs > maximumCapturePauseMs) {
+    throw new Error(
+      `EVIDENCE_ACCEPTANCE_CAPTURE_PAUSE_MS must be an integer from 0 to ${maximumCapturePauseMs}.`,
+    );
+  }
+  if (
+    environment.EVIDENCE_ACCEPTANCE_RECORD_VIDEO === '1' &&
+    (rawDirectory === undefined || rawDirectory.length === 0)
+  ) {
+    throw new Error('EVIDENCE_ACCEPTANCE_ARTIFACT_DIR is required when recording video.');
+  }
+  return {
+    directory:
+      rawDirectory === undefined || rawDirectory.length === 0 ? null : resolve(rawDirectory),
+    pauseMs,
+    recordVideo: environment.EVIDENCE_ACCEPTANCE_RECORD_VIDEO === '1',
+  };
+}
+
 export function parseBrowserJson(output: string): unknown {
   try {
     return JSON.parse(output.trim()) as unknown;
   } catch {
     throw new Error('Browser evaluation returned non-JSON output.');
   }
+}
+
+export function parseAcceptanceTabs(output: string): readonly AcceptanceTab[] {
+  return [...output.matchAll(/\[t(\d+)\]/g)].map((match) => `t${match[1]}` as AcceptanceTab);
 }
 
 export function containsPrivateMaterial(value: string): boolean {
@@ -182,6 +219,26 @@ export class NativeBrowserDriver {
     this.execute('return to evidence room', ['back'], undefined);
   }
 
+  setViewport(width: number, height: number): void {
+    this.execute(
+      'set capture viewport',
+      ['set', 'viewport', String(width), String(height)],
+      undefined,
+    );
+  }
+
+  screenshot(path: string): void {
+    this.execute('capture acceptance screenshot', ['screenshot', '--full', path], undefined);
+  }
+
+  startRecording(path: string): void {
+    this.execute('start acceptance recording', ['record', 'start', path], undefined);
+  }
+
+  stopRecording(): void {
+    this.execute('stop acceptance recording', ['record', 'stop'], undefined);
+  }
+
   switchTab(tab: AcceptanceTab): void {
     this.execute('switch expected tab', ['tab', tab], undefined);
   }
@@ -193,6 +250,10 @@ export class NativeBrowserDriver {
     } catch {
       return false;
     }
+  }
+
+  listTabs(): readonly AcceptanceTab[] {
+    return parseAcceptanceTabs(this.execute('list browser tabs', ['tab', 'list'], undefined));
   }
 
   private execute(label: string, arguments_: readonly string[], input: string | undefined): string {

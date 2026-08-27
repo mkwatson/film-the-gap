@@ -5,13 +5,47 @@ import { describe, expect, it } from 'vitest';
 import {
   containsPrivateMaterial,
   isStringArray,
+  parseAcceptanceTabs,
   parseBrowserJson,
   readAcceptanceConfig,
+  readAcceptanceArtifactConfig,
   sameStringSet,
   sanitizeAcceptanceFailure,
 } from './native-browser-harness.ts';
 
 describe('native browser acceptance harness', () => {
+  it('keeps capture disabled by default and validates an opt-in artifact directory', () => {
+    expect(readAcceptanceArtifactConfig({})).toEqual({
+      directory: null,
+      pauseMs: 0,
+      recordVideo: false,
+    });
+
+    const capture = readAcceptanceArtifactConfig({
+      EVIDENCE_ACCEPTANCE_ARTIFACT_DIR: 'tmp/demo-capture',
+      EVIDENCE_ACCEPTANCE_CAPTURE_PAUSE_MS: '1250',
+      EVIDENCE_ACCEPTANCE_RECORD_VIDEO: '1',
+    });
+    expect(capture.directory).toMatch(/\/tmp\/demo-capture$/);
+    expect(capture.pauseMs).toBe(1_250);
+    expect(capture.recordVideo).toBe(true);
+  });
+
+  it('rejects unbounded capture pauses and video without an artifact destination', () => {
+    expect(() =>
+      readAcceptanceArtifactConfig({ EVIDENCE_ACCEPTANCE_CAPTURE_PAUSE_MS: '5001' }),
+    ).toThrow(/integer from 0 to 5000/i);
+    expect(() => readAcceptanceArtifactConfig({ EVIDENCE_ACCEPTANCE_RECORD_VIDEO: '1' })).toThrow(
+      /artifact_dir is required/i,
+    );
+    expect(() =>
+      readAcceptanceArtifactConfig({
+        EVIDENCE_ACCEPTANCE_ARTIFACT_DIR: '   ',
+        EVIDENCE_ACCEPTANCE_RECORD_VIDEO: '1',
+      }),
+    ).toThrow(/artifact_dir is required/i);
+  });
+
   it('accepts credential-free local app and HTTPS service origins', () => {
     const config = readAcceptanceConfig({
       EVIDENCE_ACCEPTANCE_APP_URL: 'http://127.0.0.1:3000/',
@@ -56,6 +90,14 @@ describe('native browser acceptance harness', () => {
     expect(isStringArray(['inspect', 7])).toBe(false);
     expect(sameStringSet(['act', 'inspect'], ['inspect', 'act'])).toBe(true);
     expect(sameStringSet(['inspect'], ['inspect', 'act'])).toBe(false);
+  });
+
+  it('parses dynamic browser tab identifiers without depending on a fixed tab count', () => {
+    expect(
+      parseAcceptanceTabs(
+        '  [t1] Buyer - https://app.example\n→ [t2] Recorder - https://app.example\n  [t7] Host',
+      ),
+    ).toEqual(['t1', 't2', 't7']);
   });
 
   it('detects private ceilings and bearer paths without flagging generic privacy copy', () => {

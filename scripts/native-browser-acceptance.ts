@@ -1,14 +1,19 @@
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
+
 import {
   containsPrivateMaterial,
   isStringArray,
   NativeBrowserDriver,
   readAcceptanceConfig,
+  readAcceptanceArtifactConfig,
   recordAcceptanceStep,
   sameStringSet,
   sanitizeAcceptanceFailure,
   waitForBrowserValue,
   type AcceptanceStep,
   type AcceptanceTab,
+  type AcceptanceArtifactConfig,
 } from './native-browser-harness.ts';
 
 const agentBrowserVersion = '0.35.1';
@@ -263,15 +268,74 @@ async function waitForTools(
   await waitForBrowserValue(driver, label, toolNamesScript, hasExactToolSet(expected), timeoutMs);
 }
 
+async function captureMilestone(
+  driver: NativeBrowserDriver,
+  artifacts: AcceptanceArtifactConfig,
+  filename: string,
+): Promise<void> {
+  if (artifacts.directory === null) {
+    return;
+  }
+  if (artifacts.pauseMs > 0) {
+    await new Promise<void>((resolvePause) => {
+      setTimeout(resolvePause, artifacts.pauseMs);
+    });
+  }
+  driver.screenshot(join(artifacts.directory, filename));
+}
+
+function nameCurrentTab(driver: NativeBrowserDriver, name: string): void {
+  if (
+    !isTrue(
+      driver.eval(
+        `(() => { window.name = ${JSON.stringify(name)}; return window.name === ${JSON.stringify(name)}; })()`,
+        'name acceptance tab',
+      ),
+    )
+  ) {
+    throw new Error('Could not name an acceptance tab.');
+  }
+}
+
+function findNamedTab(driver: NativeBrowserDriver, name: string): AcceptanceTab {
+  for (const tab of [...driver.listTabs()].reverse()) {
+    if (
+      driver.trySwitchTab(tab) &&
+      isTrue(
+        driver.eval(`window.name === ${JSON.stringify(name)}`, 'identify named acceptance tab'),
+      )
+    ) {
+      return tab;
+    }
+  }
+  throw new Error('Could not find a named acceptance tab.');
+}
+
 async function main(): Promise<void> {
   const config = readAcceptanceConfig(process.env);
+  const artifacts = readAcceptanceArtifactConfig(process.env);
   const steps: AcceptanceStep[] = [];
   const driver = new NativeBrowserDriver(config);
+  let buyerTab: AcceptanceTab = 't1';
   let hostTab: AcceptanceTab = 't2';
+  let recording = false;
+
+  if (artifacts.directory !== null) {
+    mkdirSync(artifacts.directory, { recursive: true });
+  }
 
   try {
     await recordAcceptanceStep(steps, 'open-clean-native-browser', () => {
       driver.open();
+      if (artifacts.directory !== null) {
+        driver.setViewport(1440, 900);
+      }
+      if (artifacts.directory !== null && artifacts.recordVideo) {
+        driver.startRecording(join(artifacts.directory, 'buyer-state-journey.webm'));
+        recording = true;
+      }
+      nameCurrentTab(driver, 'webmcp-private-buyer');
+      buyerTab = findNamedTab(driver, 'webmcp-private-buyer');
     });
 
     await recordAcceptanceStep(steps, 'buyer-preflight-and-reset', async () => {
@@ -302,26 +366,17 @@ async function main(): Promise<void> {
         inspectInitialScript,
         config.commandTimeoutMs,
       );
+      await captureMilestone(driver, artifacts, '01-buyer-private-start.png');
     });
 
     await recordAcceptanceStep(steps, 'link-private-host-surface', async () => {
       driver.newTab(config.appUrl);
-      if (
-        !isTrue(
-          driver.eval(
-            `(() => { window.name = 'webmcp-private-host'; return true; })()`,
-            'name private host tab',
-          ),
-        )
-      ) {
-        throw new Error('Could not stage the private host surface.');
-      }
-      driver.switchTab('t1');
+      nameCurrentTab(driver, 'webmcp-private-host');
+      driver.switchTab(buyerTab);
       if (!isTrue(driver.eval(openPrivateHostScript, 'navigate private host surface'))) {
         throw new Error('Could not navigate the private host surface.');
       }
-      hostTab = driver.trySwitchTab('t3') ? 't3' : 't2';
-      driver.switchTab(hostTab);
+      hostTab = findNamedTab(driver, 'webmcp-private-host');
       await waitForTrue(
         driver,
         'host credential scrubbing',
@@ -334,13 +389,14 @@ async function main(): Promise<void> {
         pageIncludesScript('Host evidence console', 'Buyer view linked', 'Never sent to the host'),
         config.commandTimeoutMs,
       );
-      driver.switchTab('t1');
+      driver.switchTab(buyerTab);
       await waitForTrue(
         driver,
         'buyer-to-host presence',
         pageIncludesScript('Host linked'),
         config.commandTimeoutMs,
       );
+      await captureMilestone(driver, artifacts, '02-buyer-host-linked.png');
     });
 
     await recordAcceptanceStep(steps, 'share-only-evidence-requirements', async () => {
@@ -356,6 +412,7 @@ async function main(): Promise<void> {
         scopedBuyerTools,
         config.commandTimeoutMs,
       );
+      await captureMilestone(driver, artifacts, '03-buyer-requirements-unresolved.png');
       await waitForTrue(
         driver,
         'normalized evidence request',
@@ -368,6 +425,7 @@ async function main(): Promise<void> {
         queuedBuyerTools,
         config.commandTimeoutMs,
       );
+      await captureMilestone(driver, artifacts, '04-buyer-evidence-requested.png');
     });
 
     await recordAcceptanceStep(steps, 'publish-one-host-answer', async () => {
@@ -381,6 +439,7 @@ async function main(): Promise<void> {
         ),
         config.commandTimeoutMs,
       );
+      await captureMilestone(driver, artifacts, '05-host-aggregate-demand.png');
       if (
         !isTrue(
           driver.eval(
@@ -403,7 +462,8 @@ async function main(): Promise<void> {
         hostPrivacyScript,
         config.commandTimeoutMs,
       );
-      driver.switchTab('t1');
+      await captureMilestone(driver, artifacts, '06-host-one-answer.png');
+      driver.switchTab(buyerTab);
       await waitForTools(
         driver,
         'evidence-ready buyer Site Tools',
@@ -416,11 +476,13 @@ async function main(): Promise<void> {
         inspectReadyScript,
         config.commandTimeoutMs,
       );
+      await captureMilestone(driver, artifacts, '07-buyer-evidence-ready.png');
     });
 
     await recordAcceptanceStep(steps, 'create-exact-quote-hold', async () => {
       await waitForTrue(driver, 'exact-quote hold', reserveScript, config.commandTimeoutMs);
       await waitForTools(driver, 'held buyer Site Tools', heldBuyerTools, config.commandTimeoutMs);
+      await captureMilestone(driver, artifacts, '08-buyer-exact-hold.png');
     });
 
     await recordAcceptanceStep(steps, 'prepare-authoritative-ucp-cart', async () => {
@@ -452,6 +514,7 @@ async function main(): Promise<void> {
         inspectMerchantScript,
         config.commandTimeoutMs,
       );
+      await captureMilestone(driver, artifacts, '09-merchant-authoritative-cart.png');
     });
 
     await recordAcceptanceStep(steps, 'cancel-at-merchant-and-reconcile-room', async () => {
@@ -476,6 +539,7 @@ async function main(): Promise<void> {
         merchantCancelledTools,
         config.commandTimeoutMs,
       );
+      await captureMilestone(driver, artifacts, '10-merchant-cart-cancelled.png');
 
       driver.back();
       await waitForTools(
@@ -503,6 +567,7 @@ async function main(): Promise<void> {
         evidenceReadyBuyerTools,
         config.commandTimeoutMs,
       );
+      await captureMilestone(driver, artifacts, '11-buyer-released.png');
     });
 
     await recordAcceptanceStep(steps, 'prove-host-never-received-private-material', async () => {
@@ -513,7 +578,8 @@ async function main(): Promise<void> {
         hostPrivacyScript,
         config.commandTimeoutMs,
       );
-      driver.switchTab('t1');
+      await captureMilestone(driver, artifacts, '12-host-private-boundary.png');
+      driver.switchTab(buyerTab);
       if (!isTrue(driver.eval(clickExactButtonScript('Reset demo'), 'clean acceptance room'))) {
         throw new Error('Could not clean the acceptance room.');
       }
@@ -530,8 +596,19 @@ async function main(): Promise<void> {
     if (containsPrivateMaterial(serialized)) {
       throw new Error('Acceptance report unexpectedly contained private material.');
     }
+    if (recording) {
+      driver.stopRecording();
+      recording = false;
+    }
     console.log(serialized);
   } finally {
+    if (recording) {
+      try {
+        driver.stopRecording();
+      } catch {
+        // Recording cleanup must not replace the actual acceptance result.
+      }
+    }
     driver.close();
   }
 }
