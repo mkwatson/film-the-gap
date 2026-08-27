@@ -12,6 +12,7 @@ import {
 import {
   parseRemoteRoomClientMessage,
   privateActionResultSchema,
+  maximumRoomAttendeeCount,
   remoteRoomIdPattern,
   remoteRoomProtocolVersion,
   type RemoteRoomErrorCode,
@@ -49,10 +50,17 @@ interface ProcessedCommand {
   readonly privateResult: z.infer<typeof privateActionResultSchema> | null;
 }
 
+interface StoredAttendeeCredential {
+  readonly attendeeId: string;
+  readonly tokenDigest: string;
+}
+
 interface StoredRoom {
   readonly protocolVersion: typeof remoteRoomProtocolVersion;
   readonly buyerTokenDigest: string;
   readonly hostTokenDigest: string;
+  readonly attendeeCredentials: readonly StoredAttendeeCredential[];
+  readonly joinedAttendeeIds: readonly string[];
   readonly createdAt: number;
   readonly expiresAt: number;
   readonly revision: number;
@@ -66,7 +74,32 @@ interface SocketAttachment {
   readonly authenticated: boolean;
   readonly role: RemoteRoomRole | null;
   readonly clientId: string | null;
+  readonly attendeeId: string | null;
 }
+
+const storedAttendeeCredentialSchema = z.strictObject({
+  attendeeId: z.string().regex(/^attendee-[1-7]$/),
+  tokenDigest: z.string().regex(/^[a-f0-9]{64}$/),
+});
+
+const storedAttendeeCredentialsSchema = z
+  .array(storedAttendeeCredentialSchema)
+  .length(maximumRoomAttendeeCount)
+  .refine(
+    (credentials) =>
+      new Set(credentials.map(({ attendeeId }) => attendeeId)).size === credentials.length,
+    'Attendee IDs must be unique.',
+  )
+  .refine(
+    (credentials) =>
+      new Set(credentials.map(({ tokenDigest }) => tokenDigest)).size === credentials.length,
+    'Attendee credential digests must be unique.',
+  );
+
+const joinedAttendeeIdsSchema = z
+  .array(z.string().regex(/^attendee-[1-7]$/))
+  .max(maximumRoomAttendeeCount)
+  .refine((ids) => new Set(ids).size === ids.length, 'Joined attendee IDs must be unique.');
 
 const processedCommandSchema = z.strictObject({
   commandId: z.string().min(1).max(160),
@@ -83,6 +116,8 @@ const storedRoomSchema = z.strictObject({
   protocolVersion: z.literal(remoteRoomProtocolVersion),
   buyerTokenDigest: z.string().regex(/^[a-f0-9]{64}$/),
   hostTokenDigest: z.string().regex(/^[a-f0-9]{64}$/),
+  attendeeCredentials: storedAttendeeCredentialsSchema,
+  joinedAttendeeIds: joinedAttendeeIdsSchema,
   createdAt: z.number().int().positive(),
   expiresAt: z.number().int().positive(),
   revision: z.number().int().nonnegative(),
@@ -96,6 +131,7 @@ const initializeRoomSchema = z
   .strictObject({
     buyerTokenDigest: z.string().regex(/^[a-f0-9]{64}$/),
     hostTokenDigest: z.string().regex(/^[a-f0-9]{64}$/),
+    attendeeCredentials: storedAttendeeCredentialsSchema,
     createdAt: z.number().int().positive(),
     expiresAt: z.number().int().positive(),
   })
@@ -107,6 +143,10 @@ const socketAttachmentSchema = z.strictObject({
   authenticated: z.boolean(),
   role: z.enum(remoteRoomRoles).nullable(),
   clientId: z.string().min(1).max(160).nullable(),
+  attendeeId: z
+    .string()
+    .regex(/^attendee-[1-7]$/)
+    .nullable(),
 });
 
 const storedRoomKey = 'room';
@@ -201,7 +241,9 @@ function corsHeaders(request: Request, env: WorkerEnv): HeadersInit {
 function socketAttachment(socket: WebSocket): SocketAttachment {
   const value: unknown = socket.deserializeAttachment();
   const parsed = socketAttachmentSchema.safeParse(value);
-  return parsed.success ? parsed.data : { authenticated: false, role: null, clientId: null };
+  return parsed.success
+    ? parsed.data
+    : { authenticated: false, role: null, clientId: null, attendeeId: null };
 }
 
 function send(socket: WebSocket, message: RemoteRoomServerMessage): void {
@@ -306,6 +348,7 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
     const room: StoredRoom = {
       protocolVersion: remoteRoomProtocolVersion,
       ...parsed.data,
+      joinedAttendeeIds: [],
       revision: 0,
       state: createInitialState(
         (() => {
@@ -339,7 +382,12 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
     const client = pair[0];
     const server = pair[1];
     this.ctx.acceptWebSocket(server);
-    server.serializeAttachment({ authenticated: false, role: null, clientId: null });
+    server.serializeAttachment({
+      authenticated: false,
+      role: null,
+      clientId: null,
+      attendeeId: null,
+    });
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -415,6 +463,7 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
     if (
       attachment.role === null ||
       attachment.clientId === null ||
+      (attachment.role === 'attendee' && attachment.attendeeId === null) ||
       !roomRoleCanDispatch(attachment.role, message.command)
     ) {
       roomError(
@@ -431,6 +480,7 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
       socket,
       attachment.role,
       attachment.clientId,
+      attachment.attendeeId,
       message.commandId,
       message.expectedRevision,
       message.command,
@@ -450,8 +500,17 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
       return;
     }
     const digest = await sha256Hex(token);
-    const expectedDigest = role === 'buyer' ? room.buyerTokenDigest : room.hostTokenDigest;
-    if (!constantTimeEqual(digest, expectedDigest)) {
+    const attendeeCredential =
+      role === 'attendee'
+        ? room.attendeeCredentials.find(({ tokenDigest }) => constantTimeEqual(digest, tokenDigest))
+        : null;
+    const expectedDigest =
+      role === 'buyer'
+        ? room.buyerTokenDigest
+        : role === 'host'
+          ? room.hostTokenDigest
+          : attendeeCredential?.tokenDigest;
+    if (expectedDigest === undefined || !constantTimeEqual(digest, expectedDigest)) {
       roomError(
         socket,
         'authentication-failed',
@@ -463,7 +522,12 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
       return;
     }
 
-    socket.serializeAttachment({ authenticated: true, role, clientId });
+    socket.serializeAttachment({
+      authenticated: true,
+      role,
+      clientId,
+      attendeeId: attendeeCredential?.attendeeId ?? null,
+    });
     this.sendSnapshot(socket, lastSeenRevision !== room.revision);
     await this.broadcastSnapshot(false, socket);
   }
@@ -472,6 +536,7 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
     socket: WebSocket,
     role: RemoteRoomRole,
     clientId: string,
+    attendeeId: string | null,
     commandId: string,
     expectedRevision: number,
     command: RoomCommand,
@@ -525,7 +590,7 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
       return;
     }
 
-    const execution = await this.executeRoomCommand(room, command, commandId);
+    const execution = await this.executeRoomCommand(room, command, commandId, role, attendeeId);
     const result = execution.result;
     const revision = room.revision + 1;
     const processed: ProcessedCommand = {
@@ -549,6 +614,7 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
       lastMessage: result.message,
       processedCommands: [...priorProcessedCommands, processed].slice(-maxProcessedCommands),
       privateUcpCartId: execution.privateUcpCartId,
+      joinedAttendeeIds: execution.joinedAttendeeIds,
     };
     await this.saveRoom(nextRoom);
     send(socket, {
@@ -567,12 +633,48 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
     room: StoredRoom,
     command: RoomCommand,
     commandId: string,
+    role: RemoteRoomRole,
+    attendeeId: string | null,
   ): Promise<{
     readonly result: ReturnType<typeof applyRoomCommand>;
     readonly privateUcpCartId: string | null;
+    readonly joinedAttendeeIds: readonly string[];
   }> {
     const configuration = readUcpRoomConfiguration(this.workerEnv);
     const roomId = this.ctx.id.name ?? 'UNKNOWN';
+
+    if (command.kind === 'join-evidence-demand') {
+      if (role !== 'attendee' || attendeeId === null) {
+        return {
+          result: {
+            ok: false,
+            state: room.state,
+            message: 'Only an authenticated attendee can join this evidence request.',
+          },
+          privateUcpCartId: room.privateUcpCartId,
+          joinedAttendeeIds: room.joinedAttendeeIds,
+        };
+      }
+      if (room.joinedAttendeeIds.includes(attendeeId)) {
+        return {
+          result: {
+            ok: true,
+            state: room.state,
+            message: 'This authenticated attendee already joined the evidence request.',
+          },
+          privateUcpCartId: room.privateUcpCartId,
+          joinedAttendeeIds: room.joinedAttendeeIds,
+        };
+      }
+      const result = applyRoomCommand(room.state, command);
+      return {
+        result,
+        privateUcpCartId: room.privateUcpCartId,
+        joinedAttendeeIds: result.ok
+          ? [...room.joinedAttendeeIds, attendeeId]
+          : room.joinedAttendeeIds,
+      };
+    }
 
     if (command.kind === 'prepare-merchant-cart') {
       const prepared = await prepareRoomMerchantCart(
@@ -588,6 +690,7 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
             ? prepared.result
             : { ...prepared.result, privateResult: prepared.privateResult },
         privateUcpCartId: prepared.privateCartId ?? room.privateUcpCartId,
+        joinedAttendeeIds: room.joinedAttendeeIds,
       };
     }
 
@@ -603,6 +706,7 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
       return {
         result,
         privateUcpCartId: result.ok ? null : room.privateUcpCartId,
+        joinedAttendeeIds: room.joinedAttendeeIds,
       };
     }
 
@@ -620,13 +724,18 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
         this.ucpFetch(),
       );
       if (!cancelled.ok) {
-        return { result: cancelled, privateUcpCartId: room.privateUcpCartId };
+        return {
+          result: cancelled,
+          privateUcpCartId: room.privateUcpCartId,
+          joinedAttendeeIds: room.joinedAttendeeIds,
+        };
       }
     }
 
     return {
       result: applyRoomCommand(room.state, command),
       privateUcpCartId: command.kind === 'reset-room' ? null : room.privateUcpCartId,
+      joinedAttendeeIds: command.kind === 'reset-room' ? [] : room.joinedAttendeeIds,
     };
   }
 
@@ -646,6 +755,7 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
   private presence(): RoomPresence {
     let buyer = 0;
     let host = 0;
+    let attendee = 0;
     for (const socket of this.ctx.getWebSockets()) {
       const attachment = socketAttachment(socket);
       if (!attachment.authenticated || attachment.role === null) {
@@ -653,11 +763,13 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
       }
       if (attachment.role === 'buyer') {
         buyer += 1;
-      } else {
+      } else if (attachment.role === 'host') {
         host += 1;
+      } else {
+        attendee += 1;
       }
     }
-    return { buyer, host };
+    return { buyer, host, attendee };
   }
 
   private sendSnapshot(socket: WebSocket, recovered: boolean): void {
@@ -725,6 +837,16 @@ async function createRoom(request: Request, env: WorkerEnv): Promise<Response> {
     const roomId = randomRoomId();
     const buyerToken = randomBase64Url(32);
     const hostToken = randomBase64Url(32);
+    const attendeeCredentials = Array.from({ length: maximumRoomAttendeeCount }, (_, index) => ({
+      attendeeId: `attendee-${index + 1}`,
+      token: randomBase64Url(32),
+    }));
+    const storedAttendeeCredentials = await Promise.all(
+      attendeeCredentials.map(async ({ attendeeId, token }) => ({
+        attendeeId,
+        tokenDigest: await sha256Hex(token),
+      })),
+    );
     const id = env.ROOMS.idFromName(roomId);
     const stub = env.ROOMS.get(id);
     const initialization = await stub.fetch('https://room.internal/initialize', {
@@ -732,6 +854,7 @@ async function createRoom(request: Request, env: WorkerEnv): Promise<Response> {
       body: JSON.stringify({
         buyerTokenDigest: await sha256Hex(buyerToken),
         hostTokenDigest: await sha256Hex(hostToken),
+        attendeeCredentials: storedAttendeeCredentials,
         createdAt,
         expiresAt,
       }),
@@ -749,6 +872,7 @@ async function createRoom(request: Request, env: WorkerEnv): Promise<Response> {
         roomId,
         buyerToken,
         hostToken,
+        attendeeCredentials,
         expiresAt,
       },
       201,

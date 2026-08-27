@@ -102,13 +102,14 @@ The optional WebM records only the buyer-tab state progression; the twelve still
 
 Capture these independently so one permission or network failure cannot destroy the edit:
 
-1. **Primary real take:** final ChatGPT build, final public origins, physical phone linked through the private QR before recording, owned object, real camera, live reviewed model proposal if it passes.
+1. **Primary real take:** final ChatGPT build, final public origins, physical phone linked through the private QR before recording, owned object, real camera, live reviewed model proposal if it passes. Preload the seven attendee sessions before capture so the buyer and host can show `8 live · 0 fixture` without displaying any bearer invite.
 2. **Permission-free take:** exact same native Site Tools/UCP sequence with **Show base · no repair**. Keep as judge-safe proof and edit insurance; label the fixture if shown.
 3. **Phone close-up:** request arrival → camera/review → published receipt, with no buyer screen visible.
 4. **Merchant close-up:** active Cart → native inspect → cancel → cancelled state.
 5. **Recovery take:** reset once from a stale or interrupted state; retain as backup, not the primary cut.
 6. **Silent screen master:** uninterrupted full journey with no narration, notifications, mouse wandering, or editor overlays.
 7. **Narration master:** clean audio recorded separately after the visual timing is locked.
+8. **Authenticated-crowd insert:** a one- or two-second buyer/host receipt showing `8 live · 0 fixture`; never record the expanded invite panel or imply the sessions are external people.
 
 ## Pass/fail review before upload
 
@@ -118,7 +119,7 @@ Capture these independently so one permission or network failure cannot destroy 
 - By `2:15`, the separate merchant owns an exact Cart and the numbers reconcile visibly.
 - Cancellation and capability removal are visible, not narrated off-screen.
 - “Native Site Tools,” human page change, and second-origin WebMCP are visible enough to score the first tie-breaker.
-- No claim exceeds the exact take: fixture crowd is labeled; hash is a fingerprint, not authenticity; host attestation owns history; no checkout/payment exists.
+- No claim exceeds the exact take: fixture/live composition is visible; authenticated test sessions are not called external buyers; the hash is a fingerprint, not authenticity; host attestation owns history; no checkout/payment exists.
 - No live QR, secrets, host fragments, continuation paths, personal notifications, unlicensed media, or unrelated trademarks appear.
 - Audio is intelligible at phone volume; captions are corrected manually; final duration is below `3:00`.
 - The public YouTube link works logged out and matches the frozen commit/live deployment recorded in `SUBMISSION.md`.

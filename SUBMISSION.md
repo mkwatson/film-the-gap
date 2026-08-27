@@ -42,11 +42,11 @@ WebMCP lets the page expose a small semantic capability frontier over the exact 
 
 The buyer can express the real decision once in natural language. ChatGPT tracks the requirements, keeps the maximum price private, asks for the one missing fact, and compares the public quote locally. The page shows a privacy receipt, evidence status, provenance, current tools, and attributed activity, so the human can see exactly what was shared and what changed.
 
-The host no longer triages repetitive comments or receives unnecessary buyer profiles. Several private decisions can join one normalized evidence request, and one bounded camera answer can update them all. Every consequential step remains visible, reversible, and available through equivalent human controls. A deterministic, permission-free fallback keeps the complete experience testable when a camera, model, or second device is unavailable.
+The host no longer triages repetitive comments or receives unnecessary buyer profiles. Several private decisions can join one normalized evidence request, and one bounded camera answer can update them all. The solo demo starts with labeled deterministic demand fixtures, then can replace all seven one-for-one with uniquely credentialed attendee browser sessions whose only mutation is joining that question. Every consequential step remains visible, reversible, and available through equivalent human controls. A deterministic, permission-free fallback keeps the complete experience testable when a camera, model, or second device is unavailable.
 
 ### What can people and agents do together that was difficult or impossible before?
 
-Private agents can coordinate a human observation without pooling the private reasons behind it. In the demo, seven clearly labeled test-agent signals need repair history. The attending buyer's agent joins the same evidence kind, turning eight private needs into one host request: show the base and disclose whether it has ever been repaired.
+Private agents can coordinate a human observation without pooling the private reasons behind it. In the demo, the attending buyer's agent opens one repair-history request. Seven labeled fixture signals make the path immediately runnable, while seven short-lived attendee credentials can replace those fixtures one-for-one. Each attendee page exposes only inspection plus a single join mutation; it cannot see buyer context or invoke host, hold, Cart, checkout, payment, or reset authority. The host still receives one request: show the base and disclose whether it has ever been repaired.
 
 The host chooses what to capture and publish. A selected frame receives timestamp, dimensions, frame identity, and a SHA-256 fingerprint; an optional vision model proposes only a pixel-grounded observation; the host accepts or corrects it and separately attests historical repair information. That one reviewed public fact changes what the buyer's agent is allowed to do. The result then composes across the open web with a separate UCP merchant that owns the Cart, exact `$423` total, expiry, idempotency, and continuation—not the evidence app.
 
@@ -126,6 +126,7 @@ Capture two backup cuts:
 - Business profile, direct Cart, and error outcome validate against the official released UCP schema graph.
 - A Lean `4.33.1` source-bound 16-case table gates hold registration and authoritative acceptance; the theorem environment passes `leanchecker --fresh` with no `sorryAx`. The proof is explicitly limited to the abstract capability model.
 - The earlier compact buyer flow passed in ChatGPT's in-app Browser.
+- Seven unique attendee credentials replaced seven deterministic fixtures in seven distinct browser tabs, producing a visible `8 live · 0 fixture` receipt. Duplicate credentials did not double-count after Durable Object hibernation; attendee role escalation and credential/ID leakage are covered by Workerd and contract tests.
 
 ### Must pass before the same claims enter the final submission without qualification
 
@@ -138,7 +139,7 @@ Capture two backup cuts:
 
 ### Do not claim
 
-- The seven fixture agents are real external buyers; they are clearly labeled deterministic test signals.
+- The seven authenticated test-agent sessions are real external buyers, independent model instances, or production demand. They prove unique least-authority browser credentials and aggregate convergence only.
 - A JPEG hash proves authenticity, or a vision model proves historical repair status.
 - Voice can currently drive the UI-owned Site Tools end to end.
 - The merchant can check out, charge, create an order, or accept payment.

@@ -84,6 +84,8 @@ const emptyObjectSchema = z.strictObject({});
 export interface SiteToolRuntime {
   readonly readState: () => LiveMarketState;
   readonly dispatch: (command: RoomCommand) => Promise<TransitionResult>;
+  readonly readJoined?: () => boolean;
+  readonly readAuthorized?: () => boolean;
 }
 
 interface ValidationIssue {
@@ -168,8 +170,11 @@ function snapshot(state: LiveMarketState): object {
         : { repairHistoryProof: 'Host attestation; a frame proves only visible surface.' }),
     },
     hostRequest: {
-      kind: demand.kind,
-      totalAgentCount: demand.totalAgentCount,
+      composition: {
+        live: demand.liveAgentCount,
+        fixture: demand.fixtureAgentCount,
+        total: demand.totalAgentCount,
+      },
       status: demand.status,
     },
     hold:
@@ -234,7 +239,11 @@ function transitionOutput(result: TransitionResult): object {
     state: {
       evidenceOutcome: evaluation.outcome,
       hostRequest: {
-        totalAgentCount: demand.totalAgentCount,
+        composition: {
+          live: demand.liveAgentCount,
+          fixture: demand.fixtureAgentCount,
+          total: demand.totalAgentCount,
+        },
         status: demand.status,
       },
       hold:

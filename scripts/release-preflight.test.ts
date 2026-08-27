@@ -17,6 +17,10 @@ import {
 const commit = 'a'.repeat(40);
 const roomToken = 'R'.repeat(43);
 const hostToken = 'H'.repeat(43);
+const attendeeCredentials = Array.from({ length: 7 }, (_, index) => ({
+  attendeeId: `attendee-${index + 1}`,
+  token: String(index + 1).repeat(43),
+}));
 
 const config: ReleaseConfig = {
   appOrigin: 'https://app.example',
@@ -149,6 +153,7 @@ function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
           roomId: 'ABC234',
           buyerToken: roomToken,
           hostToken,
+          attendeeCredentials,
           expiresAt: Date.now() + 60_000,
         },
         201,

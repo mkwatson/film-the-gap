@@ -17,6 +17,7 @@ export interface LiveRoomController {
   readonly transport: RoomTransport;
   readonly roomId: string | null;
   readonly hostInviteUrl: string | null;
+  readonly attendeeInviteUrls: readonly string[];
   readonly expiresAt: number | null;
   readonly presence: RoomPresence;
   readonly readState: () => LiveMarketState;

@@ -72,7 +72,7 @@ function snapshot(
     revision,
     state,
     message: revision === 0 ? 'Room ready.' : 'Room updated.',
-    presence: { buyer: 1, host: 0 },
+    presence: { buyer: 1, host: 0, attendee: 0 },
     recovered,
     serverTime: Date.now(),
   };
@@ -283,11 +283,16 @@ describe('RemoteRoomClient', () => {
   });
 
   it('parses the strict room-creation response', async () => {
+    const attendeeCredentials = Array.from({ length: 7 }, (_, index) => ({
+      attendeeId: `attendee-${index + 1}`,
+      token: String(index + 1).repeat(43),
+    }));
     const credentials = {
       protocolVersion: remoteRoomProtocolVersion,
       roomId: 'XYZ789',
       buyerToken: 'b'.repeat(43),
       hostToken: 'h'.repeat(43),
+      attendeeCredentials,
       expiresAt: Date.now() + 60_000,
     } as const;
     const fetcher = vi

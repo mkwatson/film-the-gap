@@ -12,7 +12,7 @@ export type EvidenceStatus = (typeof evidenceStatuses)[number];
 export const evidenceOutcomes = ['no-requirements', 'unresolved', 'ready', 'incompatible'] as const;
 export type EvidenceOutcome = (typeof evidenceOutcomes)[number];
 
-export const activityActors = ['system', 'buyer', 'agent', 'host'] as const;
+export const activityActors = ['system', 'buyer', 'agent', 'host', 'attendee'] as const;
 export type ActivityActor = (typeof activityActors)[number];
 
 export const repairHistoryValues = ['unknown', 'none', 'repaired'] as const;
@@ -209,6 +209,7 @@ export interface LiveMarketState {
   readonly evidenceRequirements: EvidenceRequirements | null;
   readonly evidenceRequests: readonly EvidenceRequest[];
   readonly anonymousEvidenceDemand: readonly AnonymousEvidenceDemand[];
+  readonly authenticatedAttendeeCount: number;
   readonly reservation: Reservation | null;
   readonly commerce: UcpCommerceState;
   readonly activity: readonly ActivityEvent[];
@@ -233,8 +234,10 @@ export interface EvidenceEvaluation {
 export interface EvidenceDemandSummary {
   readonly kind: EvidenceRequestKind;
   readonly fixture: 'deterministic-demo-room';
-  readonly anonymousAgentCount: number;
+  readonly fixtureAgentCount: number;
+  readonly authenticatedAttendeeCount: number;
   readonly currentSessionAgentCount: number;
+  readonly liveAgentCount: number;
   readonly totalAgentCount: number;
   readonly status: 'open' | 'queued' | 'resolved';
 }
@@ -384,6 +387,7 @@ export function createInitialState(options: InitialStateOptions = {}): LiveMarke
         status: 'open',
       },
     ],
+    authenticatedAttendeeCount: 0,
     reservation: null,
     commerce: createInitialCommerceState(options.ucpMerchantOrigin),
     activity: [
@@ -523,16 +527,21 @@ export function getEvidenceDemandSummary(
   const currentSessionQueued = state.evidenceRequests.some(
     (request) => request.kind === kind && request.status === 'queued',
   );
-  const anonymousAgentCount = anonymousDemand?.agentCount ?? 0;
+  const fixtureCapacity = anonymousDemand?.agentCount ?? 0;
+  const authenticatedAttendeeCount = state.authenticatedAttendeeCount;
   const currentSessionAgentCount = currentSessionRequested ? 1 : 0;
+  const fixtureAgentCount = Math.max(0, fixtureCapacity - authenticatedAttendeeCount);
+  const liveAgentCount = authenticatedAttendeeCount + currentSessionAgentCount;
   const resolved = anonymousDemand?.status === 'resolved';
 
   return {
     kind,
     fixture: 'deterministic-demo-room',
-    anonymousAgentCount,
+    fixtureAgentCount,
+    authenticatedAttendeeCount,
     currentSessionAgentCount,
-    totalAgentCount: anonymousAgentCount + currentSessionAgentCount,
+    liveAgentCount,
+    totalAgentCount: fixtureAgentCount + liveAgentCount,
     status: resolved ? 'resolved' : currentSessionQueued ? 'queued' : 'open',
   };
 }
@@ -671,6 +680,60 @@ export function requestRepairHistory(
     ok: true,
     state: nextState,
     message: 'One normalized question now represents eight private agent decisions.',
+  };
+}
+
+export function joinAuthenticatedEvidenceDemand(state: LiveMarketState): TransitionResult {
+  if (state.showStatus !== 'live') {
+    return refuse(
+      state,
+      'attendee',
+      'authenticated_demand_joined',
+      'An attendee can join evidence demand only while the lot is live.',
+    );
+  }
+
+  const queuedRepairRequest = state.evidenceRequests.some(
+    ({ kind, status }) => kind === 'repair_history' && status === 'queued',
+  );
+  if (!queuedRepairRequest || state.lot.evidence.repairHistory !== 'unknown') {
+    return refuse(
+      state,
+      'attendee',
+      'authenticated_demand_joined',
+      'There is no open normalized repair-history request to join.',
+    );
+  }
+
+  const fixtureCapacity =
+    state.anonymousEvidenceDemand.find(({ kind }) => kind === 'repair_history')?.agentCount ?? 0;
+  if (state.authenticatedAttendeeCount >= fixtureCapacity) {
+    return refuse(
+      state,
+      'attendee',
+      'authenticated_demand_joined',
+      'Every deterministic crowd slot already has an authenticated attendee.',
+    );
+  }
+
+  const nextState = addActivity(
+    {
+      ...state,
+      authenticatedAttendeeCount: state.authenticatedAttendeeCount + 1,
+    },
+    {
+      actor: 'attendee',
+      action: 'authenticated_demand_joined',
+      outcome: 'accepted',
+      summary: 'A separately authorized attendee joined the normalized evidence request.',
+    },
+  );
+  const demand = getEvidenceDemandSummary(nextState, 'repair_history');
+
+  return {
+    ok: true,
+    state: nextState,
+    message: `${demand.liveAgentCount} live agents now share one normalized evidence request.`,
   };
 }
 

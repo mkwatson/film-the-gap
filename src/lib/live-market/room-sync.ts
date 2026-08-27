@@ -317,6 +317,7 @@ export const liveMarketStateSchema = z.strictObject({
       }),
     )
     .max(50),
+  authenticatedAttendeeCount: z.number().int().nonnegative().max(7),
   reservation: z
     .strictObject({
       id: z.string().min(1).max(120),

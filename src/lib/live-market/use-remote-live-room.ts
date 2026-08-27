@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { LiveRoomController, RoomConnectionPhase } from './live-room-controller';
 import { createInitialState, type LiveMarketState, type TransitionResult } from './model';
-import type { RoomCommand } from './room-command';
+import type { RemoteRoomRole, RoomCommand } from './room-command';
 import {
   createRemoteRoom,
   emptyRoomPresence,
@@ -22,6 +22,7 @@ import type { RoomRole } from './room-sync';
 
 const buyerCredentialsStorageKey = 'webmcp.evidence-room.buyer.v1';
 const hostAccessStorageKey = 'webmcp.evidence-room.host.v1';
+const attendeeAccessStorageKey = 'webmcp.evidence-room.attendee.v1';
 const pendingRoomCreations = new Map<string, Promise<RoomCredentials>>();
 
 function safeSessionRead(key: string): unknown {
@@ -71,16 +72,33 @@ function storedHostAccess(): RemoteRoomAccess | null {
   return parsed.data;
 }
 
-export function parseHostInviteHash(hash: string): RemoteRoomAccess | null {
+function storedAttendeeAccess(): RemoteRoomAccess | null {
+  const parsed = remoteRoomAccessSchema.safeParse(safeSessionRead(attendeeAccessStorageKey));
+  if (!parsed.success || parsed.data.role !== 'attendee' || !unexpired(parsed.data.expiresAt)) {
+    safeSessionRemove(attendeeAccessStorageKey);
+    return null;
+  }
+  return parsed.data;
+}
+
+function parseInviteHash(hash: string, role: 'host' | 'attendee'): RemoteRoomAccess | null {
   const parameters = new URLSearchParams(hash.replace(/^#/, ''));
   const expiresAt = Number.parseInt(parameters.get('expires') ?? '', 10);
   const parsed = remoteRoomAccessSchema.safeParse({
     roomId: parameters.get('room'),
-    role: 'host',
+    role,
     token: parameters.get('token'),
     expiresAt,
   });
   return parsed.success && unexpired(parsed.data.expiresAt) ? parsed.data : null;
+}
+
+export function parseHostInviteHash(hash: string): RemoteRoomAccess | null {
+  return parseInviteHash(hash, 'host');
+}
+
+export function parseAttendeeInviteHash(hash: string): RemoteRoomAccess | null {
+  return parseInviteHash(hash, 'attendee');
 }
 
 export function createHostInviteUrl(pageOrigin: string, credentials: RoomCredentials): string {
@@ -92,6 +110,21 @@ export function createHostInviteUrl(pageOrigin: string, credentials: RoomCredent
   });
   url.hash = parameters.toString();
   return url.toString();
+}
+
+export function createAttendeeInviteUrls(
+  pageOrigin: string,
+  credentials: RoomCredentials,
+): readonly string[] {
+  return credentials.attendeeCredentials.map(({ token }) => {
+    const url = new URL('/attend', pageOrigin);
+    url.hash = new URLSearchParams({
+      room: credentials.roomId,
+      token,
+      expires: String(credentials.expiresAt),
+    }).toString();
+    return url.toString();
+  });
 }
 
 function getOrCreateBuyerRoom(serviceUrl: string): Promise<RoomCredentials> {
@@ -123,11 +156,14 @@ function mapRemotePhase(phase: RemoteRoomConnectionPhase): RoomConnectionPhase {
   return 'solo';
 }
 
-function peerForPresence(role: RoomRole, presence: RoomPresence): RoomRole | null {
+function peerForPresence(role: RemoteRoomRole, presence: RoomPresence): RoomRole | null {
   if (role === 'buyer') {
     return presence.host > 0 ? 'host' : null;
   }
-  return presence.buyer > 0 ? 'buyer' : null;
+  if (role === 'host') {
+    return presence.buyer > 0 ? 'buyer' : null;
+  }
+  return presence.host > 0 ? 'host' : presence.buyer > 0 ? 'buyer' : null;
 }
 
 export function configuredEvidenceRoomServiceUrl(): string | null {
@@ -135,7 +171,10 @@ export function configuredEvidenceRoomServiceUrl(): string | null {
   return value === undefined || value.length === 0 ? null : value;
 }
 
-export function useRemoteLiveRoom(role: RoomRole, serviceUrl: string | null): LiveRoomController {
+export function useRemoteLiveRoom(
+  role: RemoteRoomRole,
+  serviceUrl: string | null,
+): LiveRoomController {
   const [state, setState] = useState<LiveMarketState>(createInitialState);
   const [lastMessage, setLastMessage] = useState(
     serviceUrl === null
@@ -147,6 +186,7 @@ export function useRemoteLiveRoom(role: RoomRole, serviceUrl: string | null): Li
   const [presence, setPresence] = useState<RoomPresence>(emptyRoomPresence);
   const [access, setAccess] = useState<RemoteRoomAccess | null>(null);
   const [hostInviteUrl, setHostInviteUrl] = useState<string | null>(null);
+  const [attendeeInviteUrls, setAttendeeInviteUrls] = useState<readonly string[]>([]);
   const stateRef = useRef(state);
   const clientRef = useRef<RemoteRoomClient | null>(null);
 
@@ -186,6 +226,7 @@ export function useRemoteLiveRoom(role: RoomRole, serviceUrl: string | null): Li
             expiresAt: credentials.expiresAt,
           });
           setHostInviteUrl(createHostInviteUrl(window.location.origin, credentials));
+          setAttendeeInviteUrls(createAttendeeInviteUrls(window.location.origin, credentials));
         })
         .catch((error: unknown) => {
           if (!active) {
@@ -199,29 +240,37 @@ export function useRemoteLiveRoom(role: RoomRole, serviceUrl: string | null): Li
           );
         });
     } else {
-      const invite = parseHostInviteHash(window.location.hash) ?? storedHostAccess();
+      const hadInviteFragment = window.location.hash.length > 0;
+      const invite =
+        role === 'host'
+          ? (parseHostInviteHash(window.location.hash) ?? storedHostAccess())
+          : (parseAttendeeInviteHash(window.location.hash) ?? storedAttendeeAccess());
+      if (hadInviteFragment) {
+        window.history.replaceState(
+          window.history.state,
+          '',
+          `${window.location.pathname}${window.location.search}`,
+        );
+      }
       if (invite === null) {
         queueMicrotask(() => {
           if (!active) {
             return;
           }
           setConnectionPhase('solo');
-          setLastMessage('Open the private host invite from the buyer view to join its room.');
+          setLastMessage(
+            role === 'host'
+              ? 'Open the private host invite from the buyer view to join its room.'
+              : 'Open one private attendee invite from the buyer view to join its evidence request.',
+          );
         });
       } else {
-        safeSessionWrite(hostAccessStorageKey, invite);
+        safeSessionWrite(role === 'host' ? hostAccessStorageKey : attendeeAccessStorageKey, invite);
         queueMicrotask(() => {
           if (active) {
             setAccess(invite);
           }
         });
-        if (window.location.hash.length > 0) {
-          window.history.replaceState(
-            window.history.state,
-            '',
-            `${window.location.pathname}${window.location.search}`,
-          );
-        }
       }
     }
 
@@ -286,6 +335,7 @@ export function useRemoteLiveRoom(role: RoomRole, serviceUrl: string | null): Li
     transport: 'remote',
     roomId: access?.roomId ?? null,
     hostInviteUrl,
+    attendeeInviteUrls,
     expiresAt: access?.expiresAt ?? null,
     presence,
     readState,

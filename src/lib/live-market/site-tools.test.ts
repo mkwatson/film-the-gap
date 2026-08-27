@@ -132,7 +132,7 @@ describe('WebMCP Site Tools', () => {
       ok: true,
       state: {
         hostRequest: {
-          totalAgentCount: 8,
+          composition: { live: 1, fixture: 7, total: 8 },
           status: 'queued',
         },
       },
@@ -296,8 +296,9 @@ describe('WebMCP Site Tools', () => {
     );
     outputs.push(await getTool(runtime, 'release_current_lot').execute({}, executeOptions));
 
-    for (const output of outputs) {
-      expect(JSON.stringify(output).length).toBeLessThanOrEqual(1_500);
+    for (const [index, output] of outputs.entries()) {
+      const length = JSON.stringify(output).length;
+      expect(length, `tool output ${index} was ${length} characters`).toBeLessThanOrEqual(1_500);
     }
   });
 

@@ -171,10 +171,12 @@ function useBroadcastLiveRoom(role: RoomRole, enabled: boolean): LiveRoomControl
     transport: 'local',
     roomId: null,
     hostInviteUrl: null,
+    attendeeInviteUrls: [],
     expiresAt: null,
     presence: {
       buyer: role === 'buyer' || peerRole === 'buyer' ? 1 : 0,
       host: role === 'host' || peerRole === 'host' ? 1 : 0,
+      attendee: 0,
     },
     readState,
     resetDemo,

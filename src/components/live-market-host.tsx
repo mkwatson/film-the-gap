@@ -91,7 +91,9 @@ export function LiveMarketHost(): React.JSX.Element {
                 {state.lot.lengthCm} cm · exact public quote {usd.format(getAllInPrice(state.lot))}
               </p>
             </div>
-            <span className="host-live-chip">{demand.totalAgentCount} test agents present</span>
+            <span className="host-live-chip">
+              {demand.liveAgentCount} live · {demand.fixtureAgentCount} fixture
+            </span>
           </div>
 
           <div
@@ -274,7 +276,11 @@ export function LiveMarketHost(): React.JSX.Element {
                 <strong id="host-activity-title">Visible activity</strong>
               </span>
             </div>
-            <ol className="activity-list host-activity-list">
+            <ol
+              className="activity-list host-activity-list"
+              aria-label="Scrollable shared room activity"
+              tabIndex={0}
+            >
               {recentActivity.map((event) => (
                 <li key={event.id}>
                   <span className={`actor actor-${event.actor}`}>{actorLabel(event.actor)}</span>

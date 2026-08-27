@@ -4,6 +4,7 @@ import {
   answerRepairHistory,
   createInitialState,
   evidenceRequirementsSchema,
+  joinAuthenticatedEvidenceDemand,
   maximumPublishedEvidenceImageCharacters,
   merchantCartPreparationBlocker,
   recordMerchantCartFailure,
@@ -21,7 +22,7 @@ import {
 } from './model';
 import { evidenceFrameProvenanceSchema, visualEvidenceReviewSchema } from './room-sync';
 
-export const remoteRoomRoles = ['buyer', 'host'] as const;
+export const remoteRoomRoles = ['buyer', 'host', 'attendee'] as const;
 export type RemoteRoomRole = (typeof remoteRoomRoles)[number];
 
 const buyerActors = ['agent', 'buyer'] as const;
@@ -48,6 +49,10 @@ const answerRepairHistoryCommandSchema = z.strictObject({
     .regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/)
     .nullable()
     .optional(),
+});
+
+const joinEvidenceDemandCommandSchema = z.strictObject({
+  kind: z.literal('join-evidence-demand'),
 });
 
 const reserveCurrentLotCommandSchema = z.strictObject({
@@ -78,6 +83,7 @@ const resetRoomCommandSchema = z.strictObject({
 export const roomCommandSchema = z.discriminatedUnion('kind', [
   setEvidenceRequirementsCommandSchema,
   requestRepairHistoryCommandSchema,
+  joinEvidenceDemandCommandSchema,
   answerRepairHistoryCommandSchema,
   reserveCurrentLotCommandSchema,
   releaseCurrentLotCommandSchema,
@@ -103,6 +109,10 @@ export interface AnswerRepairHistoryCommand {
   readonly evidenceFrame?: EvidenceFrameProvenance | undefined;
   readonly visualReview?: VisualEvidenceReview | null | undefined;
   readonly publicEvidenceImage?: string | null | undefined;
+}
+
+export interface JoinEvidenceDemandCommand {
+  readonly kind: 'join-evidence-demand';
 }
 
 export interface ReserveCurrentLotCommand {
@@ -133,6 +143,7 @@ export interface ResetRoomCommand {
 export type RoomCommand =
   | SetEvidenceRequirementsCommand
   | RequestRepairHistoryCommand
+  | JoinEvidenceDemandCommand
   | AnswerRepairHistoryCommand
   | ReserveCurrentLotCommand
   | ReleaseCurrentLotCommand
@@ -147,12 +158,15 @@ export function parseRoomCommand(value: unknown): RoomCommand | null {
 
 export function roomRoleCanDispatch(role: RemoteRoomRole, command: RoomCommand): boolean {
   if (command.kind === 'reset-room') {
-    return true;
+    return role !== 'attendee';
+  }
+  if (role === 'attendee') {
+    return command.kind === 'join-evidence-demand';
   }
   if (role === 'host') {
     return command.kind === 'answer-repair-history';
   }
-  return command.kind !== 'answer-repair-history';
+  return !['answer-repair-history', 'join-evidence-demand'].includes(command.kind);
 }
 
 export function applyRoomCommand(state: LiveMarketState, command: RoomCommand): TransitionResult {
@@ -161,6 +175,8 @@ export function applyRoomCommand(state: LiveMarketState, command: RoomCommand): 
       return setEvidenceRequirements(state, command.requirements, command.actor);
     case 'request-repair-history':
       return requestRepairHistory(state, command.actor);
+    case 'join-evidence-demand':
+      return joinAuthenticatedEvidenceDemand(state);
     case 'answer-repair-history':
       return answerRepairHistory(
         state,

@@ -117,6 +117,21 @@ Current first-party release documentation was re-read before implementing the fi
 
 The new `pnpm release:verify` command requires three distinct credential-free HTTPS origins and one exact commit. It verifies the app and Worker receipts, UCP profiles/endpoint, all three judge pages, buyer/host/merchant browser-security headers, exact configured room HTTPS/WSS access, route-specific camera authority, exact-origin room CORS, and creation of one disposable remote room. Returned room credentials are parsed and discarded; the report contains only public version receipts and step durations. The protected E12 artifact is build evidence, not a substitute for this gate. The complete operator procedure and rollback caveat are in `DEPLOYMENT.md`.
 
+### E15 authenticated crowd decision — 2026-08-27 PT
+
+The deterministic seven-signal crowd remains the canonical fast path, but it is no longer the strongest available proof. Protocol v3 pre-generates seven unique short-lived attendee credentials. An attendee credential can inspect the shared evidence demand and dispatch exactly one command kind, `join-evidence-demand`; it cannot answer, reset, hold, create/cancel a Cart, check out, or pay. The Durable Object stores only token digests and private slot IDs, prevents the same credential from double-counting, and broadcasts only an aggregate integer.
+
+An isolated Chrome 151 session then completed two nine-tab runs against the live local app plus the real Cloudflare Workerd room and UCP merchant services:
+
+1. One buyer opened the product-only repair-history request at `1 live · 7 fixture`; one separately credentialed host received the same normalized question.
+2. Seven distinct `/attend` tabs authenticated through seven fragment-only bearer invites. Every fragment was scrubbed before the room connected. The first run used equivalent human controls; the second reloaded every tab and invoked `join_shared_evidence_demand` seven times through native `document.modelContext.executeTool`.
+3. Buyer, host, and attendee pages converged visibly on `8 live · 0 fixture`. A native buyer `inspect_live_show` returned `{ live: 8, fixture: 0, total: 8 }` and contained no attendee ID, token text, or private `$450` value.
+4. After joining, each attendee page dynamically removed the join mutation and retained only `inspect_shared_evidence_demand`. Workerd tests deny buyer use of the join command; deny attendee answer, reset, and reserve commands; preserve joined slots through Durable Object hibernation; and prove that reconnecting the same credential does not increment the aggregate.
+5. One host answer reached all eight sessions and made the buyer's hold tool register. The first run continued through exact `$423` hold, authoritative UCP Cart, buyer-only continuation, cancellation/credential discard, and release without changing the `8 live · 0 fixture` composition.
+6. Full-page desktop buyer/host/attendee and 390×844 attendee captures were inspected after all fragments were scrubbed. Axe 4.12 reported zero WCAG A/AA violations on all three surfaces after the long activity lists were made keyboard-focusable.
+
+This proves distinct authenticated browser sessions and native page-owned WebMCP convergence; it does **not** prove seven external buyers, seven independent model-driven agents, or production demand. Final public-origin ChatGPT model selection remains a separate gate.
+
 ## Historical Rung 1 native run
 
 On 2026-08-26 PT, revision worktree before the first feature commit passed a complete native WebMCP loop at `http://localhost:3000` in agent-browser's isolated Headless Chrome 150.0.0.0 runtime:
@@ -186,7 +201,7 @@ On 2026-08-26 PT, E9.1 rechecked the live OpenAI Site Tools documentation, Chrom
 
 1. The duplicate `inspect_current_lot` tool was removed. `inspect_live_show` is now the single read contract; the initial page exposes exactly it plus `set_evidence_requirements`.
 2. Descriptions now state the positive operation and usage point. Dynamic registration continues to expose only state-valid mutations.
-3. Common results are capped by a deterministic test at 3,500 serialized characters. They retain the exact quote, evaluated evidence, compact frame/review provenance, aggregate request, hold, next action, available tools, and privacy receipt while removing activity history, duplicate state, raw JPEG data, and the model's superseded proposal.
+3. Common results are capped by a deterministic test at 1,500 serialized characters. They retain the exact quote, evaluated evidence, compact frame/review provenance, aggregate request, hold, next action, available tools, and privacy receipt while removing activity history, duplicate state, raw JPEG data, and the model's superseded proposal.
 4. Native isolated Chrome discovered `2 → 3 → 2 → 3 → 2 → 3` tools across requirements, request, host answer, hold, and release. Native `executeTool` completed the whole sequence, including stale `$400` refusal followed by an exact `$423` hold.
 5. The visible buyer and host state changed after every call, no page errors were recorded, all 42 tests passed, and the production build succeeded.
 
@@ -233,7 +248,7 @@ The product thesis addresses two separately observed failure modes. These source
 | [Hwang and Youn, _From brick-and-mortar to livestream shopping_ (2023)](https://doi.org/10.1186/s40691-022-00327-3)   | In 292 usable surveys of experienced livestream fashion shoppers, seller product demonstration significantly reduced product uncertainty; uncertainty significantly reduced purchase intent.                                | Ask for the smallest missing physical demonstration instead of more generic chat. The current fixture measures attention compression as eight private decisions becoming one normalized host request. |
 | [Ali, Lewis, and Vasserman, _Voluntary Disclosure and Personalized Pricing_ (2019)](https://arxiv.org/abs/1912.04774) | Their economic model finds that consumer control depends on the disclosure technology; richer partial-disclosure choices can improve consumer welfare relative to all-or-nothing disclosure in modeled markets.             | Treat disclosure as a narrow, inspectable capability boundary. Do not claim that the four-field prototype proves welfare gains, zero inference, or a universally optimal disclosure policy.           |
 
-The demo's defensible measured receipts are narrower: four seller-visible evidence fields and zero numeric ceiling fields; eight labeled test-agent decisions represented by one host question; zero hold capability until the public evidence outcome is ready; and one reversible merchant-authored UCP Cart with zero checkout or payment capability. A final physical-phone run and unfamiliar-user test remain required before submission.
+The demo's defensible measured receipts are narrower: four seller-visible evidence fields and zero numeric ceiling fields; eight labeled test-agent demand signals represented by one host question; seven deterministic signals can be replaced by seven uniquely credentialed attendee browser sessions; zero hold capability until the public evidence outcome is ready; and one reversible merchant-authored UCP Cart with zero checkout or payment capability. A final physical-phone run and unfamiliar-user test remain required before submission.
 
 ## Official documentation
 
@@ -381,5 +396,6 @@ Run this matrix at the walking skeleton, every material tool-surface change, rel
 | Camera provenance and host review survive dynamic hold/release lifecycle                | Pass: native inspect → exact hold → release                  |                                          Pending |
 | AI proposal is non-authoritative and has an honest no-auth fallback                     | Pass: API/component/browser contract; live auth still open   |                                          Pending |
 | Ordinary-browser fallback remains fully usable                                          | Pass: desktop and 390 px                                     |                                              N/A |
+| Seven fixture signals can become seven distinct least-authority attendee sessions       | Pass: nine-tab Chrome 151 run, `8 live · 0 fixture`          |    Pending: final model-driven public-origin run |
 
 Record browser/app versions, model, URL/revision, prompt, expected result, observed result, screenshots/trace, and any failure. A passing development shim is supplementary evidence only.

@@ -48,7 +48,7 @@ export function PhoneHostInvite({ inviteUrl }: PhoneHostInviteProps): React.JSX.
         className="quiet-button quiet-link invite-button"
         href={inviteUrl}
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
       >
         Open phone host ↗
       </a>

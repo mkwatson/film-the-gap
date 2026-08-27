@@ -99,7 +99,7 @@ describe('LiveMarket', () => {
     render(<LiveMarket />);
 
     expect(await screen.findByText('Browser fallback')).toBeTruthy();
-    expect(screen.getByText('7 anonymous demo signals')).toBeTruthy();
+    expect(screen.getByText('7 deterministic demo signals')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Share demo evidence needs' }));
     expect(screen.getByText('One fact still missing')).toBeTruthy();
     expect(screen.queryByText('$450')).toBeNull();

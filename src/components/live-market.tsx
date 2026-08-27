@@ -21,6 +21,7 @@ import { useLiveRoom, type RoomConnectionPhase } from '@/lib/live-market/use-liv
 import { useSiteTools } from '@/lib/live-market/use-site-tools';
 
 import { PhoneHostInvite } from './phone-host-invite';
+import { CrowdAttendeeInvites } from './crowd-attendee-invites';
 
 const usd = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -72,6 +73,7 @@ export function LiveMarket(): React.JSX.Element {
     transport,
     roomId,
     hostInviteUrl,
+    attendeeInviteUrls,
     presence,
     readState,
     resetDemo,
@@ -290,6 +292,12 @@ export function LiveMarket(): React.JSX.Element {
         </div>
       </section>
 
+      <CrowdAttendeeInvites
+        key={`${roomId ?? 'local'}:${inviteResetVersion}`}
+        inviteUrls={attendeeInviteUrls}
+        authenticatedAttendeeCount={demand.authenticatedAttendeeCount}
+      />
+
       <section className="experience-grid" aria-label="Live market collaboration">
         <article className="stream-panel panel">
           <div className="stream-heading">
@@ -323,7 +331,7 @@ export function LiveMarket(): React.JSX.Element {
               “Edges are clean. Ask me for any angle you need.”
             </div>
             <div className="viewer-count">
-              ● live evidence room · {demand.totalAgentCount} test agents present
+              ● evidence room · {demand.liveAgentCount} live · {demand.fixtureAgentCount} fixture
             </div>
           </div>
 
@@ -356,7 +364,7 @@ export function LiveMarket(): React.JSX.Element {
                     ? `${demand.totalAgentCount} decisions updated`
                     : queuedRepairRequest
                       ? `${demand.totalAgentCount} private agents waiting`
-                      : `${demand.anonymousAgentCount} anonymous demo signals`}
+                      : `${demand.fixtureAgentCount} deterministic demo signals`}
                 </small>
               </span>
             </div>
@@ -414,8 +422,9 @@ export function LiveMarket(): React.JSX.Element {
               </div>
             ) : (
               <p className="empty-copy">
-                Seven anonymous demo-room agents need the same normalized fact. Their profiles,
-                ceilings, and individual choices are not collected.
+                Seven deterministic demo-room signals need the same normalized fact. Each can be
+                replaced by a separately authenticated attendee session; profiles, ceilings, and
+                individual choices are not collected.
               </p>
             )}
           </div>
@@ -842,7 +851,7 @@ export function LiveMarket(): React.JSX.Element {
                 <strong id="activity-title">Attributed activity</strong>
               </span>
             </div>
-            <ol className="activity-list">
+            <ol className="activity-list" aria-label="Scrollable shared activity" tabIndex={0}>
               {[...state.activity].reverse().map((event) => (
                 <li key={event.id}>
                   <span className={`actor actor-${event.actor}`}>{actorLabel(event.actor)}</span>

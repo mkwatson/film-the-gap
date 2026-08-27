@@ -1,17 +1,44 @@
 import { z } from 'zod';
 
-import { roomCommandSchema, type RoomCommand } from './room-command';
+import {
+  remoteRoomRoles,
+  roomCommandSchema,
+  type RemoteRoomRole,
+  type RoomCommand,
+} from './room-command';
 import type { LiveMarketState, PrivateActionResult } from './model';
 import { liveMarketStateSchema } from './room-sync';
 
-export const remoteRoomProtocolVersion = '2' as const;
+export const remoteRoomProtocolVersion = '3' as const;
 export const remoteRoomIdPattern = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/;
+export const maximumRoomAttendeeCount = 7;
+
+const roomTokenSchema = z.string().regex(/^[A-Za-z0-9_-]{32,128}$/);
+
+export const roomAttendeeCredentialSchema = z.strictObject({
+  attendeeId: z.string().regex(/^attendee-[1-7]$/),
+  token: roomTokenSchema,
+});
+
+const roomAttendeeCredentialsSchema = z
+  .array(roomAttendeeCredentialSchema)
+  .length(maximumRoomAttendeeCount)
+  .refine(
+    (credentials) =>
+      new Set(credentials.map(({ attendeeId }) => attendeeId)).size === credentials.length,
+    'Attendee IDs must be unique.',
+  )
+  .refine(
+    (credentials) => new Set(credentials.map(({ token }) => token)).size === credentials.length,
+    'Attendee credentials must be unique.',
+  );
 
 export const roomCredentialsSchema = z.strictObject({
   protocolVersion: z.literal(remoteRoomProtocolVersion),
   roomId: z.string().regex(remoteRoomIdPattern),
-  buyerToken: z.string().regex(/^[A-Za-z0-9_-]{32,128}$/),
-  hostToken: z.string().regex(/^[A-Za-z0-9_-]{32,128}$/),
+  buyerToken: roomTokenSchema,
+  hostToken: roomTokenSchema,
+  attendeeCredentials: roomAttendeeCredentialsSchema,
   expiresAt: z.number().int().positive(),
 });
 
@@ -19,14 +46,14 @@ export type RoomCredentials = z.infer<typeof roomCredentialsSchema>;
 
 export const remoteRoomAccessSchema = z.strictObject({
   roomId: z.string().regex(remoteRoomIdPattern),
-  role: z.enum(['buyer', 'host']),
-  token: z.string().regex(/^[A-Za-z0-9_-]{32,128}$/),
+  role: z.enum(remoteRoomRoles),
+  token: roomTokenSchema,
   expiresAt: z.number().int().positive(),
 });
 
 export interface RemoteRoomAccess {
   readonly roomId: string;
-  readonly role: 'buyer' | 'host';
+  readonly role: RemoteRoomRole;
   readonly token: string;
   readonly expiresAt: number;
 }
@@ -34,17 +61,19 @@ export interface RemoteRoomAccess {
 export const roomPresenceSchema = z.strictObject({
   buyer: z.number().int().nonnegative().max(100),
   host: z.number().int().nonnegative().max(100),
+  attendee: z.number().int().nonnegative().max(maximumRoomAttendeeCount),
 });
 
 export interface RoomPresence {
   readonly buyer: number;
   readonly host: number;
+  readonly attendee: number;
 }
 
 const authenticateMessageSchema = z.strictObject({
   type: z.literal('authenticate'),
-  role: z.enum(['buyer', 'host']),
-  token: z.string().regex(/^[A-Za-z0-9_-]{32,128}$/),
+  role: z.enum(remoteRoomRoles),
+  token: roomTokenSchema,
   clientId: z.string().min(1).max(160),
   lastSeenRevision: z.number().int().nonnegative(),
 });
@@ -63,7 +92,7 @@ export const remoteRoomClientMessageSchema = z.discriminatedUnion('type', [
 
 export interface AuthenticateRoomMessage {
   readonly type: 'authenticate';
-  readonly role: 'buyer' | 'host';
+  readonly role: RemoteRoomRole;
   readonly token: string;
   readonly clientId: string;
   readonly lastSeenRevision: number;

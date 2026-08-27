@@ -9,6 +9,7 @@ import {
   getAllInPrice,
   getAvailableToolNames,
   getEvidenceDemandSummary,
+  joinAuthenticatedEvidenceDemand,
   recordCancelledMerchantCart,
   recordPreparedMerchantCart,
   releaseCurrentLot,
@@ -219,8 +220,10 @@ describe('live market state machine', () => {
   it('multicasts one answer to an aggregate without storing individual profiles', () => {
     const initial = createInitialState();
     expect(getEvidenceDemandSummary(initial, 'repair_history')).toMatchObject({
-      anonymousAgentCount: 7,
+      fixtureAgentCount: 7,
+      authenticatedAttendeeCount: 0,
       currentSessionAgentCount: 0,
+      liveAgentCount: 0,
       totalAgentCount: 7,
       status: 'open',
     });
@@ -228,8 +231,10 @@ describe('live market state machine', () => {
     const scoped = setEvidenceRequirements(initial, defaultEvidenceRequirements, 'agent').state;
     const requested = requestRepairHistory(scoped, 'agent').state;
     expect(getEvidenceDemandSummary(requested, 'repair_history')).toMatchObject({
-      anonymousAgentCount: 7,
+      fixtureAgentCount: 7,
+      authenticatedAttendeeCount: 0,
       currentSessionAgentCount: 1,
+      liveAgentCount: 1,
       totalAgentCount: 8,
       status: 'queued',
     });
@@ -245,6 +250,50 @@ describe('live market state machine', () => {
       'agentCount',
       'status',
     ]);
+  });
+
+  it('progressively replaces every crowd fixture with authenticated attendee sessions', () => {
+    const refused = joinAuthenticatedEvidenceDemand(createInitialState());
+    expect(refused).toMatchObject({
+      ok: false,
+      message: 'There is no open normalized repair-history request to join.',
+    });
+
+    const scoped = setEvidenceRequirements(
+      createInitialState(),
+      defaultEvidenceRequirements,
+      'agent',
+    ).state;
+    let state = requestRepairHistory(scoped, 'agent').state;
+
+    for (let attendee = 1; attendee <= 7; attendee += 1) {
+      const joined = joinAuthenticatedEvidenceDemand(state);
+      expect(joined).toMatchObject({
+        ok: true,
+        message: `${attendee + 1} live agents now share one normalized evidence request.`,
+      });
+      state = joined.state;
+    }
+
+    expect(getEvidenceDemandSummary(state, 'repair_history')).toMatchObject({
+      fixtureAgentCount: 0,
+      authenticatedAttendeeCount: 7,
+      currentSessionAgentCount: 1,
+      liveAgentCount: 8,
+      totalAgentCount: 8,
+      status: 'queued',
+    });
+    expect(state).not.toHaveProperty('attendeeCredentials');
+    expect(JSON.stringify(state)).not.toMatch(/attendee-[1-7]/);
+
+    const overflow = joinAuthenticatedEvidenceDemand(state);
+    expect(overflow).toMatchObject({
+      ok: false,
+      message: 'Every deterministic crowd slot already has an authenticated attendee.',
+    });
+
+    const answered = answerRepairHistory(state, 'none');
+    expect(answered.message).toBe('One camera answer resolved 8 private agent decisions.');
   });
 
   it('binds a camera attestation to structured public frame provenance', () => {

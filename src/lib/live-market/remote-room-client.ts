@@ -388,5 +388,5 @@ export class RemoteRoomClient {
 }
 
 export function emptyRoomPresence(): RoomPresence {
-  return { buyer: 0, host: 0 };
+  return { buyer: 0, host: 0, attendee: 0 };
 }

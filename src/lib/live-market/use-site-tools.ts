@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 
 import { createSiteTools, type SiteToolRuntime } from './site-tools';
 
+export type SiteToolFactory = (runtime: SiteToolRuntime) => readonly WebMCP.ModelContextTool[];
+
 export const siteToolPhases = ['checking', 'unsupported', 'registering', 'ready', 'error'] as const;
 export type SiteToolPhase = (typeof siteToolPhases)[number];
 
@@ -35,7 +37,11 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-export function useSiteTools(runtime: SiteToolRuntime, availabilityKey: string): SiteToolStatus {
+export function useSiteTools(
+  runtime: SiteToolRuntime,
+  availabilityKey: string,
+  createTools: SiteToolFactory = createSiteTools,
+): SiteToolStatus {
   const [status, setStatus] = useState<SiteToolStatus>(checkingStatus);
   const registrationsRef = useRef<Map<string, SiteToolRegistration>>(new Map());
 
@@ -69,7 +75,7 @@ export function useSiteTools(runtime: SiteToolRuntime, availabilityKey: string):
       };
     }
 
-    const tools = createSiteTools(runtime);
+    const tools = createTools(runtime);
     const desiredTools = new Map(tools.map((tool) => [tool.name, tool]));
     const registrations = registrationsRef.current;
 
@@ -129,7 +135,7 @@ export function useSiteTools(runtime: SiteToolRuntime, availabilityKey: string):
     return () => {
       active = false;
     };
-  }, [availabilityKey, runtime]);
+  }, [availabilityKey, createTools, runtime]);
 
   return status;
 }

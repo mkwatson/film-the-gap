@@ -76,8 +76,9 @@ async function createRoom(): Promise<RoomCredentials> {
 
 async function connect(
   credentials: RoomCredentials,
-  role: 'buyer' | 'host',
+  role: 'buyer' | 'host' | 'attendee',
   lastSeenRevision = 0,
+  attendeeIndex = 0,
 ): Promise<TestSocket> {
   const response = await SELF.fetch(`https://rooms.example/rooms/${credentials.roomId}/ws`, {
     headers: {
@@ -91,15 +92,24 @@ async function connect(
   }
   const next = createMessageReader(socket);
   socket.accept();
+  const attendeeToken = credentials.attendeeCredentials[attendeeIndex]?.token;
+  if (role === 'attendee' && attendeeToken === undefined) {
+    throw new Error(`Expected attendee credential ${attendeeIndex + 1}.`);
+  }
   send(socket, {
     type: 'authenticate',
     role,
-    token: role === 'buyer' ? credentials.buyerToken : credentials.hostToken,
+    token:
+      role === 'buyer'
+        ? credentials.buyerToken
+        : role === 'host'
+          ? credentials.hostToken
+          : (attendeeToken ?? ''),
     clientId: `${role}-${crypto.randomUUID()}`,
     lastSeenRevision,
   });
   const snapshot = await next('room-snapshot');
-  expect(snapshot).toMatchObject({ type: 'room-snapshot', revision: 0 });
+  expect(snapshot).toMatchObject({ type: 'room-snapshot', revision: lastSeenRevision });
   return { socket, next };
 }
 
@@ -131,7 +141,7 @@ describe('evidence room worker', () => {
     expect(response.status).toBe(200);
     expect(body).toMatchObject({
       ok: true,
-      protocolVersion: '2',
+      protocolVersion: '3',
       ucpCommerceConfigured: true,
       workerVersion: {
         id: expect.any(String),
@@ -152,8 +162,17 @@ describe('evidence room worker', () => {
     expect(response.status).toBe(201);
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3000');
     expect(credentials.buyerToken).not.toBe(credentials.hostToken);
+    expect(new Set(credentials.attendeeCredentials.map(({ token }) => token)).size).toBe(7);
+    expect(
+      credentials.attendeeCredentials.every(
+        ({ token }) => token !== credentials.buyerToken && token !== credentials.hostToken,
+      ),
+    ).toBe(true);
     expect(response.url).not.toContain(credentials.buyerToken);
     expect(response.url).not.toContain(credentials.hostToken);
+    for (const { token } of credentials.attendeeCredentials) {
+      expect(response.url).not.toContain(token);
+    }
   });
 
   it('rejects untrusted browser origins before creating a Durable Object', async () => {
@@ -219,6 +238,144 @@ describe('evidence room worker', () => {
     });
     expect(JSON.stringify(resolved)).not.toContain('$450');
     expect(JSON.stringify(resolved)).not.toContain('maxAllInPrice');
+  });
+
+  it('replaces crowd fixtures with seven distinct least-authority attendee sessions', async () => {
+    const credentials = await createRoom();
+    const buyer = await connect(credentials, 'buyer');
+
+    send(buyer.socket, {
+      type: 'command',
+      commandId: 'crowd-scope',
+      expectedRevision: 0,
+      command: {
+        kind: 'set-evidence-requirements',
+        actor: 'agent',
+        requirements: defaultEvidenceRequirements,
+      },
+    });
+    expect(await commandResult(buyer)).toMatchObject({ ok: true, revision: 1 });
+    await roomSnapshot(buyer);
+
+    send(buyer.socket, {
+      type: 'command',
+      commandId: 'crowd-request',
+      expectedRevision: 1,
+      command: { kind: 'request-repair-history', actor: 'agent' },
+    });
+    expect(await commandResult(buyer)).toMatchObject({ ok: true, revision: 2 });
+    await roomSnapshot(buyer);
+
+    send(buyer.socket, {
+      type: 'command',
+      commandId: 'buyer-cannot-join-crowd',
+      expectedRevision: 2,
+      command: { kind: 'join-evidence-demand' },
+    });
+    expect(await buyer.next('room-error')).toMatchObject({
+      code: 'unauthorized-command',
+      currentRevision: 2,
+    });
+
+    let revision = 2;
+    let finalAttendeeSnapshot: Extract<RemoteRoomServerMessage, { type: 'room-snapshot' }> | null =
+      null;
+    for (let attendeeIndex = 0; attendeeIndex < 7; attendeeIndex += 1) {
+      const attendee = await connect(credentials, 'attendee', revision, attendeeIndex);
+
+      if (attendeeIndex === 0) {
+        const forbiddenCommands = [
+          {
+            kind: 'reserve-current-lot',
+            actor: 'agent',
+            expectedAllInPrice: 423,
+          },
+          { kind: 'answer-repair-history', repairHistory: 'none' },
+          { kind: 'reset-room' },
+        ] as const;
+        for (const [index, command] of forbiddenCommands.entries()) {
+          send(attendee.socket, {
+            type: 'command',
+            commandId: `attendee-forbidden-${index}`,
+            expectedRevision: revision,
+            command,
+          });
+          expect(await attendee.next('room-error')).toMatchObject({
+            code: 'unauthorized-command',
+            currentRevision: revision,
+          });
+        }
+      }
+
+      send(attendee.socket, {
+        type: 'command',
+        commandId: `attendee-join-${attendeeIndex + 1}`,
+        expectedRevision: revision,
+        command: { kind: 'join-evidence-demand' },
+      });
+      revision += 1;
+      expect(await commandResult(attendee)).toMatchObject({
+        ok: true,
+        duplicate: false,
+        revision,
+      });
+      finalAttendeeSnapshot = await roomSnapshot(attendee);
+      expect(finalAttendeeSnapshot).toMatchObject({
+        revision,
+        state: { authenticatedAttendeeCount: attendeeIndex + 1 },
+      });
+      attendee.socket.close(1000, 'Attendee proof complete');
+    }
+
+    expect(finalAttendeeSnapshot).not.toBeNull();
+    const serializedSnapshot = JSON.stringify(finalAttendeeSnapshot);
+    expect(serializedSnapshot).not.toMatch(/attendee-[1-7]/);
+    for (const { token } of credentials.attendeeCredentials) {
+      expect(serializedSnapshot).not.toContain(token);
+    }
+
+    const id = workerEnv.ROOMS.idFromName(credentials.roomId);
+    await evictDurableObject(workerEnv.ROOMS.get(id));
+
+    const returningAttendee = await connect(credentials, 'attendee', revision, 0);
+    send(returningAttendee.socket, {
+      type: 'command',
+      commandId: 'returning-attendee-does-not-double-count',
+      expectedRevision: revision,
+      command: { kind: 'join-evidence-demand' },
+    });
+    revision += 1;
+    expect(await commandResult(returningAttendee)).toMatchObject({
+      ok: true,
+      revision,
+      message: 'This authenticated attendee already joined the evidence request.',
+    });
+    expect(await roomSnapshot(returningAttendee)).toMatchObject({
+      revision,
+      state: { authenticatedAttendeeCount: 7 },
+    });
+    returningAttendee.socket.close(1000, 'Idempotency verified');
+
+    const host = await connect(credentials, 'host', revision);
+    send(host.socket, {
+      type: 'command',
+      commandId: 'crowd-answer',
+      expectedRevision: revision,
+      command: { kind: 'answer-repair-history', repairHistory: 'none' },
+    });
+    revision += 1;
+    expect(await commandResult(host)).toMatchObject({
+      ok: true,
+      revision,
+      message: 'One camera answer resolved 8 private agent decisions.',
+    });
+    expect(await roomSnapshot(host)).toMatchObject({
+      revision,
+      state: {
+        authenticatedAttendeeCount: 7,
+        lot: { evidence: { repairHistory: 'none' } },
+      },
+    });
   });
 
   it('rejects role escalation, stale writes, and replays duplicates idempotently', async () => {
