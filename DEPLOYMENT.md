@@ -1,6 +1,6 @@
 # Public release and rollback runbook
 
-Updated 2026-08-27 PT. This runbook prepares—but does not authorize—the external release. Mark must approve repository publication, the open-source license, account/terms acceptance, and the first production deployment.
+Updated 2026-08-27 PT. This runbook prepares—but does not authorize—the external release. Mark has approved the repository's MIT license; repository publication, account/terms acceptance, and the first production deployment remain explicit external actions.
 
 ## Release topology
 
@@ -22,7 +22,7 @@ Every public surface exposes a non-secret build receipt. Vercel reports the Git-
 - Vercel generated URLs are public by default but may be protected by project settings. The final judge origin must not require Vercel Authentication, a share parameter, password, trusted IP, or automation-bypass header. See [Generated URLs](https://vercel.com/docs/deployments/generated-urls) and [Deployment Protection](https://vercel.com/docs/deployment-protection/methods-to-protect-deployments).
 - Vercel only supplies `VERCEL_GIT_COMMIT_SHA` for a Git-associated deployment when system environment variables are exposed. It is not automatically available to `--prebuilt` deployments. Confirm the project setting before release and use the explicit fallback only for an artifact built from a separately verified clean commit. See [System environment variables](https://vercel.com/docs/environment-variables/system-environment-variables) and [prebuilt deployments](https://vercel.com/docs/deployments/configure-a-build#prebuilt-deployments).
 
-Verified local release clients on 2026-08-27: Wrangler `4.127.0` in both Worker packages and Vercel CLI `54.14.2`. Recheck the current first-party docs and installed versions on release day.
+Verified local release clients on 2026-08-27: Wrangler `4.127.0` in both Worker packages and Vercel CLI `59.7.0` via `pnpm dlx vercel@59.7.0`. The package registry reports those as the current releases; recheck the first-party docs and exact command help again on release day.
 
 The August 27 protected-Preview rehearsal reached `READY` from clean commit `676ca66aac0b47cd5b65446eca5be54425119d1d`, and authenticated inspection rendered the buyer, host, UCP discovery, and health routes. It deliberately did **not** graduate the release: Preview protection remains enabled, the stable production alias has no live deployment, the Preview room variable is present but empty, and Wrangler is not authenticated to the intended account. See E12 in `EXPERIMENTS.md`.
 
@@ -30,7 +30,7 @@ The August 27 protected-Preview rehearsal reached `READY` from clean commit `676
 
 These steps mutate external systems and must not be performed unattended.
 
-1. Choose and approve a detectable open-source license; add `LICENSE` before the public repository is created.
+1. Confirm the approved MIT `LICENSE` remains detectable at the repository root.
 2. Create the public GitHub, GitLab, or Bitbucket repository and push the complete challenge-period history. Record its URL in `SUBMISSION.md`.
 3. Import that repository into one Vercel project. Record its stable production origin as `APP_ORIGIN`. Enable automatic system environment variables and confirm `VERCEL_GIT_COMMIT_SHA` is available. Leave the final production domain completely unprotected.
 4. Authenticate Wrangler to the intended Cloudflare account and accept any required terms. Confirm the stable `workers.dev` or custom origins for `webmcp-evidence-rooms` and `webmcp-evidence-merchant-preview`; record them as `ROOM_ORIGIN` and `MERCHANT_ORIGIN`.
@@ -90,8 +90,8 @@ pnpm --dir room-worker exec wrangler deploy \
 If and only if the reviewed release uses a prebuilt Vercel artifact, the corresponding command shape is:
 
 ```bash
-vercel env run -e production -- vercel build --prod
-vercel deploy --prebuilt --prod --skip-domain \
+pnpm dlx vercel@59.7.0 env run -e production -- pnpm dlx vercel@59.7.0 build --prod
+pnpm dlx vercel@59.7.0 deploy --prebuilt --prod --skip-domain \
   -e "WEBMCP_RELEASE_COMMIT_SHA=$RELEASE_SHA"
 ```
 
@@ -150,7 +150,7 @@ After September 3, 2026 at 1:00 p.m. PT, keep the submitted repository, deployme
 
 Keep the previous known-good Vercel deployment URL and both Worker version IDs in the release manifest.
 
-- Vercel: `vercel rollback PREVIOUS_DEPLOYMENT_URL`, then `vercel rollback status`.
+- Vercel: `pnpm dlx vercel@59.7.0 rollback PREVIOUS_DEPLOYMENT_URL`, then `pnpm dlx vercel@59.7.0 rollback status`.
 - Cloudflare: from each Worker package, run `wrangler rollback PREVIOUS_VERSION_ID --message "rollback to known-good release"`.
 
 Cloudflare [rollbacks](https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/) do not roll back Durable Object storage. That is acceptable for this challenge only because rooms and carts are bounded, reversible, and short-lived; still, do not roll back across an incompatible Durable Object class or storage change. Vercel documents Hobby-plan rollback as limited to the immediately previous production deployment; preserve that deployment until judging ends.
