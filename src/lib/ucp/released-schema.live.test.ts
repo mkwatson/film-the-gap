@@ -18,6 +18,7 @@ import {
 } from '../../../merchant-worker/src/protocol';
 
 const releasedSchemaTests = process.env.UCP_RELEASE_SCHEMA_LIVE === '1' ? describe : describe.skip;
+const releasedSchemaTimeoutMs = 30_000;
 type JsonValue = Parameters<Validator>[0];
 
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
@@ -126,33 +127,37 @@ const storedCart: StoredCart = {
 };
 
 releasedSchemaTests('released UCP schema conformance', () => {
-  it(`validates the business profile, direct Cart, and error result against ${ucpProtocolVersion}`, async () => {
-    const schemaRoot = `https://ucp.dev/${ucpProtocolVersion}/schemas`;
-    const [profileSchema, cartSchema, errorSchema] = await registerReleasedSchemas([
-      `${schemaRoot}/profile.json`,
-      `${schemaRoot}/shopping/cart.json`,
-      `${schemaRoot}/common/types/error_response.json`,
-    ]);
-    if (profileSchema === undefined || cartSchema === undefined || errorSchema === undefined) {
-      throw new Error('Released UCP root schemas were not registered.');
-    }
-    const [profileResult, cartResult, errorResult] = await Promise.all([
-      validate(
-        `${profileSchema}#/$defs/business_schema`,
-        requireJsonValue(merchantProfile('https://merchant.example')),
-      ),
-      validate(
-        cartSchema,
-        requireJsonValue(cartStructuredContent(storedCart, 'https://merchant.example')),
-      ),
-      validate(
-        errorSchema,
-        requireJsonValue(ucpErrorStructuredContent('Cart not found.', 'not_found')),
-      ),
-    ]);
+  it(
+    `validates the business profile, direct Cart, and error result against ${ucpProtocolVersion}`,
+    async () => {
+      const schemaRoot = `https://ucp.dev/${ucpProtocolVersion}/schemas`;
+      const [profileSchema, cartSchema, errorSchema] = await registerReleasedSchemas([
+        `${schemaRoot}/profile.json`,
+        `${schemaRoot}/shopping/cart.json`,
+        `${schemaRoot}/common/types/error_response.json`,
+      ]);
+      if (profileSchema === undefined || cartSchema === undefined || errorSchema === undefined) {
+        throw new Error('Released UCP root schemas were not registered.');
+      }
+      const [profileResult, cartResult, errorResult] = await Promise.all([
+        validate(
+          `${profileSchema}#/$defs/business_schema`,
+          requireJsonValue(merchantProfile('https://merchant.example')),
+        ),
+        validate(
+          cartSchema,
+          requireJsonValue(cartStructuredContent(storedCart, 'https://merchant.example')),
+        ),
+        validate(
+          errorSchema,
+          requireJsonValue(ucpErrorStructuredContent('Cart not found.', 'not_found')),
+        ),
+      ]);
 
-    expect(profileResult.valid).toBe(true);
-    expect(cartResult.valid).toBe(true);
-    expect(errorResult.valid).toBe(true);
-  });
+      expect(profileResult.valid).toBe(true);
+      expect(cartResult.valid).toBe(true);
+      expect(errorResult.valid).toBe(true);
+    },
+    releasedSchemaTimeoutMs,
+  );
 });
