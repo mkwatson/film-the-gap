@@ -79,6 +79,8 @@ separate UCP merchant ──▶ reversible Cart; no order or payment
 
 Animate or highlight only the active arrow; do not add sponsor logos or a product-name title. Three seconds is enough because the audience has already seen every boundary operate.
 
+The ready-to-capture, original `1920×1080` card is [public/demo-architecture.svg](public/demo-architecture.svg). Use the final verified asset directly; do not rebuild it in a presentation tool that may substitute fonts, add template marks, or expose editor chrome.
+
 ## Reproducible continuity capture
 
 The native acceptance runner can emit twelve full-page milestone stills from the same journey it asserts. This is useful for edit planning, backup inserts, submission screenshots, and visual regression—not as a substitute for model-driven ChatGPT evidence.
