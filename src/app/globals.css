@@ -229,6 +229,94 @@ select:focus-visible {
   text-decoration: none;
 }
 
+.phone-invite-control,
+.phone-invite-actions {
+  display: flex;
+  align-items: center;
+}
+
+.phone-invite-control {
+  position: relative;
+  gap: 10px;
+}
+
+.phone-invite-card {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 12px);
+  right: 0;
+  display: grid;
+  width: min(470px, calc(100vw - 24px));
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid rgba(109, 231, 235, 0.3);
+  border-radius: 16px;
+  background: #0d1913;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.62);
+}
+
+.phone-invite-qr-frame {
+  overflow: hidden;
+  border-radius: 11px;
+  background: #f7fff9;
+  line-height: 0;
+}
+
+.phone-invite-qr-frame svg {
+  width: 100%;
+  height: auto;
+}
+
+.phone-invite-copy {
+  min-width: 0;
+  align-self: center;
+}
+
+.phone-invite-copy > small,
+.phone-invite-copy > strong,
+.phone-invite-copy > span {
+  display: block;
+}
+
+.phone-invite-copy > small {
+  color: var(--cyan);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.phone-invite-copy > strong {
+  margin-top: 5px;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+
+.phone-invite-copy > p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.phone-invite-actions {
+  gap: 7px;
+  margin-top: 11px;
+}
+
+.phone-invite-actions .secondary-button {
+  min-height: 32px;
+}
+
+.phone-invite-copy > span {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
 .quiet-button:hover,
 .secondary-button:hover,
 .host-controls button:hover {
@@ -2508,6 +2596,14 @@ select:focus-visible {
     flex-direction: column;
   }
 
+  .phone-invite-card {
+    position: fixed;
+    top: 82px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+
   .agent-launchpad {
     grid-template-columns: 1fr;
   }
@@ -2608,6 +2704,22 @@ select:focus-visible {
 
   .quiet-button.invite-button {
     display: inline-flex;
+  }
+
+  .phone-invite-control {
+    align-items: flex-end;
+    flex-direction: column;
+  }
+
+  .phone-invite-card {
+    grid-template-columns: 1fr;
+    max-height: calc(100vh - 96px);
+    overflow: auto;
+  }
+
+  .phone-invite-qr-frame {
+    width: min(220px, 100%);
+    margin: 0 auto;
   }
 
   .room-code {

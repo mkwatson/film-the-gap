@@ -20,6 +20,8 @@ import { type SiteToolRuntime } from '@/lib/live-market/site-tools';
 import { useLiveRoom, type RoomConnectionPhase } from '@/lib/live-market/use-live-room';
 import { useSiteTools } from '@/lib/live-market/use-site-tools';
 
+import { PhoneHostInvite } from './phone-host-invite';
+
 const usd = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
@@ -75,7 +77,7 @@ export function LiveMarket(): React.JSX.Element {
     resetDemo,
     dispatch,
   } = useLiveRoom('buyer');
-  const [inviteCopied, setInviteCopied] = useState(false);
+  const [inviteResetVersion, setInviteResetVersion] = useState(0);
   const [starterCopyStatus, setStarterCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const [checkoutHandoff, setCheckoutHandoff] = useState<string | null>(null);
   const siteToolRuntime = useMemo<SiteToolRuntime>(
@@ -99,18 +101,6 @@ export function LiveMarket(): React.JSX.Element {
   );
   const merchantHost =
     state.commerce.merchantOrigin === null ? null : new URL(state.commerce.merchantOrigin).hostname;
-
-  async function copyHostInvite(): Promise<void> {
-    if (hostInviteUrl === null || navigator.clipboard === undefined) {
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(hostInviteUrl);
-      setInviteCopied(true);
-    } catch {
-      setInviteCopied(false);
-    }
-  }
 
   async function copyAgentStarter(): Promise<void> {
     if (navigator.clipboard === undefined) {
@@ -142,6 +132,7 @@ export function LiveMarket(): React.JSX.Element {
   function resetMarket(): void {
     setCheckoutHandoff(null);
     setStarterCopyStatus('idle');
+    setInviteResetVersion((current) => current + 1);
     resetDemo();
   }
 
@@ -224,29 +215,16 @@ export function LiveMarket(): React.JSX.Element {
                   ? 'Tools need attention'
                   : 'Connecting tools'}
           </span>
-          {hostInviteUrl !== null ? (
-            <button
-              className="quiet-button invite-button"
-              type="button"
-              onClick={() => void copyHostInvite()}
-            >
-              {inviteCopied ? 'Invite copied ✓' : 'Copy phone invite'}
-            </button>
-          ) : null}
           {hostInviteUrl === null ? (
             <Link className="quiet-button quiet-link" href="/host" target="_blank" rel="noreferrer">
               Open host view ↗
             </Link>
-          ) : (
-            <a
-              className="quiet-button quiet-link invite-button"
-              href={hostInviteUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Open phone host ↗
-            </a>
-          )}
+          ) : presence.host === 0 ? (
+            <PhoneHostInvite
+              key={`${hostInviteUrl}:${inviteResetVersion}`}
+              inviteUrl={hostInviteUrl}
+            />
+          ) : null}
           <button className="quiet-button" type="button" onClick={resetMarket}>
             Reset demo
           </button>

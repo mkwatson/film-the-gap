@@ -674,3 +674,31 @@ Results:
 - With those headers live, the ten-phase native Chrome buyer → host → reload/stale rejection → evidence → Lean-gated hold → UCP merchant → cancel/reconcile journey passed in 6.3 seconds. The independent Chrome Labs smoke then passed 5/5 with no browser-console failure.
 
 Decision: keep the browser boundary and stricter release gate because they directly harden WebMCP's unique lifecycle without adding a visible demo concept. Preserve the claim boundary: a static CSP that permits Next.js inline bootstrapping is defense in depth, not proof against a compromised same-origin application; the browser/spec must ultimately bind origin and tool identity. Defer further security theater such as decorative tool hashes or C2PA parsing unless it changes an actual trust decision. Re-run model selection only when existing Gateway capacity is available, and require the exact final ChatGPT path regardless of any evaluator score.
+
+### E14 — Private any-phone host handoff
+
+Frozen claim:
+
+> A first-time buyer can hand the seller role to an ordinary phone without copying a credential, while the bearer invite stays absent until explicit reveal and disappears on reset or successful host presence.
+
+Status: **local/tailnet browser and native-lifecycle pass; physical-phone/final-origin pass pending.**
+
+Protocol:
+
+1. Use the current typed, React 19-compatible `qrcode.react` `4.2.0` SVG renderer and keep QR generation entirely inside the buyer page rather than calling a third-party image service.
+2. Require an explicit reveal before the bearer QR exists in the DOM; keep the raw invite out of visible text; provide a deliberate copy fallback and the existing same-device host link.
+3. Decode the rendered symbol in current Chrome and compare it inside the page to the hidden host link without logging either credential.
+4. Reset while revealed, then join the host in a separate tab and verify the buyer removes the panel and all invite controls.
+5. Inspect desktop and `390×844` layouts, run axe-core, and repeat the full native WebMCP buyer → host → stale/reload → evidence → hold → UCP → cancel/reconcile lifecycle.
+
+Results:
+
+- The QR is absent on initial render and appears only after **Show private phone QR**. Its supporting copy identifies it as a temporary bearer invite, tells the operator to hide it after scanning, and never prints the URL.
+- Chrome `151.0.7922.174` decoded the rendered QR to the exact fragment-bearing host link. Reset removed it immediately; after a separate host tab authenticated, the original buyer tab reported `Host linked` and removed the entire invite control.
+- The responsive panel remained readable at desktop and `390×844`; QR quiet-zone and contrast survived native SVG scaling. Axe-core `4.12.1` reported zero WCAG A/AA violations after correcting the small status text contrast. Layered page gradients remain the previously recorded manual contrast-review incomplete.
+- Component tests cover absent-by-default rendering, reveal/hide, visible-text non-disclosure, and exact explicit clipboard copy. The complete credential-suppressing native journey still passed all ten phases in 6.2 seconds over the real tailnet room and merchant origins.
+- The primary submission video should link the phone before recording and never publish a live bearer QR. Judges can exercise the QR directly; the host browser still needs no WebMCP.
+
+Frontier check: Netlify's current open-source evaluator is `@netlify/axis` `1.17.5`, with goal, environment, service, and agent scores aimed at coding-agent/API/MCP task episodes. Package and adapter inspection found no browser/WebMCP surface. Integrating it now would score the repository-development workflow rather than the judged page experience, so it is rejected from the hero path unless a later browser adapter makes the score itself a useful product receipt.
+
+Decision: keep the QR handoff. It turns the already-real two-client architecture into a judge-usable physical-device transition with almost no narrative burden, strengthens execution, and preserves the privacy story. It does not graduate the remaining real-phone gate: an actual device on the final public origins must still scan, authenticate, capture, publish, disconnect, and reconnect successfully.

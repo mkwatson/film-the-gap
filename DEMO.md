@@ -12,7 +12,8 @@ The opening must land that idea before the audience hears “Durable Object,” 
 
 - Record a clean `1920×1080`, 30 fps source with browser zoom and text large enough to survive Devpost/YouTube compression.
 - Keep ChatGPT and the buyer page together for the first minute. Site Tools calls, their compact outputs, and the corresponding visible page change must appear in the same causal sequence.
-- Introduce the host phone only when the request arrives. Crop away notifications, status-bar personal data, room credentials, device logos, and unrelated apps. The phone browser does not need WebMCP.
+- Before recording, reveal the private phone QR, scan it, confirm the phone is linked, then hide it. Do not put a live bearer QR in the published video; if a setup capture is indispensable, wait for the invite and room to expire and still mask it in the edit.
+- Introduce the already-linked host phone only when the request arrives. Crop away notifications, status-bar personal data, room credentials, device logos, and unrelated apps. The phone browser does not need WebMCP.
 - Show the merchant as a visibly separate origin only after evidence and the hold unlock it.
 - Record narration cleanly without music. Preserve a full uninterrupted source take; edits may remove waiting time but must not reorder or fabricate tool results.
 - Use an owned, unbranded physical object and a rights-cleared background. Check every visible mark, image, sound, notification, and browser profile before capture.
@@ -101,7 +102,7 @@ The optional WebM records only the buyer-tab state progression; the twelve still
 
 Capture these independently so one permission or network failure cannot destroy the edit:
 
-1. **Primary real take:** final ChatGPT build, final public origins, physical phone, owned object, real camera, live reviewed model proposal if it passes.
+1. **Primary real take:** final ChatGPT build, final public origins, physical phone linked through the private QR before recording, owned object, real camera, live reviewed model proposal if it passes.
 2. **Permission-free take:** exact same native Site Tools/UCP sequence with **Show base · no repair**. Keep as judge-safe proof and edit insurance; label the fixture if shown.
 3. **Phone close-up:** request arrival → camera/review → published receipt, with no buyer screen visible.
 4. **Merchant close-up:** active Cart → native inspect → cancel → cancelled state.
@@ -118,7 +119,7 @@ Capture these independently so one permission or network failure cannot destroy 
 - Cancellation and capability removal are visible, not narrated off-screen.
 - “Native Site Tools,” human page change, and second-origin WebMCP are visible enough to score the first tie-breaker.
 - No claim exceeds the exact take: fixture crowd is labeled; hash is a fingerprint, not authenticity; host attestation owns history; no checkout/payment exists.
-- No secrets, host fragments, continuation paths, personal notifications, unlicensed media, or unrelated trademarks appear.
+- No live QR, secrets, host fragments, continuation paths, personal notifications, unlicensed media, or unrelated trademarks appear.
 - Audio is intelligible at phone volume; captions are corrected manually; final duration is below `3:00`.
 - The public YouTube link works logged out and matches the frozen commit/live deployment recorded in `SUBMISSION.md`.
 
