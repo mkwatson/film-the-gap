@@ -41,7 +41,7 @@ export interface RoomStateSnapshot {
 
 export type RoomMessage = RoomSyncRequest | RoomStateSnapshot;
 
-const evidenceFrameProvenanceSchema = z.discriminatedUnion('kind', [
+export const evidenceFrameProvenanceSchema = z.discriminatedUnion('kind', [
   z.strictObject({
     kind: z.literal('fixture-frame'),
     frameId: z.string().min(1).max(160),
@@ -68,7 +68,7 @@ const evidenceFrameProvenanceSchema = z.discriminatedUnion('kind', [
   }),
 ]);
 
-const visualEvidenceReviewSchema = z
+export const visualEvidenceReviewSchema = z
   .strictObject({
     source: z.enum(visualReviewSources),
     modelId: z.string().min(1).max(160).nullable(),
@@ -193,7 +193,7 @@ const lotEvidenceSchema = z
     }
   });
 
-const liveMarketStateSchema = z.strictObject({
+export const liveMarketStateSchema = z.strictObject({
   showStatus: z.enum(showStatuses),
   lot: z.strictObject({
     id: z.string().min(1).max(120),

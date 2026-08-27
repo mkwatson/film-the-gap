@@ -8,12 +8,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --max-warnings 0",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "typecheck": "tsc --noEmit && pnpm --dir room-worker typecheck",
+    "test": "pnpm test:app && pnpm test:room",
+    "test:app": "vitest run",
+    "test:room": "pnpm --dir room-worker test",
     "test:watch": "vitest",
+    "room:dev": "pnpm --dir room-worker dev",
+    "room:build": "pnpm --dir room-worker build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm room:build && pnpm build"
   },
   "engines": {
     "node": ">=24.0.0"

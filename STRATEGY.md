@@ -55,7 +55,7 @@ Every rung must preserve the previous complete path and add a resettable determi
 
 1. **Submission skeleton now:** public-ready repository structure, license, one-click reset, test prompt, limitations, deployment health, and a no-login path. External deployment/account mutations still require Mark's approval.
 2. **Agent-experience hardening:** compact non-overlapping tool results, recovery guidance, cancellation and stale-revision behavior, Chrome DevTools traces, adversarial WebMCP evals, and plain-language UI copy.
-3. **Real two-device evidence event:** a QR-joined buyer/host room, ordered/recoverable state, a real phone camera, and one owned physical item. Compare Vercel WebSockets with Cloudflare Durable Objects; retain Vercel unless Cloudflare creates a materially better and equally reliable interaction.
+3. **Real two-device evidence event:** a QR-joined buyer/host room, ordered/recoverable state, a real phone camera, and one owned physical item. The 2026-08-26 transport spike selected a standalone Cloudflare Durable Object as room authority; keep the existing Next/Vercel app as the product surface and preserve its local fallback.
 4. **Real visual intelligence:** authenticate the existing Vercel AI Gateway route, blind-check it on the physical frame, keep the model non-authoritative, and preserve manual review.
 5. **Authoritative commerce:** dynamically negotiate the merchant's advertised UCP version, use owned/dev-store inventory, create a real Cart MCP cart or permalink, and show the merchant continuation URL. Do not invent “UCP-shaped” local JSON.
 6. **Submission as product:** simplify the interface, record the causal hero in under three minutes, make the README and Devpost text independently persuasive, and freeze a clean reproducible revision early.
@@ -69,8 +69,8 @@ The hero may span several sponsors only because each owns a different boundary:
 
 - **OpenAI/ChatGPT:** native Site Tools, private conversational context, exact judged-client behavior, and optional current vision/voice intelligence.
 - **Chrome:** second native runtime, WebMCP DevTools lifecycle proof, security annotations, and behavior eval methodology.
-- **Vercel:** current Next.js 16 application, AI SDK 7, one AI Gateway, deployment, and possibly WebSockets/Eve if they pass a real spike.
-- **Cloudflare:** a Durable Object room and optional RealtimeKit/Kitesurf only if they materially improve real-time coordination or verification; not a redundant second frontend host or model gateway.
+- **Vercel:** current Next.js 16 application, AI SDK 7, one AI Gateway, and judge-facing deployment. It does not duplicate room authority.
+- **Cloudflare:** the selected SQLite-backed Durable Object room with Hibernation WebSockets and automatic tracing; optional Kitesurf only if it materially improves independent verification. It is not a redundant second frontend host or model gateway.
 - **Shopify/UCP:** authoritative discovery, capability negotiation, catalog/cart state, and human checkout handoff.
 - **Netlify:** AXIS as an inspectable build-time Agent Experience report, not a second deployment or gateway.
 - **MCP-B:** optional cross-client interoperability evidence, never required judge setup.

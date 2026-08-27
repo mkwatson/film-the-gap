@@ -3,3 +3,4 @@ coverage/
 next-env.d.ts
 node_modules/
 pnpm-lock.yaml
+room-worker/dist/

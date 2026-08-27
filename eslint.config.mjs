@@ -12,6 +12,7 @@ export default defineConfig([
     'coverage/**',
     'node_modules/**',
     'out/**',
+    'room-worker/dist/**',
     'tmp/**',
     'next-env.d.ts',
   ]),

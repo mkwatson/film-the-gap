@@ -294,6 +294,19 @@ Protocol:
 
 Decision rule: graduate only if the remote event is visibly causal, survives reconnect, has no silent stale state, and remains understandable without explaining the transport. Compare a minimal Vercel WebSocket implementation with a Cloudflare Durable Object room; choose the one that is more reliable and legible, not the one with more sponsor logos.
 
+#### E7.1 — Authoritative transport checkpoint
+
+Status: **Cloudflare transport selected and locally proven; app integration and real-device graduation pending.**
+
+- Re-read the current Vercel WebSocket and Cloudflare Durable Object/Hibernation/testing documentation on 2026-08-26 PT. Vercel's newer guidance supports WebSockets but requires an experimental Next upgrade API, Redis/pub-sub across Function instances, reconnect at maximum duration, and reconciliation with an older limits page that still denies server support. One Durable Object directly owns the ordered room, storage, sockets, hibernation recovery, and expiry.
+- Added a standalone Worker package pinned to Wrangler 4.126.0, `@cloudflare/vitest-plugin` 1.1.0, Workers types 5.20260827.1, Vitest 4.1.11, TypeScript 5.9.3, and Zod 4.4.3. It uses the current declarative `exports` configuration and SQLite storage rather than a legacy migration.
+- `POST /rooms` returns one-time buyer and host credentials; only SHA-256 digests enter room storage. WebSocket URLs contain the six-character room ID but no token. Browser origins are allowlisted before a Durable Object is invoked.
+- The first socket frame authenticates a role. Subsequent commands pass through a strict shared schema and the existing guarded market state machine. The server—not either client—owns revision, authorization, bounded duplicate history, current state, and expiry.
+- Six tests run inside the current Workers runtime: unique role credentials/CORS, hostile-origin refusal, buyer → host → buyer evidence propagation, role escalation refusal, stale-write refusal, duplicate replay, state and authenticated-socket recovery after forced Durable Object eviction, and alarm-driven deletion/peer closure.
+- The Worker dry-run bundle is 599.57 KiB (90.93 KiB gzip). The combined deterministic gate is now 45 app tests plus 6 Workers-runtime tests.
+
+The checkpoint does **not** yet satisfy E7: the Next app still uses its existing same-browser room, no public Worker has been deployed, and no physical phone has joined. Next, replace closure-based page mutations with serializable commands, add a reconnecting browser client and fragment-carried host invite, then run the real phone/desktop path. The public JPEG must also be reduced below Cloudflare's 2 MB stored-value ceiling; continuous video and private buyer context remain out of the protocol.
+
 ### E8 — Authoritative UCP commerce boundary
 
 Frozen claim:
