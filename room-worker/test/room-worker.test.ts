@@ -124,6 +124,23 @@ async function roomSnapshot(
 }
 
 describe('evidence room worker', () => {
+  it('exposes liveness, commerce configuration, and Cloudflare version metadata', async () => {
+    const response = await SELF.fetch('https://rooms.example/healthz');
+    const body: unknown = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      ok: true,
+      protocolVersion: '2',
+      ucpCommerceConfigured: true,
+      workerVersion: {
+        id: expect.any(String),
+        tag: expect.any(String),
+        timestamp: expect.any(String),
+      },
+    });
+  });
+
   it('creates a room without putting either role credential in the URL', async () => {
     const response = await SELF.fetch('https://rooms.example/rooms', {
       method: 'POST',

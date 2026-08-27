@@ -538,6 +538,23 @@ Status: **local/tailnet visual and automated-accessibility pass; manual contrast
 
 This does not graduate E9. Repeat accessibility and visual review against production builds on the final public origins, manually verify key text/background contrast, and time an unfamiliar person completing the canonical path without coaching.
 
+#### E9.6 — Reproducible release identity and public-origin preflight
+
+Frozen claim:
+
+> A judge-facing URL is not release-ready merely because three health pages are green; the app, evidence authority, and merchant must be the same reviewed release and must complete their browser-facing contracts from the final public origins.
+
+Status: **local verifier, clean-clone rehearsal, and deployment dry-runs pass; authorized permanent deployment pending.**
+
+- Added a no-store app health route that exposes only its Vercel Git commit and normalized room origin. Both Cloudflare Workers use the current version-metadata binding to expose their public version ID, release tag, and timestamp.
+- Added a bounded six-phase public verifier. It requires three distinct, credential-free HTTPS origins and one exact 40-character commit; rejects redirects and oversized or malformed bodies; verifies app/room/merchant release alignment, UCP `2026-08-25` discovery and endpoint ownership, judge-page markers, merchant CSP/Permissions/Referrer policy, exact-origin CORS, and one real disposable Durable Object room.
+- The room's buyer and host credentials are validated and immediately discarded. A regression test serializes the entire successful report and proves neither credential survives; failure output suppresses arbitrary origins and credential-shaped material.
+- Read the current Cloudflare release docs before choosing a workflow. Version preview URLs are unavailable for Workers that implement Durable Objects, so the runbook uses reviewed local/native gates, commit-tagged direct deployments, immediate public verification, and recorded rollback IDs rather than claiming preview promotion that this architecture cannot use.
+- Read the current Vercel release docs before choosing a workflow. A Production build can be staged without assigning its domain, while promoting a Preview-environment build creates a new Production deployment. The runbook therefore verifies the commit after final promotion and separately rejects deployment protection.
+- A clean clone outside the working tree completed `pnpm install --frozen-lockfile`, the full offline gate, and released UCP schema validation without `.env.local`. The current focused gate passes 88 app tests, 8 room-Worker tests, 12 merchant-Worker tests, strict TypeScript, and both Wrangler `4.127.0` tagged dry-run bundles.
+
+This materially reduces execution and submission risk, but it cannot graduate the final-origin gate without Mark's authorization for the public repository/license and permanent Vercel/Cloudflare release. After that one-time action, `pnpm release:verify`, native Chrome, model-driven ChatGPT, a clean unauthenticated browser, and a physical phone remain mandatory on the identical release.
+
 ### E10 — Frontier receipt (optional)
 
 Only after E7-E9 pass, test whether a runtime-connected Lean receipt can communicate in under ten seconds that a stale quote/evidence revision or unauthorized transition is refused. The theorem may cover the formal state model and payload projection only. It must not claim to prove image truth, seller honesty, browser conformance, or implementation equivalence.

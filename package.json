@@ -16,6 +16,7 @@
     "test:ucp-schema": "UCP_RELEASE_SCHEMA_LIVE=1 vitest run src/lib/ucp/released-schema.live.test.ts",
     "test:watch": "vitest",
     "acceptance:native": "node --experimental-strip-types scripts/native-browser-acceptance.ts",
+    "release:verify": "node --experimental-strip-types scripts/release-preflight-cli.ts",
     "room:dev": "pnpm --dir room-worker dev",
     "room:build": "pnpm --dir room-worker build",
     "merchant:dev": "pnpm --dir merchant-worker dev",

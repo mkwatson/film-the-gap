@@ -55,6 +55,20 @@ pnpm test:ucp-schema
 
 That check fetches the released schemas from `ucp.dev`, recursively registers their references, and validates both the merchant business profile and direct Cart result. It is intentionally separate from the offline default gate.
 
+### Verify a public release
+
+The public app and both Workers expose non-secret version receipts. After deploying one reviewed commit to three distinct HTTPS origins, run:
+
+```bash
+EVIDENCE_ACCEPTANCE_APP_URL=https://app.example \
+EVIDENCE_ACCEPTANCE_ROOM_ORIGIN=https://room.example \
+EVIDENCE_ACCEPTANCE_MERCHANT_ORIGIN=https://merchant.example \
+EVIDENCE_RELEASE_COMMIT_SHA=0123456789012345678901234567890123456789 \
+pnpm release:verify
+```
+
+The verifier rejects redirects, split commits, miswired UCP discovery, protected or malformed pages, incorrect merchant security policy, broken room CORS, and a room service that cannot create a real disposable Durable Object. It never logs the room credentials. See [DEPLOYMENT.md](DEPLOYMENT.md) for the current Vercel/Cloudflare release, rollback, and final-origin procedure.
+
 ### Run the native WebMCP acceptance journey
 
 The repository pins `agent-browser` 0.35.1 and includes a credential-suppressing acceptance runner for the real system Chrome. Start the app, room Worker, and merchant Worker, expose the two Worker origins over credential-free HTTPS, then run:
@@ -81,4 +95,4 @@ Chrome-format direct, ambiguous, privacy-pressure, and full multi-step model eva
 - A protected Vercel acceptance preview and disposable Cloudflare Worker have passed the public HTTPS journey. They are not yet the final judge URL: the Worker is temporary, and Vercel Authentication must not redirect a fragment-bearing host invite. There is no public repository remote yet.
 - No private Vidably or math research is included in the public worktree.
 
-Read [SUBMISSION.md](SUBMISSION.md) for the judge instructions, four required Devpost answers, proof matrix, claims ledger, and `2:45` video cut; [EXPERIMENTS.md](EXPERIMENTS.md) for the 18-primitives frontier and falsification results; [concepts/live-agent-market.md](concepts/live-agent-market.md) for the product ladder; [evals/](evals/) for the current Chrome-format evaluation corpus; [RESOURCES.md](RESOURCES.md) for exact-runtime evidence; [SPONSOR-PRODUCTS.md](SPONSOR-PRODUCTS.md) for the sponsor atlas; and [STRATEGY.md](STRATEGY.md) for the winning-probability framework.
+Read [SUBMISSION.md](SUBMISSION.md) for the judge instructions, four required Devpost answers, proof matrix, claims ledger, and `2:45` video cut; [DEPLOYMENT.md](DEPLOYMENT.md) for the public release and rollback gates; [EXPERIMENTS.md](EXPERIMENTS.md) for the 18-primitives frontier and falsification results; [concepts/live-agent-market.md](concepts/live-agent-market.md) for the product ladder; [evals/](evals/) for the current Chrome-format evaluation corpus; [RESOURCES.md](RESOURCES.md) for exact-runtime evidence; [SPONSOR-PRODUCTS.md](SPONSOR-PRODUCTS.md) for the sponsor atlas; and [STRATEGY.md](STRATEGY.md) for the winning-probability framework.

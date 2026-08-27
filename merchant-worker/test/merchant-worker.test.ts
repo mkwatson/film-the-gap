@@ -219,7 +219,14 @@ describe('public merchant surface', () => {
     expect(await agents.text()).toContain('Never send buyer identity');
     expect(await llms.text()).toContain('No checkout');
     expect(await robots.text()).toContain('Disallow: /cart/c/');
-    expect(await health.json()).toMatchObject({ ok: true });
+    expect(await health.json()).toMatchObject({
+      ok: true,
+      workerVersion: {
+        id: expect.any(String),
+        tag: expect.any(String),
+        timestamp: expect.any(String),
+      },
+    });
   });
 });
 

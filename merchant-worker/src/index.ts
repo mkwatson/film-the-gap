@@ -30,6 +30,7 @@ import {
 
 export interface MerchantEnv {
   readonly MERCHANT: DurableObjectNamespace<MerchantLedger>;
+  readonly CF_VERSION_METADATA: WorkerVersionMetadata;
   readonly CART_TTL_SECONDS?: string;
 }
 
@@ -754,6 +755,7 @@ export default {
         ok: true,
         service: merchantServerName,
         version: merchantServerVersion,
+        workerVersion: env.CF_VERSION_METADATA,
       });
     }
     if (request.method === 'GET' && url.pathname === '/robots.txt') {

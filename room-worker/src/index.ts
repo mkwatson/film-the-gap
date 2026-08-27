@@ -29,6 +29,7 @@ import {
 
 export interface WorkerEnv {
   readonly ROOMS: DurableObjectNamespace<EvidenceRoom>;
+  readonly CF_VERSION_METADATA: WorkerVersionMetadata;
   readonly ALLOWED_ORIGINS: string;
   readonly ROOM_TTL_SECONDS: string;
   readonly UCP_BUSINESS_URL?: string;
@@ -764,6 +765,7 @@ async function route(request: Request, env: WorkerEnv): Promise<Response> {
       ok: true,
       protocolVersion: remoteRoomProtocolVersion,
       ucpCommerceConfigured: readUcpRoomConfiguration(env) !== null,
+      workerVersion: env.CF_VERSION_METADATA,
     });
   }
   if (!requestOriginAllowed(request, env)) {
