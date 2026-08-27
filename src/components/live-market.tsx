@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import { historicalEvidenceLimitation } from '@/lib/live-market/evidence-proposal';
+import { decideReservePolicy, holdPolicyProof } from '@/lib/live-market/certified-policy';
 
 import {
   defaultEvidenceRequirements,
@@ -85,6 +86,11 @@ export function LiveMarket(): React.JSX.Element {
   const availabilityKey = availableToolNames.join('|');
   const siteToolStatus = useSiteTools(siteToolRuntime, availabilityKey);
   const evaluation = evaluateEvidence(state);
+  const reservePolicy = decideReservePolicy({
+    showLive: state.showStatus === 'live',
+    evidenceOutcome: evaluation.outcome,
+    hasHold: state.reservation !== null,
+  });
   const frontier = getActionFrontier(state);
   const demand = getEvidenceDemandSummary(state, 'repair_history');
   const allInPrice = getAllInPrice(state.lot);
@@ -817,6 +823,20 @@ export function LiveMarket(): React.JSX.Element {
               The hold tool is genuinely unregistered until public evidence is ready. It accepts an
               exact quote, never a private ceiling.
             </p>
+            <div
+              className={`proof-receipt proof-${reservePolicy.reserveToolAvailable ? 'allow' : 'deny'}`}
+            >
+              <span aria-hidden="true">✓</span>
+              <p>
+                <strong>Machine-checked capability gate</strong>
+                {holdPolicyProof.rule}. Current decision:{' '}
+                <b>{reservePolicy.reserveToolAvailable ? 'allow hold' : 'withhold hold'}</b>.
+                <small>
+                  {holdPolicyProof.checker} · receipt {holdPolicyProof.receipt} ·{' '}
+                  {holdPolicyProof.limitation}
+                </small>
+              </p>
+            </div>
           </section>
 
           <section className="frontier-section" aria-labelledby="frontier-title">

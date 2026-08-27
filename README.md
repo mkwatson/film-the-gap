@@ -10,7 +10,7 @@ The current rung proves one complete, privacy-minimizing collaboration loop:
 4. The agent joins seven anonymous demo agents waiting for the same missing fact.
 5. The host can explicitly start a video-only camera and capture one bounded keyframe. Vercel AI Gateway can propose a pixel-grounded observation, but the host must accept or correct it; a manual review path remains available.
 6. The host deliberately publishes that one selected JPEG, its provenance, the reviewed visual observation, and a separate repair-history attestation. One answer resolves all eight requests without revealing profiles, budgets, or the continuous camera feed.
-7. A reversible reservation tool appears and accepts only the exact current all-in quote.
+7. A Lean-generated complete policy table gates both registration and authoritative acceptance of the reversible reservation tool; it appears only for a live, evidence-ready lot with no existing hold, then accepts only a fresh revision and the exact current all-in quote.
 8. In an authoritatively configured room, the hold unlocks a reversible anonymous UCP `2026-08-25` merchant cart whose `$375` item plus `$48` flat fulfillment exactly matches the room's `$423` quote. Shared state receives bounded merchant-authored terms; only the invoking buyer receives the private continuation.
 9. The page can cancel the merchant cart, discard its credential, release the hold, and keeps equivalent human controls visible throughout.
 
@@ -46,6 +46,14 @@ pnpm check
 ```
 
 That checks formatting, ESLint, strict TypeScript, Vitest behavior, and the production build.
+
+The generated hold policy has a separate stable-Lean verification gate:
+
+```bash
+pnpm proof:verify
+```
+
+That builds the pinned Lean `4.33.1` project, rejects `sorryAx`, replays its theorem environment with `leanchecker --fresh`, regenerates the complete 16-case policy table, and checks the committed source receipt. The generated table is consumed at runtime for both dynamic Site Tool registration and authoritative hold acceptance; the deployed app needs no Lean runtime. See [proof/README.md](proof/README.md) for the exact theorems and trust boundary.
 
 The owned merchant also has an opt-in network conformance check against the official released UCP `2026-08-25` JSON Schemas:
 
@@ -91,6 +99,7 @@ Chrome-format direct, ambiguous, privacy-pressure, and full multi-step model eva
 - The seven other audience agents are a clearly labeled deterministic demo-room aggregate, not simulated individual buyers or a live backend.
 - The remote buyer and host pages use separately authenticated, revisioned, idempotent Cloudflare Durable Object sessions; local browser synchronization remains a fallback. The remote protocol and reconnect behavior pass between two browser clients, but a physical phone on a second network has not yet passed acceptance.
 - The hold is reversible. No tool can bid, charge, purchase, or move money.
+- Lean proves only the small public capability model: live show + ready evidence + no existing hold, plus fresh revision and exact quote for acceptance. It does not prove camera truth, seller honesty, full implementation equivalence, or that private information is impossible to infer. The judge-visible receipt states those limits, and TypeScript/native-browser tests verify the runtime adapter.
 - The UCP Cart client, Durable Object credential boundary, dynamic Site Tools, human receipt UI, cancellation, and private-result purge now pass against an owned original-product merchant over local/tailnet HTTPS. The owned merchant negotiates the released UCP `2026-08-25` Cart contract and returns a schema-validated `$423` total (`$375` item + `$48` flat fulfillment); its separate SQLite Durable Object owns cart IDs, replay protection, expiry, totals, and a second-origin continuation whose native Site Tools can inspect or cancel but cannot order or pay. An isolated Shopify preview separately proves Shopify's currently observed UCP `2026-04-08` discovery and native WebMCP registration; its unsaved catalog/cart execution and password-gated stable origin keep it additive rather than critical-path. Public deployment of the owned merchant still needs one-time Cloudflare account/terms authorization and a fresh acceptance run.
 - The typed core flow is verified in isolated Chrome and ChatGPT desktop's native in-app Browser. A clean-room runner now repeats the complete two-client, cross-origin commerce lifecycle in native Chrome 151 with credential-suppressed logs; the final public origins still need a fresh model-driven ChatGPT rerun. Realtime voice transport, transcription, and Voice-to-Codex delegation work, but the delegated task did not inherit the UI-owned Browser binding, so autonomous Voice-to-Site-Tools remains unproven.
 - Host camera capture, cleanup, bounded keyframe provenance, selected-frame publication, explicit host review, remote propagation, native WebMCP inspection, stale-quote refusal, exact-quote hold, release, and Worker restart recovery pass. Vercel OIDC and AI Gateway also returned a real structured vision proposal from `alibaba/qwen3.7-flash` with zero-data-retention routing; it correctly classified Chromium's synthetic green test pattern as not showing a snowboard, and the saved review could not be published as qualifying evidence. Authenticity verification, continuous-video analysis, a rights-cleared physical product, and physical-phone acceptance are not claimed.

@@ -17,6 +17,8 @@
     "test:watch": "vitest",
     "acceptance:native": "node --experimental-strip-types scripts/native-browser-acceptance.ts",
     "release:verify": "node --experimental-strip-types scripts/release-preflight-cli.ts",
+    "proof:generate": "node --experimental-strip-types scripts/proof-receipt-cli.ts --write",
+    "proof:verify": "node --experimental-strip-types scripts/proof-receipt-cli.ts --check",
     "room:dev": "pnpm --dir room-worker dev",
     "room:build": "pnpm --dir room-worker build",
     "merchant:dev": "pnpm --dir merchant-worker dev",

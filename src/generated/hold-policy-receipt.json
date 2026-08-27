@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "policy": "reserve_current_lot",
+  "leanToolchain": "leanprover/lean4:v4.33.1",
+  "theorems": [
+    "WebMCPPolicy.reserveToolAvailable_sound",
+    "WebMCPPolicy.sellerEnvelope_privateCeiling_noninterference",
+    "WebMCPPolicy.acceptedHold_sound",
+    "WebMCPPolicy.staleRevision_refused"
+  ],
+  "cases": [
+    {
+      "showLive": false,
+      "evidenceOutcome": "no-requirements",
+      "hasHold": false,
+      "reserveToolAvailable": false
+    },
+    {
+      "showLive": false,
+      "evidenceOutcome": "no-requirements",
+      "hasHold": true,
+      "reserveToolAvailable": false
+    },
+    {
+      "showLive": false,
+      "evidenceOutcome": "unresolved",
+      "hasHold": false,
+      "reserveToolAvailable": false
+    },
+    {
+      "showLive": false,
+      "evidenceOutcome": "unresolved",
+      "hasHold": true,
+      "reserveToolAvailable": false
+    },
+    {
+      "showLive": false,
+      "evidenceOutcome": "ready",
+      "hasHold": false,
+      "reserveToolAvailable": false
+    },
+    {
+      "showLive": false,
+      "evidenceOutcome": "ready",
+      "hasHold": true,
+      "reserveToolAvailable": false
+    },
+    {
+      "showLive": false,
+      "evidenceOutcome": "incompatible",
+      "hasHold": false,
+      "reserveToolAvailable": false
+    },
+    {
+      "showLive": false,
+      "evidenceOutcome": "incompatible",
+      "hasHold": true,
+      "reserveToolAvailable": false
+    },
+    {
+      "showLive": true,
+      "evidenceOutcome": "no-requirements",
+      "hasHold": false,
+      "reserveToolAvailable": false
+    },
+    {
+      "showLive": true,
+      "evidenceOutcome": "no-requirements",
+      "hasHold": true,
+      "reserveToolAvailable": false
+    },
+    {
+      "showLive": true,
+      "evidenceOutcome": "unresolved",
+      "hasHold": false,
+      "reserveToolAvailable": false
+    },
+    {
+      "showLive": true,
+      "evidenceOutcome": "unresolved",
+      "hasHold": true,
+      "reserveToolAvailable": false
+    },
+    {
+      "showLive": true,
+      "evidenceOutcome": "ready",
+      "hasHold": false,
+      "reserveToolAvailable": true
+    },
+    {
+      "showLive": true,
+      "evidenceOutcome": "ready",
+      "hasHold": true,
+      "reserveToolAvailable": false
+    },
+    {
+      "showLive": true,
+      "evidenceOutcome": "incompatible",
+      "hasHold": false,
+      "reserveToolAvailable": false
+    },
+    {
+      "showLive": true,
+      "evidenceOutcome": "incompatible",
+      "hasHold": true,
+      "reserveToolAvailable": false
+    }
+  ],
+  "sourceSha256": "c00c0101767ff2e11c6aa3e84238008601149dc3a539f59305cc317c1cf85e9f",
+  "limitations": [
+    "Proves the abstract capability policy, not that an image or seller statement is true.",
+    "Proves private-ceiling noninterference for the modeled projection, not every browser or network implementation.",
+    "Runtime TypeScript tests separately verify the adapter and generated table used by the page."
+  ]
+}

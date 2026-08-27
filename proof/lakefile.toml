@@ -1,0 +1,10 @@
+name = "webmcp-capability-policy"
+version = "0.1.0"
+defaultTargets = ["CapabilityPolicy", "emit_policy"]
+
+[[lean_lib]]
+name = "CapabilityPolicy"
+
+[[lean_exe]]
+name = "emit_policy"
+root = "Main"

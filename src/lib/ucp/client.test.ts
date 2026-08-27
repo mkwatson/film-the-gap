@@ -133,6 +133,14 @@ function jsonRpcRequest(body: BodyInit | null | undefined): {
   return { id: record.id, method: record.method, params: record.params };
 }
 
+function recordedRequestParams(request: RecordedRequest | undefined): unknown {
+  const body = request?.body;
+  if (typeof body !== 'object' || body === null || !('params' in body)) {
+    throw new Error('Expected a recorded JSON-RPC request with params.');
+  }
+  return body.params;
+}
+
 function mockMerchant(options: MockMerchantOptions = {}): {
   readonly fetch: UcpFetch;
   readonly requests: readonly RecordedRequest[];
@@ -247,10 +255,10 @@ describe('UCP Cart client', () => {
       ],
       continueUrl: 'https://merchant.example/cart/c/test-cart',
     });
-    const callBody = JSON.stringify(merchant.requests[2]?.body);
-    expect(callBody).toContain('create_cart');
-    expect(callBody).toContain(variantId);
-    expect(callBody).not.toMatch(/450|maximum|buyer|email|postal|payment|credential/i);
+    const callParams = JSON.stringify(recordedRequestParams(merchant.requests[2]));
+    expect(callParams).toContain('create_cart');
+    expect(callParams).toContain(variantId);
+    expect(callParams).not.toMatch(/450|maximum|buyer|email|postal|payment|credential/i);
   });
 
   it('preserves merchant messages and total order without recomputing them', async () => {

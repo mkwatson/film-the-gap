@@ -78,6 +78,8 @@ describe('LiveMarket', () => {
     expect(screen.getByText('Same-screen fallback')).toBeTruthy();
     expect(screen.getByText('Local view ready')).toBeTruthy();
     expect(screen.getByText('Demo hold only')).toBeTruthy();
+    expect(screen.getByText('Machine-checked capability gate')).toBeTruthy();
+    expect(screen.getByText(/Current decision:/).textContent).toContain('withhold hold');
     expect(screen.queryByText('$450')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy agent starter' }));
@@ -110,6 +112,7 @@ describe('LiveMarket', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show: no repair' }));
     expect(screen.getByText('Public evidence ready')).toBeTruthy();
     expect(screen.getByText('One answer → 8 private decisions')).toBeTruthy();
+    expect(screen.getByText(/Current decision:/).textContent).toContain('allow hold');
 
     fireEvent.click(screen.getByRole('button', { name: 'Hold at $423' }));
     expect(screen.getByText('Reversible hold active at $423')).toBeTruthy();

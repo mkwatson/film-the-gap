@@ -1531,6 +1531,66 @@ select:focus-visible {
   line-height: 1.45;
 }
 
+.proof-receipt {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 9px;
+  padding: 8px;
+  color: var(--violet);
+  border: 1px solid rgba(159, 150, 255, 0.2);
+  border-radius: 9px;
+  background: rgba(159, 150, 255, 0.04);
+}
+
+.proof-allow {
+  color: var(--mint);
+  border-color: rgba(107, 231, 175, 0.22);
+  background: rgba(107, 231, 175, 0.045);
+}
+
+.proof-receipt > span {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 8px;
+}
+
+.proof-receipt p,
+.proof-receipt small {
+  display: block;
+}
+
+.proof-receipt p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 7px;
+  line-height: 1.45;
+}
+
+.proof-receipt strong {
+  display: block;
+  margin-bottom: 2px;
+  color: #e5e2ff;
+  font-size: 8px;
+}
+
+.proof-allow strong,
+.proof-receipt b {
+  color: currentColor;
+}
+
+.proof-receipt small {
+  margin-top: 3px;
+  color: var(--dim);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 6px;
+}
+
 .activity-section {
   min-height: 0;
   padding-top: 17px;

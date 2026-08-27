@@ -572,8 +572,22 @@ Status: **deterministic visual rehearsal passes; final ChatGPT/phone source capt
 
 This graduates repeatable visual continuity, not the submission video. The primary take still requires the exact final ChatGPT build, stable public origins, a real phone, an owned unbranded item, a reviewed physical-camera result, clean narration/captions, and one unfamiliar viewer who can explain the thesis after a silent watch.
 
-### E10 — Frontier receipt (optional)
+### E10 — Proof-carrying capability unlock
 
-Only after E7-E9 pass, test whether a runtime-connected Lean receipt can communicate in under ten seconds that a stale quote/evidence revision or unauthorized transition is refused. The theorem may cover the formal state model and payload projection only. It must not claim to prove image truth, seller honesty, browser conformance, or implementation equivalence.
+Frozen claim:
 
-Decision rule: integrate only if a non-technical viewer understands the consequence immediately and the proof service cannot destabilize the hero flow. Otherwise preserve the proof-carrying Site Tool constitution as a post-challenge branch.
+> A machine-checked public-state policy controls whether the reversible hold capability exists and whether the room may accept it; the receipt proves authority conditions, not physical-world truth.
+
+Status: **technically graduated into the technical path; final cold-view communication gate pending.**
+
+- Read the current first-party release and proof-validation docs before selecting the toolchain. The isolated project pins latest stable Lean `4.33.1`, not the newer `4.34.0-rc2` prerelease, and intentionally has no mathlib dependency or global default toolchain.
+- Lean enumerates the complete `showLive × evidenceOutcome × hasHold` state space. Exactly one of 16 cases allows `reserve_current_lot`: the show is live, public evidence is ready, and no hold exists.
+- The generated, source-hashed JSON table is load-bearing. The buyer's dynamic WebMCP registration and the authoritative hold handler both query it; no Lean runtime or proof service exists in the deployed request path.
+- Four theorems freeze the narrow claims: `reserveToolAvailable_sound`, `sellerEnvelope_privateCeiling_noninterference`, `acceptedHold_sound`, and `staleRevision_refused`.
+- `pnpm proof:verify` builds the Lake project, rejects any `sorryAx`, replays the compiled declarations with `leanchecker --fresh`, regenerates all 16 cases, and rejects a stale committed receipt. Runtime schema/adapter tests guard the Lean-to-TypeScript seam.
+- The UI shows one compact receipt beside the tool frontier: current `allow hold` or `withhold hold`, Lean version, source-receipt prefix, and “Abstract policy only—not camera truth.” It is supporting technical evidence, not the first-30-second hero.
+- A full native Chrome journey passed all nine buyer → host → room → merchant → room phases with the generated policy in both registration and acceptance. At evidence-ready state, the green receipt appeared beside the newly registered `reserve_current_lot` tool.
+
+Limits are part of the experiment result. Lean does not establish image authenticity, seller honesty, browser conformance, complete implementation equivalence, or zero statistical inference. The private-ceiling theorem applies to the modeled seller projection; separate application tests and native acceptance verify the implementation seam.
+
+Decision: keep the proof because it is compact, honest, runtime-connected, offline at request time, and materially strengthens the “capability appears only when safe” claim. Do not expand it into a proof service or let it displace the physical human-agent collaboration in the demo. The final graduation gate is an unfamiliar viewer correctly explaining within ten seconds that it controls authority rather than camera truth.

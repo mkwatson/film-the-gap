@@ -39,12 +39,12 @@ inspect + set evidence requirements
   -> request missing host evidence
   -> capture one frame; AI proposes; host accepts/corrects
   -> separate host history attestation resolves eight requests
-  -> reserve only against the exact current quote
+  -> Lean-generated policy unlocks reserve; accept only fresh exact quote
   -> prepare a merchant-owned UCP Cart on a second origin
   -> cancel, reconcile, purge the private handoff, and release
 ```
 
-ChatGPT's in-app Browser completed the earlier model-driven native sequence through request, stale refusal, exact-quote hold, and release. A fresh Chrome 151 runner now repeats the full buyer → separate host → authoritative room → owned merchant → room lifecycle through native WebMCP in roughly five seconds, including dynamic registration on both origins, cancellation, reconciliation, host non-disclosure, and credential-suppressed logs. Camera capture and reviewed evidence pass with Chromium's synthetic camera; Vercel AI Gateway returned a structured abstaining proposal for that non-product frame. The complete offline gate passes 91 app tests, 8 room-Worker tests, 12 merchant-Worker tests, strict TypeScript, formatting, lint, two Worker dry-runs, and a Next.js production build. The released UCP profile, direct Cart, and error outcome also pass an opt-in validation against the official `2026-08-25` schema graph. A separate public-release verifier binds the app and both Workers to one reviewed commit and exercises health, UCP, pages, CORS, and a real disposable room without logging credentials.
+ChatGPT's in-app Browser completed the earlier model-driven native sequence through request, stale refusal, exact-quote hold, and release. A fresh Chrome 151 runner now repeats the full buyer → separate host → authoritative room → owned merchant → room lifecycle through native WebMCP in roughly five seconds, including dynamic registration on both origins, cancellation, reconciliation, host non-disclosure, and credential-suppressed logs. Camera capture and reviewed evidence pass with Chromium's synthetic camera; Vercel AI Gateway returned a structured abstaining proposal for that non-product frame. A Lean `4.33.1` project now emits a source-bound complete policy table that gates the hold in both registration and authoritative acceptance; its four deliberately narrow theorems replay under `leanchecker --fresh` without `sorryAx`. The complete offline gate passes 97 app tests, 8 room-Worker tests, 12 merchant-Worker tests, proof replay, strict TypeScript, formatting, lint, two Worker dry-runs, and a Next.js production build. The released UCP profile, direct Cart, and error outcome also pass an opt-in validation against the official `2026-08-25` schema graph. A separate public-release verifier binds the app and both Workers to one reviewed commit and exercises health, UCP, pages, CORS, and a real disposable room without logging credentials.
 
 This is a data-minimization boundary, not a proof of zero statistical inference. A keyframe digest identifies bytes; it does not prove authenticity or repair history. A model can describe visible pixels but cannot establish a historical “never repaired” fact, so the host attestation remains separate. The other seven agents are deterministic test signals, not external buyers. Voice transport/transcription/delegation works, but the delegated task did not inherit the UI-owned Browser, so autonomous Voice-to-Site-Tools remains unproven. Stable public origins, a rights-cleared physical-item/phone run, the full current model-driven ChatGPT journey, and unfamiliar-person comprehension remain explicit final gates.
 
@@ -232,7 +232,7 @@ Each rung must remain a complete demo when every later rung is disabled.
 5. **Camera-to-evidence:** opt-in capture, bounded provenance, server digest verification, frame-cited proposal contract, authenticated abstaining model call, host accept/correct, manual fallback, and intentional selected-frame publication pass. One rights-cleared physical-frame run remains the acceptance gate.
 6. **Two-way physical context:** the buyer's camera supplies a second observation and the agent directs a short cross-camera inspection.
 7. **Transactional trust:** the owned UCP merchant now owns authoritative Cart terms, lifecycle, and handoff. Shopify-native catalog/checkout/consent/permalink/post-purchase state remains an additive later boundary only if access and reliability strengthen the judged path.
-8. **Proof-carrying authority:** a Lean-checked invariant controls a consequential capability only when the proof is judge-visible and stronger than ordinary runtime validation.
+8. **Proof-carrying authority:** a Lean-generated 16-case table now controls hold registration and authoritative acceptance. Its visible receipt states the narrow authority guarantee and disclaims camera truth; an unfamiliar-viewer comprehension gate remains.
 9. **Market-scale coordination:** real buyer agents aggregate unresolved demand and direct the highest-value demonstrations without overwhelming the host.
 
 ## Forty-five-second demo
@@ -290,15 +290,14 @@ Drop or substantially reframe this concept if any of these survive a real browse
 3. Add near-live transcription and timestamped Vidably evidence extraction through a clean, licensed boundary.
 4. Let a buyer camera supply a second physical observation and have the agent direct a short cross-camera inspection.
 5. Add Shopify-native catalog/checkout/consent/permalink or post-purchase state only where an owned store can make it authoritative and judge-reliable.
-6. Let a Lean-checked quote/authority invariant visibly gate a consequential capability.
+6. Extend formal coverage only if another small invariant becomes both load-bearing and instantly understandable; do not build a general proof service.
 7. Add a rights-cleared live broadcast transport and many real participants without weakening the deterministic judge path.
 
-## Explicit non-goals for the walking skeleton
+## Explicit non-goals for the submitted core
 
 - No clone of Whatnot.
 - No real payments or binding bids.
 - No autonomous unattended shopping.
-- No UCP implementation before the live collaboration proves itself.
-- No Lean implementation before a visible invariant is stable.
+- No decorative UCP or formal-verification surface disconnected from runtime authority.
 - No production Vidably changes.
 - No public deployment or repository action without Mark's approval.

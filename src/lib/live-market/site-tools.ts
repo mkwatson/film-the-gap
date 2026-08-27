@@ -339,7 +339,7 @@ function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextT
       name: 'reserve_current_lot',
       title: 'Create exact-quote reversible hold',
       description:
-        'Create a reversible 10-minute hold after public evidence is ready, using the exact current all-in quote from inspect_live_show. Changed quotes are rejected. This takes no payment.',
+        'Create a reversible 10-minute hold after public evidence is ready, using the exact current all-in quote from inspect_live_show. A Lean-generated policy table controls whether this tool exists. Changed quotes are rejected. This takes no payment.',
       inputSchema: reservationInputSchema,
       annotations: {
         readOnlyHint: false,

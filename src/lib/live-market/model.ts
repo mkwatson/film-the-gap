@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { ucpProtocolVersion } from '../ucp/profile';
+import { decideReservePolicy } from './certified-policy';
 
 export const showStatuses = ['preview', 'live', 'closed'] as const;
 export type ShowStatus = (typeof showStatuses)[number];
@@ -830,7 +831,12 @@ export function reserveCurrentLot(
   }
 
   const evaluation = evaluateEvidence(state);
-  if (evaluation.outcome !== 'ready') {
+  const reservePolicy = decideReservePolicy({
+    showLive: state.showStatus === 'live',
+    evidenceOutcome: evaluation.outcome,
+    hasHold: state.reservation !== null,
+  });
+  if (!reservePolicy.reserveToolAvailable) {
     const blockers = [...evaluation.violated, ...evaluation.unresolved];
     const reason =
       evaluation.outcome === 'no-requirements'
@@ -1067,7 +1073,12 @@ export function getAvailableToolNames(state: LiveMarketState): readonly string[]
     names.push('request_host_evidence');
   }
 
-  if (evaluation.outcome === 'ready' && state.reservation === null) {
+  const reservePolicy = decideReservePolicy({
+    showLive: state.showStatus === 'live',
+    evidenceOutcome: evaluation.outcome,
+    hasHold: state.reservation !== null,
+  });
+  if (reservePolicy.reserveToolAvailable) {
     names.push('reserve_current_lot');
   }
 

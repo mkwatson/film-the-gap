@@ -15,6 +15,7 @@ merchant-worker/.wrangler/
 node_modules/
 out/
 tmp/
+proof/.lake/
 *.private.md
 *.log
 *.tsbuildinfo
