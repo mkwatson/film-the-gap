@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultEvidenceRequirements } from '@/lib/live-market/model';
 
-import { LiveMarket } from './live-market';
+import { getEvidenceRoomReadiness, LiveMarket } from './live-market';
 
 interface Registration {
   readonly tool: WebMCP.ModelContextTool;
@@ -63,6 +63,25 @@ afterEach(() => {
 });
 
 describe('LiveMarket', () => {
+  it('reports remote authority only after an authenticated room exists', () => {
+    expect(getEvidenceRoomReadiness('local', null, 'solo')).toEqual({
+      value: 'Same-screen fallback',
+      phase: 'fallback',
+    });
+    expect(getEvidenceRoomReadiness('remote', null, 'checking')).toEqual({
+      value: 'Connecting',
+      phase: 'waiting',
+    });
+    expect(getEvidenceRoomReadiness('remote', null, 'solo')).toEqual({
+      value: 'Unavailable',
+      phase: 'attention',
+    });
+    expect(getEvidenceRoomReadiness('remote', 'ROOM234', 'waiting')).toEqual({
+      value: 'Durable Object live',
+      phase: 'ready',
+    });
+  });
+
   it('starts with a copyable product-only agent brief and honest fallback preflight', async () => {
     const writeText = vi.fn(async (text: string): Promise<void> => {
       void text;

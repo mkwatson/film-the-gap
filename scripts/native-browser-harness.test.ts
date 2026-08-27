@@ -62,6 +62,7 @@ describe('native browser acceptance harness', () => {
     expect(config.commandTimeoutMs).toBe(12_000);
     expect(config.headed).toBe(true);
     expect(config.authenticatedCrowd).toBe(false);
+    expect(config.appCookieFile).toBeNull();
   });
 
   it('enables the authenticated crowd lane only by explicit opt-in', () => {
@@ -83,6 +84,16 @@ describe('native browser acceptance harness', () => {
         EVIDENCE_ACCEPTANCE_AUTHENTICATED_CROWD: 'true',
       }).authenticatedCrowd,
     ).toBe(false);
+  });
+
+  it('resolves an optional protected-app cookie file without reading its contents', () => {
+    const config = readAcceptanceConfig({
+      EVIDENCE_ACCEPTANCE_ROOM_ORIGIN: 'https://room.example',
+      EVIDENCE_ACCEPTANCE_MERCHANT_ORIGIN: 'https://merchant.example',
+      EVIDENCE_ACCEPTANCE_APP_COOKIE_FILE: 'tmp/protected-preview.cookies',
+    });
+
+    expect(config.appCookieFile).toMatch(/\/tmp\/protected-preview\.cookies$/);
   });
 
   it('rejects credentialed, path-bearing, or insecure service URLs', () => {
@@ -135,6 +146,7 @@ describe('native browser acceptance harness', () => {
     expect(containsPrivateMaterial('maximum price is $450')).toBe(true);
     expect(containsPrivateMaterial('https://example.test/cart/c/privateCredential123')).toBe(true);
     expect(containsPrivateMaterial('https://example.test/?token=privateCredential123')).toBe(true);
+    expect(containsPrivateMaterial('_vercel_jwt=privateCredential123')).toBe(true);
     expect(containsPrivateMaterial('Maximum price stays private.')).toBe(false);
   });
 

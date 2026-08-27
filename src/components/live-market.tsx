@@ -16,6 +16,7 @@ import {
   getEvidenceDemandSummary,
   type EvidenceStatus,
 } from '@/lib/live-market/model';
+import type { RoomTransport } from '@/lib/live-market/live-room-controller';
 import { type SiteToolRuntime } from '@/lib/live-market/site-tools';
 import { useLiveRoom, type RoomConnectionPhase } from '@/lib/live-market/use-live-room';
 import { useSiteTools } from '@/lib/live-market/use-site-tools';
@@ -56,6 +57,28 @@ function roomConnectionCopy(phase: RoomConnectionPhase): string {
     return 'Single-screen mode';
   }
   return 'Connecting room';
+}
+
+interface EvidenceRoomReadiness {
+  readonly value: 'Same-screen fallback' | 'Connecting' | 'Unavailable' | 'Durable Object live';
+  readonly phase: 'fallback' | 'waiting' | 'attention' | 'ready';
+}
+
+export function getEvidenceRoomReadiness(
+  transport: RoomTransport,
+  roomId: string | null,
+  connectionPhase: RoomConnectionPhase,
+): EvidenceRoomReadiness {
+  if (transport === 'local') {
+    return { value: 'Same-screen fallback', phase: 'fallback' };
+  }
+  if (connectionPhase === 'solo') {
+    return { value: 'Unavailable', phase: 'attention' };
+  }
+  if (roomId === null || connectionPhase === 'checking') {
+    return { value: 'Connecting', phase: 'waiting' };
+  }
+  return { value: 'Durable Object live', phase: 'ready' };
 }
 
 function formatMinorAmount(amount: number, currency: string): string {
@@ -147,6 +170,8 @@ export function LiveMarket(): React.JSX.Element {
           ? 'Public evidence ready'
           : 'Evidence conflicts';
 
+  const evidenceRoomReadiness = getEvidenceRoomReadiness(transport, roomId, connectionPhase);
+
   const launchReadiness = [
     {
       label: 'Native WebMCP',
@@ -165,8 +190,7 @@ export function LiveMarket(): React.JSX.Element {
     },
     {
       label: 'Evidence room',
-      value: transport === 'remote' ? 'Durable Object live' : 'Same-screen fallback',
-      phase: transport === 'remote' ? 'ready' : 'fallback',
+      ...evidenceRoomReadiness,
     },
     {
       label: 'Seller phone',
