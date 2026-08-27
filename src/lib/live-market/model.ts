@@ -809,10 +809,6 @@ export function getAvailableToolNames(state: LiveMarketState): readonly string[]
     names.push('set_evidence_requirements');
   }
 
-  if (state.showStatus === 'live') {
-    names.push('inspect_current_lot');
-  }
-
   const repairRequestIsQueued = state.evidenceRequests.some(
     ({ kind, status }) => kind === 'repair_history' && status === 'queued',
   );

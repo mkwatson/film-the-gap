@@ -90,7 +90,6 @@ describe('LiveMarket', () => {
       expect(modelContext.activeToolNames()).toEqual([
         'inspect_live_show',
         'set_evidence_requirements',
-        'inspect_current_lot',
       ]);
     });
 

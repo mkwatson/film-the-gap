@@ -328,6 +328,18 @@ Protocol:
 
 Decision rule: graduate only if the golden path passes repeatedly from a clean state and the description/video/README each make the project independently understandable.
 
+#### E9.1 — Compact tool contract result
+
+Status: **deterministic and native-Chrome pass; exact ChatGPT rerun pending.**
+
+- Re-read the current OpenAI Site Tools page, Chrome best practices/evals, and rendered WebMCP draft on 2026-08-26 PT.
+- Removed `inspect_current_lot`, whose implementation and output duplicated `inspect_live_show`. The initial surface is now one read plus one bounded write.
+- Rewrote tool descriptions around the positive action and state in which it is useful.
+- Replaced the verbose audit snapshot with a decision packet capped at 3,500 serialized characters in every common tested state. Full activity and pixel presentation remain visible in the human UI; the tool packet retains only information needed for the next agent action.
+- Native isolated Chrome passed discovery and execution across `2 → 3 → 2 → 3 → 2 → 3` tools, including dynamic request disappearance, stale-quote refusal, exact hold, and release. The browser showed every state change with no page errors.
+- Formatting, zero-warning lint, strict TypeScript, 42 tests across 9 files, and the Next.js production build pass.
+- Do not graduate E9 from this sub-result: the current two-tool initial surface still needs direct and ambiguous model-driven prompts in the exact ChatGPT client, plus cancellation/duplicate/reconnect datasets and public-origin clean-room testing.
+
 ### E10 — Frontier receipt (optional)
 
 Only after E7-E9 pass, test whether a runtime-connected Lean receipt can communicate in under ten seconds that a stale quote/evidence revision or unauthorized transition is refused. The theorem may cover the formal state model and payload projection only. It must not claim to prove image truth, seller honesty, browser conformance, or implementation equivalence.

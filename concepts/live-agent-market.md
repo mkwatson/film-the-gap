@@ -125,16 +125,15 @@ The current implementation will not model money movement, payment, auction settl
 
 Always available:
 
-| Tool                 | Effect                                                      |
-| -------------------- | ----------------------------------------------------------- |
-| `inspect_live_show`  | Read current show, lot, mandate status, and recent activity |
-| `set_buying_mandate` | Replace the visible structured buyer mandate                |
+| Tool                | Effect                                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| `inspect_live_show` | Read the exact quote, public evidence, privacy receipt, aggregate request, hold, and next capability |
 
-Available only while a lot is live:
+Available while no hold is active:
 
-| Tool                  | Effect                                                         |
-| --------------------- | -------------------------------------------------------------- |
-| `inspect_current_lot` | Read authoritative lot facts, evidence, and mandate evaluation |
+| Tool                        | Effect                                                              |
+| --------------------------- | ------------------------------------------------------------------- |
+| `set_evidence_requirements` | Publish only the four product-evidence fields the seller can act on |
 
 Available only when the disclosed mandate has unresolved repair history and no matching request is already queued:
 
@@ -147,6 +146,14 @@ Available only when the current lot is eligible and unreserved:
 | Tool                  | Effect                                                    |
 | --------------------- | --------------------------------------------------------- |
 | `reserve_current_lot` | Create a reversible hold, visibly attributed to the agent |
+
+Available only while a hold is active:
+
+| Tool                  | Effect                                              |
+| --------------------- | --------------------------------------------------- |
+| `release_current_lot` | Release the reversible hold and restore valid tools |
+
+The earlier duplicate `inspect_current_lot` read tool was removed after E9 testing showed that it returned the same state as `inspect_live_show`. The current contract exposes one read tool plus only the mutations meaningful in the current page state.
 
 Available only while reserved:
 

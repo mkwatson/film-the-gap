@@ -113,46 +113,82 @@ function validationFailure(error: z.ZodError): {
 }
 
 function snapshot(state: LiveMarketState): object {
+  const evaluation = evaluateEvidence(state);
+  const frontier = getActionFrontier(state);
+  const evidenceFrame = state.lot.evidence.repairEvidenceFrame;
+  const visualReview = state.lot.evidence.visualReview;
+
   return {
-    showStatus: state.showStatus,
-    currentLot: {
+    show: {
+      status: state.showStatus,
+    },
+    lot: {
       id: state.lot.id,
       title: state.lot.title,
       lengthCm: state.lot.lengthCm,
-      currentBid: state.lot.currentBid,
-      shipping: state.lot.shipping,
-      allInPrice: getAllInPrice(state.lot),
-      publicEvidence: {
-        edgeCondition: state.lot.evidence.edgeCondition,
-        edgeEvidenceSource: state.lot.evidence.edgeEvidenceSource,
-        repairHistory: state.lot.evidence.repairHistory,
-        repairEvidenceSource: state.lot.evidence.repairEvidenceSource,
-        repairEvidenceFrame: state.lot.evidence.repairEvidenceFrame,
-        selectedFramePubliclyVisible: state.lot.evidence.repairEvidenceImage !== null,
-        visualReview: state.lot.evidence.visualReview,
-        historicalEvidenceLimitation,
+      exactAllInQuote: getAllInPrice(state.lot),
+      closesInSeconds: state.lot.closesInSeconds,
+    },
+    decisionEvidence: {
+      requirements: state.evidenceRequirements,
+      outcome: evaluation.outcome,
+      conditions: evaluation.conditions.map(({ id, status, detail, source }) => ({
+        id,
+        status,
+        detail,
+        source,
+      })),
+      unresolved: evaluation.unresolved,
+      violated: evaluation.violated,
+    },
+    publishedEvidence: {
+      edge: {
+        condition: state.lot.evidence.edgeCondition,
+        source: state.lot.evidence.edgeEvidenceSource,
       },
+      repairHistory: state.lot.evidence.repairHistory,
+      repairHistorySource: state.lot.evidence.repairEvidenceSource,
+      selectedFrame:
+        evidenceFrame === null
+          ? null
+          : {
+              kind: evidenceFrame.kind,
+              frameId: evidenceFrame.frameId,
+              capturedAt: evidenceFrame.capturedAt,
+              showOffsetSeconds: evidenceFrame.showOffsetSeconds,
+              sha256: evidenceFrame.sha256,
+              widthPx: evidenceFrame.widthPx,
+              heightPx: evidenceFrame.heightPx,
+            },
+      selectedFramePubliclyVisible: state.lot.evidence.repairEvidenceImage !== null,
+      reviewedObservation:
+        visualReview === null
+          ? null
+          : {
+              source: visualReview.source,
+              modelId: visualReview.modelId,
+              hostDecision: visualReview.hostDecision,
+              baseVisibility: visualReview.reviewedFinding.baseVisibility,
+              surfaceFinding: visualReview.reviewedFinding.surfaceFinding,
+              confidence: visualReview.reviewedFinding.confidence,
+              summary: visualReview.reviewedFinding.summary,
+            },
+      limitation: historicalEvidenceLimitation,
     },
-    sellerVisibleEvidenceRequirements: state.evidenceRequirements,
-    evidenceEvaluation: evaluateEvidence(state),
-    privacyBoundary: {
-      receivedFromBuyer:
+    hostRequest: getEvidenceDemandSummary(state, 'repair_history'),
+    hold: state.reservation,
+    next: {
+      actor: frontier.next.actor,
+      action: frontier.next.action,
+      instruction: frontier.next.instruction,
+      availableTools: getAvailableToolNames(state),
+    },
+    privacyReceipt: {
+      sharedFields:
         state.evidenceRequirements === null ? [] : Object.keys(state.evidenceRequirements),
-      notCollected: [
-        'maximum willingness to pay',
-        'private price ceiling',
-        'buyer profile',
-        'urgency',
-      ],
-      actionBinding: 'A hold accepts only the exact current page quote.',
-      guarantee: 'Data minimization, not a claim of zero statistical inference.',
+      withheldFields: ['maximum price', 'buyer identity', 'urgency', 'preference weights'],
+      holdBinding: 'exact current page quote only',
     },
-    aggregateEvidenceDemand: getEvidenceDemandSummary(state, 'repair_history'),
-    actionFrontier: getActionFrontier(state),
-    pendingHostRequests: state.evidenceRequests.filter(({ status }) => status === 'queued'),
-    reservation: state.reservation,
-    currentlyAvailableTools: getAvailableToolNames(state),
-    recentActivity: state.activity.slice(-5),
   };
 }
 
@@ -174,7 +210,7 @@ function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextT
       name: 'inspect_live_show',
       title: 'Inspect live show',
       description:
-        'Read the current live lot, seller-visible evidence requirements, privacy receipt, aggregate host question, action frontier, reservation, and recent activity. Use this first for the live show.',
+        'Read the current lot, exact all-in quote, public evidence, privacy receipt, aggregate host request, hold, and next available action. Use when arriving or after the page changes.',
       inputSchema: emptyInputSchema,
       annotations: {
         readOnlyHint: true,
@@ -193,7 +229,7 @@ function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextT
       name: 'set_evidence_requirements',
       title: 'Share product evidence requirements',
       description:
-        'Replace only the four product-evidence requirements disclosed to this page when no hold is active. Never pass the buyer’s budget, maximum price, urgency, profile, preference weights, or wider conversation. This does not bid, reserve, purchase, or release a hold.',
+        'Publish the four product-evidence requirements this seller can act on: length range, visible-edge requirement, and repair-history policy. The schema accepts only those fields and changes no quote or hold.',
       inputSchema: evidenceRequirementsInputSchema,
       annotations: {
         readOnlyHint: false,
@@ -212,29 +248,10 @@ function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextT
       },
     },
     {
-      name: 'inspect_current_lot',
-      title: 'Inspect current lot and exact quote',
-      description:
-        'Read authoritative page state, the exact current all-in quote, public evidence evaluation, and the next capability frontier. Compare price to private buyer context outside this page before taking an action.',
-      inputSchema: emptyInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        untrustedContentHint: true,
-      },
-      execute: async (input, options?: WebMCP.ToolExecuteCallbackOptions): Promise<object> => {
-        checkAbort(options);
-        const parsed = emptyObjectSchema.safeParse(input);
-        if (!parsed.success) {
-          return validationFailure(parsed.error);
-        }
-        return snapshot(runtime.readState());
-      },
-    },
-    {
       name: 'request_host_evidence',
       title: 'Join missing-evidence request',
       description:
-        'Join the normalized repair-history question in the visible host queue. The page aggregates only the evidence kind, not buyer profiles, private prices, or individual decisions. A future host answer remains untrusted evidence.',
+        'Add this page’s repair-history need to the host’s anonymous aggregate queue. The host receives one normalized product question and the resulting answer remains reviewable public evidence.',
       inputSchema: evidenceRequestInputSchema,
       annotations: {
         readOnlyHint: false,
@@ -254,7 +271,7 @@ function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextT
       name: 'reserve_current_lot',
       title: 'Create exact-quote reversible hold',
       description:
-        'Create a reversible 10-minute hold only after public evidence is ready. Pass the exact all-in quote just inspected—not the buyer’s ceiling. A stale quote is rejected. This does not bid, charge money, or complete a purchase.',
+        'Create a reversible 10-minute hold after public evidence is ready, using the exact current all-in quote from inspect_live_show. Changed quotes are rejected. This takes no payment.',
       inputSchema: reservationInputSchema,
       annotations: {
         readOnlyHint: false,

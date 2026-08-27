@@ -101,9 +101,9 @@ describe('WebMCP Site Tools', () => {
     const inspectOutput = await getTool(runtime, 'inspect_live_show').execute({}, executeOptions);
     expectNoPrivateBuyerFields(inspectOutput);
     expect(inspectOutput).toMatchObject({
-      privacyBoundary: {
-        receivedFromBuyer: [],
-        actionBinding: 'A hold accepts only the exact current page quote.',
+      privacyReceipt: {
+        sharedFields: [],
+        holdBinding: 'exact current page quote only',
       },
     });
   });
@@ -127,7 +127,7 @@ describe('WebMCP Site Tools', () => {
     expect(requestOutput).toMatchObject({
       ok: true,
       state: {
-        aggregateEvidenceDemand: {
+        hostRequest: {
           totalAgentCount: 8,
           status: 'queued',
         },
@@ -205,24 +205,22 @@ describe('WebMCP Site Tools', () => {
       ),
     );
 
-    const output = await getTool(runtime, 'inspect_current_lot').execute({}, executeOptions);
+    const output = await getTool(runtime, 'inspect_live_show').execute({}, executeOptions);
 
     expect(output).toMatchObject({
-      currentLot: {
-        publicEvidence: {
-          repairHistory: 'none',
-          repairEvidenceFrame: {
-            kind: 'camera-keyframe',
-            frameId: 'camera-9dff50df08c6',
-            widthPx: 960,
-            heightPx: 540,
-          },
-          selectedFramePubliclyVisible: true,
-          visualReview: {
-            source: 'ai-gateway',
-            modelId: 'openai/gpt-5.6-sol',
-            hostDecision: 'accepted',
-          },
+      publishedEvidence: {
+        repairHistory: 'none',
+        selectedFrame: {
+          kind: 'camera-keyframe',
+          frameId: 'camera-9dff50df08c6',
+          widthPx: 960,
+          heightPx: 540,
+        },
+        selectedFramePubliclyVisible: true,
+        reviewedObservation: {
+          source: 'ai-gateway',
+          modelId: 'openai/gpt-5.6-sol',
+          hostDecision: 'accepted',
         },
       },
     });
@@ -265,17 +263,37 @@ describe('WebMCP Site Tools', () => {
     const runtime = createRuntime();
     const initial = await getTool(runtime, 'inspect_live_show').execute({}, executeOptions);
     expect(initial).toMatchObject({
-      actionFrontier: {
-        next: { action: 'set_evidence_requirements' },
-        blocked: [{ name: 'request_host_evidence' }, { name: 'reserve_current_lot' }],
+      next: {
+        action: 'set_evidence_requirements',
+        availableTools: ['inspect_live_show', 'set_evidence_requirements'],
       },
-      currentlyAvailableTools: [
-        'inspect_live_show',
-        'set_evidence_requirements',
-        'inspect_current_lot',
-      ],
     });
     expect(createSiteTools(runtime).map(({ name }) => name)).not.toContain('reserve_current_lot');
+  });
+
+  it('keeps common tool results within a compact agent context budget', async () => {
+    const runtime = createRuntime();
+    const outputs: unknown[] = [];
+
+    outputs.push(await getTool(runtime, 'inspect_live_show').execute({}, executeOptions));
+    outputs.push(
+      await getTool(runtime, 'set_evidence_requirements').execute(
+        defaultEvidenceRequirements,
+        executeOptions,
+      ),
+    );
+    outputs.push(
+      await getTool(runtime, 'request_host_evidence').execute(
+        { kind: 'repair_history' },
+        executeOptions,
+      ),
+    );
+    runtime.transition((state) => answerRepairHistory(state, 'none'));
+    outputs.push(await getTool(runtime, 'inspect_live_show').execute({}, executeOptions));
+
+    for (const output of outputs) {
+      expect(JSON.stringify(output).length).toBeLessThanOrEqual(3_500);
+    }
   });
 
   it('tolerates judged runtime callback shapes without a usable signal', async () => {
@@ -291,8 +309,8 @@ describe('WebMCP Site Tools', () => {
       {} as unknown as WebMCP.ToolExecuteCallbackOptions,
     );
 
-    expect(outputWithoutOptions).toMatchObject({ showStatus: 'live' });
-    expect(outputWithoutSignal).toMatchObject({ showStatus: 'live' });
+    expect(outputWithoutOptions).toMatchObject({ show: { status: 'live' } });
+    expect(outputWithoutSignal).toMatchObject({ show: { status: 'live' } });
   });
 
   it('propagates cancellation before performing a mutation', async () => {

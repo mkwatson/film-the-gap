@@ -59,7 +59,6 @@ describe('live market state machine', () => {
     expect(getAvailableToolNames(initial)).toEqual([
       'inspect_live_show',
       'set_evidence_requirements',
-      'inspect_current_lot',
     ]);
 
     const scoped = setEvidenceRequirements(initial, defaultEvidenceRequirements, 'agent').state;
