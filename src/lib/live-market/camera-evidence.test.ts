@@ -60,6 +60,28 @@ describe('camera evidence provenance', () => {
     await expect(canvasToJpegBlob(canvas)).rejects.toThrow('could not encode');
   });
 
+  it('reduces JPEG quality until the frame fits the remote room budget', async () => {
+    const canvas = document.createElement('canvas');
+    let attempts = 0;
+    canvas.toBlob = (callback): void => {
+      attempts += 1;
+      const size = attempts === 1 ? 700_000 : 500_000;
+      callback(new Blob([new Uint8Array(size)], { type: 'image/jpeg' }));
+    };
+
+    await expect(canvasToJpegBlob(canvas)).resolves.toMatchObject({ size: 500_000 });
+    expect(attempts).toBe(2);
+  });
+
+  it('asks the host to retry when no safe JPEG encoding fits', async () => {
+    const canvas = document.createElement('canvas');
+    canvas.toBlob = (callback): void => {
+      callback(new Blob([new Uint8Array(700_000)], { type: 'image/jpeg' }));
+    };
+
+    await expect(canvasToJpegBlob(canvas)).rejects.toThrow('too detailed to publish safely');
+  });
+
   it('serializes only a selected non-empty JPEG for intentional publication', async () => {
     await expect(blobToDataUrl(new Blob(['frame'], { type: 'image/jpeg' }))).resolves.toBe(
       'data:image/jpeg;base64,ZnJhbWU=',

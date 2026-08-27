@@ -195,6 +195,7 @@ function roomError(
   message: string,
   recoverable: boolean,
   currentRevision: number | null,
+  commandId: string | null = null,
 ): void {
   send(socket, {
     type: 'room-error',
@@ -202,6 +203,7 @@ function roomError(
     message,
     recoverable,
     currentRevision,
+    commandId,
   });
 }
 
@@ -386,6 +388,7 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
         'This room role cannot perform that command.',
         true,
         room.revision,
+        message.commandId,
       );
       return;
     }
@@ -455,6 +458,7 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
         `Expected revision ${expectedRevision}; current revision is ${room.revision}.`,
         true,
         room.revision,
+        commandId,
       );
       this.sendSnapshot(socket, true);
       return;

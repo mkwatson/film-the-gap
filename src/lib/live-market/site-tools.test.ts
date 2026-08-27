@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  answerRepairHistory,
   createInitialState,
   defaultEvidenceRequirements,
   getAllInPrice,
   type LiveMarketState,
-  type TransitionResult,
 } from './model';
-import { createSiteTools, type MarketTransition, type SiteToolRuntime } from './site-tools';
+import { applyRoomCommand, type RoomCommand } from './room-command';
+import { createSiteTools, type SiteToolRuntime } from './site-tools';
 
 interface MutableRuntime extends SiteToolRuntime {
   readonly getState: () => LiveMarketState;
+  readonly setStateForTest: (next: (state: LiveMarketState) => LiveMarketState) => void;
 }
 
 function createRuntime(): MutableRuntime {
@@ -20,10 +20,13 @@ function createRuntime(): MutableRuntime {
   return {
     readState: () => state,
     getState: () => state,
-    transition: (transition: MarketTransition): TransitionResult => {
-      const result = transition(state);
+    dispatch: async (command: RoomCommand) => {
+      const result = applyRoomCommand(state, command);
       state = result.state;
       return result;
+    },
+    setStateForTest: (next) => {
+      state = next(state);
     },
   };
 }
@@ -137,7 +140,7 @@ describe('WebMCP Site Tools', () => {
     expectNoPrivateBuyerFields(createSiteTools(runtime));
     expect(createSiteTools(runtime).map(({ name }) => name)).not.toContain('request_host_evidence');
 
-    runtime.transition((state) => answerRepairHistory(state, 'none'));
+    await runtime.dispatch({ kind: 'answer-repair-history', repairHistory: 'none' });
     expectNoPrivateBuyerFields(createSiteTools(runtime));
     expect(createSiteTools(runtime).map(({ name }) => name)).toContain('reserve_current_lot');
 
@@ -187,23 +190,21 @@ describe('WebMCP Site Tools', () => {
       summary: 'The full base is visible with no obvious repair marker.',
       suggestedNextView: null,
     } as const;
-    runtime.transition((state) =>
-      answerRepairHistory(
-        state,
-        'none',
-        frame,
-        {
-          source: 'ai-gateway',
-          modelId: 'openai/gpt-5.6-sol',
-          frameId: frame.frameId,
-          frameSha256: frame.sha256,
-          proposal: finding,
-          reviewedFinding: finding,
-          hostDecision: 'accepted',
-        },
-        'data:image/jpeg;base64,ZnJhbWU=',
-      ),
-    );
+    await runtime.dispatch({
+      kind: 'answer-repair-history',
+      repairHistory: 'none',
+      evidenceFrame: frame,
+      visualReview: {
+        source: 'ai-gateway',
+        modelId: 'openai/gpt-5.6-sol',
+        frameId: frame.frameId,
+        frameSha256: frame.sha256,
+        proposal: finding,
+        reviewedFinding: finding,
+        hostDecision: 'accepted',
+      },
+      publicEvidenceImage: 'data:image/jpeg;base64,ZnJhbWU=',
+    });
 
     const output = await getTool(runtime, 'inspect_live_show').execute({}, executeOptions);
 
@@ -234,19 +235,15 @@ describe('WebMCP Site Tools', () => {
       defaultEvidenceRequirements,
       executeOptions,
     );
-    runtime.transition((state) => answerRepairHistory(state, 'none'));
+    await runtime.dispatch({ kind: 'answer-repair-history', repairHistory: 'none' });
     const reserveTool = getTool(runtime, 'reserve_current_lot');
     const inspectedQuote = getAllInPrice(runtime.getState().lot);
 
-    runtime.transition((state) => ({
-      ok: true,
-      message: 'Fixture price advanced.',
-      state: {
-        ...state,
-        lot: {
-          ...state.lot,
-          currentBid: state.lot.currentBid + 10,
-        },
+    runtime.setStateForTest((state) => ({
+      ...state,
+      lot: {
+        ...state.lot,
+        currentBid: state.lot.currentBid + 10,
       },
     }));
     const output = await reserveTool.execute(
@@ -288,7 +285,7 @@ describe('WebMCP Site Tools', () => {
         executeOptions,
       ),
     );
-    runtime.transition((state) => answerRepairHistory(state, 'none'));
+    await runtime.dispatch({ kind: 'answer-repair-history', repairHistory: 'none' });
     outputs.push(await getTool(runtime, 'inspect_live_show').execute({}, executeOptions));
 
     for (const output of outputs) {

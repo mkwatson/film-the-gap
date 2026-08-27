@@ -188,6 +188,15 @@ button:focus-visible {
   color: var(--amber);
 }
 
+.room-code {
+  color: var(--cyan);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .quiet-button,
 .secondary-button,
 .host-controls button {
@@ -636,6 +645,20 @@ button:focus-visible {
 .host-controls .danger-button:hover {
   border-color: rgba(255, 132, 111, 0.45);
   background: rgba(255, 132, 111, 0.08);
+}
+
+.remote-host-waiting {
+  grid-template-columns: 1fr;
+  padding: 10px;
+  border: 1px dashed rgba(109, 231, 235, 0.32);
+  border-radius: 10px;
+  color: var(--cyan);
+  background: rgba(109, 231, 235, 0.04);
+}
+
+.remote-host-waiting strong {
+  font-size: 10px;
+  line-height: 1.45;
 }
 
 .empty-copy {
@@ -2162,6 +2185,17 @@ button:focus-visible {
   .brand-lockup small,
   .quiet-button {
     display: none;
+  }
+
+  .quiet-button.invite-button {
+    display: inline-flex;
+  }
+
+  .room-code {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .runtime-pill {

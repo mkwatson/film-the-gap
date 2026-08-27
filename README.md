@@ -21,10 +21,16 @@ Requirements: Node.js 24 or newer and pnpm 11.6.0.
 
 ```bash
 pnpm install
-pnpm dev
+pnpm room:dev
 ```
 
-Open `http://localhost:3000` for the buyer/agent view. Open `http://localhost:3000/host` in a second same-origin tab for the progressive host view. The two pages synchronize the request and answer locally; the buyer page retains an in-page host control, so the complete fallback never requires a second tab.
+In a second shell, start the app against the room service:
+
+```bash
+NEXT_PUBLIC_EVIDENCE_ROOM_URL=http://localhost:8787 pnpm dev
+```
+
+Open `http://localhost:3000` for the buyer/agent view. Use its private host invite to open `/host` in a second browser context. The buyer and host authenticate as different roles in one revisioned Cloudflare Durable Object room. The invite token travels in the URL fragment, is stored only for the browser session, and is immediately removed from address history. To exercise the deterministic no-service fallback instead, run `pnpm dev` without the environment variable; that path uses same-origin browser synchronization and retains an in-page host answer.
 
 The host camera is opt-in and requests video only. Camera access requires a secure context (`localhost` or HTTPS) and browser permission. A selected JPEG keyframe is fingerprinted locally with SHA-256. “Analyze” sends only that frame to the server, which recomputes the digest before an optional AI Gateway call. “Publish” intentionally adds the selected JPEG, its provenance, the reviewed visual observation, and the host's separate history attestation to synchronized page state. Site Tool results expose the provenance/review chain and whether the image is visibly published, but omit the JPEG bytes. The digest identifies bytes—it does not prove that the scene is authentic or establish repair history.
 
@@ -42,10 +48,10 @@ That checks formatting, ESLint, strict TypeScript, Vitest behavior, and the prod
 
 - The current lot, decorative video scene, fallback host response, and hold are deterministic challenge fixtures. The camera path is real browser media capture; its automated acceptance run used Chromium's synthetic camera source rather than a physical board.
 - The seven other audience agents are a clearly labeled deterministic demo-room aggregate, not simulated individual buyers or a live backend.
-- The separate host view currently uses same-origin browser synchronization. It proves the two-surface interaction and recovery contract, not a networked phone/desktop room.
+- The remote buyer and host pages use separately authenticated, revisioned, idempotent Cloudflare Durable Object sessions; local browser synchronization remains a fallback. The remote protocol and reconnect behavior pass between two browser clients, but a physical phone on a second network has not yet passed acceptance.
 - The hold is reversible. No tool can bid, charge, purchase, or move money.
 - The full typed core flow is verified in isolated Chrome and ChatGPT desktop's native in-app Browser. Realtime voice transport, transcription, and Voice-to-Codex delegation work, but the delegated task did not inherit the UI-owned Browser binding, so autonomous Voice-to-Site-Tools remains unproven. Repeated navigation/reconnect, Mark's normal Chrome profile, and an MBP clean-room run remain explicit gates.
-- Host camera capture, cleanup, bounded keyframe provenance, selected-frame publication, explicit host review, two-tab propagation, native WebMCP inspection, exact-quote hold, and release pass locally. The AI SDK 7 / AI Gateway route is implemented with current GPT-5.6 Sol → Terra → Luna fallback configuration and tested against a mocked model result; the authenticated live model call remains an acceptance gate because this local project is not linked and has no Gateway credential. Authenticity verification, continuous-video analysis, and real cross-device transport are not claimed.
+- Host camera capture, cleanup, bounded keyframe provenance, selected-frame publication, explicit host review, remote propagation, native WebMCP inspection, exact-quote hold, release, and Worker restart recovery pass locally. The AI SDK 7 / AI Gateway route is implemented with current GPT-5.6 Sol → Terra → Luna fallback configuration and tested against a mocked model result; the authenticated live model call remains an acceptance gate because this local project is not linked and has no Gateway credential. Authenticity verification, continuous-video analysis, and physical-phone acceptance are not claimed.
 - There is no public deployment or repository remote yet.
 - No private Vidably or math research is included in the public worktree.
 

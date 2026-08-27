@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import type { LiveRoomController, RoomConnectionPhase } from './live-room-controller';
 import { createInitialState, type LiveMarketState, type TransitionResult } from './model';
+import { applyRoomCommand, type RoomCommand } from './room-command';
 import {
   advanceRoomVersion,
   compareRoomVersions,
@@ -14,20 +16,9 @@ import {
   type RoomRole,
   type RoomVersion,
 } from './room-sync';
-import type { MarketTransition } from './site-tools';
+import { configuredEvidenceRoomServiceUrl, useRemoteLiveRoom } from './use-remote-live-room';
 
-export const roomConnectionPhases = ['checking', 'solo', 'waiting', 'linked'] as const;
-export type RoomConnectionPhase = (typeof roomConnectionPhases)[number];
-
-export interface LiveRoomController {
-  readonly state: LiveMarketState;
-  readonly lastMessage: string;
-  readonly connectionPhase: RoomConnectionPhase;
-  readonly peerRole: RoomRole | null;
-  readonly readState: () => LiveMarketState;
-  readonly resetDemo: () => void;
-  readonly transition: (next: MarketTransition) => TransitionResult;
-}
+export type { LiveRoomController, RoomConnectionPhase } from './live-room-controller';
 
 const roomId = 'evidence-market-demo-room-v1';
 const roomChannelName = 'webmcp-evidence-market-room-v1';
@@ -38,7 +29,7 @@ function initialMessage(role: RoomRole): string {
     : 'Waiting for public evidence requirements.';
 }
 
-export function useLiveRoom(role: RoomRole): LiveRoomController {
+function useBroadcastLiveRoom(role: RoomRole, enabled: boolean): LiveRoomController {
   const [state, setState] = useState<LiveMarketState>(createInitialState);
   const [lastMessage, setLastMessage] = useState(initialMessage(role));
   const [connectionPhase, setConnectionPhase] = useState<RoomConnectionPhase>('checking');
@@ -70,9 +61,9 @@ export function useLiveRoom(role: RoomRole): LiveRoomController {
     setLastMessage(nextMessage);
   }, []);
 
-  const transition = useCallback(
-    (next: MarketTransition): TransitionResult => {
-      const result = next(stateRef.current);
+  const dispatch = useCallback(
+    async (command: RoomCommand): Promise<TransitionResult> => {
+      const result = applyRoomCommand(stateRef.current, command);
       applyLocalState(result.state, result.message);
 
       const senderId = clientIdRef.current;
@@ -116,6 +107,13 @@ export function useLiveRoom(role: RoomRole): LiveRoomController {
     const senderId = crypto.randomUUID();
     clientIdRef.current = senderId;
     versionRef.current = createInitialRoomVersion(senderId);
+
+    if (!enabled) {
+      scheduleConnectionPhase('solo');
+      return () => {
+        active = false;
+      };
+    }
 
     if (typeof BroadcastChannel === 'undefined') {
       scheduleConnectionPhase('solo');
@@ -163,15 +161,30 @@ export function useLiveRoom(role: RoomRole): LiveRoomController {
         channelRef.current = null;
       }
     };
-  }, [applyLocalState, publishSnapshot, role]);
+  }, [applyLocalState, enabled, publishSnapshot, role]);
 
   return {
     state,
     lastMessage,
     connectionPhase,
     peerRole,
+    transport: 'local',
+    roomId: null,
+    hostInviteUrl: null,
+    expiresAt: null,
+    presence: {
+      buyer: role === 'buyer' || peerRole === 'buyer' ? 1 : 0,
+      host: role === 'host' || peerRole === 'host' ? 1 : 0,
+    },
     readState,
     resetDemo,
-    transition,
+    dispatch,
   };
+}
+
+export function useLiveRoom(role: RoomRole): LiveRoomController {
+  const serviceUrl = configuredEvidenceRoomServiceUrl();
+  const localRoom = useBroadcastLiveRoom(role, serviceUrl === null);
+  const remoteRoom = useRemoteLiveRoom(role, serviceUrl);
+  return serviceUrl === null ? localRoom : remoteRoom;
 }

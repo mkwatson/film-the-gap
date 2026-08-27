@@ -6,9 +6,9 @@ Research state: 2026-08-26 PT. H1-H4 were frozen before the Rung 2 implementatio
 
 - Recoverable historical control: commit `41ab726` (`feat: add native WebMCP live market rung`) preserves the original five-constraint flow.
 - Current working behavior: a buyer or agent shares four seller-visible evidence requirements but no ceiling or profile, joins a normalized request for one missing physical fact, receives a host answer, and creates or releases a reversible exact-quote hold through dynamically registered native Site Tools.
-- Progressive host behavior: `/host` receives the same request in a second same-origin browser context, exposes only the normalized evidence demand, and returns one answer to the buyer view. The single-page host control remains the deterministic fallback.
+- Progressive host behavior: with `NEXT_PUBLIC_EVIDENCE_ROOM_URL` configured, `/host` joins the buyer's temporary server-authoritative room through a fragment-carried private invite, exposes only the normalized evidence demand, and returns one reviewed answer to the buyer. Without the service, the same pages retain the deterministic local fallback.
 - Historical limitation: `41ab726` received, stored, displayed, and returned `maxAllInPrice`. That is now a positive leakage control, not the current contract.
-- Runtime boundary: the complete typed native sequence passes in isolated Chrome and ChatGPT desktop 26.820.60940 with GPT-5.6 Sol. Realtime voice transport/transcription/delegation passes, but the delegated task did not inherit the UI-owned Browser binding. Opt-in host camera capture, server digest verification, explicit review/manual fallback, selected-frame publication, native audit inspection, exact hold, and release pass in Chromium with a synthetic camera. A live authenticated Gateway inference, Mark's normal Chrome profile, physical-camera clean-room acceptance, public deployment, and real cross-device room transport remain open gates.
+- Runtime boundary: the complete typed native sequence passes in isolated Chrome and ChatGPT desktop 26.820.60940 with GPT-5.6 Sol. Realtime voice transport/transcription/delegation passes, but the delegated task did not inherit the UI-owned Browser binding. Opt-in host camera capture, server digest verification, explicit review/manual fallback, selected-frame publication, native audit inspection, exact hold, release, remote reconnect, and Durable Object recovery pass in Chromium with a synthetic camera. A live authenticated Gateway inference, Mark's normal Chrome profile, physical-camera clean-room acceptance, public deployment, and a real phone on a second network remain open gates.
 
 ## What changed in the evidence
 
@@ -248,7 +248,7 @@ Decision: **graduate H5 as the current camera/provenance rung.** A SHA-256 diges
 ### E6 and H6 — Product path passes; authenticated model call remains open
 
 - The app now installs AI SDK 7.0.79 and uses a plain Gateway model ID, which makes Vercel AI Gateway the default provider. The route selects `openai/gpt-5.6-sol`, then configures `gpt-5.6-terra` and `gpt-5.6-luna` as model fallbacks with `zeroDataRetention: true`. These IDs and image-input capabilities were re-read from the unauthenticated live Gateway model catalog on 2026-08-26 rather than assumed from memory.
-- `POST /api/evidence/propose` accepts one JPEG no larger than 1.5 MB, validates its bounded dimensions and derived frame ID, recomputes SHA-256 from the received bytes, and refuses a mismatch before inference.
+- `POST /api/evidence/propose` accepts one JPEG no larger than 650 KB, validates its bounded dimensions and derived frame ID, recomputes SHA-256 from the received bytes, and refuses a mismatch before inference.
 - The AI prompt and Zod output schema permit only base visibility, visible surface signals, confidence, pixel-grounded details, a short summary, and a suggested next view. The server excludes image-bearing request messages/bodies from AI SDK result retention.
 - A model response remains a proposal. The host must accept or correct it; the audit record preserves the model ID, original proposal, reviewed finding, decision, frame ID, and digest. Manual review records `modelId: null` and never masquerades as an AI result.
 - The state machine refuses an unreviewed camera attestation, a review bound to another frame, an unclear/unusable view, a no-repair attestation that conflicts with a visible possible-repair signal, or a camera answer that omits the intentionally public selected JPEG.
@@ -300,12 +300,27 @@ Status: **Cloudflare transport selected and locally proven; app integration and 
 
 - Re-read the current Vercel WebSocket and Cloudflare Durable Object/Hibernation/testing documentation on 2026-08-26 PT. Vercel's newer guidance supports WebSockets but requires an experimental Next upgrade API, Redis/pub-sub across Function instances, reconnect at maximum duration, and reconciliation with an older limits page that still denies server support. One Durable Object directly owns the ordered room, storage, sockets, hibernation recovery, and expiry.
 - Added a standalone Worker package pinned to Wrangler 4.126.0, `@cloudflare/vitest-plugin` 1.1.0, Workers types 5.20260827.1, Vitest 4.1.11, TypeScript 5.9.3, and Zod 4.4.3. It uses the current declarative `exports` configuration and SQLite storage rather than a legacy migration.
-- `POST /rooms` returns one-time buyer and host credentials; only SHA-256 digests enter room storage. WebSocket URLs contain the six-character room ID but no token. Browser origins are allowlisted before a Durable Object is invoked.
+- `POST /rooms` returns short-lived buyer and host role credentials; only SHA-256 digests enter room storage. WebSocket URLs contain the six-character room ID but no token. Browser origins are allowlisted before a Durable Object is invoked.
 - The first socket frame authenticates a role. Subsequent commands pass through a strict shared schema and the existing guarded market state machine. The server—not either client—owns revision, authorization, bounded duplicate history, current state, and expiry.
 - Six tests run inside the current Workers runtime: unique role credentials/CORS, hostile-origin refusal, buyer → host → buyer evidence propagation, role escalation refusal, stale-write refusal, duplicate replay, state and authenticated-socket recovery after forced Durable Object eviction, and alarm-driven deletion/peer closure.
 - The Worker dry-run bundle is 599.57 KiB (90.93 KiB gzip). The combined deterministic gate is now 45 app tests plus 6 Workers-runtime tests.
 
 The checkpoint does **not** yet satisfy E7: the Next app still uses its existing same-browser room, no public Worker has been deployed, and no physical phone has joined. Next, replace closure-based page mutations with serializable commands, add a reconnecting browser client and fragment-carried host invite, then run the real phone/desktop path. The public JPEG must also be reduced below Cloudflare's 2 MB stored-value ceiling; continuous video and private buyer context remain out of the protocol.
+
+#### E7.2 — Browser integration checkpoint
+
+Status: **application integration and remote-camera path proven locally; public deployment and physical-phone graduation pending.**
+
+- Every human control and native Site Tool now dispatches the same strict serializable `RoomCommand` through the same guarded state machine. The local `BroadcastChannel` path remains available when no room service is configured.
+- The remote browser client authenticates in the first WebSocket frame, keeps credentials out of URLs, allows one command in flight, waits for the authoritative snapshot before resolving a Site Tool call, and replays an unacknowledged command with the same command ID after reconnect. Server revisions, duplicate history, and role authorization remain authoritative.
+- The buyer creates a two-hour room and displays a six-character code plus explicit host invite. The host credential is carried in the URL fragment, copied into session storage, and stripped from address history immediately; buyer and host credentials never enter durable page state or Site Tool results.
+- A native Chrome WebMCP run completed requirements → remote host request → separate host answer → 4/4 supported → stale-price refusal → exact `$423` hold → release. Buyer and host refreshes recovered the authoritative state.
+- Stopping and restarting Wrangler cleared peer presence, triggered bounded reconnect backoff, recovered the same Durable Object state, and restored both peers without duplicating commands. A second run published a reviewed 960×540 synthetic-camera JPEG through the room; the buyer rendered the same selected frame and remained ready after another Worker restart.
+- Camera encoding now tries progressively smaller JPEG qualities and refuses publication above 650 KB. The strict room schema permits at most 900,000 data-URL characters, comfortably below Cloudflare's 2 MB value limit while leaving room for the rest of the snapshot.
+- The combined gate passes: formatting, zero-warning ESLint, strict TypeScript, 54 app tests across 12 files, 6 Workers-runtime tests, a Wrangler 4.126.0 dry-run, and the Next.js 16.3.3 production build. Browser console and page-error logs were empty.
+- Fresh 390×844 buyer and host captures had no horizontal overflow. The complete state remained legible: room linkage, privacy boundary, reviewed public frame, 4/4 support, exact-price action, and host-visible aggregate all survived the narrow layout.
+
+This is a real network protocol between two separately authenticated React clients, but both acceptance clients still ran as tabs on the Mac mini and the camera was Chromium's synthetic device. Do not call E7 graduated until an HTTPS deployment passes on a physical phone and the judged desktop client, including reconnect and a rights-cleared object.
 
 ### E8 — Authoritative UCP commerce boundary
 

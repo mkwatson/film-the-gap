@@ -2,13 +2,10 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  answerRepairHistory,
   defaultEvidenceRequirements,
   evaluateEvidence,
   getAvailableToolNames,
   getEvidenceDemandSummary,
-  requestRepairHistory,
-  setEvidenceRequirements,
 } from './model';
 import { type RoomRole } from './room-sync';
 import { useLiveRoom } from './use-live-room';
@@ -55,8 +52,21 @@ interface RoomProbeProps {
   readonly role: RoomRole;
 }
 
+function containsNumericValue(value: unknown, target: number): boolean {
+  if (typeof value === 'number') {
+    return value === target;
+  }
+  if (Array.isArray(value)) {
+    return value.some((item) => containsNumericValue(item, target));
+  }
+  if (typeof value === 'object' && value !== null) {
+    return Object.values(value).some((item) => containsNumericValue(item, target));
+  }
+  return false;
+}
+
 function RoomProbe({ role }: RoomProbeProps): React.JSX.Element {
-  const { state, connectionPhase, resetDemo, transition } = useLiveRoom(role);
+  const { state, connectionPhase, resetDemo, dispatch } = useLiveRoom(role);
   const demand = getEvidenceDemandSummary(state, 'repair_history');
   const outcome = evaluateEvidence(state).outcome;
 
@@ -72,16 +82,18 @@ function RoomProbe({ role }: RoomProbeProps): React.JSX.Element {
           <button
             type="button"
             onClick={() =>
-              transition((current) =>
-                setEvidenceRequirements(current, defaultEvidenceRequirements, 'agent'),
-              )
+              void dispatch({
+                kind: 'set-evidence-requirements',
+                actor: 'agent',
+                requirements: defaultEvidenceRequirements,
+              })
             }
           >
             Buyer shares requirements
           </button>
           <button
             type="button"
-            onClick={() => transition((current) => requestRepairHistory(current, 'agent'))}
+            onClick={() => void dispatch({ kind: 'request-repair-history', actor: 'agent' })}
           >
             Buyer requests evidence
           </button>
@@ -92,7 +104,7 @@ function RoomProbe({ role }: RoomProbeProps): React.JSX.Element {
       ) : (
         <button
           type="button"
-          onClick={() => transition((current) => answerRepairHistory(current, 'none'))}
+          onClick={() => void dispatch({ kind: 'answer-repair-history', repairHistory: 'none' })}
         >
           Host answers evidence
         </button>
@@ -145,7 +157,7 @@ describe('useLiveRoom', () => {
     const serializedMessages = JSON.stringify(FakeBroadcastChannel.sentMessages);
     expect(serializedMessages).not.toContain('maxAllInPrice');
     expect(serializedMessages).not.toContain('buyerProfile');
-    expect(serializedMessages).not.toContain('450');
+    expect(containsNumericValue(FakeBroadcastChannel.sentMessages, 450)).toBe(false);
 
     fireEvent.click(buyer.getByRole('button', { name: 'Buyer resets room' }));
     await waitFor(() => {

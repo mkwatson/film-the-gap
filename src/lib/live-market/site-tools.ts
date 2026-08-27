@@ -8,13 +8,10 @@ import {
   getAllInPrice,
   getAvailableToolNames,
   getEvidenceDemandSummary,
-  releaseCurrentLot,
-  requestRepairHistory,
-  reserveCurrentLot,
-  setEvidenceRequirements,
   type LiveMarketState,
   type TransitionResult,
 } from './model';
+import type { RoomCommand } from './room-command';
 
 const emptyInputSchema = {
   type: 'object',
@@ -85,11 +82,9 @@ const reservationSchema = z.strictObject({
 });
 const emptyObjectSchema = z.strictObject({});
 
-export type MarketTransition = (state: LiveMarketState) => TransitionResult;
-
 export interface SiteToolRuntime {
   readonly readState: () => LiveMarketState;
-  readonly transition: (transition: MarketTransition) => TransitionResult;
+  readonly dispatch: (command: RoomCommand) => Promise<TransitionResult>;
 }
 
 interface ValidationIssue {
@@ -241,9 +236,11 @@ function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextT
         if (!parsed.success) {
           return validationFailure(parsed.error);
         }
-        const result = runtime.transition((state) =>
-          setEvidenceRequirements(state, parsed.data, 'agent'),
-        );
+        const result = await runtime.dispatch({
+          kind: 'set-evidence-requirements',
+          actor: 'agent',
+          requirements: parsed.data,
+        });
         return transitionOutput(result);
       },
     },
@@ -263,7 +260,10 @@ function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextT
         if (!parsed.success) {
           return validationFailure(parsed.error);
         }
-        const result = runtime.transition((state) => requestRepairHistory(state, 'agent'));
+        const result = await runtime.dispatch({
+          kind: 'request-repair-history',
+          actor: 'agent',
+        });
         return transitionOutput(result);
       },
     },
@@ -283,9 +283,11 @@ function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextT
         if (!parsed.success) {
           return validationFailure(parsed.error);
         }
-        const result = runtime.transition((state) =>
-          reserveCurrentLot(state, 'agent', parsed.data.expectedAllInPrice),
-        );
+        const result = await runtime.dispatch({
+          kind: 'reserve-current-lot',
+          actor: 'agent',
+          expectedAllInPrice: parsed.data.expectedAllInPrice,
+        });
         return transitionOutput(result);
       },
     },
@@ -305,7 +307,10 @@ function createAllTools(runtime: SiteToolRuntime): readonly WebMCP.ModelContextT
         if (!parsed.success) {
           return validationFailure(parsed.error);
         }
-        const result = runtime.transition((state) => releaseCurrentLot(state, 'agent'));
+        const result = await runtime.dispatch({
+          kind: 'release-current-lot',
+          actor: 'agent',
+        });
         return transitionOutput(result);
       },
     },

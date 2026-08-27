@@ -8,6 +8,7 @@
 .next/
 coverage/
 room-worker/dist/
+room-worker/.wrangler/
 node_modules/
 out/
 tmp/

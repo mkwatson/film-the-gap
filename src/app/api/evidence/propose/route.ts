@@ -6,11 +6,11 @@ import {
   evidenceVisionPrimaryModel,
   visualEvidenceFindingSchema,
 } from '@/lib/live-market/evidence-proposal';
+import { maximumCapturedEvidenceFrameBytes } from '@/lib/live-market/model';
 
 export const runtime = 'nodejs';
 
-const maximumFrameBytes = 1_500_000;
-const maximumRequestBytes = 1_650_000;
+const maximumRequestBytes = maximumCapturedEvidenceFrameBytes + 150_000;
 const sha256Pattern = /^[a-f0-9]{64}$/;
 const frameIdPattern = /^camera-[a-f0-9]{12}$/;
 
@@ -67,8 +67,8 @@ async function parseEvidenceFrameRequest(
   if (!(frame instanceof File) || frame.type !== 'image/jpeg') {
     return { error: 'The selected evidence frame must be a JPEG file.' };
   }
-  if (frame.size === 0 || frame.size > maximumFrameBytes) {
-    return { error: 'The selected evidence frame must be between 1 byte and 1.5 MB.' };
+  if (frame.size === 0 || frame.size > maximumCapturedEvidenceFrameBytes) {
+    return { error: 'The selected evidence frame must be between 1 byte and 650 KB.' };
   }
   if (
     typeof frameId !== 'string' ||

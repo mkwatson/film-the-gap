@@ -13,6 +13,7 @@ export default defineConfig([
     'node_modules/**',
     'out/**',
     'room-worker/dist/**',
+    'room-worker/.wrangler/**',
     'tmp/**',
     'next-env.d.ts',
   ]),

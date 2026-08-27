@@ -1,4 +1,4 @@
-import type { CameraEvidenceFrameProvenance } from './model';
+import { maximumCapturedEvidenceFrameBytes, type CameraEvidenceFrameProvenance } from './model';
 
 export interface CameraEvidenceInput {
   readonly blob: Blob;
@@ -47,19 +47,37 @@ export async function createCameraEvidenceFrame(
 }
 
 export function canvasToJpegBlob(canvas: HTMLCanvasElement): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (blob === null) {
-          reject(new Error('The browser could not encode the evidence keyframe.'));
-          return;
-        }
-        resolve(blob);
-      },
-      'image/jpeg',
-      0.86,
-    );
-  });
+  const qualities = [0.82, 0.72, 0.62, 0.5] as const;
+
+  return qualities
+    .reduce<Promise<Blob | null>>(async (previous, quality) => {
+      const accepted = await previous;
+      if (accepted !== null) {
+        return accepted;
+      }
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (candidate) => {
+            if (candidate === null) {
+              reject(new Error('The browser could not encode the evidence keyframe.'));
+              return;
+            }
+            resolve(candidate);
+          },
+          'image/jpeg',
+          quality,
+        );
+      });
+      return blob.size <= maximumCapturedEvidenceFrameBytes ? blob : null;
+    }, Promise.resolve(null))
+    .then((blob) => {
+      if (blob === null) {
+        throw new Error(
+          'The evidence keyframe is too detailed to publish safely. Move closer and retry.',
+        );
+      }
+      return blob;
+    });
 }
 
 export function blobToDataUrl(blob: Blob): Promise<string> {

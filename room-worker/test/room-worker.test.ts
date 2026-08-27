@@ -192,18 +192,6 @@ describe('evidence room worker', () => {
       command: {
         kind: 'answer-repair-history',
         repairHistory: 'none',
-        evidenceFrame: {
-          kind: 'fixture-frame',
-          frameId: 'fixture-host-frame-0031',
-          label: 'Host fixture disclosure · source frame 00:31',
-          capturedAt: null,
-          showOffsetSeconds: 31,
-          sha256: null,
-          widthPx: null,
-          heightPx: null,
-        },
-        visualReview: null,
-        publicEvidenceImage: null,
       },
     });
     expect(await commandResult(host)).toMatchObject({ ok: true, revision: 3 });

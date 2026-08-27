@@ -4,13 +4,18 @@ import {
   answerRepairHistory,
   createInitialState,
   evidenceRequirementsSchema,
+  maximumPublishedEvidenceImageCharacters,
   releaseCurrentLot,
   repairHistoryValues,
   requestRepairHistory,
   reserveCurrentLot,
   setEvidenceRequirements,
+  type EvidenceFrameProvenance,
+  type EvidenceRequirements,
   type LiveMarketState,
+  type RepairHistory,
   type TransitionResult,
+  type VisualEvidenceReview,
 } from './model';
 import { evidenceFrameProvenanceSchema, visualEvidenceReviewSchema } from './room-sync';
 
@@ -33,13 +38,14 @@ const requestRepairHistoryCommandSchema = z.strictObject({
 const answerRepairHistoryCommandSchema = z.strictObject({
   kind: z.literal('answer-repair-history'),
   repairHistory: z.enum(repairHistoryValues).exclude(['unknown']),
-  evidenceFrame: evidenceFrameProvenanceSchema,
-  visualReview: visualEvidenceReviewSchema.nullable(),
+  evidenceFrame: evidenceFrameProvenanceSchema.optional(),
+  visualReview: visualEvidenceReviewSchema.nullable().optional(),
   publicEvidenceImage: z
     .string()
-    .max(2_100_000)
+    .max(maximumPublishedEvidenceImageCharacters)
     .regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/)
-    .nullable(),
+    .nullable()
+    .optional(),
 });
 
 const reserveCurrentLotCommandSchema = z.strictObject({
@@ -66,7 +72,47 @@ export const roomCommandSchema = z.discriminatedUnion('kind', [
   resetRoomCommandSchema,
 ]);
 
-export type RoomCommand = z.infer<typeof roomCommandSchema>;
+export interface SetEvidenceRequirementsCommand {
+  readonly kind: 'set-evidence-requirements';
+  readonly actor: 'agent' | 'buyer';
+  readonly requirements: EvidenceRequirements;
+}
+
+export interface RequestRepairHistoryCommand {
+  readonly kind: 'request-repair-history';
+  readonly actor: 'agent' | 'buyer';
+}
+
+export interface AnswerRepairHistoryCommand {
+  readonly kind: 'answer-repair-history';
+  readonly repairHistory: Exclude<RepairHistory, 'unknown'>;
+  readonly evidenceFrame?: EvidenceFrameProvenance | undefined;
+  readonly visualReview?: VisualEvidenceReview | null | undefined;
+  readonly publicEvidenceImage?: string | null | undefined;
+}
+
+export interface ReserveCurrentLotCommand {
+  readonly kind: 'reserve-current-lot';
+  readonly actor: 'agent' | 'buyer';
+  readonly expectedAllInPrice: number;
+}
+
+export interface ReleaseCurrentLotCommand {
+  readonly kind: 'release-current-lot';
+  readonly actor: 'agent' | 'buyer';
+}
+
+export interface ResetRoomCommand {
+  readonly kind: 'reset-room';
+}
+
+export type RoomCommand =
+  | SetEvidenceRequirementsCommand
+  | RequestRepairHistoryCommand
+  | AnswerRepairHistoryCommand
+  | ReserveCurrentLotCommand
+  | ReleaseCurrentLotCommand
+  | ResetRoomCommand;
 
 export function parseRoomCommand(value: unknown): RoomCommand | null {
   const parsed = roomCommandSchema.safeParse(value);
@@ -94,8 +140,8 @@ export function applyRoomCommand(state: LiveMarketState, command: RoomCommand): 
         state,
         command.repairHistory,
         command.evidenceFrame,
-        command.visualReview,
-        command.publicEvidenceImage,
+        command.visualReview ?? null,
+        command.publicEvidenceImage ?? null,
       );
     case 'reserve-current-lot':
       return reserveCurrentLot(state, command.actor, command.expectedAllInPrice);

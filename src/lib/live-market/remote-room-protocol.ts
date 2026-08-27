@@ -17,6 +17,20 @@ export const roomCredentialsSchema = z.strictObject({
 
 export type RoomCredentials = z.infer<typeof roomCredentialsSchema>;
 
+export const remoteRoomAccessSchema = z.strictObject({
+  roomId: z.string().regex(remoteRoomIdPattern),
+  role: z.enum(['buyer', 'host']),
+  token: z.string().regex(/^[A-Za-z0-9_-]{32,128}$/),
+  expiresAt: z.number().int().positive(),
+});
+
+export interface RemoteRoomAccess {
+  readonly roomId: string;
+  readonly role: 'buyer' | 'host';
+  readonly token: string;
+  readonly expiresAt: number;
+}
+
 export const roomPresenceSchema = z.strictObject({
   buyer: z.number().int().nonnegative().max(100),
   host: z.number().int().nonnegative().max(100),
@@ -102,6 +116,7 @@ const roomErrorMessageSchema = z.strictObject({
   message: z.string().min(1).max(500),
   recoverable: z.boolean(),
   currentRevision: z.number().int().nonnegative().nullable(),
+  commandId: z.string().min(1).max(160).nullable(),
 });
 
 const roomExpiredMessageSchema = z.strictObject({
@@ -143,6 +158,7 @@ export interface RoomErrorMessage {
   readonly message: string;
   readonly recoverable: boolean;
   readonly currentRevision: number | null;
+  readonly commandId: string | null;
 }
 
 export interface RoomExpiredMessage {

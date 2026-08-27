@@ -3,11 +3,7 @@
 import Link from 'next/link';
 
 import { HostCameraCapture } from '@/components/host-camera-capture';
-import {
-  answerRepairHistory,
-  getAllInPrice,
-  getEvidenceDemandSummary,
-} from '@/lib/live-market/model';
+import { getAllInPrice, getEvidenceDemandSummary } from '@/lib/live-market/model';
 import { useLiveRoom, type RoomConnectionPhase } from '@/lib/live-market/use-live-room';
 
 const usd = new Intl.NumberFormat('en-US', {
@@ -37,7 +33,8 @@ function actorLabel(actor: string): string {
 }
 
 export function LiveMarketHost(): React.JSX.Element {
-  const { state, lastMessage, connectionPhase, resetDemo, transition } = useLiveRoom('host');
+  const { state, lastMessage, connectionPhase, transport, roomId, resetDemo, dispatch } =
+    useLiveRoom('host');
   const demand = getEvidenceDemandSummary(state, 'repair_history');
   const queuedRepairRequest = state.evidenceRequests.some(
     ({ kind, status }) => kind === 'repair_history' && status === 'queued',
@@ -61,6 +58,9 @@ export function LiveMarketHost(): React.JSX.Element {
             <span aria-hidden="true" />
             {connectionCopy(connectionPhase)}
           </span>
+          {transport === 'remote' && roomId !== null ? (
+            <span className="room-code">Room {roomId} · authoritative</span>
+          ) : null}
           <Link className="quiet-button quiet-link" href="/">
             Buyer view ↗
           </Link>
@@ -147,16 +147,14 @@ export function LiveMarketHost(): React.JSX.Element {
                 decision without revealing why each person needs it.
               </p>
               <HostCameraCapture
-                onPublish={(repairHistory, provenance, visualReview, publicEvidenceImage) =>
-                  transition((current) =>
-                    answerRepairHistory(
-                      current,
-                      repairHistory,
-                      provenance,
-                      visualReview,
-                      publicEvidenceImage,
-                    ),
-                  )
+                onPublish={(repairHistory, evidenceFrame, visualReview, publicEvidenceImage) =>
+                  void dispatch({
+                    kind: 'answer-repair-history',
+                    repairHistory,
+                    evidenceFrame,
+                    visualReview,
+                    publicEvidenceImage,
+                  })
                 }
               />
               <div className="fixture-fallback-heading">
@@ -167,14 +165,18 @@ export function LiveMarketHost(): React.JSX.Element {
                 <button
                   className="primary-button"
                   type="button"
-                  onClick={() => transition((current) => answerRepairHistory(current, 'none'))}
+                  onClick={() =>
+                    void dispatch({ kind: 'answer-repair-history', repairHistory: 'none' })
+                  }
                 >
                   Show base · no repair
                 </button>
                 <button
                   className="danger-button"
                   type="button"
-                  onClick={() => transition((current) => answerRepairHistory(current, 'repaired'))}
+                  onClick={() =>
+                    void dispatch({ kind: 'answer-repair-history', repairHistory: 'repaired' })
+                  }
                 >
                   Show repaired area
                 </button>

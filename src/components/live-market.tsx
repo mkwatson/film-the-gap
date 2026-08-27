@@ -2,22 +2,17 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { historicalEvidenceLimitation } from '@/lib/live-market/evidence-proposal';
 
 import {
-  answerRepairHistory,
   defaultEvidenceRequirements,
   evaluateEvidence,
   getActionFrontier,
   getAllInPrice,
   getAvailableToolNames,
   getEvidenceDemandSummary,
-  releaseCurrentLot,
-  requestRepairHistory,
-  reserveCurrentLot,
-  setEvidenceRequirements,
   type EvidenceStatus,
 } from '@/lib/live-market/model';
 import { type SiteToolRuntime } from '@/lib/live-market/site-tools';
@@ -57,11 +52,22 @@ function roomConnectionCopy(phase: RoomConnectionPhase): string {
 }
 
 export function LiveMarket(): React.JSX.Element {
-  const { state, lastMessage, connectionPhase, readState, resetDemo, transition } =
-    useLiveRoom('buyer');
+  const {
+    state,
+    lastMessage,
+    connectionPhase,
+    transport,
+    roomId,
+    hostInviteUrl,
+    presence,
+    readState,
+    resetDemo,
+    dispatch,
+  } = useLiveRoom('buyer');
+  const [inviteCopied, setInviteCopied] = useState(false);
   const siteToolRuntime = useMemo<SiteToolRuntime>(
-    () => ({ readState, transition }),
-    [readState, transition],
+    () => ({ readState, dispatch }),
+    [dispatch, readState],
   );
   const availableToolNames = getAvailableToolNames(state);
   const availabilityKey = availableToolNames.join('|');
@@ -73,6 +79,18 @@ export function LiveMarket(): React.JSX.Element {
   const queuedRepairRequest = state.evidenceRequests.some(
     ({ kind, status }) => kind === 'repair_history' && status === 'queued',
   );
+
+  async function copyHostInvite(): Promise<void> {
+    if (hostInviteUrl === null || navigator.clipboard === undefined) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(hostInviteUrl);
+      setInviteCopied(true);
+    } catch {
+      setInviteCopied(false);
+    }
+  }
 
   const evaluationTitle =
     evaluation.outcome === 'no-requirements'
@@ -100,6 +118,11 @@ export function LiveMarket(): React.JSX.Element {
             <span aria-hidden="true" />
             {roomConnectionCopy(connectionPhase)}
           </span>
+          {transport === 'remote' && roomId !== null ? (
+            <span className="room-code" title="Temporary Cloudflare evidence room">
+              Room {roomId} · {presence.host > 0 ? 'phone online' : 'invite phone'}
+            </span>
+          ) : null}
           <span className={`runtime-pill runtime-${siteToolStatus.phase}`}>
             <span className="runtime-dot" aria-hidden="true" />
             {siteToolStatus.phase === 'ready'
@@ -110,9 +133,29 @@ export function LiveMarket(): React.JSX.Element {
                   ? 'Tools need attention'
                   : 'Connecting tools'}
           </span>
-          <Link className="quiet-button quiet-link" href="/host" target="_blank" rel="noreferrer">
-            Open host view ↗
-          </Link>
+          {hostInviteUrl !== null ? (
+            <button
+              className="quiet-button invite-button"
+              type="button"
+              onClick={() => void copyHostInvite()}
+            >
+              {inviteCopied ? 'Invite copied ✓' : 'Copy phone invite'}
+            </button>
+          ) : null}
+          {hostInviteUrl === null ? (
+            <Link className="quiet-button quiet-link" href="/host" target="_blank" rel="noreferrer">
+              Open host view ↗
+            </Link>
+          ) : (
+            <a
+              className="quiet-button quiet-link invite-button"
+              href={hostInviteUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open phone host ↗
+            </a>
+          )}
           <button className="quiet-button" type="button" onClick={resetDemo}>
             Reset demo
           </button>
@@ -198,24 +241,37 @@ export function LiveMarket(): React.JSX.Element {
                   {demand.totalAgentCount} decisions · one camera answer
                 </span>
                 <p>Show the base and disclose whether it has ever been repaired.</p>
-                <div className="host-controls" aria-label="Deterministic host response controls">
-                  <small>Single-screen fallback</small>
-                  <button
-                    type="button"
-                    onClick={() => transition((current) => answerRepairHistory(current, 'none'))}
-                  >
-                    Show: no repair
-                  </button>
-                  <button
-                    className="danger-button"
-                    type="button"
-                    onClick={() =>
-                      transition((current) => answerRepairHistory(current, 'repaired'))
-                    }
-                  >
-                    Disclose repair
-                  </button>
-                </div>
+                {transport === 'local' ? (
+                  <div className="host-controls" aria-label="Deterministic host response controls">
+                    <small>Single-screen fallback</small>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void dispatch({ kind: 'answer-repair-history', repairHistory: 'none' })
+                      }
+                    >
+                      Show: no repair
+                    </button>
+                    <button
+                      className="danger-button"
+                      type="button"
+                      onClick={() =>
+                        void dispatch({ kind: 'answer-repair-history', repairHistory: 'repaired' })
+                      }
+                    >
+                      Disclose repair
+                    </button>
+                  </div>
+                ) : (
+                  <div className="host-controls remote-host-waiting">
+                    <small>Separate seller surface</small>
+                    <strong>
+                      {presence.host > 0
+                        ? 'The phone host is reviewing this request.'
+                        : 'Open the private invite on the seller phone.'}
+                    </strong>
+                  </div>
+                )}
               </div>
             ) : demand.status === 'resolved' ? (
               <div className="multicast-result">
@@ -262,9 +318,11 @@ export function LiveMarket(): React.JSX.Element {
                   className="primary-button"
                   type="button"
                   onClick={() =>
-                    transition((current) =>
-                      setEvidenceRequirements(current, defaultEvidenceRequirements, 'buyer'),
-                    )
+                    void dispatch({
+                      kind: 'set-evidence-requirements',
+                      actor: 'buyer',
+                      requirements: defaultEvidenceRequirements,
+                    })
                   }
                 >
                   Share demo evidence needs
@@ -404,7 +462,7 @@ export function LiveMarket(): React.JSX.Element {
                 <button
                   className="primary-button"
                   type="button"
-                  onClick={() => transition((current) => releaseCurrentLot(current, 'buyer'))}
+                  onClick={() => void dispatch({ kind: 'release-current-lot', actor: 'buyer' })}
                 >
                   Release hold
                 </button>
@@ -422,9 +480,11 @@ export function LiveMarket(): React.JSX.Element {
                   className="primary-button"
                   type="button"
                   onClick={() =>
-                    transition((current) =>
-                      reserveCurrentLot(current, 'buyer', getAllInPrice(current.lot)),
-                    )
+                    void dispatch({
+                      kind: 'reserve-current-lot',
+                      actor: 'buyer',
+                      expectedAllInPrice: getAllInPrice(state.lot),
+                    })
                   }
                 >
                   Hold at {usd.format(allInPrice)}
@@ -448,7 +508,9 @@ export function LiveMarket(): React.JSX.Element {
                   <button
                     className="secondary-button"
                     type="button"
-                    onClick={() => transition((current) => requestRepairHistory(current, 'buyer'))}
+                    onClick={() =>
+                      void dispatch({ kind: 'request-repair-history', actor: 'buyer' })
+                    }
                   >
                     Join evidence request
                   </button>

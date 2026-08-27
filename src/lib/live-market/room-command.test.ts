@@ -28,18 +28,6 @@ describe('room commands', () => {
     const hostCommand: RoomCommand = {
       kind: 'answer-repair-history',
       repairHistory: 'none',
-      evidenceFrame: {
-        kind: 'fixture-frame',
-        frameId: 'fixture-host-frame-0031',
-        label: 'Host fixture disclosure · source frame 00:31',
-        capturedAt: null,
-        showOffsetSeconds: 31,
-        sha256: null,
-        widthPx: null,
-        heightPx: null,
-      },
-      visualReview: null,
-      publicEvidenceImage: null,
     };
 
     expect(roomRoleCanDispatch('buyer', buyerCommand)).toBe(true);

@@ -6,6 +6,7 @@ import {
   evidenceRequestKinds,
   evidenceRequirementsSchema,
   hostReviewDecisions,
+  maximumPublishedEvidenceImageCharacters,
   repairHistoryValues,
   showStatuses,
   visualReviewSources,
@@ -120,7 +121,7 @@ const lotEvidenceSchema = z
     repairEvidenceFrame: evidenceFrameProvenanceSchema.nullable(),
     repairEvidenceImage: z
       .string()
-      .max(2_100_000)
+      .max(maximumPublishedEvidenceImageCharacters)
       .regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/)
       .nullable(),
     visualReview: visualEvidenceReviewSchema.nullable(),

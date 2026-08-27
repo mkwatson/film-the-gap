@@ -36,6 +36,9 @@ export type HostReviewDecision = (typeof hostReviewDecisions)[number];
 export const evidenceRequestKinds = ['repair_history'] as const;
 export type EvidenceRequestKind = (typeof evidenceRequestKinds)[number];
 
+export const maximumPublishedEvidenceImageCharacters = 900_000;
+export const maximumCapturedEvidenceFrameBytes = 650_000;
+
 export interface EvidenceRequirements {
   readonly minLengthCm: number;
   readonly maxLengthCm: number;

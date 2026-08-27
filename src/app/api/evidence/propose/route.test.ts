@@ -14,6 +14,7 @@ vi.mock('ai', () => ({
 }));
 
 import { POST } from './route';
+import { maximumCapturedEvidenceFrameBytes } from '@/lib/live-market/model';
 
 const frameHash = '9dff50df08c635815f4b19da10f756605a34a79a48d4ba48712782502975a70e';
 const originalGatewayKey = process.env.AI_GATEWAY_API_KEY;
@@ -24,6 +25,24 @@ function evidenceRequest(sha256 = frameHash): Request {
   formData.append('frame', new File(['frame'], 'camera.jpg', { type: 'image/jpeg' }));
   formData.append('frameId', `camera-${sha256.slice(0, 12)}`);
   formData.append('frameSha256', sha256);
+  formData.append('widthPx', '960');
+  formData.append('heightPx', '540');
+  return new Request('http://localhost/api/evidence/propose', {
+    method: 'POST',
+    body: formData,
+  });
+}
+
+function oversizedEvidenceRequest(): Request {
+  const formData = new FormData();
+  formData.append(
+    'frame',
+    new File([new Uint8Array(maximumCapturedEvidenceFrameBytes + 1)], 'camera.jpg', {
+      type: 'image/jpeg',
+    }),
+  );
+  formData.append('frameId', `camera-${frameHash.slice(0, 12)}`);
+  formData.append('frameSha256', frameHash);
   formData.append('widthPx', '960');
   formData.append('heightPx', '540');
   return new Request('http://localhost/api/evidence/propose', {
@@ -78,6 +97,17 @@ describe('POST /api/evidence/propose', () => {
       error: 'invalid_evidence_frame',
       message: 'The JPEG bytes do not match the declared frame digest.',
     });
+  });
+
+  it('rejects a frame that cannot fit the authoritative room state', async () => {
+    const response = await POST(oversizedEvidenceRequest());
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'invalid_evidence_frame',
+      message: 'The selected evidence frame must be between 1 byte and 650 KB.',
+    });
+    expect(generateTextMock).not.toHaveBeenCalled();
   });
 
   it('uses the current OpenAI vision model through Gateway with bounded structured output', async () => {
