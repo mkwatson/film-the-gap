@@ -1,12 +1,11 @@
 {
-  "name": "@webmcp-challenge/evidence-room-worker",
+  "name": "@webmcp-challenge/evidence-merchant-worker",
   "version": "0.0.1",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "wrangler deploy --dry-run --outdir dist",
     "dev": "wrangler dev",
-    "dev:fixture-merchant": "wrangler dev --config test/fixtures/wrangler.jsonc --port 8790",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

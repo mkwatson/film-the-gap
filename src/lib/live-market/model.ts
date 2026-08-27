@@ -1098,7 +1098,7 @@ export function getActionFrontier(state: LiveMarketState): ActionFrontier {
       actor: 'agent-or-buyer',
       action: 'cancel_merchant_cart',
       instruction:
-        'Review the merchant-authored cart receipt, then cancel it or continue through an explicit human checkout handoff.',
+        'Review the merchant-authored cart receipt, then cancel it or open the private merchant continuation with explicit approval. No order or payment is authorized.',
     };
     blocked.push({
       name: 'release_current_lot',

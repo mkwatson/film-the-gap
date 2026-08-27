@@ -1,6 +1,6 @@
 # WebMCP Challenge strategy and idea frontier
 
-Research state: 2026-08-26. This is a working decision document, not a project commitment or a novelty claim.
+Research state: 2026-08-27. This is a working decision document, not a project commitment or a novelty claim.
 
 ## Objective
 
@@ -22,19 +22,18 @@ Do not discard the working evidence-directed live market. No clean-sheet challen
 
 The strongest concrete embodiment remains live/secondhand commerce because the pain, audience, economic value, and final action are immediately legible. The submission must not be framed as “ChatGPT shops a livestream.” Its novel primitive is many private agents coordinating scarce human attention without disclosing private ceilings or profiles.
 
-The current app is a strong **public acceptance rung**, not yet a winning submission. Native dynamic WebMCP, seller-minimal schemas, exact-quote refusal, a separately authenticated room, camera provenance, live abstaining visual proposals, a reversible hold, strict TypeScript, tests, and the exact ChatGPT client have all been demonstrated, though not yet together on the final unprotected origin with a physical phone. The largest unclaimed score gains are now real-world credibility, authoritative commerce, and submission communication—not more simulated intelligence.
+The current app is a strong **tailnet acceptance rung**, not yet a winning submission. Native dynamic WebMCP, seller-minimal schemas, exact-quote refusal, a separately authenticated room, camera provenance, live abstaining visual proposals, a reversible hold, an owned authoritative UCP merchant, a private second-origin WebMCP continuation, strict TypeScript, tests, and native Chrome have now run in one complete journey. The exact ChatGPT client passed the earlier compact flow, but still needs the new merchant journey on the final unprotected origin. The largest unclaimed score gains are stable public access, a real physical phone/item moment, independent judge comprehension, and submission communication—not more simulated intelligence.
 
 ### Current honest scorecard
 
 Scores are directional estimates on a ten-point scale, not claims about future judges.
 
-| State                                             | WebMCP | Execution | Impact | Creativity | Why it is or is not competitive                                                                               |
-| ------------------------------------------------- | -----: | --------: | -----: | ---------: | ------------------------------------------------------------------------------------------------------------- |
-| Current public acceptance artifact                |    9.1 |       8.2 |    7.0 |        9.0 | Public native lifecycle, remote authority, and live abstaining vision pass; permanent origin and phone remain |
-| Public, resettable, concise golden path           |    9.3 |       8.8 |    7.5 |        9.1 | Judges can run and understand it; physical-world and commerce claims remain staged                            |
-| Real networked seller phone + owned physical item |    9.3 |       9.0 |    8.5 |        9.5 | The agent visibly causes a remote human to acquire fresh evidence                                             |
-| Authoritative UCP catalog/cart handoff            |    9.5 |       9.2 |    9.0 |        9.5 | The evidence event advances a real, standards-based merchant state                                            |
-| Submission-grade polish, evals, and fallback      |    9.7 |       9.6 |    9.2 |        9.5 | The magic is legible in 30 seconds and survives unattended judging                                            |
+| State                                                        | WebMCP | Execution | Impact | Creativity | Why it is or is not competitive                                                                                           |
+| ------------------------------------------------------------ | -----: | --------: | -----: | ---------: | ------------------------------------------------------------------------------------------------------------------------- |
+| Current tailnet artifact + owned UCP merchant                |    9.5 |       8.8 |    8.1 |        9.4 | Full dynamic two-origin native flow works; stable public access, physical item, and concise judge onboarding remain       |
+| Public, resettable, concise golden path                      |    9.6 |       9.3 |    8.4 |        9.4 | Judges can run the authoritative flow unattended; the physical evidence moment is still deterministic                     |
+| Real networked seller phone + owned physical item            |    9.6 |       9.5 |    9.1 |        9.7 | The agent visibly causes a remote human to acquire fresh evidence before the real merchant state advances                 |
+| Submission-grade polish, blind evals, and resilient fallback |    9.8 |       9.7 |    9.3 |        9.7 | The new primitive is legible in 30 seconds, independently verifiable, and survives unattended judging and dependency loss |
 
 ### Winning causality moment
 
@@ -57,7 +56,7 @@ Every rung must preserve the previous complete path and add a resettable determi
 2. **Agent-experience hardening:** compact non-overlapping tool results, recovery guidance, cancellation and stale-revision behavior, Chrome DevTools traces, adversarial WebMCP evals, and plain-language UI copy.
 3. **Real two-device evidence event:** a QR-joined buyer/host room, ordered/recoverable state, a real phone camera, and one owned physical item. The 2026-08-26 transport spike selected a standalone Cloudflare Durable Object as room authority; keep the existing Next/Vercel app as the product surface and preserve its local fallback.
 4. **Real visual intelligence:** authenticate the existing Vercel AI Gateway route, blind-check it on the physical frame, keep the model non-authoritative, and preserve manual review.
-5. **Authoritative commerce:** dynamically negotiate the merchant's advertised UCP version, use owned/dev-store inventory, create a real Cart MCP cart or permalink, and show the merchant continuation URL. Do not invent “UCP-shaped” local JSON.
+5. **Authoritative commerce:** the owned merchant now negotiates UCP `2026-04-08`, issues real server-held carts from original inventory, and exposes a private second-origin continuation. Graduate it publicly, then add Shopify-native interoperability only if it strengthens rather than destabilizes this completed boundary.
 6. **Submission as product:** simplify the interface, record the causal hero in under three minutes, make the README and Devpost text independently persuasive, and freeze a clean reproducible revision early.
 7. **Frontier rungs only after the above:** voice input, a portable evidence extension, a Lean-checked runtime receipt, paid evidence bounties, or a larger real crowd.
 

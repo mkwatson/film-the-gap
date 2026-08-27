@@ -15,6 +15,8 @@ export default defineConfig([
     'room-worker/dist/**',
     'room-worker/.wrangler/**',
     'room-worker/test/fixtures/.wrangler/**',
+    'merchant-worker/dist/**',
+    'merchant-worker/.wrangler/**',
     'tmp/**',
     'next-env.d.ts',
   ]),

@@ -636,15 +636,20 @@ export function LiveMarket(): React.JSX.Element {
                   <div className="merchant-privacy-receipt">
                     <span aria-hidden="true">✓</span>
                     <p>
-                      <strong>Server-held cart credential</strong>
-                      Shared state contains totals and messages—not the cart ID, continuation URL,
-                      buyer identity, ceiling, address, or payment.
+                      <strong>
+                        {state.commerce.cartStatus === 'active'
+                          ? 'Server-held cart credential'
+                          : 'Private cart credential discarded'}
+                      </strong>
+                      {state.commerce.cartStatus === 'active'
+                        ? 'Shared state contains totals and messages—not the cart ID, continuation URL, buyer identity, ceiling, address, or payment.'
+                        : 'Only the sanitized merchant receipt remains in shared state; the cart ID and continuation URL are gone.'}
                     </p>
                   </div>
                   {state.commerce.cartStatus === 'active' ? (
                     checkoutHandoff === null ? (
                       <p className="merchant-handoff-copy">
-                        The private checkout handoff is returned only to the invoking buyer or
+                        The private merchant continuation is returned only to the invoking buyer or
                         ChatGPT tool call; it is not broadcast to the host room.
                       </p>
                     ) : (

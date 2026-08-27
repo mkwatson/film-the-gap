@@ -23,7 +23,6 @@ describe.skipIf(!liveConfigurationPresent)('live UCP merchant', () => {
       input: {
         variantId,
         context: {
-          addressCountry: 'US',
           currency: 'USD',
           language: 'en-US',
           intent: 'verify an evidence-gated cart handoff before judging',

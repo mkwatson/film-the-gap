@@ -392,6 +392,42 @@ Status: **the complete configured experience passes in native Chrome against a l
 
 This is intentionally a stepping stone, not E8 graduation. It removes browser integration, UI, dynamic-registration, and privacy plumbing from the risk register. The remaining decisive substitution is an owned, publicly reachable Shopify product with cleared presentation, followed by the same native-Site-Tools run and immediate cancellation on the unprotected judged origins.
 
+#### E8.4 — Owned-merchant substitution
+
+Frozen claim:
+
+> A first-party public merchant can make the evidence-gated cart genuinely authoritative tonight, without weakening the privacy boundary or making an expiring/password-gated Shopify development surface part of the judged critical path.
+
+Acceptance contract:
+
+1. A separate public merchant origin owns an original product, the `2026-04-08` UCP profile, JSON-RPC Catalog/Cart tools, idempotency, cart expiry, totals, lifecycle, and continuation page.
+2. The merchant—not the evidence room—issues and stores cart credentials. The evidence-room Durable Object receives a merchant-authored receipt, retains the credential privately, and broadcasts neither the cart ID nor continuation path.
+3. `create_cart` accepts only the one demo variant, quantity `1`, bounded localization, intent, the public platform profile, and an idempotency key. It refuses named buyer, ceiling, address, payment, and unknown fields.
+4. Duplicate create calls with the same idempotency key return the same cart; changed payloads, stale/cancelled carts, redirects, oversized bodies, unsupported versions/tools, and malformed calls fail closed.
+5. The continuation is a real second web page with its own minimal WebMCP tools. It can inspect and cancel the exact cart but cannot charge, order, or collect payment. Cancellation propagates back to the evidence room and purges the buyer-only handoff.
+6. Workerd integration and clean browser tests must cover discovery → create → private handoff → cross-site inspect → cancel → room purge, including host non-disclosure and replay refusal.
+
+Shopify control result, 2026-08-27 PT:
+
+- Shopify CLI auto-upgraded to `4.7.0`. Its new agent-oriented `store create preview` path created an isolated temporary store without signup, card, or payment capability and persisted a broad local Admin API session. A new original 156 cm / `$375` demo product was created and published through Admin GraphQL `2026-07`.
+- The temporary storefront registered Shopify's ten native WebMCP tools and served a current UCP `2026-04-08` discovery profile. That proves the intended cross-site composition surface. Before the preview is saved, however, native catalog calls fail at the Storefront API boundary and Cart MCP initialization fails; the stable `myshopify.com` origin remains password-gated. Its expiring preview access is therefore a development control, not a judged dependency.
+- Mark's existing personal dev store is isolated from production, populated with Shopify test data, reachable through the installed Vidably app's read/write product scopes, and suitable for a later native-Shopify acceptance run. The installed app lacks publication/token scopes, direct `store auth` requires a one-time browser approval, and the documented storefront-password file is absent on this Mac Mini. No product or app configuration there was changed.
+- A new development store in the otherwise empty isolated organization was rejected because CLI store management is not enabled for that organization. No fallback store was created and no paid plan was selected.
+
+Decision: build and graduate the owned public merchant first. Preserve Shopify native WebMCP/UCP as an additive proof of open-web interoperability after the one-time authorization/password seam is cleared; do not let that seam block the reliable hero path.
+
+Implementation and local acceptance result, 2026-08-27 PT:
+
+- A separate Cloudflare Worker now owns the original product, UCP profile, Cart MCP endpoint, SQLite-backed `MerchantLedger` Durable Object, 30-minute expiry alarm, 24-hour bounded retention, idempotency records, same-origin private continuation, and human fallback. It exposes no checkout, order, or payment capability.
+- The MCP endpoint is deliberately dual-era. It serves current stateless MCP `2026-07-28` (`server/discover`, per-request `_meta`, required transport headers, complete-result/cache metadata) while retaining the initialization-era/UCP Cart binding used by current Shopify-compatible clients. Header/body mismatches, unsupported versions, unknown methods, hostile origins, oversized bodies, and schema expansion fail closed.
+- Twelve Workerd tests cover discovery, deterministic tools, both protocol eras, exact product/totals, strict private-field exclusion, concurrent replay collapse, changed-payload refusal, read-vs-mutation metadata, update/cancel idempotency, expiry, alarm cleanup, origin validation through TLS termination, and guessed-continuation refusal. The root live UCP client also completed create → inspect → immediate cancel over the Tailscale HTTPS boundary.
+- Chrome `151.0.7922.174` completed the native two-tab buyer/host journey against the new merchant: requirements → aggregate evidence request → host answer → exact `$423` hold → merchant UCP negotiation → `$375` cart receipt → buyer-only second-origin continuation. The merchant page registered `inspect_merchant_cart` and `cancel_merchant_cart`; after native cancellation it visibly closed the cart and dynamically removed the cancel tool. Returning to the room reconciled the already-cancelled merchant cart, discarded the server-held credential, and left neither cart ID nor continuation path in host-visible state.
+- The run found and fixed a real proxy boundary: Tailscale terminates TLS and rewrites the forwarded `Origin` scheme. Validation now requires the same authority and permits only the observed HTTP/HTTPS scheme rewrite when `X-Forwarded-Proto: https`; a foreign authority remains rejected. It also found and fixed a request-stream forwarding hang by consuming and bounding the outer body before Durable Object dispatch.
+- A temporary Cloudflare deployment was intentionally stopped when Wrangler asked the operator to accept Cloudflare's Terms of Service and Privacy Policy. The implementation is deployment-dry-run clean, but a stable judge-accessible origin remains pending that one-time user legal/authentication action. No terms were accepted on Mark's behalf.
+- A current-stack audit upgraded both Worker packages to Wrangler `4.127.0` and `@cloudflare/vitest-plugin` `1.1.1`; the entire gate still passed. ESLint `10.9.1` was also tested because `9.39.5` is out of upstream support and Next's peer range says `>=9`, but Next `16.3.3`'s bundled `eslint-plugin-react` crashes on the ESLint 10 rule-context API. It was reverted to the newest working 9.x release. TypeScript `7.0.2` was not installed because the current `@typescript-eslint/parser` peer contract caps TypeScript below `6.1`; `5.9.3` remains the newest compatible compiler in the assembled stack.
+
+Status: **local E8.4 behavior is graduated; public E8.4 deployment is not**. The current working rung remains available over tailnet HTTPS, while the public release gate is isolated to Cloudflare authorization and a repeat of the recorded native acceptance matrix.
+
 ### E9 — Submission-grade Agent Experience
 
 Frozen claim:

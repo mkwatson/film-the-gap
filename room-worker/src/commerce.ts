@@ -172,7 +172,7 @@ export async function prepareRoomMerchantCart(
               kind: 'ucp-cart-handoff',
               continueUrl: created.cart.continueUrl,
               instruction:
-                'Open only with explicit buyer approval. The merchant—not this app—owns checkout, fulfillment, and payment.',
+                'Open only with explicit buyer approval. This room authorizes no order or payment; any downstream checkout remains the merchant’s separate responsibility.',
             },
     };
   } catch (error: unknown) {

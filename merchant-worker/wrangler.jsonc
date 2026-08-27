@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "webmcp-evidence-merchant-preview",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-27",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MERCHANT",
+        "class_name": "MerchantLedger",
+      },
+    ],
+  },
+  "exports": {
+    "MerchantLedger": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+  },
+  "vars": {
+    "CART_TTL_SECONDS": "1800",
+  },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true,
+    },
+  },
+}
