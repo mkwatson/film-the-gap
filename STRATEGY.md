@@ -35,6 +35,23 @@ Scores are directional estimates on a ten-point scale, not claims about future j
 | Real networked seller phone + owned physical item            |    9.6 |       9.5 |    9.1 |        9.7 | The agent visibly causes a remote human to acquire fresh evidence before the real merchant state advances                 |
 | Submission-grade polish, blind evals, and resilient fallback |    9.8 |       9.7 |    9.3 |        9.7 | The new primitive is legible in 30 seconds, independently verifiable, and survives unattended judging and dependency loss |
 
+### Overnight re-score — 2026-08-27 PT
+
+The local artifact has now added a judge preflight, an atomic three-origin release verifier, a clean-clone proof, a reproducible 2:45 capture packet, and a minimal architecture receipt. That improves execution evidence, but it does not erase the multiplicative hard gates. The highest-value remaining work is ordered below.
+
+| Opportunity or threat                                      | Expected win effect | Autonomous now? | Decision                                                                                                                                                               |
+| ---------------------------------------------------------- | ------------------: | --------------: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stable public buyer, room, and merchant origins            |           Very high |              No | Keep the exact deploy/verify/rollback command ready. Do not substitute another feature for Mark's one-time license, repository, and vendor-authorization actions.      |
+| Current ChatGPT + physical phone/item + unfamiliar viewer  |           Very high |              No | These are the decisive execution, impact, and comprehension gates. Rehearse every surrounding step, but do not claim them before the real run.                         |
+| Research-grounded impact case and measurable demo receipts |                High |             Yes | Do now. Connect two measured market failures to four values the running demo actually proves; distinguish research motivation from our own outcome evidence.           |
+| Cold-reader and adversarial submission evaluation          |                High |          Partly | Make the packet independently scorable and prepare blind protocols now; a real unfamiliar human remains mandatory before final freeze.                                 |
+| Lean-checked policy receipt                                |    Medium, volatile |             Yes | Run only as an isolated E10 spike. Graduate it only if the runtime connection is honest, the consequence is understood in under ten seconds, and the hero stays green. |
+| More UCP/Shopify surface area                              |                 Low |             Yes | Reject for now. The released, merchant-authoritative Cart already proves the boundary; catalog, consent, or checkout would consume demo time without fixing a top gap. |
+| Voice, larger synthetic crowd, or another model gateway    |        Low/negative |             Yes | Reject from the hero. Each adds explanation and exact-runtime risk while the typed, eight-decision, one-camera path already demonstrates the primitive.                |
+| Another frontend host or sponsor-logo integration          |            Negative |             Yes | Reject. Vercel, Cloudflare, Chrome, OpenAI, and UCP/Shopify already own distinct load-bearing boundaries; redundancy would weaken coherence.                           |
+
+The resulting overnight order is: strengthen the impact proof; attempt the bounded proof-carrying capability experiment; keep it only on evidence; then spend remaining autonomous cycles on hostile tests, cold-read clarity, and release rehearsal. The order changes immediately if stable public access becomes available.
+
 ### Winning causality moment
 
 The moment we are building toward must work without architecture narration:
@@ -134,7 +151,7 @@ The terms are not statistically independent. The model is useful because it prev
 | Submission cutoff and freeze                         | Late or post-deadline changes cannot rescue a broken submission.                                                       | Establish internal buffers for deployment, YouTube processing, Devpost verification, rights review, and rollback.                                           |
 | IP, privacy, authorization, and trademark compliance | A rights or terms violation can disqualify the entry or force damaging edits.                                          | Use owned/cleared media and data, current SDK/API terms, minimal personal data, and explicit provenance.                                                    |
 
-The official page rose from **1,563 to roughly 2,010 registered participants during 2026-08-26**. Registrations are not completed submissions and the gallery is still unpublished, but the field is large enough that competence alone will not be memorable.
+The official page rose from **1,563 registered participants on 2026-08-26 to 2,459 on 2026-08-27**. Registrations are not completed submissions and the gallery is still unpublished, but the field is large enough that competence alone will not be memorable.
 
 ### Strategic score multipliers
 
