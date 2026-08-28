@@ -35,6 +35,7 @@ These steps mutate external systems and must not be performed unattended.
 3. **Complete:** the repository is linked to the Vercel project and the stable production origin is unprotected.
 4. **Complete:** Wrangler is authorized and the two distinct permanent `workers.dev` origins are recorded above.
 5. **Complete:** Vercel Production compiles the permanent room origin, and OIDC remains available for AI Gateway without a long-lived model key.
+6. Before graduating claim-scoped phone-video analysis, add `AI_GATEWAY_API_KEY` as an encrypted secret on the room Worker. This cross-runtime key is required because Vercel OIDC is available to the Vercel app, not to a Cloudflare Worker. Do not pass it with `--var`, commit it, or expose it through a `NEXT_PUBLIC_` name.
 
 The final origins must be distinct, credential-free HTTPS origins. Do not use a protected Vercel Preview URL or a temporary Tailscale URL in the submission.
 
@@ -68,6 +69,14 @@ There is no existing judge traffic during the initial release, so deploy depende
    - `UCP_PLATFORM_PROFILE_URL=APP_ORIGIN/.well-known/ucp`
 
    Record the room Worker version ID. Never deploy the checked-in localhost-only room variables as production configuration.
+
+   If the release includes AI-assisted continuous-video review, provision its encrypted secret while Mark is present before deploying:
+
+   ```bash
+   pnpm --dir room-worker exec wrangler secret put AI_GATEWAY_API_KEY
+   ```
+
+   The no-secret path remains functional and explicitly falls back to manual contributor review.
 
 3. Create a Production-environment Vercel deployment from `RELEASE_SHA` with `--skip-domain`, or from that exact Git reference in the dashboard. Prefer the Git-associated path. If a reviewed prebuilt artifact is deliberately used, make the public room origin available during `vercel build` because `NEXT_PUBLIC_` values are compiled into the client, and pass the exact SHA to the deployed runtime. Inspect the unique deployment and `/api/health`; its `commit` must equal `RELEASE_SHA` and `evidenceRoomOrigin` must equal `ROOM_ORIGIN`.
 4. Promote the staged Production build to `APP_ORIGIN`. Do not promote a Preview-environment build under the assumption that it is the identical artifact; current Vercel behavior creates a new Production deployment in that case.

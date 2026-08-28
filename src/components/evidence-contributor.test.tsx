@@ -14,6 +14,7 @@ const remoteMocks = vi.hoisted(() => ({
   read: vi.fn(),
   reserve: vi.fn(),
   upload: vi.fn(),
+  analyze: vi.fn(),
   publish: vi.fn(),
 }));
 
@@ -22,6 +23,7 @@ vi.mock('@/lib/evidence-network/remote-client', () => ({
   readRemoteEvidenceCase: remoteMocks.read,
   reserveRemoteEvidenceUpload: remoteMocks.reserve,
   uploadEvidenceVideo: remoteMocks.upload,
+  analyzeRemoteEvidenceVideo: remoteMocks.analyze,
   publishRemoteEvidence: remoteMocks.publish,
 }));
 
@@ -61,6 +63,21 @@ beforeEach(() => {
     expiresAt: '2026-08-27T17:00:00.000Z',
   });
   remoteMocks.upload.mockResolvedValue(undefined);
+  remoteMocks.analyze.mockResolvedValue({
+    kind: 'proposal',
+    uploadId: '0123456789abcdef0123456789abcdef',
+    modelId: 'google/gemini-3.7-flash',
+    finding: {
+      result: 'supports',
+      confidence: 'high',
+      observation: 'No water reached the paper during the continuous inversion.',
+      startSeconds: 1,
+      endSeconds: 10,
+      continuity: 'continuous',
+      visibleDetails: ['The bottle and dry paper remained visible.'],
+      limitations: ['This shows only the recorded ten-second test.'],
+    },
+  });
   const publishedState = applyEvidenceNetworkCommand(
     openMissionState(),
     {
@@ -71,7 +88,10 @@ beforeEach(() => {
         observation: 'The requested behavior was visible for the full continuous test.',
         contributorLabel: 'Product owner',
         durationSeconds: 10,
+        citationStartSeconds: 1,
+        citationEndSeconds: 10,
         confidence: 'high',
+        continuity: 'continuous',
         rights: 'owned',
         provenance: 'live_capture',
         capturedAt: '2026-08-27T16:01:00.000Z',
@@ -149,7 +169,7 @@ describe('EvidenceContributor', () => {
     Object.defineProperty(video, 'duration', { configurable: true, value: 10 });
     fireEvent.loadedMetadata(video);
 
-    const uploadButton = await screen.findByRole('button', { name: 'Upload for review' });
+    const uploadButton = await screen.findByRole('button', { name: 'Upload + draft evidence' });
     await waitFor(() => expect(uploadButton.hasAttribute('disabled')).toBe(false));
     fireEvent.click(uploadButton);
 
@@ -158,6 +178,9 @@ describe('EvidenceContributor', () => {
     ).toBeTruthy();
     expect(remoteMocks.reserve).toHaveBeenCalledOnce();
     expect(remoteMocks.upload).toHaveBeenCalledOnce();
+    expect(remoteMocks.analyze).toHaveBeenCalledOnce();
+    expect(screen.getByText('google/gemini-3.7-flash')).toBeTruthy();
+    expect(screen.getByText('Proposed citation 00:01–00:10')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Publish reviewed evidence' }));
 
@@ -168,8 +191,50 @@ describe('EvidenceContributor', () => {
       'BCDF2345',
       expect.objectContaining({
         uploadId: '0123456789abcdef0123456789abcdef',
-        review: expect.objectContaining({ result: 'supports', rights: 'owned' }),
+        review: expect.objectContaining({
+          result: 'supports',
+          rights: 'owned',
+          confidence: 'high',
+          continuity: 'continuous',
+          citationStartSeconds: 1,
+          citationEndSeconds: 10,
+        }),
       }),
+    );
+  });
+
+  it('falls back to an explicit inconclusive manual review when AI is unavailable', async () => {
+    remoteMocks.analyze.mockResolvedValueOnce({
+      kind: 'manual-review-required',
+      uploadId: '0123456789abcdef0123456789abcdef',
+      reason: 'gateway-unconfigured',
+      message: 'Vercel AI Gateway is not configured here. Review manually.',
+    });
+    render(<EvidenceContributor caseId="BCDF2345" />);
+    const input = await screen.findByLabelText('Record or choose evidence video');
+    const file = new File(['ten-second-video'], 'proof.mp4', { type: 'video/mp4' });
+    if (file.arrayBuffer === undefined) {
+      Object.defineProperty(file, 'arrayBuffer', {
+        configurable: true,
+        value: async (): Promise<ArrayBuffer> =>
+          new TextEncoder().encode('ten-second-video').buffer,
+      });
+    }
+    fireEvent.change(input, { target: { files: [file] } });
+    const video = await waitFor(() => {
+      const found = document.querySelector('video');
+      if (found === null) throw new Error('Expected a local video preview.');
+      return found;
+    });
+    Object.defineProperty(video, 'duration', { configurable: true, value: 10 });
+    fireEvent.loadedMetadata(video);
+    const uploadButton = await screen.findByRole('button', { name: 'Upload + draft evidence' });
+    await waitFor(() => expect(uploadButton.hasAttribute('disabled')).toBe(false));
+    fireEvent.click(uploadButton);
+
+    expect(await screen.findByText('Manual review')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'inconclusive' }).getAttribute('aria-pressed')).toBe(
+      'true',
     );
   });
 });

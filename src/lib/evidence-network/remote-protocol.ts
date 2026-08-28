@@ -190,6 +190,11 @@ export const reserveEvidenceUploadRequestSchema = z.strictObject({
 });
 export type ReserveEvidenceUploadRequest = z.infer<typeof reserveEvidenceUploadRequestSchema>;
 
+export const analyzeEvidenceVideoRequestSchema = z.strictObject({
+  token: tokenSchema,
+});
+export type AnalyzeEvidenceVideoRequest = z.infer<typeof analyzeEvidenceVideoRequestSchema>;
+
 export interface ReservedEvidenceUpload {
   readonly provider: 'cloudflare_stream';
   readonly uploadId: string;
@@ -206,22 +211,38 @@ export const reservedEvidenceUploadSchema: z.ZodType<ReservedEvidenceUpload> = z
   expiresAt: timestampSchema,
 });
 
-export const publishRemoteEvidenceRequestSchema = z.strictObject({
-  token: tokenSchema,
-  commandId: idSchema,
-  expectedRevision: z.number().int().nonnegative(),
-  uploadId: z.string().regex(/^[a-zA-Z0-9_-]{16,128}$/),
-  review: z.strictObject({
-    result: z.enum(evidenceResults),
-    observation: z.string().trim().min(4).max(360),
-    contributorLabel: z.string().trim().min(2).max(80),
-    durationSeconds: z.number().int().min(1).max(90),
-    confidence: z.enum(evidenceConfidences),
-    rights: z.enum(['owned', 'authorized']),
-    capturedAt: timestampSchema,
-    sha256: z.string().regex(/^[a-f0-9]{64}$/),
-  }),
-});
+export const publishRemoteEvidenceRequestSchema = z
+  .strictObject({
+    token: tokenSchema,
+    commandId: idSchema,
+    expectedRevision: z.number().int().nonnegative(),
+    uploadId: z.string().regex(/^[a-zA-Z0-9_-]{16,128}$/),
+    review: z.strictObject({
+      result: z.enum(evidenceResults),
+      observation: z.string().trim().min(4).max(360),
+      contributorLabel: z.string().trim().min(2).max(80),
+      durationSeconds: z.number().int().min(1).max(90),
+      citationStartSeconds: z.number().int().nonnegative(),
+      citationEndSeconds: z.number().int().positive(),
+      confidence: z.enum(evidenceConfidences),
+      continuity: z.enum(['continuous', 'edited', 'unknown']),
+      rights: z.enum(['owned', 'authorized']),
+      capturedAt: timestampSchema,
+      sha256: z.string().regex(/^[a-f0-9]{64}$/),
+    }),
+  })
+  .superRefine((value, context) => {
+    if (
+      value.review.citationStartSeconds >= value.review.citationEndSeconds ||
+      value.review.citationEndSeconds > value.review.durationSeconds
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['review', 'citationEndSeconds'],
+        message: 'The cited interval must be ordered and fit inside the recording.',
+      });
+    }
+  });
 export type PublishRemoteEvidenceRequest = z.infer<typeof publishRemoteEvidenceRequestSchema>;
 
 export interface RemoteEvidenceCaseSnapshot {

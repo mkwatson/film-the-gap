@@ -3214,6 +3214,7 @@ select:focus-visible {
 .contributor-error,
 .contributor-brief,
 .contributor-recorder,
+.contributor-processing,
 .contributor-review,
 .contributor-complete {
   margin-top: 18px;
@@ -3347,6 +3348,41 @@ select:focus-visible {
   padding: clamp(22px, 5vw, 34px);
 }
 
+.contributor-processing {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  align-items: center;
+  padding: clamp(24px, 6vw, 40px);
+  border-color: color-mix(in srgb, var(--cyan) 34%, transparent);
+}
+
+.contributor-processing > span {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  color: var(--cyan);
+  border: 1px solid color-mix(in srgb, var(--cyan) 34%, transparent);
+  border-radius: 50%;
+  font-size: 25px;
+  animation: evidence-pulse 1.4s ease-in-out infinite;
+}
+
+.contributor-processing h2 {
+  margin: 5px 0 8px;
+  font-size: clamp(22px, 5vw, 32px);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+.contributor-processing p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .contributor-recorder h2,
 .contributor-review h2 {
   margin: 5px 0 8px;
@@ -3362,6 +3398,63 @@ select:focus-visible {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.55;
+}
+
+.contributor-ai-proposal,
+.contributor-manual-review {
+  margin-top: 18px;
+  padding: 15px;
+  border: 1px solid color-mix(in srgb, var(--cyan) 28%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--cyan) 5%, transparent);
+}
+
+.contributor-ai-proposal > span,
+.contributor-ai-proposal > strong,
+.contributor-manual-review > strong {
+  display: block;
+}
+
+.contributor-ai-proposal > span {
+  color: var(--cyan);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.contributor-ai-proposal > strong {
+  margin-top: 5px;
+  font-size: 13px;
+}
+
+.contributor-ai-proposal p,
+.contributor-manual-review p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.contributor-ai-proposal ul {
+  display: grid;
+  gap: 4px;
+  margin: 10px 0;
+  padding-left: 18px;
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.contributor-ai-proposal small {
+  color: var(--dim);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.contributor-manual-review {
+  border-color: color-mix(in srgb, var(--amber) 28%, transparent);
+  background: color-mix(in srgb, var(--amber) 5%, transparent);
 }
 
 .contributor-capture-button {
@@ -3521,10 +3614,42 @@ select:focus-visible {
 }
 
 .contributor-review fieldset {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 11px;
+}
+
+.contributor-time-range {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.contributor-time-range label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.contributor-time-range input {
+  min-height: 44px;
+  width: 100%;
+  padding: 0 12px;
+  color: var(--ink);
+  border: 1px solid var(--line-bright);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.14);
+  font:
+    500 13px/1.5 Inter,
+    ui-sans-serif,
+    sans-serif;
 }
 
 .contributor-review fieldset legend {
@@ -3598,6 +3723,19 @@ select:focus-visible {
   border-top: 1px solid var(--line);
 }
 
+@keyframes evidence-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @media (max-width: 560px) {
   .contributor-header {
     align-items: flex-start;
@@ -3611,7 +3749,8 @@ select:focus-visible {
 
   .contributor-preview dl,
   .contributor-result-buttons,
-  .contributor-review fieldset {
+  .contributor-review fieldset,
+  .contributor-time-range {
     grid-template-columns: 1fr;
   }
 
@@ -3633,6 +3772,7 @@ select:focus-visible {
   *::before,
   *::after {
     scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
 }

@@ -9,6 +9,7 @@ import {
   type ReviewedEvidenceInput,
 } from '../../src/lib/evidence-network/model';
 import {
+  analyzeEvidenceVideoRequestSchema,
   createRemoteEvidenceCaseRequestSchema,
   evidenceNetworkStateSchema,
   ownerEvidenceCommandRequestSchema,
@@ -23,6 +24,13 @@ import {
   type RemoteEvidenceCaseSnapshot,
   type RemoteEvidenceServerMessage,
 } from '../../src/lib/evidence-network/remote-protocol';
+import { generateAuthorizedVideoProposal } from '../../src/lib/evidence-network/server/video-analysis';
+import {
+  maximumAnalyzableVideoBytes,
+  videoEvidenceProposalSchema,
+  type AuthorizedVideoAnalysisInput,
+  type VideoEvidenceProposal,
+} from '../../src/lib/evidence-network/video-analysis';
 
 export interface ProductEvidenceWorkerEnv {
   readonly CASES: DurableObjectNamespace<ProductEvidenceCaseObject>;
@@ -30,6 +38,8 @@ export interface ProductEvidenceWorkerEnv {
   readonly ALLOWED_ORIGINS: string;
   readonly STREAM?: StreamBinding;
   readonly STREAM_OUTBOUND?: Fetcher;
+  readonly AI_GATEWAY_API_KEY?: string;
+  readonly AI_ANALYSIS_OUTBOUND?: Fetcher;
 }
 
 interface StoredUploadReservation {
@@ -39,6 +49,11 @@ interface StoredUploadReservation {
   readonly fileSizeBytes: number;
   readonly maxDurationSeconds: number;
   readonly mimeType: string;
+  readonly downloadRequestedAt: number | null;
+  readonly analysisStatus: 'not_requested' | 'running' | 'complete' | 'unavailable';
+  readonly analysisStartedAt: number | null;
+  readonly analysisAttempts: number;
+  readonly analysis: VideoEvidenceProposal | null;
 }
 
 interface ProcessedEvidenceCommand {
@@ -71,6 +86,12 @@ interface StreamVideoDetails {
   readonly hlsPlaybackUrl: string | null;
 }
 
+interface StreamDownloadDetails {
+  readonly status: 'ready' | 'inprogress' | 'error';
+  readonly percentComplete: number;
+  readonly url: string | null;
+}
+
 const storedUploadReservationSchema = z.strictObject({
   uploadId: z.string().regex(/^[a-zA-Z0-9_-]{16,128}$/),
   createdAt: z.number().int().positive(),
@@ -78,6 +99,11 @@ const storedUploadReservationSchema = z.strictObject({
   fileSizeBytes: z.number().int().positive(),
   maxDurationSeconds: z.number().int().min(2).max(90),
   mimeType: z.string().min(3).max(120),
+  downloadRequestedAt: z.number().int().positive().nullable(),
+  analysisStatus: z.enum(['not_requested', 'running', 'complete', 'unavailable']),
+  analysisStartedAt: z.number().int().positive().nullable(),
+  analysisAttempts: z.number().int().min(0).max(2),
+  analysis: videoEvidenceProposalSchema.nullable(),
 });
 
 const processedEvidenceCommandSchema = z.strictObject({
@@ -124,11 +150,18 @@ const streamVideoDetailsSchema: z.ZodType<StreamVideoDetails> = z.strictObject({
   hlsPlaybackUrl: z.url().nullable(),
 });
 
+const streamDownloadDetailsSchema: z.ZodType<StreamDownloadDetails> = z.strictObject({
+  status: z.enum(['ready', 'inprogress', 'error']),
+  percentComplete: z.number().min(0).max(100),
+  url: z.url().nullable(),
+});
+
 const caseIdAlphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const storedCaseKey = 'product-evidence-case';
 const maxProcessedCommands = 128;
 const defaultCaseTtlSeconds = 86_400;
 const maximumCaseTtlSeconds = 7 * 86_400;
+const analysisLockMilliseconds = 60_000;
 
 function jsonResponse(body: object, status = 200, headers?: HeadersInit): Response {
   return Response.json(body, {
@@ -303,6 +336,76 @@ async function readStreamVideo(
   };
 }
 
+function isCloudflareStreamMp4(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === 'https:' &&
+      /^customer-[a-z0-9-]+\.cloudflarestream\.com$/i.test(url.hostname) &&
+      url.pathname.endsWith('/downloads/default.mp4') &&
+      url.username.length === 0 &&
+      url.password.length === 0
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function prepareStreamDownload(
+  env: ProductEvidenceWorkerEnv,
+  uploadId: string,
+  alreadyRequested: boolean,
+): Promise<StreamDownloadDetails> {
+  if (env.STREAM_OUTBOUND !== undefined) {
+    const response = await env.STREAM_OUTBOUND.fetch(
+      `https://stream.test/videos/${uploadId}/downloads/default`,
+      { method: alreadyRequested ? 'GET' : 'POST' },
+    );
+    if (!response.ok) {
+      throw new Error(`Cloudflare Stream download preparation failed with ${response.status}.`);
+    }
+    return streamDownloadDetailsSchema.parse(await response.json());
+  }
+  if (env.STREAM === undefined) {
+    throw new Error('Cloudflare Stream is not configured for this environment.');
+  }
+  const downloads = alreadyRequested
+    ? await env.STREAM.video(uploadId).downloads.get()
+    : await env.STREAM.video(uploadId).downloads.generate();
+  const video = downloads.default;
+  if (video === undefined) {
+    return { status: 'inprogress', percentComplete: 0, url: null };
+  }
+  return {
+    status: video.status,
+    percentComplete: video.percentComplete,
+    url: video.url ?? null,
+  };
+}
+
+async function analyzeAuthorizedVideo(
+  env: ProductEvidenceWorkerEnv,
+  input: AuthorizedVideoAnalysisInput,
+  abortSignal: AbortSignal,
+): Promise<VideoEvidenceProposal> {
+  if (env.AI_ANALYSIS_OUTBOUND !== undefined) {
+    const response = await env.AI_ANALYSIS_OUTBOUND.fetch('https://analysis.test/video', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!response.ok) {
+      throw new Error(`The test analysis service failed with ${response.status}.`);
+    }
+    return videoEvidenceProposalSchema.parse(await response.json());
+  }
+  const apiKey = env.AI_GATEWAY_API_KEY?.trim();
+  if (apiKey === undefined || apiKey.length === 0) {
+    throw new Error('Vercel AI Gateway is not configured.');
+  }
+  return generateAuthorizedVideoProposal(input, { apiKey, abortSignal });
+}
+
 function publicServerMessage(
   caseId: string,
   stored: StoredEvidenceCase,
@@ -321,6 +424,7 @@ function send(socket: WebSocket, message: RemoteEvidenceServerMessage): void {
 export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWorkerEnv> {
   private stored: StoredEvidenceCase | null = null;
   private readonly workerEnv: ProductEvidenceWorkerEnv;
+  private readonly activeVideoAnalyses = new Set<string>();
 
   constructor(ctx: DurableObjectState, env: ProductEvidenceWorkerEnv) {
     super(ctx, env);
@@ -358,6 +462,14 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
     }
     if (request.method === 'POST' && url.pathname === '/publish-evidence') {
       return this.publishEvidence(request);
+    }
+    const analysisMatch = /^\/video\/([a-zA-Z0-9_-]{16,128})\/analysis$/.exec(url.pathname);
+    if (request.method === 'POST' && analysisMatch !== null) {
+      const uploadId = analysisMatch[1];
+      if (uploadId === undefined) {
+        return jsonResponse({ error: 'invalid_upload_id' }, 400);
+      }
+      return this.analyzeEvidenceVideo(request, uploadId);
     }
     const videoMatch = /^\/video\/([a-zA-Z0-9_-]{16,128})$/.exec(url.pathname);
     if (request.method === 'GET' && videoMatch !== null) {
@@ -578,6 +690,11 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
       fileSizeBytes: parsed.data.fileSizeBytes,
       maxDurationSeconds,
       mimeType: parsed.data.mimeType,
+      downloadRequestedAt: null,
+      analysisStatus: 'not_requested',
+      analysisStartedAt: null,
+      analysisAttempts: 0,
+      analysis: null,
     };
     this.stored = {
       ...stored,
@@ -597,6 +714,249 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
       },
       201,
     );
+  }
+
+  private async replaceUpload(nextUpload: StoredUploadReservation): Promise<void> {
+    const stored = this.stored;
+    if (stored === null) {
+      return;
+    }
+    this.stored = {
+      ...stored,
+      uploads: stored.uploads.map((upload) =>
+        upload.uploadId === nextUpload.uploadId ? nextUpload : upload,
+      ),
+    };
+    await this.ctx.storage.put(storedCaseKey, this.stored);
+  }
+
+  private analysisProcessing(
+    uploadId: string,
+    stage: 'stream-processing' | 'mp4-preparing' | 'model-review',
+    message: string,
+  ): Response {
+    return jsonResponse({ kind: 'processing', uploadId, stage, message }, 202);
+  }
+
+  private manualAnalysis(
+    uploadId: string,
+    reason:
+      'gateway-unconfigured' | 'gateway-unavailable' | 'video-too-large' | 'stream-unavailable',
+    message: string,
+  ): Response {
+    return jsonResponse({ kind: 'manual-review-required', uploadId, reason, message });
+  }
+
+  private async analyzeEvidenceVideo(request: Request, uploadId: string): Promise<Response> {
+    const parsed = analyzeEvidenceVideoRequestSchema.safeParse(parseJson(await request.text()));
+    if (!parsed.success) {
+      return jsonResponse({ error: 'invalid_video_analysis_request' }, 400);
+    }
+    const stored = this.stored;
+    if (
+      stored === null ||
+      !(await this.authenticate(parsed.data.token, stored.contributorTokenDigest))
+    ) {
+      return jsonResponse({ error: 'invalid_contributor_token' }, 403);
+    }
+    const evidenceCase = stored.state.activeCase;
+    const mission = evidenceCase?.mission;
+    if (evidenceCase === null || evidenceCase === undefined || mission?.status !== 'open') {
+      return jsonResponse({ error: 'no_open_filming_mission' }, 409);
+    }
+    let reservation = stored.uploads.find((upload) => upload.uploadId === uploadId);
+    if (reservation === undefined || reservation.expiresAt <= Date.now()) {
+      return jsonResponse({ error: 'upload_reservation_not_found' }, 409);
+    }
+    if (reservation.fileSizeBytes > maximumAnalyzableVideoBytes) {
+      return this.manualAnalysis(
+        uploadId,
+        'video-too-large',
+        'This clip is preserved in Stream but is too large for the bounded AI review path. Review it manually.',
+      );
+    }
+    if (reservation.analysisStatus === 'complete' && reservation.analysis !== null) {
+      return jsonResponse({ kind: 'proposal', uploadId, ...reservation.analysis });
+    }
+    if (reservation.analysisStatus === 'unavailable') {
+      return this.manualAnalysis(
+        uploadId,
+        'gateway-unavailable',
+        'The AI proposal was unavailable. Review the exact uploaded recording manually.',
+      );
+    }
+    const now = Date.now();
+    if (
+      reservation.analysisStatus === 'running' &&
+      reservation.analysisStartedAt !== null &&
+      now - reservation.analysisStartedAt < analysisLockMilliseconds
+    ) {
+      return this.analysisProcessing(
+        uploadId,
+        'model-review',
+        'Gemini is locating the smallest interval that answers the question.',
+      );
+    }
+    if (reservation.analysisStatus === 'running' && reservation.analysisAttempts >= 2) {
+      reservation = { ...reservation, analysisStatus: 'unavailable' };
+      await this.replaceUpload(reservation);
+      return this.manualAnalysis(
+        uploadId,
+        'gateway-unavailable',
+        'The bounded AI review did not finish. Review the exact uploaded recording manually.',
+      );
+    }
+
+    let video: StreamVideoDetails;
+    try {
+      video = await readStreamVideo(this.workerEnv, uploadId);
+    } catch (error: unknown) {
+      console.error('Cloudflare Stream video analysis status failed', error);
+      return this.manualAnalysis(
+        uploadId,
+        'stream-unavailable',
+        'Cloudflare Stream could not verify this clip yet. Review can continue manually.',
+      );
+    }
+    if (!video.uploaded || !video.readyToStream) {
+      return this.analysisProcessing(
+        uploadId,
+        'stream-processing',
+        'Cloudflare Stream is verifying and encoding the exact uploaded clip.',
+      );
+    }
+
+    let download: StreamDownloadDetails;
+    try {
+      const alreadyRequested = reservation.downloadRequestedAt !== null;
+      download = await prepareStreamDownload(this.workerEnv, uploadId, alreadyRequested);
+      if (!alreadyRequested) {
+        reservation = { ...reservation, downloadRequestedAt: now };
+        await this.replaceUpload(reservation);
+      }
+    } catch (error: unknown) {
+      console.error('Cloudflare Stream MP4 preparation failed', error);
+      return this.manualAnalysis(
+        uploadId,
+        'stream-unavailable',
+        'The exact Stream MP4 was unavailable. Review can continue manually.',
+      );
+    }
+    if (download.status === 'inprogress') {
+      return this.analysisProcessing(
+        uploadId,
+        'mp4-preparing',
+        `Cloudflare Stream is preparing the analysis copy (${Math.round(download.percentComplete)}%).`,
+      );
+    }
+    if (
+      download.status !== 'ready' ||
+      download.url === null ||
+      !isCloudflareStreamMp4(download.url)
+    ) {
+      return this.manualAnalysis(
+        uploadId,
+        'stream-unavailable',
+        'Cloudflare Stream did not return a valid analysis copy. Review can continue manually.',
+      );
+    }
+    if (
+      this.workerEnv.AI_ANALYSIS_OUTBOUND === undefined &&
+      !this.workerEnv.AI_GATEWAY_API_KEY?.trim()
+    ) {
+      return this.manualAnalysis(
+        uploadId,
+        'gateway-unconfigured',
+        'Vercel AI Gateway is not configured here. Review the exact uploaded recording manually.',
+      );
+    }
+
+    const latestReservation = this.stored?.uploads.find((upload) => upload.uploadId === uploadId);
+    if (latestReservation === undefined || latestReservation.expiresAt <= Date.now()) {
+      return jsonResponse({ error: 'upload_reservation_not_found' }, 409);
+    }
+    if (latestReservation.analysisStatus === 'complete' && latestReservation.analysis !== null) {
+      return jsonResponse({ kind: 'proposal', uploadId, ...latestReservation.analysis });
+    }
+    if (latestReservation.analysisStatus === 'unavailable') {
+      return this.manualAnalysis(
+        uploadId,
+        'gateway-unavailable',
+        'The AI proposal was unavailable. Review the exact uploaded recording manually.',
+      );
+    }
+    const latestNow = Date.now();
+    if (
+      this.activeVideoAnalyses.has(uploadId) ||
+      (latestReservation.analysisStatus === 'running' &&
+        latestReservation.analysisStartedAt !== null &&
+        latestNow - latestReservation.analysisStartedAt < analysisLockMilliseconds)
+    ) {
+      return this.analysisProcessing(
+        uploadId,
+        'model-review',
+        'Gemini is locating the smallest interval that answers the question.',
+      );
+    }
+    if (latestReservation.analysisStatus === 'running' && latestReservation.analysisAttempts >= 2) {
+      await this.replaceUpload({ ...latestReservation, analysisStatus: 'unavailable' });
+      return this.manualAnalysis(
+        uploadId,
+        'gateway-unavailable',
+        'The bounded AI review did not finish. Review the exact uploaded recording manually.',
+      );
+    }
+
+    reservation = {
+      ...latestReservation,
+      analysisStatus: 'running',
+      analysisStartedAt: latestNow,
+      analysisAttempts: Math.min(2, latestReservation.analysisAttempts + 1),
+    };
+    this.activeVideoAnalyses.add(uploadId);
+    try {
+      await this.replaceUpload(reservation);
+      const durationSeconds = Math.max(
+        1,
+        Math.round(video.durationSeconds ?? reservation.maxDurationSeconds),
+      );
+      const analysis = await analyzeAuthorizedVideo(
+        this.workerEnv,
+        {
+          uploadId,
+          videoUrl: download.url,
+          productName: evidenceCase.product.name,
+          question: evidenceCase.question.text,
+          instruction: mission.instruction,
+          successCriterion: mission.successCriterion,
+          durationSeconds,
+          continuousTakeRequired: mission.continuousTakeRequired,
+        },
+        request.signal,
+      );
+      await this.replaceUpload({
+        ...reservation,
+        analysisStatus: 'complete',
+        analysisStartedAt: null,
+        analysis,
+      });
+      return jsonResponse({ kind: 'proposal', uploadId, ...analysis });
+    } catch (error: unknown) {
+      console.error('Vercel AI Gateway video analysis failed', error);
+      await this.replaceUpload({
+        ...reservation,
+        analysisStatus: 'unavailable',
+        analysisStartedAt: null,
+        analysis: null,
+      });
+      return this.manualAnalysis(
+        uploadId,
+        'gateway-unavailable',
+        'The AI proposal was unavailable. Review the exact uploaded recording manually.',
+      );
+    } finally {
+      this.activeVideoAnalyses.delete(uploadId);
+    }
   }
 
   private async publishEvidence(request: Request): Promise<Response> {
@@ -635,10 +995,22 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
     if (!video.uploaded) {
       return jsonResponse({ error: 'video_upload_incomplete' }, 409);
     }
+    if (!video.readyToStream) {
+      return jsonResponse({ error: 'video_still_processing' }, 409);
+    }
     const actualDuration =
       video.durationSeconds === null
         ? parsed.data.review.durationSeconds
         : Math.max(1, Math.round(video.durationSeconds));
+    if (parsed.data.review.citationEndSeconds > actualDuration) {
+      return jsonResponse(
+        {
+          error: 'citation_outside_video',
+          message: 'The reviewed citation extends beyond the verified Stream duration.',
+        },
+        400,
+      );
+    }
     const evidenceInput: ReviewedEvidenceInput = {
       ...parsed.data.review,
       durationSeconds: actualDuration,
@@ -785,7 +1157,7 @@ export async function routeProductEvidenceRequest(
     return createEvidenceCase(request, env, cors);
   }
   const match =
-    /^\/evidence-cases\/([A-Z2-9]{8})(?:\/(snapshot|ws|commands|uploads|evidence|videos\/([a-zA-Z0-9_-]{16,128})))?$/.exec(
+    /^\/evidence-cases\/([A-Z2-9]{8})(?:\/(snapshot|ws|commands|uploads|evidence|videos\/([a-zA-Z0-9_-]{16,128})(?:\/(analysis))?))?$/.exec(
       url.pathname,
     );
   if (match === null) {
@@ -794,6 +1166,7 @@ export async function routeProductEvidenceRequest(
   const caseId = match[1];
   const action = match[2] ?? 'snapshot';
   const uploadId = match[3];
+  const videoAction = match[4];
   if (caseId === undefined || !remoteEvidenceCaseIdPattern.test(caseId)) {
     return jsonResponse({ error: 'invalid_evidence_case_id' }, 400, cors);
   }
@@ -810,7 +1183,7 @@ export async function routeProductEvidenceRequest(
   } else if (action === 'evidence') {
     internalPath = '/publish-evidence';
   } else if (uploadId !== undefined) {
-    internalPath = `/video/${uploadId}`;
+    internalPath = `/video/${uploadId}${videoAction === 'analysis' ? '/analysis' : ''}`;
   } else {
     return jsonResponse({ error: 'not_found' }, 404, cors);
   }

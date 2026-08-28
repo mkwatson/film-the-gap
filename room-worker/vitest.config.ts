@@ -157,7 +157,37 @@ async function mockCloudflareStream(request: Request): Promise<Response> {
         'https://customer-demo.cloudflarestream.com/0123456789abcdef0123456789abcdef/manifest/video.m3u8',
     });
   }
+  if (
+    ['GET', 'POST'].includes(request.method) &&
+    url.pathname === '/videos/0123456789abcdef0123456789abcdef/downloads/default'
+  ) {
+    return json({
+      status: 'ready',
+      percentComplete: 100,
+      url: 'https://customer-demo.cloudflarestream.com/0123456789abcdef0123456789abcdef/downloads/default.mp4',
+    });
+  }
   return json({ error: 'not_found' }, 404);
+}
+
+async function mockVideoAnalysis(request: Request): Promise<Response> {
+  if (request.method !== 'POST' || new URL(request.url).pathname !== '/video') {
+    return json({ error: 'not_found' }, 404);
+  }
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  return json({
+    modelId: 'google/gemini-3.7-flash',
+    finding: {
+      result: 'supports',
+      confidence: 'high',
+      observation: 'No water reached the paper during the continuous inversion.',
+      startSeconds: 1,
+      endSeconds: 10,
+      continuity: 'continuous',
+      visibleDetails: ['The closed bottle stayed inverted above dry paper.'],
+      limitations: ['The recording establishes only the tested ten-second interval.'],
+    },
+  });
 }
 
 export default defineConfig({
@@ -173,6 +203,7 @@ export default defineConfig({
         serviceBindings: {
           UCP_OUTBOUND: mockUcpMerchant,
           STREAM_OUTBOUND: mockCloudflareStream,
+          AI_ANALYSIS_OUTBOUND: mockVideoAnalysis,
         },
       },
     }),

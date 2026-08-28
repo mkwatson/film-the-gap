@@ -175,7 +175,10 @@ describe('product evidence network model', () => {
           observation: 'No water reached the paper during the continuous ten-second inversion.',
           contributorLabel: 'Judge replay contributor',
           durationSeconds: 10,
+          citationStartSeconds: 0,
+          citationEndSeconds: 10,
           confidence: 'high',
+          continuity: 'continuous',
           rights: 'owned',
           provenance: 'demo_replay',
           capturedAt: evidenceTime,
@@ -208,7 +211,10 @@ describe('product evidence network model', () => {
           observation: 'The lid was partly out of frame, so leakage could not be ruled out.',
           contributorLabel: 'Cautious contributor',
           durationSeconds: 10,
+          citationStartSeconds: 0,
+          citationEndSeconds: 10,
           confidence: 'low',
+          continuity: 'continuous',
           rights: 'authorized',
           provenance: 'authorized_import',
           capturedAt: evidenceTime,
@@ -217,6 +223,34 @@ describe('product evidence network model', () => {
       evidenceTime,
     );
 
+    expect(currentEvidenceAnswer(result.state)?.status).toBe('insufficient');
+  });
+
+  it('does not let an edited clip satisfy a mission that requires one continuous take', () => {
+    const state = createOpenMission();
+    const result = applyEvidenceNetworkCommand(
+      state,
+      {
+        kind: 'publish-reviewed-evidence',
+        actor: 'contributor',
+        input: {
+          result: 'supports',
+          observation: 'Separate shots showed the bottle inverted and the paper still dry.',
+          contributorLabel: 'Product owner',
+          durationSeconds: 10,
+          citationStartSeconds: 0,
+          citationEndSeconds: 10,
+          confidence: 'high',
+          continuity: 'edited',
+          rights: 'owned',
+          provenance: 'authorized_import',
+          capturedAt: evidenceTime,
+        },
+      },
+      evidenceTime,
+    );
+
+    expect(result.ok).toBe(true);
     expect(currentEvidenceAnswer(result.state)?.status).toBe('insufficient');
   });
 
@@ -232,7 +266,10 @@ describe('product evidence network model', () => {
           observation: 'The short clip did not cover the complete requested interval.',
           contributorLabel: 'Product owner',
           durationSeconds: 5,
+          citationStartSeconds: 0,
+          citationEndSeconds: 5,
           confidence: 'high',
+          continuity: 'continuous',
           rights: 'owned',
           provenance: 'demo_replay',
           capturedAt: evidenceTime,
@@ -258,7 +295,10 @@ describe('product evidence network model', () => {
           observation: 'Water reached the paper during the continuous inversion.',
           contributorLabel: 'Product owner',
           durationSeconds: 10,
+          citationStartSeconds: 1,
+          citationEndSeconds: 10,
           confidence: 'high',
+          continuity: 'continuous',
           rights: 'owned',
           provenance: 'live_capture',
           capturedAt: evidenceTime,
@@ -290,7 +330,10 @@ describe('product evidence network model', () => {
           observation: 'No water reached the paper during the inversion.',
           contributorLabel: 'Product owner',
           durationSeconds: 10,
+          citationStartSeconds: 0,
+          citationEndSeconds: 10,
           confidence: 'high',
+          continuity: 'continuous',
           rights: 'owned',
           provenance: 'live_capture',
           capturedAt: evidenceTime,
@@ -316,7 +359,10 @@ describe('product evidence network model', () => {
           observation: 'Water appeared below the lid during inversion.',
           contributorLabel: 'Product owner',
           durationSeconds: 10,
+          citationStartSeconds: 0,
+          citationEndSeconds: 10,
           confidence: 'high',
+          continuity: 'continuous',
           rights: 'owned',
           provenance: 'live_capture',
           capturedAt: evidenceTime,

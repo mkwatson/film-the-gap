@@ -30,6 +30,7 @@ import {
   type CreateRemoteEvidenceCaseRequest,
   type RemoteEvidenceCaseCredentials,
 } from '@/lib/evidence-network/remote-protocol';
+import { formatEvidenceTimestamp } from '@/lib/evidence-network/video-analysis';
 import {
   createEvidenceSiteTools,
   type EvidencePhoneCaptureReceipt,
@@ -65,7 +66,7 @@ function citationSeconds(start: number | null, end: number | null, fallback: str
   if (start === null || end === null) {
     return fallback;
   }
-  return `Video ${String(start).padStart(2, '0')}:${String(0).padStart(2, '0')}–00:${String(end).padStart(2, '0')}`;
+  return `Video ${formatEvidenceTimestamp(start)}–${formatEvidenceTimestamp(end)}`;
 }
 
 function parseJsonString(value: string): unknown {
@@ -439,7 +440,10 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
           : 'Water appeared on the paper below the lid during the continuous inversion.',
         contributorLabel: 'Clearly labeled replay contributor',
         durationSeconds: 10,
+        citationStartSeconds: 0,
+        citationEndSeconds: 10,
         confidence: 'high',
+        continuity: 'continuous',
         rights: 'owned',
         provenance: 'demo_replay',
         capturedAt: new Date().toISOString(),

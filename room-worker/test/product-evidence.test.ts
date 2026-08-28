@@ -234,6 +234,26 @@ describe('generic product evidence cases', () => {
     expect(uploadResponse.status).toBe(201);
     expect(upload.provider).toBe('cloudflare_stream');
 
+    const analysisResponse = await SELF.fetch(
+      `https://rooms.example/evidence-cases/${credentials.caseId}/videos/${upload.uploadId}/analysis`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({ token: credentials.contributorToken }),
+      },
+    );
+    expect(analysisResponse.status).toBe(200);
+    expect(await analysisResponse.json()).toMatchObject({
+      kind: 'proposal',
+      modelId: 'google/gemini-3.7-flash',
+      finding: {
+        result: 'supports',
+        startSeconds: 1,
+        endSeconds: 10,
+        continuity: 'continuous',
+      },
+    });
+
     const publishResponse = await SELF.fetch(
       `https://rooms.example/evidence-cases/${credentials.caseId}/evidence`,
       {
@@ -249,7 +269,10 @@ describe('generic product evidence cases', () => {
             observation: 'No water reached the paper during the continuous inversion.',
             contributorLabel: 'Bottle owner',
             durationSeconds: 10,
+            citationStartSeconds: 1,
+            citationEndSeconds: 10,
             confidence: 'high',
+            continuity: 'continuous',
             rights: 'owned',
             capturedAt: new Date().toISOString(),
             sha256: 'a'.repeat(64),
@@ -295,6 +318,50 @@ describe('generic product evidence cases', () => {
     socket.close(1000, 'Test complete');
   });
 
+  it('coalesces concurrent analysis requests into one active model review', async () => {
+    const { credentials } = await createCase();
+    const uploadResponse = await SELF.fetch(
+      `https://rooms.example/evidence-cases/${credentials.caseId}/uploads`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({
+          token: credentials.contributorToken,
+          fileSizeBytes: 2_000_000,
+          maxDurationSeconds: 30,
+          mimeType: 'video/mp4',
+        }),
+      },
+    );
+    const upload = reservedEvidenceUploadSchema.parse(await uploadResponse.json());
+    const analyze = (): Promise<Response> =>
+      SELF.fetch(
+        `https://rooms.example/evidence-cases/${credentials.caseId}/videos/${upload.uploadId}/analysis`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Origin: origin },
+          body: JSON.stringify({ token: credentials.contributorToken }),
+        },
+      );
+
+    const responses = await Promise.all([analyze(), analyze()]);
+    expect(responses.map(({ status }) => status).sort()).toEqual([200, 202]);
+    const bodies = await Promise.all(responses.map((response) => response.json()));
+    expect(bodies).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'processing', stage: 'model-review' }),
+        expect.objectContaining({ kind: 'proposal', modelId: 'google/gemini-3.7-flash' }),
+      ]),
+    );
+
+    const cached = await analyze();
+    expect(cached.status).toBe(200);
+    expect(await cached.json()).toMatchObject({
+      kind: 'proposal',
+      modelId: 'google/gemini-3.7-flash',
+    });
+  });
+
   it('does not let the owner token exercise the contributor upload capability', async () => {
     const { credentials } = await createCase();
     const response = await SELF.fetch(
@@ -310,6 +377,36 @@ describe('generic product evidence cases', () => {
         }),
       },
     );
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({ error: 'invalid_contributor_token' });
+  });
+
+  it('does not let the owner token invoke paid analysis for a contributor upload', async () => {
+    const { credentials } = await createCase();
+    const uploadResponse = await SELF.fetch(
+      `https://rooms.example/evidence-cases/${credentials.caseId}/uploads`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({
+          token: credentials.contributorToken,
+          fileSizeBytes: 2_000_000,
+          maxDurationSeconds: 30,
+          mimeType: 'video/mp4',
+        }),
+      },
+    );
+    const upload = reservedEvidenceUploadSchema.parse(await uploadResponse.json());
+
+    const response = await SELF.fetch(
+      `https://rooms.example/evidence-cases/${credentials.caseId}/videos/${upload.uploadId}/analysis`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({ token: credentials.ownerToken }),
+      },
+    );
+
     expect(response.status).toBe(403);
     expect(await response.json()).toMatchObject({ error: 'invalid_contributor_token' });
   });

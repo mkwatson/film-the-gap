@@ -90,7 +90,10 @@ export const reviewedEvidenceInputSchema = z
     observation: z.string().trim().min(4).max(360),
     contributorLabel: z.string().trim().min(2).max(80),
     durationSeconds: z.number().int().min(1).max(300),
+    citationStartSeconds: z.number().int().nonnegative(),
+    citationEndSeconds: z.number().int().positive(),
     confidence: z.enum(evidenceConfidences),
+    continuity: z.enum(['continuous', 'edited', 'unknown']),
     rights: z.enum(['owned', 'authorized']),
     provenance: z.enum(['live_capture', 'authorized_import', 'demo_replay']),
     capturedAt: z.iso.datetime(),
@@ -110,6 +113,16 @@ export const reviewedEvidenceInputSchema = z
         code: 'custom',
         path: ['streamUid'],
         message: 'A live capture must reference its reserved video upload.',
+      });
+    }
+    if (
+      value.citationStartSeconds >= value.citationEndSeconds ||
+      value.citationEndSeconds > value.durationSeconds
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['citationEndSeconds'],
+        message: 'The cited interval must be ordered and fit inside the recording.',
       });
     }
   });
@@ -291,9 +304,16 @@ function isDecisionGrade(
   return (
     source !== null &&
     ['owned', 'authorized'].includes(source.rights) &&
+    (evidenceCase.mission?.continuousTakeRequired !== true || source.continuity === 'continuous') &&
     observation.confidence !== 'low' &&
     observation.result !== 'inconclusive'
   );
+}
+
+function evidenceTimestamp(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
 export function deriveEvidenceAnswer(
@@ -718,7 +738,7 @@ function publishReviewedEvidence(
     mediaType: 'video',
     rights: parsed.data.rights,
     provenance: parsed.data.provenance,
-    continuity: evidenceCase.mission.continuousTakeRequired ? 'continuous' : 'unknown',
+    continuity: parsed.data.continuity,
     contributorLabel: parsed.data.contributorLabel,
     createdAt: parsed.data.capturedAt,
     streamUid: parsed.data.streamUid ?? null,
@@ -732,9 +752,9 @@ function publishReviewedEvidence(
     text: parsed.data.observation,
     citation: {
       sourceId,
-      startSeconds: 0,
-      endSeconds: parsed.data.durationSeconds,
-      label: `00:00–00:${String(parsed.data.durationSeconds).padStart(2, '0')}`,
+      startSeconds: parsed.data.citationStartSeconds,
+      endSeconds: parsed.data.citationEndSeconds,
+      label: `${evidenceTimestamp(parsed.data.citationStartSeconds)}–${evidenceTimestamp(parsed.data.citationEndSeconds)}`,
     },
     reviewedBy: parsed.data.contributorLabel,
     reviewedAt: now,

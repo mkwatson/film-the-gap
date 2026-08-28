@@ -2,8 +2,13 @@
 
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 
-import { currentEvidenceAnswer, type EvidenceResult } from '@/lib/evidence-network/model';
 import {
+  currentEvidenceAnswer,
+  type EvidenceConfidence,
+  type EvidenceResult,
+} from '@/lib/evidence-network/model';
+import {
+  analyzeRemoteEvidenceVideo,
   configuredEvidenceServiceUrl,
   publishRemoteEvidence,
   readRemoteEvidenceCase,
@@ -16,6 +21,11 @@ import {
   type RemoteEvidenceCaseSnapshot,
   type ReservedEvidenceUpload,
 } from '@/lib/evidence-network/remote-protocol';
+import {
+  formatEvidenceTimestamp,
+  type VideoEvidenceAnalysisResponse,
+  type VideoEvidenceContinuity,
+} from '@/lib/evidence-network/video-analysis';
 
 type ContributorPhase =
   | 'loading'
@@ -23,6 +33,7 @@ type ContributorPhase =
   | 'hashing'
   | 'reserving'
   | 'uploading'
+  | 'processing'
   | 'review'
   | 'publishing'
   | 'complete'
@@ -37,6 +48,10 @@ const resultCopy: Readonly<Record<EvidenceResult, string>> = {
   contradicts: 'The requested behavior failed during the continuous test.',
   inconclusive: 'The recording did not keep every required detail visible.',
 };
+
+function wait(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -62,8 +77,13 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
   const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
   const [sha256, setSha256] = useState<string | null>(null);
   const [upload, setUpload] = useState<ReservedEvidenceUpload | null>(null);
-  const [result, setResult] = useState<EvidenceResult>('supports');
-  const [observation, setObservation] = useState(resultCopy.supports);
+  const [analysis, setAnalysis] = useState<VideoEvidenceAnalysisResponse | null>(null);
+  const [result, setResult] = useState<EvidenceResult>('inconclusive');
+  const [observation, setObservation] = useState(resultCopy.inconclusive);
+  const [confidence, setConfidence] = useState<EvidenceConfidence>('low');
+  const [continuity, setContinuity] = useState<VideoEvidenceContinuity>('unknown');
+  const [citationStartSeconds, setCitationStartSeconds] = useState(0);
+  const [citationEndSeconds, setCitationEndSeconds] = useState(1);
   const [contributorLabel, setContributorLabel] = useState('Product owner');
   const [rights, setRights] = useState<'owned' | 'authorized'>('owned');
   const [error, setError] = useState<string | null>(null);
@@ -138,6 +158,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
     if (phase === 'hashing') return 'Fingerprinting on this phone';
     if (phase === 'reserving') return 'Creating one-time upload';
     if (phase === 'uploading') return 'Uploading directly to Cloudflare Stream';
+    if (phase === 'processing') return 'Finding the exact proof interval';
     if (phase === 'review') return 'Your review is required';
     if (phase === 'publishing') return 'Publishing reviewed evidence';
     if (phase === 'complete') return 'Evidence published';
@@ -165,6 +186,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
     setLocalVideoUrl(URL.createObjectURL(selected));
     setDurationSeconds(null);
     setSha256(null);
+    setAnalysis(null);
     setError(null);
     setPhase('hashing');
     try {
@@ -192,6 +214,56 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
       setUpload(reserved);
       setPhase('uploading');
       await uploadEvidenceVideo(reserved.uploadUrl, file);
+      setPhase('processing');
+      const roundedDuration = Math.max(1, Math.round(durationSeconds ?? 1));
+      setCitationStartSeconds(0);
+      setCitationEndSeconds(roundedDuration);
+      let completedAnalysis: VideoEvidenceAnalysisResponse | null = null;
+      try {
+        for (let attempt = 0; attempt < 60; attempt += 1) {
+          const response = await analyzeRemoteEvidenceVideo(serviceUrl, caseId, reserved.uploadId, {
+            token,
+          });
+          setAnalysis(response);
+          if (response.kind !== 'processing') {
+            completedAnalysis = response;
+            break;
+          }
+          await wait(1_250);
+        }
+        if (completedAnalysis === null) {
+          completedAnalysis = {
+            kind: 'manual-review-required',
+            uploadId: reserved.uploadId,
+            reason: 'gateway-unavailable',
+            message:
+              'The bounded AI draft did not finish in time. Review the exact uploaded recording manually.',
+          };
+          setAnalysis(completedAnalysis);
+        }
+      } catch {
+        completedAnalysis = {
+          kind: 'manual-review-required',
+          uploadId: reserved.uploadId,
+          reason: 'gateway-unavailable',
+          message:
+            'The AI draft could not be retrieved. Review the exact uploaded recording manually.',
+        };
+        setAnalysis(completedAnalysis);
+      }
+      if (completedAnalysis?.kind === 'proposal') {
+        setResult(completedAnalysis.finding.result);
+        setObservation(completedAnalysis.finding.observation);
+        setConfidence(completedAnalysis.finding.confidence);
+        setContinuity(completedAnalysis.finding.continuity);
+        setCitationStartSeconds(completedAnalysis.finding.startSeconds);
+        setCitationEndSeconds(completedAnalysis.finding.endSeconds);
+      } else {
+        setResult('inconclusive');
+        setObservation(resultCopy.inconclusive);
+        setConfidence('low');
+        setContinuity('unknown');
+      }
       setPhase('review');
     } catch (caught: unknown) {
       setError(errorMessage(caught));
@@ -202,6 +274,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
   function chooseResult(nextResult: EvidenceResult): void {
     setResult(nextResult);
     setObservation(resultCopy[nextResult]);
+    setConfidence(nextResult === 'inconclusive' ? 'low' : 'medium');
   }
 
   async function publishReview(): Promise<void> {
@@ -228,7 +301,10 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
           observation,
           contributorLabel,
           durationSeconds: Math.max(1, Math.round(durationSeconds)),
-          confidence: result === 'inconclusive' ? 'low' : 'high',
+          citationStartSeconds,
+          citationEndSeconds,
+          confidence,
+          continuity,
           rights,
           capturedAt: new Date(file?.lastModified ?? Date.now()).toISOString(),
           sha256,
@@ -298,14 +374,15 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
             </ul>
           </section>
 
-          {mission.status === 'open' && !['review', 'publishing'].includes(phase) ? (
+          {mission.status === 'open' && !['processing', 'review', 'publishing'].includes(phase) ? (
             <section className="contributor-recorder" aria-labelledby="record-title">
               <div>
                 <p className="evidence-eyebrow">No app or account required</p>
                 <h2 id="record-title">Record or choose the evidence clip.</h2>
                 <p>
                   The video stays on this phone until you choose upload. It then goes directly to a
-                  one-time Cloudflare Stream URL.
+                  one-time Cloudflare Stream URL. Vercel AI Gateway can draft a timestamped review;
+                  you decide what gets published.
                 </p>
               </div>
               <label className="contributor-capture-button">
@@ -356,17 +433,34 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                   <button
                     className="evidence-primary-button"
                     type="button"
-                    disabled={!fileReady || ['reserving', 'uploading'].includes(phase)}
+                    disabled={
+                      !fileReady || ['reserving', 'uploading', 'processing'].includes(phase)
+                    }
                     onClick={() => void uploadSelectedVideo()}
                   >
                     {phase === 'reserving'
                       ? 'Creating one-time upload…'
                       : phase === 'uploading'
                         ? 'Uploading video…'
-                        : 'Upload for review'}
+                        : 'Upload + draft evidence'}
                   </button>
                 </div>
               ) : null}
+            </section>
+          ) : null}
+
+          {phase === 'processing' ? (
+            <section className="contributor-processing" aria-live="polite">
+              <span aria-hidden="true">◎</span>
+              <div>
+                <p className="evidence-eyebrow">Claim-scoped AI draft</p>
+                <h2>Finding the smallest interval that answers the question.</h2>
+                <p>
+                  {analysis?.kind === 'processing'
+                    ? analysis.message
+                    : 'Cloudflare Stream is verifying the upload before Vercel AI Gateway reviews it.'}
+                </p>
+              </div>
             </section>
           ) : null}
 
@@ -374,7 +468,36 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
             <section className="contributor-review" aria-labelledby="review-title">
               <p className="evidence-eyebrow">Human review gate</p>
               <h2 id="review-title">What does your video actually show?</h2>
-              <p>Choose the result, correct the observation, and confirm your right to share it.</p>
+              <p>
+                Inspect the AI draft, correct every field, and confirm your right to share the clip.
+              </p>
+              {analysis?.kind === 'proposal' ? (
+                <div className="contributor-ai-proposal">
+                  <span>AI draft · untrusted until you review it</span>
+                  <strong>{analysis.modelId}</strong>
+                  <p>
+                    Proposed citation {formatEvidenceTimestamp(analysis.finding.startSeconds)}–
+                    {formatEvidenceTimestamp(analysis.finding.endSeconds)}
+                  </p>
+                  <ul>
+                    {analysis.finding.visibleDetails.map((detail) => (
+                      <li key={detail}>{detail}</li>
+                    ))}
+                  </ul>
+                  {analysis.finding.limitations.length > 0 ? (
+                    <small>Limits: {analysis.finding.limitations.join(' · ')}</small>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="contributor-manual-review">
+                  <strong>Manual review</strong>
+                  <p>
+                    {analysis?.kind === 'manual-review-required'
+                      ? analysis.message
+                      : 'No model proposal was used. Start from inconclusive and review carefully.'}
+                  </p>
+                </div>
+              )}
               <div className="contributor-result-buttons" role="group" aria-label="Observed result">
                 {(['supports', 'contradicts', 'inconclusive'] as const).map((candidate) => (
                   <button
@@ -398,6 +521,56 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                   onChange={(event) => setObservation(event.currentTarget.value)}
                 />
               </label>
+              <fieldset>
+                <legend>Reviewed confidence</legend>
+                {(['low', 'medium', 'high'] as const).map((candidate) => (
+                  <label key={candidate}>
+                    <input
+                      type="radio"
+                      name="confidence"
+                      checked={confidence === candidate}
+                      onChange={() => setConfidence(candidate)}
+                    />
+                    {candidate}
+                  </label>
+                ))}
+              </fieldset>
+              <fieldset>
+                <legend>Recording continuity</legend>
+                {(['continuous', 'edited', 'unknown'] as const).map((candidate) => (
+                  <label key={candidate}>
+                    <input
+                      type="radio"
+                      name="continuity"
+                      checked={continuity === candidate}
+                      onChange={() => setContinuity(candidate)}
+                    />
+                    {candidate}
+                  </label>
+                ))}
+              </fieldset>
+              <div className="contributor-time-range">
+                <label>
+                  Evidence starts (seconds)
+                  <input
+                    type="number"
+                    min={0}
+                    max={Math.max(0, citationEndSeconds - 1)}
+                    value={citationStartSeconds}
+                    onChange={(event) => setCitationStartSeconds(event.currentTarget.valueAsNumber)}
+                  />
+                </label>
+                <label>
+                  Evidence ends (seconds)
+                  <input
+                    type="number"
+                    min={citationStartSeconds + 1}
+                    max={Math.max(1, Math.round(durationSeconds ?? 1))}
+                    value={citationEndSeconds}
+                    onChange={(event) => setCitationEndSeconds(event.currentTarget.valueAsNumber)}
+                  />
+                </label>
+              </div>
               <label>
                 Public contributor label
                 <input
@@ -432,14 +605,23 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
               <button
                 className="evidence-primary-button"
                 type="button"
-                disabled={phase === 'publishing' || observation.trim().length < 4}
+                disabled={
+                  phase === 'publishing' ||
+                  observation.trim().length < 4 ||
+                  !Number.isInteger(citationStartSeconds) ||
+                  !Number.isInteger(citationEndSeconds) ||
+                  citationStartSeconds < 0 ||
+                  citationStartSeconds >= citationEndSeconds ||
+                  citationEndSeconds > Math.max(1, Math.round(durationSeconds ?? 1))
+                }
                 onClick={() => void publishReview()}
               >
                 {phase === 'publishing' ? 'Publishing evidence…' : 'Publish reviewed evidence'}
               </button>
               <p className="contributor-fine-print">
-                A file digest records which bytes were uploaded; it is provenance, not proof that a
-                video is authentic. The visible continuous test and your review remain the evidence.
+                Cloudflare preserves the uploaded bytes and Vercel AI Gateway only proposes an
+                observation. The digest is provenance—not proof of authenticity—and your reviewed
+                video remains the evidence.
               </p>
             </section>
           ) : null}

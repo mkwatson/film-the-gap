@@ -1,4 +1,5 @@
 import {
+  analyzeEvidenceVideoRequestSchema,
   createRemoteEvidenceCaseRequestSchema,
   ownerEvidenceCommandRequestSchema,
   publishRemoteEvidenceRequestSchema,
@@ -6,6 +7,7 @@ import {
   remoteEvidenceCaseSnapshotSchema,
   reserveEvidenceUploadRequestSchema,
   reservedEvidenceUploadSchema,
+  type AnalyzeEvidenceVideoRequest,
   type CreateRemoteEvidenceCaseRequest,
   type OwnerEvidenceCommandRequest,
   type PublishRemoteEvidenceRequest,
@@ -14,6 +16,10 @@ import {
   type ReserveEvidenceUploadRequest,
   type ReservedEvidenceUpload,
 } from './remote-protocol';
+import {
+  videoEvidenceAnalysisResponseSchema,
+  type VideoEvidenceAnalysisResponse,
+} from './video-analysis';
 
 export type EvidenceFetch = (
   input: string | URL | globalThis.Request,
@@ -184,6 +190,21 @@ export async function uploadEvidenceVideo(
       null,
     );
   }
+}
+
+export async function analyzeRemoteEvidenceVideo(
+  serviceUrl: string,
+  caseId: string,
+  uploadId: string,
+  request: AnalyzeEvidenceVideoRequest,
+  evidenceFetch: EvidenceFetch = fetch,
+): Promise<VideoEvidenceAnalysisResponse> {
+  const input = analyzeEvidenceVideoRequestSchema.parse(request);
+  const response = await evidenceFetch(
+    `${normalizeServiceUrl(serviceUrl)}/evidence-cases/${encodeURIComponent(caseId)}/videos/${encodeURIComponent(uploadId)}/analysis`,
+    jsonRequest(input),
+  );
+  return videoEvidenceAnalysisResponseSchema.parse(await checkedJson(response));
 }
 
 export async function publishRemoteEvidence(
