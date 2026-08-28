@@ -42,7 +42,7 @@ These are defense-in-depth controls, not claims of perfect abuse prevention.
 | Public mission board   | Explicit shopper confirmation; public fields only; 24-hour expiry; daily purge; fulfilled jobs hidden                                     |
 | Public recorder path   | Separate case-scoped capability; removal revokes it without invalidating the private contributor link                                     |
 | Model calls            | One cached successful proposal per upload and no more than two crash-recovery attempts                                                    |
-| Video AI spend         | Dedicated AI Gateway key with a hard non-renewing budget and 30-day expiry                                                                |
+| Video AI spend         | Dedicated AI Gateway key with a `$5` no-refresh quota, bounded calls, no BYOK/auto-top-up, and manual post-judging revocation             |
 | Broad web search       | Vercel OIDC under a non-renewing project budget, one Exa `instant` call, four results, exact-query receipt check, and 20-second timeout   |
 | Product-page reading   | Server capability; public HTTPS/default port only; same-origin navigation; 24-hour Browser Run cache; atomic D1 maximum of 60 reads/day   |
 | Discovery reuse        | SHA-256 cache key; successful configured searches reused for 15 minutes through Vercel Runtime Cache                                      |
@@ -52,6 +52,8 @@ These are defense-in-depth controls, not claims of perfect abuse prevention.
 Cloudflare's current Worker rate-limit binding is deliberately permissive, eventually consistent, and local to a Cloudflare location. It is useful overload protection, not exact global accounting. Browser Run therefore uses an atomic D1 daily ceiling instead: even if all 60 actions consume both eight-second timeout phases on every day of a 31-day month, this candidate stays below 8.3 browser hours. Cloudflare currently includes 10 Browser Run hours per month on Workers Paid; Workers Paid is a separate account plan with a `$5` monthly minimum, and unrelated account usage could consume its included headroom. Current public documentation does not promise a hard Browser Run dollar cap on Paid, so the release must use an otherwise-idle account or explicitly accept that residual shared-account risk after checking current usage.
 
 Stream has a different cost model. Storage is prepaid in `$5` blocks, but delivery—including web playback and MP4 analysis downloads—is postpaid at `$1` per 1,000 delivered minutes. The candidate reduces ordinary exposure by making every network-reusable clip private at publication, allowing playback only from the Worker viewer, issuing at most 60 fresh one-hour tokens per UTC day, disabling autoplay, and loading at the cited timestamp. That is a strong operational bound, not a mathematically hard dollar cap: a valid one-hour token can be replayed before it expires. Release approval must therefore explicitly include this residual delivery exposure, and usage must be monitored through judging. At one complete 90-second play per issued token, the ceiling represents 2,790 delivered minutes in a 31-day month, or `$2.79`; the canonical 12-second demo would be about `$0.37`. See [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/), [Browser Run pricing](https://developers.cloudflare.com/browser-run/pricing/), [Browser Run limits](https://developers.cloudflare.com/browser-run/limits/), [Stream pricing](https://developers.cloudflare.com/stream/pricing/), [Stream signed URLs](https://developers.cloudflare.com/stream/viewing-videos/securing-your-stream/), [Stream Worker binding](https://developers.cloudflare.com/stream/manage-video-library/bindings/), [Workers Rate Limiting](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/), [Vercel WAF Rate Limiting](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting), and [AI Gateway key budgets](https://vercel.com/changelog/budgets-for-api-keys-on-ai-gateway).
+
+Vercel's current [AI Gateway authentication documentation](https://vercel.com/docs/ai-gateway/authentication-and-byok) says static keys do not expire unless revoked. Its [budget guidance](https://vercel.com/academy/ai-gateway/set-a-budget) also says the request that crosses a quota can finish before later requests are rejected. The `$5`, no-refresh video-key quota and project budget are therefore valuable operational boundaries, not mathematically hard dollar caps. The Worker separately limits clip size/duration, upload attempts, proposal reuse, output shape, and recovery attempts; keep auto-top-up and BYOK off, monitor usage, and manually revoke the dedicated key after judging.
 
 Turnstile is not on the canonical judge path yet. Its server validation would add useful bot resistance, but an unverified interaction inside ChatGPT's in-app Browser is a larger submission risk than the bounded residual cost. Reconsider only after an exact-runtime test proves invisible or interaction-only Turnstile does not interrupt native Site Tools or phone capture.
 
@@ -138,7 +140,7 @@ The recommended release uses Workers Paid plus Stream. If the intended Cloudflar
 
    ```
 
-   Mark then creates the one external video-analysis key in the Vercel AI Gateway dashboard during the private setup session: name `webmcp-product-evidence-video`, `$5` spend quota, refresh period `none`, alerts at 50/75/100%, 30-day expiry, and no bypass of project settings. The key value must never be pasted into chat, an agent tool call, a shell argument, command output, or a URL. Paste it directly from the dashboard into `wrangler secret put`'s non-echoing prompt in Mark's own SSH terminal. The assistant may verify only the key's name/budget/expiry metadata afterward. Keep Vercel auto top-up disabled and retain the route/WAF limits below. The project budget is the hard discovery ceiling; an explicit `AI_GATEWAY_DISCOVERY_API_KEY` is unnecessary and would override OIDC.
+   Mark then creates the one external video-analysis key in the Vercel AI Gateway dashboard during the private setup session: name `webmcp-product-evidence-video`, `$5` spend quota, refresh period `none`, alerts at 50/75/100% if the dashboard offers them, no BYOK, and no bypass of project settings. Current keys do not expire automatically, so schedule manual revocation after the September 21 judging period ends. The key value must never be pasted into chat, an agent tool call, a shell argument, command output, or a URL. Paste it directly from the dashboard into `wrangler secret put`'s non-echoing prompt in Mark's own SSH terminal. The assistant may verify only the key's name and budget metadata afterward. Keep Vercel auto top-up disabled and retain the route/WAF limits below. The project budget bounds discovery but may allow one crossing request to finish; an explicit `AI_GATEWAY_DISCOVERY_API_KEY` is unnecessary and would override OIDC.
 
 6. If live social discovery is enabled, create a dedicated ScrapeCreators key with only the credits Mark approves. The app remains truthful and functional without it, but reports discovery as unavailable.
 7. Before every budget, environment, firewall, or deploy command, rerun `pnpm release:target-check` and `vercel project inspect` with the explicit project and scope. Both must identify the new standalone project, never a pre-existing project. `.vercel/project.json` must remain uncommitted.
@@ -361,14 +363,14 @@ After every mandatory receipt passes, and only within Mark's approved Browser Ru
 
 ## Freeze manifest
 
-| Field         | Required value                                                                                     |
-| ------------- | -------------------------------------------------------------------------------------------------- |
-| Git           | Full `WEBMCP_RELEASE_COMMIT_SHA`, signed/frozen tag, clean public repository                       |
-| Vercel        | Immutable deployment URL, stable alias, commit receipt, WAF rule ID/state                          |
-| Cloudflare    | Worker origin/version, D1 migrations, Cron Trigger, private Stream media, Browser Run, rate limits |
-| Paid edges    | Gateway key expiry/cap, Workers plan, Stream storage/delivery, token ceiling, discovery credit     |
-| Runtime tests | Release verifier, Chrome, ChatGPT, physical phone, fallback, cold tester timestamps                |
-| Submission    | Final live URL, repository URL, YouTube URL, Devpost export                                        |
+| Field         | Required value                                                                                          |
+| ------------- | ------------------------------------------------------------------------------------------------------- |
+| Git           | Full `WEBMCP_RELEASE_COMMIT_SHA`, signed/frozen tag, clean public repository                            |
+| Vercel        | Immutable deployment URL, stable alias, commit receipt, WAF rule ID/state                               |
+| Cloudflare    | Worker origin/version, D1 migrations, Cron Trigger, private Stream media, Browser Run, rate limits      |
+| Paid edges    | Gateway quota/manual revocation, Workers plan, Stream storage/delivery, token ceiling, discovery credit |
+| Runtime tests | Release verifier, Chrome, ChatGPT, physical phone, fallback, cold tester timestamps                     |
+| Submission    | Final live URL, repository URL, YouTube URL, Devpost export                                             |
 
 After the September 3, 2026 1:00 p.m. PT deadline, keep the submitted repository, deployment, and entry frozen through judging. Continue experiments only in a clearly separate branch or project.
 

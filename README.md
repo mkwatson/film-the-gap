@@ -107,7 +107,7 @@ Optional social discovery uses one server-only ScrapeCreators key. On Vercel, br
 SCRAPECREATORS_API_KEY=... pnpm dev
 ```
 
-For local or non-Vercel development, either run through `vercel dev`/a current `vercel env pull`, or set a separate hard-budgeted `AI_GATEWAY_DISCOVERY_API_KEY`. An explicit key overrides OIDC and must never be reused from the Cloudflare video-analysis Worker. The release runbook puts a non-renewing project budget around OIDC-backed discovery.
+For local or non-Vercel development, either run through `vercel dev`/a current `vercel env pull`, or set a separate budgeted `AI_GATEWAY_DISCOVERY_API_KEY`. An explicit key overrides OIDC and must never be reused from the Cloudflare video-analysis Worker. The release runbook puts a non-renewing project budget around OIDC-backed discovery and documents the provider's one-crossing-request behavior.
 
 The broad-web path uses `openai/gpt-5.4-nano` only to invoke the Gateway-native Exa `instant` search tool, verifies that the tool preserved the exact bounded query, keeps at most four results, and fails closed on a malformed receipt. Discovery results remain external leads until reviewed; the app does not download or republish public media merely because it can find it.
 
