@@ -1,5 +1,4 @@
 packages:
-  - merchant-worker
   - room-worker
 
 allowBuilds:

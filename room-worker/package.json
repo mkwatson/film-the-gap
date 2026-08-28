@@ -5,15 +5,12 @@
   "type": "module",
   "scripts": {
     "build": "wrangler deploy -c wrangler.evidence.jsonc --dry-run --outdir dist",
-    "build:legacy": "wrangler deploy --dry-run --outdir dist-legacy",
     "dev": "wrangler dev -c wrangler.evidence.jsonc",
-    "dev:legacy": "wrangler dev",
     "d1:migrate:evidence-local": "wrangler d1 migrations apply webmcp-product-evidence-library --local --config wrangler.evidence.jsonc",
     "d1:migrate:evidence-acceptance": "wrangler d1 migrations apply webmcp-evidence-library-acceptance --local --config test/fixtures/evidence-room.wrangler.jsonc",
     "dev:evidence-acceptance": "wrangler dev -c test/fixtures/evidence-room.wrangler.jsonc --port 8792",
     "dev:evidence-services": "wrangler dev -c test/fixtures/evidence-services.wrangler.jsonc --port 8793",
-    "dev:fixture-merchant": "wrangler dev --config test/fixtures/wrangler.jsonc --port 8790",
-    "test": "vitest run && vitest run -c vitest.evidence.config.ts",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

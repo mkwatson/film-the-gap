@@ -175,6 +175,16 @@ Limits: the passing synthetic clip deliberately does not contain the random miss
 
 Decision: keep the generic corpus and contributor-only microphone permission. They raise WebMCP Leverage, execution confidence, and public-repository coherence without adding a demo feature. Do not claim exact ChatGPT or physical-phone compatibility until those runtimes complete the same current release.
 
+## E27 — One-product public candidate
+
+**Frozen claim:** Removing executable challenge-history rungs from the candidate tree will improve judge comprehension, reproducibility, and implementation credibility without weakening the generic evidence product or erasing provenance preserved by Git.
+
+**Result:** **graduated locally.** The current tree contains one Next.js app, one standalone evidence Worker, three current browser surfaces, one WebMCP eval corpus, and one end-to-end acceptance runner. The retired auction UI/state machine, live-market Worker, owned UCP merchant, Lean hold proof, legacy fixtures, and their package dependencies remain recoverable in earlier commits but no longer inflate current typechecks, tests, bundles, styles, or repository review. Shared CSS fell from roughly 5,600 to 2,500 lines; the mobile top bar now gives the Site Tools receipt its own row and keeps both actions legible at `390×844`.
+
+The post-removal full gate passed 145 app tests, 26 Workerd tests, zero-warning lint, strict TypeScript, formatting, one current Wrangler production dry run, and the six-route Next.js production build. The eight-step native Chrome journey then passed again after visual checks of desktop shopper, public board, desktop contributor, and mobile shopper/contributor surfaces; no horizontal overflow or framework overlay appeared.
+
+Decision: keep the deletion. Git history remains the evidence of meaningful challenge-period extension and prior experiments; the submitted repository landing page now explains only the product a judge can run. UCP and Lean can return only as future load-bearing product capabilities, not as unused sponsor or technical ornament.
+
 ## What changed in the evidence
 
 1. The [official challenge page](https://openai.com/webmcp-challenge/) asks for an app that becomes meaningfully better when people and agents use it together. The [Devpost gallery](https://webmcp.devpost.com/project-gallery) was still unpublished on August 26, while the last same-day refresh showed 1,717 participants. We cannot novelty-check private entries, so the interaction itself must be structurally memorable.

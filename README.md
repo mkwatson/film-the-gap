@@ -46,7 +46,7 @@ Question → evidence gap → WebMCP mission → open request board → product 
 
 The continuous-video path currently targets `google/gemini-3.7-flash` through AI Gateway, with `google/gemini-3.6-flash` as fallback. Exact versions and source receipts are recorded in [EXPERIMENTS.md](EXPERIMENTS.md) and [SPONSOR-PRODUCTS.md](SPONSOR-PRODUCTS.md). No live model or Stream request runs in the default test suite.
 
-UCP, the prior live-shopping market, and the Lean capability proof remain in the challenge-period history as independently working research rungs. Their public routes are intentionally absent from this candidate because adding checkout or a formal proof does not improve the core product-evidence story yet.
+UCP, the prior live-shopping market, and the Lean capability proof remain in Git history as independently working research rungs. Their implementation and public routes are intentionally absent from this candidate because adding checkout or a formal proof does not improve the core product-evidence story yet.
 
 ## Run locally
 
@@ -93,7 +93,7 @@ Run the full offline gate:
 pnpm check
 ```
 
-It covers formatting, ESLint, strict TypeScript, app/Worker tests, both Worker dry-run bundles, and a production Next.js build.
+It covers formatting, ESLint, strict TypeScript, app/Worker tests, the standalone Cloudflare Worker dry-run bundle, and a production Next.js build.
 
 Useful focused commands:
 

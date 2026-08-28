@@ -9,25 +9,18 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --max-warnings 0",
-    "typecheck": "tsc --noEmit && pnpm --dir room-worker typecheck && pnpm --dir merchant-worker typecheck",
-    "test": "pnpm test:app && pnpm test:room && pnpm test:merchant",
+    "typecheck": "tsc --noEmit && pnpm --dir room-worker typecheck",
+    "test": "pnpm test:app && pnpm test:room",
     "test:app": "vitest run",
     "test:room": "pnpm --dir room-worker test",
-    "test:merchant": "pnpm --dir merchant-worker test",
-    "test:ucp-schema": "UCP_RELEASE_SCHEMA_LIVE=1 vitest run src/lib/ucp/released-schema.live.test.ts",
     "test:watch": "vitest",
-    "acceptance:native": "tsx scripts/native-browser-acceptance.ts",
     "acceptance:evidence-network": "tsx scripts/evidence-network-acceptance.ts",
     "release:verify": "tsx scripts/release-preflight-cli.ts",
-    "proof:generate": "tsx scripts/proof-receipt-cli.ts --write",
-    "proof:verify": "tsx scripts/proof-receipt-cli.ts --check",
     "room:dev": "pnpm --dir room-worker dev",
     "room:build": "pnpm --dir room-worker build",
-    "merchant:dev": "pnpm --dir merchant-worker dev",
-    "merchant:build": "pnpm --dir merchant-worker build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm room:build && pnpm merchant:build && pnpm build"
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm room:build && pnpm build"
   },
   "engines": {
     "node": ">=24.0.0"
@@ -43,7 +36,6 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@hyperjump/json-schema": "1.17.8",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.6",

@@ -1,6 +1,0 @@
-{
-  "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "webmcp-ucp-browser-fixture",
-  "main": "./ucp-merchant.ts",
-  "compatibility_date": "2026-08-25",
-}
