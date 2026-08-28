@@ -21,6 +21,8 @@ function analysisInstructions(): string {
     'Never infer product identity, authenticity, ownership, intent, safety, durability, historical events, or conditions outside the cited interval.',
     'Choose inconclusive whenever the requested condition, control, product, or outcome is not continuously observable enough to answer.',
     'Cuts, missing setup, off-camera action, or an unclear outcome must be disclosed in continuity and limitations.',
+    'Separately check whether the exact mission phrase is visibly shown or audibly spoken; do not infer it from similar words.',
+    'The phrase only bounds the recording to after the mission was issued. It does not prove identity, ownership, product authenticity, or the truth of the product claim.',
     'Cite the smallest interval that contains the setup and observable outcome, using integer seconds.',
     'A human contributor will review and may correct this proposal before anything is published.',
   ].join(' ');
@@ -32,6 +34,7 @@ function analysisPrompt(input: AuthorizedVideoAnalysisInput): string {
     `Shopper question: ${input.question}`,
     `Filming instruction: ${input.instruction}`,
     `Success criterion: ${input.successCriterion}`,
+    `Exact fresh-capture mission phrase: ${input.captureChallengePhrase}`,
     `Recorded duration: ${input.durationSeconds} seconds.`,
     input.continuousTakeRequired
       ? 'This claim requires one continuous take; a conclusive result is invalid if continuity is edited or unclear.'

@@ -96,12 +96,26 @@ describe('remote product evidence protocol', () => {
       }).success,
     ).toBe(true);
     expect(
-      toReviewedEvidenceInput({
+      publishRemoteEvidenceRequestSchema.safeParse({
         ...base,
-        review: { ...base.review, sha256: 'a'.repeat(64) },
-      }),
+        review: {
+          ...base.review,
+          sha256: 'a'.repeat(64),
+          captureTiming: 'mission_challenge_verified',
+        },
+      }).success,
+    ).toBe(false);
+    expect(
+      toReviewedEvidenceInput(
+        {
+          ...base,
+          review: { ...base.review, sha256: 'a'.repeat(64) },
+        },
+        'preexisting',
+      ),
     ).toMatchObject({
       provenance: 'authorized_import',
+      captureTiming: 'preexisting',
       streamUid: base.uploadId,
     });
   });

@@ -9,6 +9,9 @@ export const maximumAnalyzableVideoBytes = 95 * 1024 * 1024;
 export const videoEvidenceContinuities = ['continuous', 'edited', 'unknown'] as const;
 export type VideoEvidenceContinuity = (typeof videoEvidenceContinuities)[number];
 
+export const captureChallengeStatuses = ['verified', 'not_detected', 'unclear'] as const;
+export type CaptureChallengeStatus = (typeof captureChallengeStatuses)[number];
+
 export const videoEvidenceFindingSchema = z.strictObject({
   result: z
     .enum(evidenceResults)
@@ -25,6 +28,15 @@ export const videoEvidenceFindingSchema = z.strictObject({
   startSeconds: z.number().int().nonnegative(),
   endSeconds: z.number().int().positive(),
   continuity: z.enum(videoEvidenceContinuities),
+  captureChallenge: z.strictObject({
+    status: z.enum(captureChallengeStatuses),
+    observation: z
+      .string()
+      .trim()
+      .min(4)
+      .max(180)
+      .describe('Whether the exact mission phrase is visibly shown or audibly spoken.'),
+  }),
   visibleDetails: z
     .array(z.string().trim().min(1).max(160))
     .max(5)
@@ -84,6 +96,7 @@ export interface AuthorizedVideoAnalysisInput {
   readonly question: string;
   readonly instruction: string;
   readonly successCriterion: string;
+  readonly captureChallengePhrase: string;
   readonly durationSeconds: number;
   readonly continuousTakeRequired: boolean;
 }

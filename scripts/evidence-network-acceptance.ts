@@ -504,8 +504,10 @@ async function run(): Promise<void> {
         const hasStoredCapability = Object.keys(sessionStorage).some((key) =>
           key.startsWith('product-evidence-contributor:'),
         );
+        const text = (document.body?.innerText ?? '').toLowerCase();
         return location.hash === '' && hasStoredCapability &&
-          (document.body?.innerText ?? '').includes('Record or choose the evidence clip.');
+          text.includes('record or choose the evidence clip.') &&
+          text.includes('optional fresh-capture check');
       })()`;
       await waitForBrowserValue(
         driver,
@@ -567,6 +569,9 @@ async function run(): Promise<void> {
           model: text.includes('google/gemini-3.7-flash'),
           citation: text.includes('Proposed citation 00:01–00:11'),
           reviewBoundary: normalized.includes('ai draft · untrusted until you review it'),
+          honestChallengeFallback: text.includes(
+            'Fresh-capture check: The synthetic fixture does not contain the mission phrase',
+          ),
         };
       })()`);
       if (
@@ -669,6 +674,7 @@ async function run(): Promise<void> {
             serialized.includes('"status":"insufficient"') &&
             serialized.includes('"status":"contradicted"') &&
             serialized.includes('"timestamp":"00:01–00:11"') &&
+            serialized.includes('"captureTiming":"contributor_attested"') &&
             serialized.includes(${JSON.stringify(correctedObservation)});`,
         ),
         'invoke inspect_answer_change',
@@ -747,6 +753,7 @@ async function run(): Promise<void> {
             {},
             `return serialized.includes('"status":"contradicted"') &&
               serialized.includes('"reuseScope":"public_network"') &&
+              serialized.includes('"captureTiming":"contributor_attested"') &&
               serialized.includes('"streamUid":"acceptancevideo0000000000000001"') &&
               serialized.includes(${JSON.stringify(correctedObservation)}) &&
               serialized.includes('"mission":null') &&

@@ -428,6 +428,15 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
               <li>Keep the requested behavior visible</li>
               <li>You review the observation before it publishes</li>
             </ul>
+            <div className="contributor-capture-challenge">
+              <span>Optional fresh-capture check</span>
+              <code>{mission.captureChallenge.phrase}</code>
+              <p>
+                To let the network verify that this recording followed the mission, keep the product
+                visible and clearly say this phrase—or show it written in frame—near the start. An
+                existing authorized clip is still useful, but will be labeled preexisting.
+              </p>
+            </div>
           </section>
 
           {mission.status === 'open' && !['processing', 'review', 'publishing'].includes(phase) ? (
@@ -540,6 +549,11 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                       <li key={detail}>{detail}</li>
                     ))}
                   </ul>
+                  <p
+                    className={`contributor-challenge-result challenge-${analysis.finding.captureChallenge.status}`}
+                  >
+                    Fresh-capture check: {analysis.finding.captureChallenge.observation}
+                  </p>
                   {analysis.finding.limitations.length > 0 ? (
                     <small>Limits: {analysis.finding.limitations.join(' · ')}</small>
                   ) : null}
@@ -731,7 +745,9 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
               <p className="contributor-fine-print">
                 Cloudflare Stream hosts the uploaded recording and Vercel AI Gateway only proposes
                 an observation. The client-computed digest is only a file receipt—not independent
-                provenance or authenticity proof—and your reviewed video remains the evidence.
+                provenance or authenticity proof. Detecting the one-time mission phrase only bounds
+                capture timing; it does not prove identity, ownership, or product authenticity—and
+                your reviewed video remains the evidence.
               </p>
             </section>
           ) : null}

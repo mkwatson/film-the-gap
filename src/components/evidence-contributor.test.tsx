@@ -75,6 +75,10 @@ beforeEach(() => {
       startSeconds: 1,
       endSeconds: 10,
       continuity: 'continuous',
+      captureChallenge: {
+        status: 'verified',
+        observation: 'The exact mission phrase is audible at the start.',
+      },
       visibleDetails: ['The bottle and dry paper remained visible.'],
       limitations: ['This shows only the recorded ten-second test.'],
     },
@@ -93,6 +97,7 @@ beforeEach(() => {
         citationEndSeconds: 10,
         confidence: 'high',
         continuity: 'continuous',
+        captureTiming: 'mission_challenge_verified',
         rights: 'owned',
         reuseScope: 'case_only',
         provenance: 'live_capture',
@@ -136,6 +141,7 @@ describe('EvidenceContributor', () => {
     const input = screen.getByLabelText('Record or choose evidence video');
     expect(input.getAttribute('accept')).toBe('video/*');
     expect(input.getAttribute('capture')).toBe('environment');
+    expect(screen.getByText(/^[A-Z]+ [A-Z]+ [1-9][0-9]$/)).toBeTruthy();
     expect(screen.queryByText(/sign in/i)).toBeNull();
   });
 
@@ -210,6 +216,9 @@ describe('EvidenceContributor', () => {
     expect(remoteMocks.analyze).toHaveBeenCalledOnce();
     expect(screen.getByText('google/gemini-3.7-flash')).toBeTruthy();
     expect(screen.getByText('Proposed citation 00:01–00:10')).toBeTruthy();
+    expect(
+      screen.getByText(/Fresh-capture check: The exact mission phrase is audible/),
+    ).toBeTruthy();
     expect(
       screen.getByRole('button', { name: 'Publish reviewed evidence' }).hasAttribute('disabled'),
     ).toBe(true);

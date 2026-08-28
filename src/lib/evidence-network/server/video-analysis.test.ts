@@ -25,6 +25,7 @@ const input = {
   question: 'Can the phone charge while the receiver is connected and recording?',
   instruction: 'Show the receiver, charging indicator, and active recording timer.',
   successCriterion: 'Keep all three visible while the timer advances.',
+  captureChallengePhrase: 'LIME ORBIT 47',
   durationSeconds: 12,
   continuousTakeRequired: true,
 } as const;
@@ -36,6 +37,10 @@ const finding = {
   startSeconds: 2,
   endSeconds: 11,
   continuity: 'continuous',
+  captureChallenge: {
+    status: 'verified',
+    observation: 'The exact mission phrase is audible at the start.',
+  },
   visibleDetails: ['The charging icon remained visible.', 'The recording timer advanced.'],
   limitations: ['The clip does not establish long-term charging performance.'],
 } as const;
@@ -82,7 +87,9 @@ describe('Vercel AI Gateway video evidence adapter', () => {
               }),
               expect.objectContaining({
                 type: 'text',
-                text: expect.stringContaining(input.question),
+                text: expect.stringMatching(
+                  new RegExp(`${input.question}.*${input.captureChallengePhrase}`, 's'),
+                ),
               }),
             ],
           },

@@ -176,6 +176,11 @@ async function mockVideoAnalysis(request: Request): Promise<Response> {
   if (request.method !== 'POST' || new URL(request.url).pathname !== '/video') {
     return json({ error: 'not_found' }, 404);
   }
+  const input = (await request.json()) as Record<string, unknown>;
+  const captureChallengePhrase = input.captureChallengePhrase;
+  if (typeof captureChallengePhrase !== 'string') {
+    return json({ error: 'capture_challenge_required' }, 400);
+  }
   await new Promise((resolve) => setTimeout(resolve, 60));
   return json({
     modelId: 'google/gemini-3.7-flash',
@@ -186,6 +191,10 @@ async function mockVideoAnalysis(request: Request): Promise<Response> {
       startSeconds: 1,
       endSeconds: 10,
       continuity: 'continuous',
+      captureChallenge: {
+        status: 'verified',
+        observation: `The exact mission phrase ${captureChallengePhrase} is audible at the start.`,
+      },
       visibleDetails: ['The closed bottle stayed inverted above dry paper.'],
       limitations: ['The recording establishes only the tested ten-second interval.'],
     },

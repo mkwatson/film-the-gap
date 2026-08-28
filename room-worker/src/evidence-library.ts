@@ -18,6 +18,8 @@ interface EvidenceLibraryRow {
   readonly rights: 'owned' | 'authorized';
   readonly provenance: 'live_capture' | 'authorized_import';
   readonly continuity: 'continuous' | 'edited' | 'unknown';
+  readonly capture_timing:
+    'mission_challenge_verified' | 'contributor_attested' | 'preexisting' | 'unknown';
   readonly contributor_label: string;
   readonly captured_at: string;
   readonly stream_uid: string;
@@ -78,6 +80,7 @@ function rowToRecord(row: EvidenceLibraryRow): ReusableEvidenceRecord {
       rights: row.rights,
       provenance: row.provenance,
       continuity: row.continuity,
+      captureTiming: row.capture_timing,
       contributorLabel: row.contributor_label,
       capturedAt: row.captured_at,
       streamUid: row.stream_uid,
@@ -117,6 +120,7 @@ export async function indexReusableEvidence(
         rights,
         provenance,
         continuity,
+        capture_timing,
         contributor_label,
         captured_at,
         stream_uid,
@@ -130,7 +134,7 @@ export async function indexReusableEvidence(
         reviewed_at,
         indexed_at,
         expires_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(stream_uid) DO UPDATE SET
         evidence_id = excluded.evidence_id,
         product_name = excluded.product_name,
@@ -144,6 +148,7 @@ export async function indexReusableEvidence(
         rights = excluded.rights,
         provenance = excluded.provenance,
         continuity = excluded.continuity,
+        capture_timing = excluded.capture_timing,
         contributor_label = excluded.contributor_label,
         captured_at = excluded.captured_at,
         sha256 = excluded.sha256,
@@ -171,6 +176,7 @@ export async function indexReusableEvidence(
       record.source.rights,
       record.source.provenance,
       record.source.continuity,
+      record.source.captureTiming,
       record.source.contributorLabel,
       record.source.capturedAt,
       record.source.streamUid,
@@ -211,6 +217,7 @@ export async function searchReusableEvidence(
         rights,
         provenance,
         continuity,
+        capture_timing,
         contributor_label,
         captured_at,
         stream_uid,

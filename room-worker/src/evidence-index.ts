@@ -62,6 +62,7 @@ async function route(request: Request, env: EvidenceWorkerEnv): Promise<Response
         videoAnalysis:
           env.AI_ANALYSIS_OUTBOUND !== undefined ||
           (env.AI_GATEWAY_API_KEY?.trim().length ?? 0) > 0,
+        missionBoundCapture: true,
         reusableEvidence: env.EVIDENCE_LIBRARY !== undefined,
         reusableEvidenceRetentionDays: publicNetworkEvidenceRetentionDays,
         expiredEvidencePurge: 'daily',

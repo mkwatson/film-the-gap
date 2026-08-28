@@ -317,6 +317,7 @@ describe('product evidence Site Tools', () => {
           citationEndSeconds: 10,
           confidence: 'high',
           continuity: 'continuous',
+          captureTiming: 'preexisting',
           rights: 'owned',
           reuseScope: 'case_only',
           provenance: 'demo_replay',
@@ -330,7 +331,7 @@ describe('product evidence Site Tools', () => {
       changed: true,
       before: { status: 'insufficient' },
       after: { status: 'supported' },
-      decisiveEvidence: [{ timestamp: '00:00–00:10' }],
+      decisiveEvidence: [{ timestamp: '00:00–00:10', captureTiming: 'preexisting' }],
     });
     expect(createEvidenceSiteTools(runtime(state).runtime).map(({ name }) => name)).toContain(
       'inspect_answer_change',

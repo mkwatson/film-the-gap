@@ -10,6 +10,7 @@ import {
   reusableEvidenceRecordSchema,
   type EvidenceNetworkState,
   type ReviewedEvidenceInput,
+  type SourceCaptureTiming,
 } from '../../src/lib/evidence-network/model';
 import {
   analyzeEvidenceVideoRequestSchema,
@@ -91,6 +92,18 @@ interface StoredEvidenceCase {
   readonly uploads: readonly StoredUploadReservation[];
   readonly uploadReservationsCreated: number;
   readonly processedCommands: readonly ProcessedEvidenceCommand[];
+}
+
+function captureTimingForReview(
+  provenance: 'live_capture' | 'authorized_import',
+  reservation: StoredUploadReservation,
+): SourceCaptureTiming {
+  if (provenance === 'authorized_import') {
+    return 'preexisting';
+  }
+  return reservation.analysis?.finding.captureChallenge.status === 'verified'
+    ? 'mission_challenge_verified'
+    : 'contributor_attested';
 }
 
 interface StreamVideoDetails {
@@ -1155,6 +1168,7 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
           question: evidenceCase.question.text,
           instruction: mission.instruction,
           successCriterion: mission.successCriterion,
+          captureChallengePhrase: mission.captureChallenge.phrase,
           durationSeconds,
           continuousTakeRequired: mission.continuousTakeRequired,
         },
@@ -1240,6 +1254,7 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
     }
     const evidenceInput: ReviewedEvidenceInput = {
       ...parsed.data.review,
+      captureTiming: captureTimingForReview(parsed.data.review.provenance, reservation),
       durationSeconds: actualDuration,
       streamUid: parsed.data.uploadId,
       ...(video.previewUrl === null ? {} : { videoUrl: video.previewUrl }),
@@ -1291,11 +1306,15 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
         productUrl: evidenceCase.product.suppliedUrl,
         question: evidenceCase.question.text,
         source: {
-          title: 'Contributor-recorded mission video',
+          title:
+            parsed.data.review.provenance === 'live_capture'
+              ? 'Contributor-recorded mission video'
+              : 'Contributor-authorized existing video',
           videoUrl: video.previewUrl,
           rights: parsed.data.review.rights,
           provenance: parsed.data.review.provenance,
           continuity: parsed.data.review.continuity,
+          captureTiming: captureTimingForReview(parsed.data.review.provenance, reservation),
           contributorLabel: parsed.data.review.contributorLabel,
           capturedAt: parsed.data.review.capturedAt,
           streamUid: parsed.data.uploadId,

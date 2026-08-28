@@ -3343,6 +3343,40 @@ select:focus-visible {
   content: '✓';
 }
 
+.contributor-capture-challenge {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--cyan) 30%, transparent);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--cyan) 5%, transparent);
+}
+
+.contributor-capture-challenge span {
+  color: var(--cyan);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.contributor-capture-challenge code {
+  color: var(--ink);
+  font-size: clamp(20px, 6vw, 28px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.contributor-capture-challenge p {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .contributor-recorder,
 .contributor-review {
   padding: clamp(22px, 5vw, 34px);
@@ -3450,6 +3484,24 @@ select:focus-visible {
   color: var(--dim);
   font-size: 9px;
   line-height: 1.45;
+}
+
+.contributor-ai-proposal .contributor-challenge-result {
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.12);
+  color: var(--muted);
+}
+
+.contributor-ai-proposal .challenge-verified {
+  color: var(--mint);
+  border-color: color-mix(in srgb, var(--mint) 30%, transparent);
+}
+
+.contributor-ai-proposal .challenge-not_detected {
+  color: var(--amber);
+  border-color: color-mix(in srgb, var(--amber) 30%, transparent);
 }
 
 .contributor-manual-review {

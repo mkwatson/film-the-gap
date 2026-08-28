@@ -6,6 +6,7 @@ interface AnalysisInput {
   readonly question: string;
   readonly instruction: string;
   readonly successCriterion: string;
+  readonly captureChallengePhrase: string;
   readonly durationSeconds: number;
   readonly continuousTakeRequired: boolean;
 }
@@ -28,6 +29,7 @@ function analysisInput(value: unknown): AnalysisInput | null {
     typeof record.question !== 'string' ||
     typeof record.instruction !== 'string' ||
     typeof record.successCriterion !== 'string' ||
+    typeof record.captureChallengePhrase !== 'string' ||
     typeof record.durationSeconds !== 'number' ||
     typeof record.continuousTakeRequired !== 'boolean'
   ) {
@@ -39,6 +41,7 @@ function analysisInput(value: unknown): AnalysisInput | null {
     question: record.question,
     instruction: record.instruction,
     successCriterion: record.successCriterion,
+    captureChallengePhrase: record.captureChallengePhrase,
     durationSeconds: record.durationSeconds,
     continuousTakeRequired: record.continuousTakeRequired,
   };
@@ -98,6 +101,10 @@ export default {
           startSeconds: 1,
           endSeconds: 11,
           continuity: 'continuous',
+          captureChallenge: {
+            status: 'not_detected',
+            observation: `The synthetic fixture does not contain the mission phrase ${parsed.captureChallengePhrase}.`,
+          },
           visibleDetails: [
             'The closed lid remains visible.',
             'The bottle stays inverted above the same paper.',

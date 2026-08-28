@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { createCaptureChallenge, type CaptureChallenge } from './capture-challenge';
 import { publicHttpUrlSchema } from './url-policy';
 
 export const evidenceAnswerStatuses = [
@@ -29,6 +30,14 @@ export type SourceProvenanceKind = (typeof sourceProvenanceKinds)[number];
 
 export const sourceContinuityKinds = ['continuous', 'edited', 'still', 'unknown'] as const;
 export type SourceContinuityKind = (typeof sourceContinuityKinds)[number];
+
+export const sourceCaptureTimings = [
+  'mission_challenge_verified',
+  'contributor_attested',
+  'preexisting',
+  'unknown',
+] as const;
+export type SourceCaptureTiming = (typeof sourceCaptureTimings)[number];
 
 export const evidenceReuseScopes = ['not_eligible', 'case_only', 'public_network'] as const;
 export type EvidenceReuseScope = (typeof evidenceReuseScopes)[number];
@@ -85,6 +94,7 @@ export const reusableEvidenceRecordSchema = z
       rights: z.enum(['owned', 'authorized']),
       provenance: z.enum(['live_capture', 'authorized_import']),
       continuity: z.enum(['continuous', 'edited', 'unknown']),
+      captureTiming: z.enum(sourceCaptureTimings),
       contributorLabel: z.string().trim().min(2).max(80),
       capturedAt: z.iso.datetime(),
       streamUid: z.string().regex(/^[a-zA-Z0-9_-]{16,128}$/),
@@ -103,6 +113,26 @@ export const reusableEvidenceRecordSchema = z
     expiresAt: z.iso.datetime(),
   })
   .superRefine((value, context) => {
+    if (
+      value.source.provenance === 'live_capture' &&
+      !['mission_challenge_verified', 'contributor_attested'].includes(value.source.captureTiming)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['source', 'captureTiming'],
+        message: 'Reusable live capture timing must be attested or mission-challenge verified.',
+      });
+    }
+    if (
+      value.source.provenance === 'authorized_import' &&
+      value.source.captureTiming !== 'preexisting'
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['source', 'captureTiming'],
+        message: 'Reusable imported video must be labeled preexisting.',
+      });
+    }
     if (
       !qualifiesForPublicNetworkReuse({
         result: value.observation.result,
@@ -177,6 +207,11 @@ export const filmingMissionInputSchema = z.strictObject({
 
 export type FilmingMissionInput = z.infer<typeof filmingMissionInputSchema>;
 
+export const captureChallengeSchema: z.ZodType<CaptureChallenge> = z.strictObject({
+  kind: z.literal('spoken_or_shown_phrase'),
+  phrase: z.string().regex(/^[A-Z]+ [A-Z]+ [1-9][0-9]$/),
+});
+
 export const reviewedEvidenceInputSchema = z
   .strictObject({
     result: z.enum(evidenceResults),
@@ -187,6 +222,7 @@ export const reviewedEvidenceInputSchema = z
     citationEndSeconds: z.number().int().positive(),
     confidence: z.enum(evidenceConfidences),
     continuity: z.enum(['continuous', 'edited', 'unknown']),
+    captureTiming: z.enum(sourceCaptureTimings),
     rights: z.enum(['owned', 'authorized']),
     reuseScope: z.enum(['case_only', 'public_network']),
     provenance: z.enum(['live_capture', 'authorized_import', 'demo_replay']),
@@ -207,6 +243,23 @@ export const reviewedEvidenceInputSchema = z
         code: 'custom',
         path: ['streamUid'],
         message: 'A live capture must reference its reserved video upload.',
+      });
+    }
+    if (
+      value.provenance === 'live_capture' &&
+      !['mission_challenge_verified', 'contributor_attested'].includes(value.captureTiming)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['captureTiming'],
+        message: 'A live capture must be contributor-attested or mission-challenge verified.',
+      });
+    }
+    if (value.provenance !== 'live_capture' && value.captureTiming !== 'preexisting') {
+      context.addIssue({
+        code: 'custom',
+        path: ['captureTiming'],
+        message: 'An imported or replayed clip must be labeled preexisting.',
       });
     }
     if (
@@ -243,6 +296,7 @@ export interface EvidenceSource {
   readonly rights: SourceRights;
   readonly provenance: SourceProvenanceKind;
   readonly continuity: SourceContinuityKind;
+  readonly captureTiming: SourceCaptureTiming;
   readonly reuseScope: EvidenceReuseScope;
   readonly contributorLabel: string;
   readonly createdAt: string;
@@ -275,6 +329,7 @@ export interface FilmingMission {
   readonly successCriterion: string;
   readonly minimumSeconds: number;
   readonly continuousTakeRequired: boolean;
+  readonly captureChallenge: CaptureChallenge;
   readonly createdAt: string;
   readonly fulfilledAt: string | null;
 }
@@ -475,6 +530,7 @@ export function createDemoEvidenceNetworkState(): EvidenceNetworkState {
     rights: 'owned',
     provenance: 'demo_replay',
     continuity: 'unknown',
+    captureTiming: 'preexisting',
     reuseScope: 'case_only',
     contributorLabel: 'Demo catalog',
     createdAt: demoTimestamp,
@@ -590,6 +646,7 @@ function askProductQuestion(
           rights: 'link_only',
           provenance: 'external_link',
           continuity: 'unknown',
+          captureTiming: 'unknown',
           reuseScope: 'not_eligible',
           contributorLabel: 'External publisher',
           createdAt: now,
@@ -679,6 +736,7 @@ function recordEvidenceDiscovery(
     rights: record.source.rights,
     provenance: record.source.provenance,
     continuity: record.source.continuity,
+    captureTiming: record.source.captureTiming,
     reuseScope: 'public_network',
     contributorLabel: record.source.contributorLabel,
     createdAt: record.source.capturedAt,
@@ -721,6 +779,7 @@ function recordEvidenceDiscovery(
     rights: 'link_only',
     provenance: 'external_link',
     continuity: 'unknown',
+    captureTiming: 'unknown',
     reuseScope: 'not_eligible',
     contributorLabel: lead.creatorLabel,
     createdAt: now,
@@ -842,6 +901,7 @@ function createFilmingMission(
     id: nextId('mission', revision),
     status: 'open',
     ...parsed.data,
+    captureChallenge: createCaptureChallenge(),
     createdAt: now,
     fulfilledAt: null,
   };
@@ -892,12 +952,15 @@ function publishReviewedEvidence(
     title:
       parsed.data.provenance === 'demo_replay'
         ? 'Clearly labeled mission replay'
-        : 'Contributor-recorded mission video',
+        : parsed.data.provenance === 'authorized_import'
+          ? 'Contributor-authorized existing video'
+          : 'Contributor-recorded mission video',
     url: parsed.data.videoUrl ?? null,
     mediaType: 'video',
     rights: parsed.data.rights,
     provenance: parsed.data.provenance,
     continuity: parsed.data.continuity,
+    captureTiming: parsed.data.captureTiming,
     reuseScope: parsed.data.reuseScope,
     contributorLabel: parsed.data.contributorLabel,
     createdAt: parsed.data.capturedAt,

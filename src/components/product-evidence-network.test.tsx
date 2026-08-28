@@ -255,6 +255,7 @@ describe('ProductEvidenceNetwork', () => {
                 rights: 'owned',
                 provenance: 'live_capture',
                 continuity: 'continuous',
+                captureTiming: 'mission_challenge_verified',
                 contributorLabel: 'Lamp owner',
                 capturedAt: '2026-08-27T19:00:00.000Z',
                 streamUid: 'networkvideo00000001',

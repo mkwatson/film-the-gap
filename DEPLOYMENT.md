@@ -4,17 +4,17 @@ Updated 2026-08-27 PT. Nothing described here is publicly deployed yet. The exis
 
 ## Candidate topology
 
-| Surface                     | Runtime                                            | Responsibility                                                                                   |
-| --------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Shopper, board, contributor | Next.js 16 on Vercel                               | Native WebMCP tools, open requests, human UI, QR handoff, discovery, video review, playback      |
-| Evidence service            | Cloudflare Worker + SQLite Durable Object          | Revisioned cases, scoped capabilities, WebSocket updates, upload reservations, reviewed evidence |
-| Mission/reuse index         | Cloudflare D1                                      | 24-hour public filming requests plus exact opted-in product/question evidence lookup             |
-| Video                       | Cloudflare Stream binding                          | One-time direct phone uploads, encoding, authorized MP4 generation, playback                     |
-| Evidence expiry             | Cloudflare Cron Trigger                            | Daily physical deletion of expired 24-hour requests and 30-day reusable metadata                 |
-| Multimodal proposal         | Vercel AI Gateway + AI SDK 7, called by the Worker | Bounded timestamped proposal from the authorized MP4; never publication authority                |
-| Social-video discovery      | ScrapeCreators, called only by the Vercel app      | Link-only TikTok, Instagram, and YouTube leads; never implied reuse rights                       |
-| Broad-web discovery         | Exa tool through Vercel AI Gateway + AI SDK 7      | At most four claim-aware web/PDP leads from one exact-query-verified call                        |
-| Discovery reuse             | Vercel Runtime Cache                               | Reuses successful public-query receipts for 15 minutes per region                                |
+| Surface                     | Runtime                                            | Responsibility                                                                                                   |
+| --------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Shopper, board, contributor | Next.js 16 on Vercel                               | Native WebMCP tools, open requests, human UI, QR handoff, discovery, video review, playback                      |
+| Evidence service            | Cloudflare Worker + SQLite Durable Object          | Revisioned cases, random capture phrases, scoped capabilities, WebSocket updates, uploads, reviewed evidence     |
+| Mission/reuse index         | Cloudflare D1                                      | 24-hour public filming requests plus exact opted-in product/question evidence lookup                             |
+| Video                       | Cloudflare Stream binding                          | One-time direct phone uploads, encoding, authorized MP4 generation, playback                                     |
+| Evidence expiry             | Cloudflare Cron Trigger                            | Daily physical deletion of expired 24-hour requests and 30-day reusable metadata                                 |
+| Multimodal proposal         | Vercel AI Gateway + AI SDK 7, called by the Worker | Bounded timestamped proposal and exact mission-phrase check from the authorized MP4; never publication authority |
+| Social-video discovery      | ScrapeCreators, called only by the Vercel app      | Link-only TikTok, Instagram, and YouTube leads; never implied reuse rights                                       |
+| Broad-web discovery         | Exa tool through Vercel AI Gateway + AI SDK 7      | At most four claim-aware web/PDP leads from one exact-query-verified call                                        |
+| Discovery reuse             | Vercel Runtime Cache                               | Reuses successful public-query receipts for 15 minutes per region                                                |
 
 The deployable Worker is [evidence-index.ts](room-worker/src/evidence-index.ts), configured by [wrangler.evidence.jsonc](room-worker/wrangler.evidence.jsonc). It intentionally exposes no live-market rooms, UCP cart, merchant, checkout, or legacy image-model endpoint.
 
@@ -32,6 +32,7 @@ These are defense-in-depth controls, not claims of perfect abuse prevention.
 | Upload capability      | One-time Stream URL with a 15-minute expiry and allowed app hostname                                                                    |
 | Stored video           | Scheduled deletion after 31 days; enough for judging, not indefinite storage                                                            |
 | Reusable evidence      | Explicit contributor opt-in; exact product/question matching; 30-day expiry and daily D1 purge                                          |
+| Capture timing         | Random per-mission phrase; server-stored model receipt; honest contributor-attested/preexisting fallback; never labeled authenticity    |
 | Public mission board   | Explicit shopper confirmation; public fields only; 24-hour expiry; daily purge; fulfilled jobs hidden                                   |
 | Public recorder path   | Separate case-scoped capability; removal revokes it without invalidating the private contributor link                                   |
 | Model calls            | One cached successful proposal per upload and no more than two crash-recovery attempts                                                  |
@@ -237,7 +238,7 @@ The report contains only public Worker metadata and step timings. It parses but 
 Then perform one user-approved paid rehearsal on the final origins:
 
 1. Clean unauthenticated desktop browser: arbitrary product/question, mission, QR/link.
-2. Physical phone: owned unbranded object, continuous recording, real direct Stream upload, real Gateway proposal, explicit correction/review, publish.
+2. Physical phone: owned unbranded object, say or show the issued phrase with the product visible, continuous recording, real direct Stream upload, real Gateway proposal and phrase check, explicit correction/review, publish.
    Confirm specifically that the Gateway provider can fetch the generated public MP4 while Stream playback-origin restrictions are active; current Cloudflare documentation describes those restrictions for HLS/DASH playback but does not explicitly guarantee this downstream-download combination.
 3. Contributor explicitly opts into 30-day network reuse; confirm weak/inconclusive evidence cannot be selected for reuse.
 4. Desktop reload: same durable case and timestamped evidence still visible.

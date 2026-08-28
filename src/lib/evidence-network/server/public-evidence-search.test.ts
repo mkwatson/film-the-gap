@@ -25,6 +25,7 @@ const reusableRecord: ReusableEvidenceRecord = {
     rights: 'owned',
     provenance: 'live_capture',
     continuity: 'continuous',
+    captureTiming: 'mission_challenge_verified',
     contributorLabel: 'Product owner',
     capturedAt: '2026-08-27T19:00:00.000Z',
     streamUid: 'networkvideo00000001',

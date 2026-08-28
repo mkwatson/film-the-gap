@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import {
+  captureChallengeSchema,
   evidenceActors,
   evidenceAnswerStatuses,
   evidenceConfidences,
@@ -12,6 +13,7 @@ import {
   filmingMissionInputSchema,
   productQuestionInputSchema,
   sourceContinuityKinds,
+  sourceCaptureTimings,
   sourceProvenanceKinds,
   sourceRights,
   type EvidenceDiscoveryInput,
@@ -19,6 +21,7 @@ import {
   type FilmingMissionInput,
   type ProductQuestionInput,
   type ReviewedEvidenceInput,
+  type SourceCaptureTiming,
 } from './model';
 import { maximumAnalyzableVideoBytes } from './video-analysis';
 import { publicHttpUrlSchema } from './url-policy';
@@ -42,6 +45,7 @@ const evidenceSourceSchema = z.strictObject({
   rights: z.enum(sourceRights),
   provenance: z.enum(sourceProvenanceKinds),
   continuity: z.enum(sourceContinuityKinds),
+  captureTiming: z.enum(sourceCaptureTimings),
   reuseScope: z.enum(['not_eligible', 'case_only', 'public_network']),
   contributorLabel: z.string().min(1).max(120),
   createdAt: timestampSchema,
@@ -78,6 +82,7 @@ const filmingMissionSchema = z.strictObject({
   successCriterion: filmingMissionInputSchema.shape.successCriterion,
   minimumSeconds: filmingMissionInputSchema.shape.minimumSeconds,
   continuousTakeRequired: filmingMissionInputSchema.shape.continuousTakeRequired,
+  captureChallenge: captureChallengeSchema,
   createdAt: timestampSchema,
   fulfilledAt: timestampSchema.nullable(),
 });
@@ -374,9 +379,11 @@ export function parseRemoteEvidenceServerMessage(
 
 export function toReviewedEvidenceInput(
   request: PublishRemoteEvidenceRequest,
+  captureTiming: SourceCaptureTiming,
 ): ReviewedEvidenceInput {
   return {
     ...request.review,
+    captureTiming,
     streamUid: request.uploadId,
   };
 }

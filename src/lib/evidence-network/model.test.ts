@@ -189,6 +189,7 @@ describe('product evidence network model', () => {
                 rights: 'owned',
                 provenance: 'live_capture',
                 continuity: 'continuous',
+                captureTiming: 'mission_challenge_verified',
                 contributorLabel: 'Lamp owner',
                 capturedAt: evidenceTime,
                 streamUid: 'networkvideo00000001',
@@ -230,6 +231,10 @@ describe('product evidence network model', () => {
       status: 'open',
       minimumSeconds: 10,
       continuousTakeRequired: true,
+      captureChallenge: {
+        kind: 'spoken_or_shown_phrase',
+        phrase: expect.stringMatching(/^[A-Z]+ [A-Z]+ [1-9][0-9]$/),
+      },
     });
     expect(getEvidenceNetworkToolNames(state)).not.toContain('create_filming_mission');
   });
@@ -250,6 +255,7 @@ describe('product evidence network model', () => {
           citationEndSeconds: 10,
           confidence: 'high',
           continuity: 'continuous',
+          captureTiming: 'preexisting',
           rights: 'owned',
           reuseScope: 'case_only',
           provenance: 'demo_replay',
@@ -287,6 +293,7 @@ describe('product evidence network model', () => {
           citationEndSeconds: 10,
           confidence: 'low',
           continuity: 'continuous',
+          captureTiming: 'preexisting',
           rights: 'authorized',
           reuseScope: 'case_only',
           provenance: 'authorized_import',
@@ -315,6 +322,7 @@ describe('product evidence network model', () => {
           citationEndSeconds: 10,
           confidence: 'high',
           continuity: 'edited',
+          captureTiming: 'preexisting',
           rights: 'owned',
           reuseScope: 'case_only',
           provenance: 'authorized_import',
@@ -344,6 +352,7 @@ describe('product evidence network model', () => {
           citationEndSeconds: 5,
           confidence: 'high',
           continuity: 'continuous',
+          captureTiming: 'preexisting',
           rights: 'owned',
           reuseScope: 'case_only',
           provenance: 'demo_replay',
@@ -374,6 +383,7 @@ describe('product evidence network model', () => {
           citationEndSeconds: 10,
           confidence: 'high',
           continuity: 'continuous',
+          captureTiming: 'mission_challenge_verified',
           rights: 'owned',
           reuseScope: 'case_only',
           provenance: 'live_capture',
@@ -389,6 +399,7 @@ describe('product evidence network model', () => {
     expect(currentEvidenceAnswer(result.state)?.status).toBe('contradicted');
     expect(result.state.activeCase?.sources.at(-1)).toMatchObject({
       provenance: 'live_capture',
+      captureTiming: 'mission_challenge_verified',
       streamUid: '0123456789abcdef0123456789abcdef',
       sha256: 'a'.repeat(64),
     });
@@ -410,6 +421,7 @@ describe('product evidence network model', () => {
           citationEndSeconds: 10,
           confidence: 'high',
           continuity: 'continuous',
+          captureTiming: 'contributor_attested',
           rights: 'owned',
           reuseScope: 'case_only',
           provenance: 'live_capture',
@@ -440,6 +452,7 @@ describe('product evidence network model', () => {
           citationEndSeconds: 10,
           confidence: 'high',
           continuity: 'continuous',
+          captureTiming: 'contributor_attested',
           rights: 'owned',
           reuseScope: 'case_only',
           provenance: 'live_capture',

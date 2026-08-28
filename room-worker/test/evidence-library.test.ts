@@ -31,6 +31,7 @@ function record(
       rights: 'owned',
       provenance: 'live_capture',
       continuity: 'continuous',
+      captureTiming: 'mission_challenge_verified',
       contributorLabel: 'Product owner',
       capturedAt: '2026-08-27T19:00:00.000Z',
       streamUid,
@@ -168,7 +169,10 @@ describe('reusable evidence library', () => {
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe(appOrigin);
     expect(result.status).toBe('complete');
     expect(result.records[0]).toMatchObject({
-      source: { streamUid: 'networkvideo00000003' },
+      source: {
+        streamUid: 'networkvideo00000003',
+        captureTiming: 'mission_challenge_verified',
+      },
       observation: {
         result: 'contradicts',
         text: 'A wet line appeared on the paper at 00:08.',

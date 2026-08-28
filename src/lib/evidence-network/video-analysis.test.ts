@@ -14,6 +14,10 @@ const finding: VideoEvidenceFinding = {
   startSeconds: 2,
   endSeconds: 11,
   continuity: 'continuous',
+  captureChallenge: {
+    status: 'verified',
+    observation: 'The exact mission phrase is audible at the start.',
+  },
   visibleDetails: ['The charging icon remained on.', 'The recording timer advanced.'],
   limitations: ['The clip does not establish long-term battery behavior.'],
 };

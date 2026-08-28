@@ -25,6 +25,7 @@ describe('standalone evidence Worker', () => {
       evidenceServices: {
         stream: true,
         videoAnalysis: true,
+        missionBoundCapture: true,
         reusableEvidence: true,
         reusableEvidenceRetentionDays: 30,
         expiredEvidencePurge: 'daily',

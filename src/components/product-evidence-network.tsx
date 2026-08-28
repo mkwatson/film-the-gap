@@ -687,6 +687,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
         citationEndSeconds: 10,
         confidence: 'high',
         continuity: 'continuous',
+        captureTiming: 'preexisting',
         rights: 'owned',
         reuseScope: 'case_only',
         provenance: 'demo_replay',
@@ -920,7 +921,8 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                           <strong>{source.title}</strong>
                           <small>
                             {source.mediaType.replaceAll('_', ' ')} ·{' '}
-                            {source.provenance.replaceAll('_', ' ')}
+                            {source.provenance.replaceAll('_', ' ')} ·{' '}
+                            {source.captureTiming.replaceAll('_', ' ')}
                             {source.reuseScope === 'public_network'
                               ? ' · reusable network evidence'
                               : ''}
@@ -1046,6 +1048,10 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                       ? 'Not allowed for this claim'
                       : 'Allowed when disclosed'}
                   </dd>
+                </div>
+                <div>
+                  <dt>Fresh-capture phrase</dt>
+                  <dd>{mission.captureChallenge.phrase}</dd>
                 </div>
               </dl>
 

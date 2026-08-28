@@ -168,6 +168,7 @@ function sourceSnapshot(state: EvidenceNetworkState): readonly object[] {
     rights: source.rights,
     provenance: source.provenance,
     continuity: source.continuity,
+    captureTiming: source.captureTiming,
     reuseScope: source.reuseScope,
     ...(source.url === null ? {} : { url: source.url }),
     ...(source.streamUid === null ? {} : { streamUid: source.streamUid }),
@@ -287,13 +288,17 @@ export function answerChangeSnapshot(state: EvidenceNetworkState): object {
     after,
     decisiveEvidence: evidenceCase.observations
       .filter(({ id }) => after?.decisiveObservationIds.includes(id) ?? false)
-      .map(({ result, confidence, text, citation }) => ({
-        result,
-        confidence,
-        text,
-        sourceId: citation.sourceId,
-        timestamp: citation.label,
-      })),
+      .map(({ result, confidence, text, citation }) => {
+        const source = evidenceCase.sources.find(({ id }) => id === citation.sourceId);
+        return {
+          result,
+          confidence,
+          text,
+          sourceId: citation.sourceId,
+          timestamp: citation.label,
+          captureTiming: source?.captureTiming ?? 'unknown',
+        };
+      }),
   };
 }
 

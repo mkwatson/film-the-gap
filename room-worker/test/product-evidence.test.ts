@@ -335,6 +335,7 @@ describe('generic product evidence cases', () => {
         startSeconds: 1,
         endSeconds: 10,
         continuity: 'continuous',
+        captureChallenge: { status: 'verified' },
       },
     });
 
@@ -386,7 +387,12 @@ describe('generic product evidence cases', () => {
       }),
     ).toMatchObject([
       {
-        source: { streamUid: upload.uploadId, rights: 'owned', provenance: 'live_capture' },
+        source: {
+          streamUid: upload.uploadId,
+          rights: 'owned',
+          provenance: 'live_capture',
+          captureTiming: 'mission_challenge_verified',
+        },
         observation: { result: 'supports', citationStartSeconds: 1, citationEndSeconds: 10 },
       },
     ]);

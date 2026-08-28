@@ -63,6 +63,7 @@ interface ReleaseFetchOptions {
   readonly workerTag?: string;
   readonly contributorCameraAllowed?: boolean;
   readonly globalRateLimitConfigured?: boolean;
+  readonly missionBoundCapture?: boolean;
   readonly reusableIndexAvailable?: boolean;
 }
 
@@ -94,6 +95,7 @@ function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
         evidenceServices: {
           stream: true,
           videoAnalysis: true,
+          missionBoundCapture: options.missionBoundCapture ?? true,
           reusableEvidence: true,
           reusableEvidenceRetentionDays: 30,
           expiredEvidencePurge: 'daily',
@@ -243,6 +245,12 @@ describe('public release preflight', () => {
   it('fails closed when a required public rate limit is absent', async () => {
     await expect(
       verifyPublicRelease(config, releaseFetch({ globalRateLimitConfigured: false })),
+    ).rejects.toThrow(/invalid response contract/i);
+  });
+
+  it('fails closed when mission-bound capture is not deployed', async () => {
+    await expect(
+      verifyPublicRelease(config, releaseFetch({ missionBoundCapture: false })),
     ).rejects.toThrow(/invalid response contract/i);
   });
 

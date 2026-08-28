@@ -68,6 +68,7 @@ const roomHealthSchema = z.strictObject({
   evidenceServices: z.strictObject({
     stream: z.literal(true),
     videoAnalysis: z.literal(true),
+    missionBoundCapture: z.literal(true),
     reusableEvidence: z.literal(true),
     reusableEvidenceRetentionDays: z.literal(30),
     expiredEvidencePurge: z.literal('daily'),
