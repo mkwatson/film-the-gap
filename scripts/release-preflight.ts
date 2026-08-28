@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { reusableEvidenceSearchResponseSchema } from '../src/lib/evidence-network/model.ts';
 import {
   maximumUploadsPerEvidenceCase,
   remoteEvidenceCaseCredentialsSchema,
@@ -66,6 +67,9 @@ const roomHealthSchema = z.strictObject({
   evidenceServices: z.strictObject({
     stream: z.literal(true),
     videoAnalysis: z.literal(true),
+    reusableEvidence: z.literal(true),
+    reusableEvidenceRetentionDays: z.literal(30),
+    expiredEvidencePurge: z.literal('daily'),
   }),
   workerVersion: workerVersionSchema,
 });
@@ -332,6 +336,35 @@ export async function verifyPublicRelease(
     const health = parseWithSchema(roomHealthSchema, await jsonBody(response, label), label);
     validateWorkerVersion(health.workerVersion, config.expectedCommit, label);
     roomVersion = health.workerVersion;
+  });
+
+  await step('reusable evidence index', async () => {
+    const label = 'reusable evidence index';
+    const response = await probe(
+      fetcher,
+      config,
+      label,
+      `${config.roomOrigin}/evidence-library/search`,
+      {
+        method: 'POST',
+        headers: { Origin: config.appOrigin, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productName: 'Release preflight sentinel product',
+          question: 'Is there reviewed evidence for this release preflight sentinel?',
+        }),
+      },
+    );
+    requireStatus(response, 200, label);
+    requireHeader(response, 'Access-Control-Allow-Origin', config.appOrigin, label);
+    requireHeaderIncludes(response, 'Cache-Control', 'no-store', label);
+    const result = parseWithSchema(
+      reusableEvidenceSearchResponseSchema,
+      await jsonBody(response, label),
+      label,
+    );
+    if (result.status !== 'complete') {
+      throw probeError(label, 'D1 schema or binding unavailable');
+    }
   });
 
   await step('buyer and contributor pages', async () => {

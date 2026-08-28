@@ -4,12 +4,14 @@ import {
   evidenceDiscoveryInputSchema,
   type EvidenceDiscoveryInput,
   type ProductQuestionInput,
+  type ReusableEvidenceSearchResponse,
 } from '../model';
+import { searchRemoteReusableEvidence } from '../remote-client';
 import { canonicalizePublicDiscoveryUrl } from '../url-policy';
 import { searchGatewayWebEvidence } from './gateway-web-search';
 import { buildEvidenceSearchQuery, searchScrapeCreatorsEvidence } from './scrape-creators';
 
-const cacheVersion = 'v1';
+const cacheVersion = 'v2';
 const cacheTtlSeconds = 15 * 60;
 
 interface DiscoveryCacheSetOptions {
@@ -28,12 +30,68 @@ type EvidenceSearch = (
   signal?: AbortSignal,
 ) => Promise<EvidenceDiscoveryInput>;
 
+type ReusableEvidenceSearch = (
+  input: ProductQuestionInput,
+  signal?: AbortSignal,
+) => Promise<ReusableEvidenceSearchResponse>;
+
 interface PublicEvidenceSearchDependencies {
   readonly scrapeCreatorsApiKey: string | undefined;
   readonly gatewayApiKey: string | undefined;
+  readonly evidenceServiceUrl?: string;
   readonly cache?: EvidenceDiscoveryCache;
   readonly searchSocial?: EvidenceSearch;
   readonly searchWeb?: EvidenceSearch;
+  readonly searchNetwork?: ReusableEvidenceSearch;
+}
+
+function unavailableNetworkSearch(warning?: string): ReusableEvidenceSearchResponse {
+  return {
+    status: 'unavailable',
+    records: [],
+    warnings: warning === undefined ? [] : [warning],
+  };
+}
+
+async function searchReusableNetwork(
+  input: ProductQuestionInput,
+  dependencies: PublicEvidenceSearchDependencies,
+  signal?: AbortSignal,
+): Promise<ReusableEvidenceSearchResponse> {
+  try {
+    if (dependencies.searchNetwork !== undefined) {
+      return await dependencies.searchNetwork(input, signal);
+    }
+    if (dependencies.evidenceServiceUrl === undefined) {
+      return unavailableNetworkSearch();
+    }
+    return await searchRemoteReusableEvidence(
+      dependencies.evidenceServiceUrl,
+      input,
+      fetch,
+      signal,
+    );
+  } catch {
+    return unavailableNetworkSearch(
+      'The reusable evidence index was temporarily unavailable; public discovery continued.',
+    );
+  }
+}
+
+function mergeReusableNetwork(
+  publicResult: EvidenceDiscoveryInput,
+  networkResult: ReusableEvidenceSearchResponse,
+): EvidenceDiscoveryInput {
+  const hasReusableEvidence = networkResult.records.length > 0;
+  return evidenceDiscoveryInputSchema.parse({
+    ...publicResult,
+    status:
+      hasReusableEvidence && publicResult.status === 'unavailable'
+        ? 'partial'
+        : publicResult.status,
+    warnings: [...networkResult.warnings, ...publicResult.warnings].slice(0, 8),
+    reviewedEvidence: networkResult.records,
+  });
 }
 
 function suppliedPageLead(
@@ -154,6 +212,7 @@ export async function searchPublicProductEvidence(
   dependencies: PublicEvidenceSearchDependencies,
   signal?: AbortSignal,
 ): Promise<EvidenceDiscoveryInput> {
+  const networkSearch = searchReusableNetwork(input, dependencies, signal);
   const providers = {
     social:
       dependencies.searchSocial !== undefined ||
@@ -164,7 +223,7 @@ export async function searchPublicProductEvidence(
   const key = cacheKey(input, providers);
   const cached = await readCachedDiscovery(dependencies.cache, key);
   if (cached !== null) {
-    return cached;
+    return mergeReusableNetwork(cached, await networkSearch);
   }
 
   const socialSearch =
@@ -192,7 +251,7 @@ export async function searchPublicProductEvidence(
   ) {
     await writeCachedDiscovery(dependencies.cache, key, result);
   }
-  return result;
+  return mergeReusableNetwork(result, await networkSearch);
 }
 
 export const publicEvidenceSearchRuntime = {

@@ -1,3 +1,4 @@
+import { env } from 'cloudflare:workers';
 import { SELF } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 
@@ -14,8 +15,11 @@ import {
   maximumUploadsPerEvidenceCase,
   streamAllowedOriginDomains,
 } from '../src/product-evidence';
+import { searchReusableEvidence } from '../src/evidence-library';
 
 const origin = 'http://localhost:3000';
+const evidenceLibrary = (env as unknown as { readonly EVIDENCE_LIBRARY: D1Database })
+  .EVIDENCE_LIBRARY;
 const mission = {
   instruction: 'Fill the bottle, close the lid, and hold it upside down over dry paper.',
   successCriterion: 'Keep the closed lid and dry paper visible for the entire test.',
@@ -352,6 +356,7 @@ describe('generic product evidence cases', () => {
             confidence: 'high',
             continuity: 'continuous',
             rights: 'owned',
+            reuseScope: 'public_network',
             capturedAt: new Date().toISOString(),
             sha256: 'a'.repeat(64),
           },
@@ -371,6 +376,17 @@ describe('generic product evidence cases', () => {
     };
     expect(published.snapshot.state.activeCase.answers.at(-1)?.status).toBe('supported');
     expect(published.snapshot.state.activeCase.sources.at(-1)?.streamUid).toBe(upload.uploadId);
+    expect(
+      await searchReusableEvidence(evidenceLibrary, {
+        productName: 'EVERYDAY insulated travel bottle',
+        question: 'Does the filled bottle stay leak-free when held upside down for 10 seconds?',
+      }),
+    ).toMatchObject([
+      {
+        source: { streamUid: upload.uploadId, rights: 'owned' },
+        observation: { result: 'supports', citationStartSeconds: 1, citationEndSeconds: 10 },
+      },
+    ]);
 
     const updatedMessage = await reader.next('case-snapshot');
     expect(updatedMessage).toMatchObject({
@@ -394,6 +410,62 @@ describe('generic product evidence cases', () => {
       readyToStream: true,
     });
     socket.close(1000, 'Test complete');
+  });
+
+  it('keeps weak evidence case-only instead of poisoning the reusable index', async () => {
+    const { credentials } = await createCase();
+    const uploadResponse = await SELF.fetch(
+      `https://rooms.example/evidence-cases/${credentials.caseId}/uploads`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({
+          token: credentials.contributorToken,
+          fileSizeBytes: 2_000_000,
+          maxDurationSeconds: 30,
+          mimeType: 'video/mp4',
+        }),
+      },
+    );
+    const upload = reservedEvidenceUploadSchema.parse(await uploadResponse.json());
+
+    const publishResponse = await SELF.fetch(
+      `https://rooms.example/evidence-cases/${credentials.caseId}/evidence`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({
+          token: credentials.contributorToken,
+          commandId: crypto.randomUUID(),
+          expectedRevision: credentials.state.revision,
+          uploadId: upload.uploadId,
+          review: {
+            result: 'inconclusive',
+            observation: 'The lid moved out of frame during the test.',
+            contributorLabel: 'Bottle owner',
+            durationSeconds: 10,
+            citationStartSeconds: 1,
+            citationEndSeconds: 10,
+            confidence: 'low',
+            continuity: 'continuous',
+            rights: 'owned',
+            reuseScope: 'public_network',
+            capturedAt: new Date().toISOString(),
+            sha256: 'b'.repeat(64),
+          },
+        }),
+      },
+    );
+
+    expect(publishResponse.status).toBe(422);
+    expect(await publishResponse.json()).toMatchObject({ error: 'evidence_not_reusable' });
+    const snapshotResponse = await SELF.fetch(
+      `https://rooms.example/evidence-cases/${credentials.caseId}/snapshot`,
+      { headers: { Origin: origin } },
+    );
+    expect(await snapshotResponse.json()).toMatchObject({
+      state: { activeCase: { mission: { status: 'open' }, answers: [{ status: 'insufficient' }] } },
+    });
   });
 
   it('coalesces concurrent analysis requests into one active model review', async () => {

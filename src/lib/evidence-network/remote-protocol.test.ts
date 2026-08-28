@@ -79,6 +79,7 @@ describe('remote product evidence protocol', () => {
         confidence: 'high',
         continuity: 'continuous',
         rights: 'owned',
+        reuseScope: 'case_only',
         capturedAt: '2026-08-27T16:00:00.000Z',
       },
     } as const;

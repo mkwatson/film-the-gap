@@ -4,6 +4,7 @@ import type {
   EvidenceDiscoveryInput,
   EvidenceDiscoveryProvider,
   ProductQuestionInput,
+  ReusableEvidenceRecord,
 } from '../model';
 import { searchPublicProductEvidence, type EvidenceDiscoveryCache } from './public-evidence-search';
 
@@ -11,6 +12,35 @@ const question: ProductQuestionInput = {
   productName: 'Trail Flask 24 oz',
   productUrl: 'https://shop.example/products/trail-flask?utm_source=shopper#details',
   question: 'Does it stay leak-free while upside down for ten seconds?',
+};
+
+const reusableRecord: ReusableEvidenceRecord = {
+  id: 'prior-case:networkvideo00000001',
+  productName: question.productName,
+  productUrl: 'https://shop.example/products/trail-flask',
+  question: question.question,
+  source: {
+    title: 'Contributor-recorded mission video',
+    videoUrl: 'https://customer-demo.cloudflarestream.com/networkvideo00000001/watch',
+    rights: 'owned',
+    provenance: 'live_capture',
+    continuity: 'continuous',
+    contributorLabel: 'Product owner',
+    capturedAt: '2026-08-27T19:00:00.000Z',
+    streamUid: 'networkvideo00000001',
+    sha256: 'a'.repeat(64),
+    durationSeconds: 12,
+  },
+  observation: {
+    result: 'supports',
+    confidence: 'high',
+    text: 'No liquid reached the paper during the continuous inversion.',
+    citationStartSeconds: 1,
+    citationEndSeconds: 11,
+    reviewedAt: '2026-08-27T19:01:00.000Z',
+  },
+  indexedAt: '2026-08-27T19:01:00.000Z',
+  expiresAt: '2026-09-26T19:01:00.000Z',
 };
 
 function discovery(
@@ -121,9 +151,40 @@ describe('public product evidence orchestration', () => {
     expect(set).toHaveBeenCalledTimes(1);
     expect(set).toHaveBeenCalledWith(
       expect.stringMatching(/^search:[a-f0-9]{64}$/),
-      first,
+      expect.not.objectContaining({ reviewedEvidence: expect.anything() }),
       expect.objectContaining({ ttl: 900, tags: ['product-evidence-discovery'] }),
     );
+    expect(searchSocial).toHaveBeenCalledTimes(1);
+    expect(searchWeb).toHaveBeenCalledTimes(1);
+  });
+
+  it('checks reusable evidence fresh even when public discovery comes from cache', async () => {
+    const { cache } = recordingCache();
+    const searchSocial = vi.fn(async () =>
+      discovery('scrapecreators', { searchedPlatforms: ['youtube'] }),
+    );
+    const searchWeb = vi.fn(async () =>
+      discovery('vercel_ai_gateway', { searchedPlatforms: ['web'] }),
+    );
+    const searchNetwork = vi
+      .fn()
+      .mockResolvedValueOnce({ status: 'complete', records: [], warnings: [] })
+      .mockResolvedValueOnce({ status: 'complete', records: [reusableRecord], warnings: [] });
+    const dependencies = {
+      scrapeCreatorsApiKey: 'social-key',
+      gatewayApiKey: 'gateway-key',
+      cache,
+      searchSocial,
+      searchWeb,
+      searchNetwork,
+    } as const;
+
+    const before = await searchPublicProductEvidence(question, dependencies);
+    const after = await searchPublicProductEvidence(question, dependencies);
+
+    expect(before.reviewedEvidence).toEqual([]);
+    expect(after.reviewedEvidence).toEqual([reusableRecord]);
+    expect(searchNetwork).toHaveBeenCalledTimes(2);
     expect(searchSocial).toHaveBeenCalledTimes(1);
     expect(searchWeb).toHaveBeenCalledTimes(1);
   });

@@ -2,6 +2,8 @@ import {
   maximumUploadsPerEvidenceCase,
   remoteEvidenceProtocolVersion,
 } from '../../src/lib/evidence-network/remote-protocol';
+import { publicNetworkEvidenceRetentionDays } from '../../src/lib/evidence-network/model';
+import { deleteExpiredReusableEvidence, routeReusableEvidenceRequest } from './evidence-library';
 import { routeProductEvidenceRequest, type ProductEvidenceWorkerEnv } from './product-evidence';
 
 export { ProductEvidenceCaseObject } from './product-evidence';
@@ -59,12 +61,23 @@ async function route(request: Request, env: EvidenceWorkerEnv): Promise<Response
         videoAnalysis:
           env.AI_ANALYSIS_OUTBOUND !== undefined ||
           (env.AI_GATEWAY_API_KEY?.trim().length ?? 0) > 0,
+        reusableEvidence: env.EVIDENCE_LIBRARY !== undefined,
+        reusableEvidenceRetentionDays: publicNetworkEvidenceRetentionDays,
+        expiredEvidencePurge: 'daily',
       },
       workerVersion: env.CF_VERSION_METADATA,
     });
   }
   if (!requestOriginAllowed(request, env)) {
     return jsonResponse({ error: 'origin_not_allowed' }, 403);
+  }
+  const reusableEvidenceResponse = await routeReusableEvidenceRequest(
+    request,
+    env.EVIDENCE_LIBRARY,
+    corsHeaders(request, env),
+  );
+  if (reusableEvidenceResponse !== null) {
+    return reusableEvidenceResponse;
   }
   const evidenceResponse = await routeProductEvidenceRequest(
     request,
@@ -82,5 +95,16 @@ export default {
       console.error('Product evidence request failure', error);
       return jsonResponse({ error: 'internal_error' }, 500, corsHeaders(request, env));
     }
+  },
+  async scheduled(controller: ScheduledController, env: EvidenceWorkerEnv): Promise<void> {
+    if (env.EVIDENCE_LIBRARY === undefined) {
+      console.warn('Skipped expired evidence purge because the D1 binding is unavailable.');
+      return;
+    }
+    const deleted = await deleteExpiredReusableEvidence(
+      env.EVIDENCE_LIBRARY,
+      new Date(controller.scheduledTime).toISOString(),
+    );
+    console.log('Expired reusable evidence purge completed.', { deleted });
   },
 } satisfies ExportedHandler<EvidenceWorkerEnv>;

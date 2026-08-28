@@ -39,6 +39,7 @@ const evidenceSourceSchema = z.strictObject({
   rights: z.enum(sourceRights),
   provenance: z.enum(sourceProvenanceKinds),
   continuity: z.enum(sourceContinuityKinds),
+  reuseScope: z.enum(['not_eligible', 'case_only', 'public_network']),
   contributorLabel: z.string().min(1).max(120),
   createdAt: timestampSchema,
   streamUid: z
@@ -224,6 +225,7 @@ export const publishRemoteEvidenceRequestSchema = z
       confidence: z.enum(evidenceConfidences),
       continuity: z.enum(['continuous', 'edited', 'unknown']),
       rights: z.enum(['owned', 'authorized']),
+      reuseScope: z.enum(['case_only', 'public_network']),
       capturedAt: timestampSchema,
       sha256: z.string().regex(/^[a-f0-9]{64}$/),
     }),

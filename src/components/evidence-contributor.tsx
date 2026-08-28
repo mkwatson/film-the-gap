@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 
 import {
   currentEvidenceAnswer,
+  publicNetworkEvidenceRetentionDays,
+  qualifiesForPublicNetworkReuse,
   type EvidenceConfidence,
   type EvidenceResult,
 } from '@/lib/evidence-network/model';
@@ -104,6 +106,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
   const [citationEndSeconds, setCitationEndSeconds] = useState(1);
   const [contributorLabel, setContributorLabel] = useState('Product owner');
   const [rights, setRights] = useState<'owned' | 'authorized'>('owned');
+  const [reuseScope, setReuseScope] = useState<'case_only' | 'public_network'>('case_only');
   const [error, setError] = useState<string | null>(null);
 
   const evidenceCase = snapshot?.state.activeCase ?? null;
@@ -115,6 +118,11 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
     sha256 !== null &&
     durationSeconds !== null &&
     durationSeconds >= minimumSeconds;
+  const networkReuseEligible = qualifiesForPublicNetworkReuse({
+    result,
+    confidence,
+    continuity,
+  });
 
   useEffect(() => {
     let active = true;
@@ -296,6 +304,23 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
     setResult(nextResult);
     setObservation(resultCopy[nextResult]);
     setConfidence(nextResult === 'inconclusive' ? 'low' : 'medium');
+    if (nextResult === 'inconclusive') {
+      setReuseScope('case_only');
+    }
+  }
+
+  function chooseConfidence(nextConfidence: EvidenceConfidence): void {
+    setConfidence(nextConfidence);
+    if (nextConfidence === 'low') {
+      setReuseScope('case_only');
+    }
+  }
+
+  function chooseContinuity(nextContinuity: VideoEvidenceContinuity): void {
+    setContinuity(nextContinuity);
+    if (nextContinuity !== 'continuous') {
+      setReuseScope('case_only');
+    }
   }
 
   async function publishReview(): Promise<void> {
@@ -327,6 +352,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
           confidence,
           continuity,
           rights,
+          reuseScope,
           capturedAt: new Date(file?.lastModified ?? Date.now()).toISOString(),
           sha256,
         },
@@ -550,7 +576,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                       type="radio"
                       name="confidence"
                       checked={confidence === candidate}
-                      onChange={() => setConfidence(candidate)}
+                      onChange={() => chooseConfidence(candidate)}
                     />
                     {candidate}
                   </label>
@@ -564,7 +590,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                       type="radio"
                       name="continuity"
                       checked={continuity === candidate}
-                      onChange={() => setContinuity(candidate)}
+                      onChange={() => chooseContinuity(candidate)}
                     />
                     {candidate}
                   </label>
@@ -623,6 +649,34 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                   I am authorized to publish it
                 </label>
               </fieldset>
+              <fieldset>
+                <legend>Who can reuse this reviewed clip?</legend>
+                <label>
+                  <input
+                    type="radio"
+                    name="reuse-scope"
+                    checked={reuseScope === 'case_only'}
+                    onChange={() => setReuseScope('case_only')}
+                  />
+                  Only this evidence case
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="reuse-scope"
+                    disabled={!networkReuseEligible}
+                    checked={reuseScope === 'public_network'}
+                    onChange={() => setReuseScope('public_network')}
+                  />
+                  Future matching product questions too
+                </label>
+                <small>
+                  {networkReuseEligible
+                    ? `Public-network reuse lasts up to ${publicNetworkEvidenceRetentionDays} days and includes the clip, reviewed observation, timestamp, contributor label, rights, and file receipt.`
+                    : 'Network reuse unlocks for a conclusive, medium-or-high-confidence continuous recording.'}{' '}
+                  It never includes shopper identity or private preferences.
+                </small>
+              </fieldset>
               <button
                 className="evidence-primary-button"
                 type="button"
@@ -661,6 +715,12 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                 </strong>
                 {snapshot?.lastMessage}
               </p>
+              {reuseScope === 'public_network' ? (
+                <p>
+                  For up to {publicNetworkEvidenceRetentionDays} days, this reviewed recording is
+                  reusable when a future shopper asks the same product question.
+                </p>
+              ) : null}
               <p>You can close this page. The shopper and ChatGPT receive the same cited update.</p>
             </section>
           ) : null}

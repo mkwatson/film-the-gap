@@ -152,6 +152,77 @@ describe('product evidence network model', () => {
     expect(getEvidenceNetworkToolNames(result.state)).toContain('create_filming_mission');
   });
 
+  it('reuses a rights-cleared network recording instead of creating another mission', () => {
+    const asked = applyEvidenceNetworkCommand(
+      createEmptyEvidenceNetworkState(),
+      {
+        kind: 'ask-product-question',
+        actor: 'agent',
+        input: {
+          productName: 'Desk lamp',
+          question: 'Does it remember its brightness after losing power?',
+        },
+      },
+      questionTime,
+    ).state;
+    const result = applyEvidenceNetworkCommand(
+      asked,
+      {
+        kind: 'record-evidence-discovery',
+        actor: 'agent',
+        input: {
+          provider: 'evidence_network',
+          status: 'complete',
+          query: 'Desk lamp brightness memory power loss',
+          searchedPlatforms: [],
+          warnings: [],
+          leads: [],
+          reviewedEvidence: [
+            {
+              id: 'prior-case:networkvideo00000001',
+              productName: 'Desk lamp',
+              productUrl: null,
+              question: 'Does it remember its brightness after losing power?',
+              source: {
+                title: 'Contributor-recorded mission video',
+                videoUrl: 'https://customer-demo.cloudflarestream.com/networkvideo00000001/watch',
+                rights: 'owned',
+                provenance: 'live_capture',
+                continuity: 'continuous',
+                contributorLabel: 'Lamp owner',
+                capturedAt: evidenceTime,
+                streamUid: 'networkvideo00000001',
+                sha256: 'a'.repeat(64),
+                durationSeconds: 12,
+              },
+              observation: {
+                result: 'supports',
+                confidence: 'high',
+                text: 'The lamp returned to the same brightness after the complete power cycle.',
+                citationStartSeconds: 2,
+                citationEndSeconds: 11,
+                reviewedAt: evidenceTime,
+              },
+              indexedAt: evidenceTime,
+              expiresAt: '2026-09-27T15:02:00.000Z',
+            },
+          ],
+        },
+      },
+      evidenceTime,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.message).toContain('Reused 1 reviewed network recording');
+    expect(currentEvidenceAnswer(result.state)?.status).toBe('supported');
+    expect(result.state.activeCase?.sources.at(-1)).toMatchObject({
+      reuseScope: 'public_network',
+      streamUid: 'networkvideo00000001',
+    });
+    expect(getEvidenceNetworkToolNames(result.state)).toContain('inspect_answer_change');
+    expect(getEvidenceNetworkToolNames(result.state)).not.toContain('create_filming_mission');
+  });
+
   it('creates one bounded continuous-video mission and removes the duplicate action', () => {
     const state = createOpenMission();
 
@@ -180,6 +251,7 @@ describe('product evidence network model', () => {
           confidence: 'high',
           continuity: 'continuous',
           rights: 'owned',
+          reuseScope: 'case_only',
           provenance: 'demo_replay',
           capturedAt: evidenceTime,
         },
@@ -216,6 +288,7 @@ describe('product evidence network model', () => {
           confidence: 'low',
           continuity: 'continuous',
           rights: 'authorized',
+          reuseScope: 'case_only',
           provenance: 'authorized_import',
           capturedAt: evidenceTime,
         },
@@ -243,6 +316,7 @@ describe('product evidence network model', () => {
           confidence: 'high',
           continuity: 'edited',
           rights: 'owned',
+          reuseScope: 'case_only',
           provenance: 'authorized_import',
           capturedAt: evidenceTime,
         },
@@ -271,6 +345,7 @@ describe('product evidence network model', () => {
           confidence: 'high',
           continuity: 'continuous',
           rights: 'owned',
+          reuseScope: 'case_only',
           provenance: 'demo_replay',
           capturedAt: evidenceTime,
         },
@@ -300,6 +375,7 @@ describe('product evidence network model', () => {
           confidence: 'high',
           continuity: 'continuous',
           rights: 'owned',
+          reuseScope: 'case_only',
           provenance: 'live_capture',
           capturedAt: evidenceTime,
           streamUid: '0123456789abcdef0123456789abcdef',
@@ -335,6 +411,7 @@ describe('product evidence network model', () => {
           confidence: 'high',
           continuity: 'continuous',
           rights: 'owned',
+          reuseScope: 'case_only',
           provenance: 'live_capture',
           capturedAt: evidenceTime,
         },
@@ -364,6 +441,7 @@ describe('product evidence network model', () => {
           confidence: 'high',
           continuity: 'continuous',
           rights: 'owned',
+          reuseScope: 'case_only',
           provenance: 'live_capture',
           capturedAt: evidenceTime,
         },

@@ -235,6 +235,7 @@ describe('product evidence Site Tools', () => {
           confidence: 'high',
           continuity: 'continuous',
           rights: 'owned',
+          reuseScope: 'case_only',
           provenance: 'demo_replay',
           capturedAt: '2026-08-27T16:02:00.000Z',
         },

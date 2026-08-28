@@ -22,7 +22,13 @@ describe('standalone evidence Worker', () => {
         globalCaseCreation: true,
         maximumUploadsPerEvidenceCase,
       },
-      evidenceServices: { stream: true, videoAnalysis: true },
+      evidenceServices: {
+        stream: true,
+        videoAnalysis: true,
+        reusableEvidence: true,
+        reusableEvidenceRetentionDays: 30,
+        expiredEvidencePurge: 'daily',
+      },
     });
   });
 

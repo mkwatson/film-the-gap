@@ -1,12 +1,12 @@
 # Demo production packet
 
-Updated 2026-08-27 PT. The target cut is `2:40`: one physical product, one question the web cannot prove, one native WebMCP mission, one real phone recording, one reviewed finding, and one visibly changed ChatGPT answer.
+Updated 2026-08-27 PT. The target cut is `2:55`: one physical product, one question the web cannot prove, one native WebMCP mission, one real phone recording, one reviewed finding, one visibly changed ChatGPT answer, and a fresh shopper who reuses the same citation without another mission.
 
 This packet does not authorize a deployment, paid Stream/Gateway use, external recording, YouTube publication, or a final project name. Mark controls those actions.
 
 ## The one thing viewers must remember
 
-> ChatGPT finds the exact fact missing from the web, asks a person with the product to film it, and changes its answer using the reviewed video.
+> ChatGPT finds the exact fact missing from the web, asks a person with the product to film it once, and reuses that reviewed video whenever the same question returns.
 
 Every shot must reinforce that sentence. Commerce, UCP, Lean, the prior auction, sponsor logos, and implementation history stay out of the primary cut.
 
@@ -30,6 +30,10 @@ After the contributor publishes:
 
 > Re-inspect the product evidence and use the new answer-change tool. Tell me only what changed, what the reviewed video establishes, and the exact cited interval.
 
+Network-reuse prompt:
+
+> Now open a fresh case for this exact product URL and the same question, then search existing evidence. Tell me what was reused and whether anyone needs to film it again.
+
 Do not mention internal tool names in the prompt. If ChatGPT needs rescue, preserve the failed take, improve the page contract or prompt, reset, and try again.
 
 ## Primary capture layout
@@ -42,21 +46,22 @@ Do not mention internal tool names in the prompt. If ChatGPT needs rescue, prese
 - Use no music. Record clean narration after the visual timing is locked, and correct the final captions manually.
 - Waiting time may be shortened transparently, but do not reorder, fabricate, or splice the evidence test itself. Preserve the original continuous product-test video.
 
-## `2:40` visual and narration contract
+## `2:55` visual and narration contract
 
 The narration is intentionally short enough to leave room for the product to explain itself.
 
-| Time        | Required visual proof                                                                                                            | Narration                                                                                                                                                                                                                          |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `0:00–0:13` | Owned bottle beside the page. Highlight the question, marketing-copy source, and **Not enough proof** answer.                    | “Product pages answer the questions someone thought to write down. This bottle says leak resistant—but that does not prove it stays dry upside down for ten seconds.”                                                              |
-| `0:13–0:32` | Send the primary prompt. ChatGPT calls native **Inspect product evidence** and reports that the existing source is inconclusive. | “So I ask ChatGPT the question I actually care about. Through this page's native Site Tools, it can distinguish a product claim from evidence that really answers me.”                                                             |
-| `0:32–0:50` | ChatGPT creates the ten-second continuous mission and phone handoff. Show `create_filming_mission` disappear and the QR receipt. | “The web does not have the proof. Instead of guessing, ChatGPT creates the smallest test that would settle it: fill the bottle, close it, invert it over dry paper, and keep everything visible for ten continuous seconds.”       |
-| `0:50–1:12` | On the ordinary phone browser, show the exact mission and record the complete continuous test.                                   | “Anyone who has the product and receives this link can help—no account and no app. The phone sees only this public question and recording instruction. The contributor decides what to record.”                                    |
-| `1:12–1:33` | Select the video, show direct Stream upload, then the bounded proposal with a cited interval. Waiting may be cut.                | “The video uploads directly to Cloudflare Stream. Through Vercel AI Gateway, a video model proposes the result and the smallest relevant interval. It cannot publish anything.”                                                    |
-| `1:33–1:52` | Scrub the clip; visibly review or correct the result, observation, confidence, continuity, timestamp, rights, and attribution.   | “The person who made the recording reviews every material field. Here I [confirm or correct] the proposal to say: ‘[OBSERVATION].’ Only this reviewed finding can affect the answer.”                                              |
-| `1:52–2:10` | Publish. Buyer updates live to **Before: Not enough proof → After: [ACTUAL RESULT]**; `inspect_answer_change` appears.           | “When I publish, the original page changes live. The answer is now [ACTUAL RESULT], and a new answer-change tool appears. That capability did not exist before the evidence arrived.”                                              |
-| `2:10–2:26` | Send the second prompt. ChatGPT calls the new tool and cites `[TIMESTAMP]` plus the reviewed observation.                        | “ChatGPT re-inspects and tells me exactly what changed, what the video establishes, and where to verify it. The recommendation is now grounded in the recording—not copied from marketing text.”                                   |
-| `2:26–2:40` | Show the minimal architecture card, then briefly open the blank generic-product form. End on the before/after answer.            | “This works for any observable product question. Agents identify the missing knowledge; people supply the physical evidence; and over time those reviewed videos can become a shared evidence layer for better product decisions.” |
+| Time        | Required visual proof                                                                                                              | Narration                                                                                                                                                                                  |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `0:00–0:12` | Owned bottle beside the page. Highlight the question, marketing-copy source, and **Not enough proof** answer.                      | “This bottle says leak resistant. That does not prove it stays dry upside down for ten seconds—the question I actually care about.”                                                        |
+| `0:12–0:28` | Send the primary prompt. ChatGPT calls native **Inspect product evidence** and reports that the existing source is inconclusive.   | “Through this page's native Site Tools, ChatGPT can distinguish a product claim from evidence that really answers me.”                                                                     |
+| `0:28–0:45` | ChatGPT creates the ten-second continuous mission and phone handoff. Show `create_filming_mission` disappear and the QR receipt.   | “Instead of guessing, ChatGPT creates the smallest test that would settle it and a bounded phone handoff.”                                                                                 |
+| `0:45–1:05` | On the ordinary phone browser, show the exact mission and record the complete continuous test.                                     | “A person with the product can help—no account and no app. The phone sees only the public question and exact recording instruction.”                                                       |
+| `1:05–1:24` | Select the video, show direct Stream upload, then the bounded proposal with a cited interval. Waiting may be cut.                  | “The clip uploads directly to Cloudflare Stream. Through Vercel AI Gateway, a video model proposes the result and smallest relevant interval. It cannot publish.”                          |
+| `1:24–1:45` | Scrub the clip; review or correct every material field, rights, and the explicit 30-day reuse choice.                              | “The recorder reviews every material field and explicitly chooses whether this evidence can help future matching shoppers. Only conclusive, continuous reviewed evidence is eligible.”     |
+| `1:45–2:01` | Publish. Buyer updates live to **Before: Not enough proof → After: [ACTUAL RESULT]**; `inspect_answer_change` appears.             | “Publishing changes the first answer live and unlocks a new answer-change tool with the exact citation.”                                                                                   |
+| `2:01–2:14` | ChatGPT calls the new tool and cites `[TIMESTAMP]` plus the reviewed observation.                                                  | “ChatGPT tells me exactly what changed, what the recording establishes, and where I can verify it.”                                                                                        |
+| `2:14–2:38` | Send the network-reuse prompt. Show a fresh case search become **[ACTUAL RESULT]**, the D1 receipt, same citation, and no mission. | “Now a second shopper asks the same question. ChatGPT finds the reviewed recording, reuses its timestamp, and does not interrupt another person. That is the network: evidence compounds.” |
+| `2:38–2:55` | Show the minimal architecture card and blank arbitrary-product form. End on **Never recapture known proof**.                       | “This works for any observable product question: search what people have already shown, and film only the facts the web still cannot prove.”                                               |
 
 If the real Gateway falls back to manual review during the recorded take, narrate “The contributor reviews the exact uploaded video” and omit the model/Gateway sentence. Never describe a call that the video does not show.
 
@@ -72,6 +77,9 @@ Next.js product-evidence page on Vercel
 Cloudflare Durable Object ↔ contributor phone → Cloudflare Stream
    ↑ reviewed evidence                         ↓ authorized MP4
    └──────────────── human review ← Vercel AI Gateway proposal
+                         ↓ explicit reuse consent
+               Cloudflare D1 → later matching question
+                         ↓ 30-day expiry + daily purge
 ```
 
 Highlight only the causal path the viewer just watched. “Human review” must sit between model proposal and published evidence.
@@ -87,7 +95,8 @@ The ready-to-capture `1920×1080` asset is [public/demo-architecture.svg](public
 5. **Manual-fallback take:** the same real upload with the model proposal unavailable. Prove a contributor can still review conservatively and that inconclusive remains a valid outcome.
 6. **Deterministic replay take:** the explicitly labeled replay path. Keep it for judge-safe recovery and screenshots, never present it as fresh footage or a model call.
 7. **Unknown-product insert:** open a new case for the USB-C lavalier microphone question and show that the same tool contract adapts without a code change. Do not attempt a second full mission in the primary cut.
-8. **Silent screen master and narration master:** capture separately so a browser pause or spoken mistake cannot force a fabricated edit.
+8. **Fresh-shopper reuse:** open the exact same product URL and question in a new case, search, and capture the same Stream UID/timestamp resolving it with no mission creation.
+9. **Silent screen master and narration master:** capture separately so a browser pause or spoken mistake cannot force a fabricated edit.
 
 ## Reproducible acceptance and edit receipts
 
@@ -106,7 +115,8 @@ It generates an owned 12-second MP4 and drives the real Next.js page and Durable
 5. the reviewer can correct **Supports** to **Contradicts**;
 6. publication updates the buyer over WebSocket;
 7. `inspect_answer_change` returns insufficient → contradicted with the exact `00:01–00:11` citation; and
-8. a buyer reload reconnects to the same Durable Object state.
+8. a buyer reload reconnects to the same Durable Object state; and
+9. a fresh matching case reuses that exact citation and exposes no filming-mission tool.
 
 This receipt proves the product flow and failure boundaries, not a live Stream/model call or physical truth. The public physical-phone rehearsal remains a separate mandatory gate.
 
@@ -117,9 +127,9 @@ This receipt proves the product flow and failure boundaries, not a live Stream/m
 - By `0:55`, ChatGPT has created a concrete filming mission and the page's available tools have changed.
 - The viewer sees an ordinary phone record an owned physical product for the full required continuous duration.
 - The model is visibly a proposal, and the human's review is visibly authoritative.
-- By `2:10`, the same buyer page shows **before → after** and a newly available answer-change tool.
+- By `2:01`, the same buyer page shows **before → after** and a newly available answer-change tool.
 - ChatGPT's final statement includes the reviewed result and exact timestamp rather than a paraphrased marketing claim.
-- The final fourteen seconds make the scalable future obvious without claiming the prototype already has universal contributor reach or a permanent global index.
+- By `2:38`, a fresh matching case visibly reuses the same recording and has no new filming mission; the compounding future is demonstrated rather than narrated.
 - The video never claims that a hash proves authenticity, AI proves truth, public video grants reuse rights, or every product owner can already be contacted.
 - No live QR, token, secret, personal notification, development hostname, unlicensed physical mark, copyrighted clip, or music appears.
 - Audio is intelligible at phone volume, captions are corrected, the YouTube link works logged out, and final duration is below `3:00`.

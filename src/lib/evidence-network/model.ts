@@ -30,6 +30,24 @@ export type SourceProvenanceKind = (typeof sourceProvenanceKinds)[number];
 export const sourceContinuityKinds = ['continuous', 'edited', 'still', 'unknown'] as const;
 export type SourceContinuityKind = (typeof sourceContinuityKinds)[number];
 
+export const evidenceReuseScopes = ['not_eligible', 'case_only', 'public_network'] as const;
+export type EvidenceReuseScope = (typeof evidenceReuseScopes)[number];
+export const publicNetworkEvidenceRetentionDays = 30;
+
+export interface ReusableEvidenceQualificationInput {
+  readonly result: EvidenceResult;
+  readonly confidence: EvidenceConfidence;
+  readonly continuity: Extract<SourceContinuityKind, 'continuous' | 'edited' | 'unknown'>;
+}
+
+export function qualifiesForPublicNetworkReuse(input: ReusableEvidenceQualificationInput): boolean {
+  return (
+    input.result !== 'inconclusive' &&
+    input.confidence !== 'low' &&
+    input.continuity === 'continuous'
+  );
+}
+
 export const evidenceActors = ['human', 'agent', 'contributor', 'system'] as const;
 export type EvidenceActor = (typeof evidenceActors)[number];
 
@@ -55,6 +73,79 @@ export const productQuestionInputSchema = z.strictObject({
 
 export type ProductQuestionInput = z.infer<typeof productQuestionInputSchema>;
 
+export const reusableEvidenceRecordSchema = z
+  .strictObject({
+    id: z.string().regex(/^[a-zA-Z0-9:_-]{4,320}$/),
+    productName: z.string().trim().min(2).max(120),
+    productUrl: publicHttpUrlSchema.nullable(),
+    question: z.string().trim().min(8).max(280),
+    source: z.strictObject({
+      title: z.string().trim().min(1).max(240),
+      videoUrl: publicHttpUrlSchema,
+      rights: z.enum(['owned', 'authorized']),
+      provenance: z.enum(['live_capture', 'authorized_import']),
+      continuity: z.enum(['continuous', 'edited', 'unknown']),
+      contributorLabel: z.string().trim().min(2).max(80),
+      capturedAt: z.iso.datetime(),
+      streamUid: z.string().regex(/^[a-zA-Z0-9_-]{16,128}$/),
+      sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      durationSeconds: z.number().int().min(1).max(300),
+    }),
+    observation: z.strictObject({
+      result: z.enum(evidenceResults),
+      confidence: z.enum(evidenceConfidences),
+      text: z.string().trim().min(4).max(360),
+      citationStartSeconds: z.number().int().nonnegative(),
+      citationEndSeconds: z.number().int().positive(),
+      reviewedAt: z.iso.datetime(),
+    }),
+    indexedAt: z.iso.datetime(),
+    expiresAt: z.iso.datetime(),
+  })
+  .superRefine((value, context) => {
+    if (
+      !qualifiesForPublicNetworkReuse({
+        result: value.observation.result,
+        confidence: value.observation.confidence,
+        continuity: value.source.continuity,
+      })
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['observation'],
+        message:
+          'Reusable network evidence must be conclusive, medium-or-high confidence, and continuous.',
+      });
+    }
+    if (
+      value.observation.citationStartSeconds >= value.observation.citationEndSeconds ||
+      value.observation.citationEndSeconds > value.source.durationSeconds
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['observation', 'citationEndSeconds'],
+        message: 'The reusable citation must be ordered and fit inside the recording.',
+      });
+    }
+    if (Date.parse(value.indexedAt) >= Date.parse(value.expiresAt)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['expiresAt'],
+        message: 'Reusable evidence must expire after it is indexed.',
+      });
+    }
+  });
+
+export type ReusableEvidenceRecord = z.infer<typeof reusableEvidenceRecordSchema>;
+
+export const reusableEvidenceSearchResponseSchema = z.strictObject({
+  status: z.enum(['complete', 'unavailable']),
+  records: z.array(reusableEvidenceRecordSchema).max(4),
+  warnings: z.array(z.string().trim().min(1).max(240)).max(4),
+});
+
+export type ReusableEvidenceSearchResponse = z.infer<typeof reusableEvidenceSearchResponseSchema>;
+
 export const evidenceDiscoveryInputSchema = z.strictObject({
   provider: z.enum(evidenceDiscoveryProviders),
   status: z.enum(evidenceDiscoveryStatuses),
@@ -72,6 +163,7 @@ export const evidenceDiscoveryInputSchema = z.strictObject({
       }),
     )
     .max(12),
+  reviewedEvidence: z.array(reusableEvidenceRecordSchema).max(4).optional(),
 });
 
 export type EvidenceDiscoveryInput = z.infer<typeof evidenceDiscoveryInputSchema>;
@@ -96,6 +188,7 @@ export const reviewedEvidenceInputSchema = z
     confidence: z.enum(evidenceConfidences),
     continuity: z.enum(['continuous', 'edited', 'unknown']),
     rights: z.enum(['owned', 'authorized']),
+    reuseScope: z.enum(['case_only', 'public_network']),
     provenance: z.enum(['live_capture', 'authorized_import', 'demo_replay']),
     capturedAt: z.iso.datetime(),
     videoUrl: publicHttpUrlSchema.optional(),
@@ -150,6 +243,7 @@ export interface EvidenceSource {
   readonly rights: SourceRights;
   readonly provenance: SourceProvenanceKind;
   readonly continuity: SourceContinuityKind;
+  readonly reuseScope: EvidenceReuseScope;
   readonly contributorLabel: string;
   readonly createdAt: string;
   readonly streamUid: string | null;
@@ -381,6 +475,7 @@ export function createDemoEvidenceNetworkState(): EvidenceNetworkState {
     rights: 'owned',
     provenance: 'demo_replay',
     continuity: 'unknown',
+    reuseScope: 'case_only',
     contributorLabel: 'Demo catalog',
     createdAt: demoTimestamp,
     streamUid: null,
@@ -495,6 +590,7 @@ function askProductQuestion(
           rights: 'link_only',
           provenance: 'external_link',
           continuity: 'unknown',
+          reuseScope: 'not_eligible',
           contributorLabel: 'External publisher',
           createdAt: now,
           streamUid: null,
@@ -564,7 +660,52 @@ function recordEvidenceDiscovery(
   }
 
   const revision = state.revision + 1;
-  const knownUrls = new Set(evidenceCase.sources.flatMap(({ url }) => (url === null ? [] : [url])));
+  const reusableRecords = parsed.data.reviewedEvidence ?? [];
+  const knownStreamUids = new Set(
+    evidenceCase.sources.flatMap(({ streamUid }) => (streamUid === null ? [] : [streamUid])),
+  );
+  const uniqueReusableRecords = reusableRecords.filter(({ source }) => {
+    if (knownStreamUids.has(source.streamUid)) {
+      return false;
+    }
+    knownStreamUids.add(source.streamUid);
+    return true;
+  });
+  const reusableSources: EvidenceSource[] = uniqueReusableRecords.map((record, index) => ({
+    id: `source-${revision}-network-${index + 1}`,
+    title: record.source.title,
+    url: record.source.videoUrl,
+    mediaType: 'video',
+    rights: record.source.rights,
+    provenance: record.source.provenance,
+    continuity: record.source.continuity,
+    reuseScope: 'public_network',
+    contributorLabel: record.source.contributorLabel,
+    createdAt: record.source.capturedAt,
+    streamUid: record.source.streamUid,
+    sha256: record.source.sha256,
+  }));
+  const reusableObservations: EvidenceObservation[] = uniqueReusableRecords.map(
+    (record, index) => ({
+      id: `observation-${revision}-network-${index + 1}`,
+      claim: evidenceCase.question.text,
+      result: record.observation.result,
+      confidence: record.observation.confidence,
+      text: record.observation.text,
+      citation: {
+        sourceId: `source-${revision}-network-${index + 1}`,
+        startSeconds: record.observation.citationStartSeconds,
+        endSeconds: record.observation.citationEndSeconds,
+        label: `${evidenceTimestamp(record.observation.citationStartSeconds)}–${evidenceTimestamp(record.observation.citationEndSeconds)}`,
+      },
+      reviewedBy: record.source.contributorLabel,
+      reviewedAt: record.observation.reviewedAt,
+    }),
+  );
+  const knownUrls = new Set([
+    ...evidenceCase.sources.flatMap(({ url }) => (url === null ? [] : [url])),
+    ...reusableSources.flatMap(({ url }) => (url === null ? [] : [url])),
+  ]);
   const uniqueLeads = parsed.data.leads.filter(({ url }) => {
     if (knownUrls.has(url)) {
       return false;
@@ -580,6 +721,7 @@ function recordEvidenceDiscovery(
     rights: 'link_only',
     provenance: 'external_link',
     continuity: 'unknown',
+    reuseScope: 'not_eligible',
     contributorLabel: lead.creatorLabel,
     createdAt: now,
     streamUid: null,
@@ -608,41 +750,57 @@ function recordEvidenceDiscovery(
     query: parsed.data.query,
     searchedPlatforms: parsed.data.searchedPlatforms,
     warnings: parsed.data.warnings,
-    sourceIds: sources.map(({ id }) => id),
+    sourceIds: [...reusableSources, ...sources].map(({ id }) => id),
     searchedAt: now,
   };
+  const nextCaseWithoutAnswer: ProductEvidenceCase = {
+    ...evidenceCase,
+    sources: [...evidenceCase.sources, ...reusableSources, ...sources],
+    observations: [...evidenceCase.observations, ...reusableObservations, ...observations],
+    discovery,
+  };
+  const networkAnswer = deriveEvidenceAnswer(nextCaseWithoutAnswer, revision, now);
+  const reusableObservationIds = new Set(reusableObservations.map(({ id }) => id));
+  const reusableEvidenceChangedAnswer = networkAnswer.decisiveObservationIds.some((id) =>
+    reusableObservationIds.has(id),
+  );
+  const nextCase: ProductEvidenceCase = reusableEvidenceChangedAnswer
+    ? {
+        ...nextCaseWithoutAnswer,
+        answers: [...evidenceCase.answers, networkAnswer],
+      }
+    : nextCaseWithoutAnswer;
 
   return {
     ok: true,
     state: {
       revision,
-      activeCase: {
-        ...evidenceCase,
-        sources: [...evidenceCase.sources, ...sources],
-        observations: [...evidenceCase.observations, ...observations],
-        discovery,
-      },
+      activeCase: nextCase,
       activity: [
         ...state.activity,
         activity(
           revision,
           actor,
           'search_product_evidence',
-          parsed.data.status === 'unavailable'
-            ? 'The live public-source provider was unavailable; no result was treated as evidence.'
-            : sources.length === 0
-              ? 'Searched available public sources but found no claim-ready evidence leads.'
-              : `Indexed ${sources.length} public discovery lead${sources.length === 1 ? '' : 's'} without treating them as proof.`,
+          uniqueReusableRecords.length > 0
+            ? `Reused ${uniqueReusableRecords.length} rights-cleared, claim-reviewed recording${uniqueReusableRecords.length === 1 ? '' : 's'} from the evidence network.`
+            : parsed.data.status === 'unavailable'
+              ? 'The live public-source provider was unavailable; no result was treated as evidence.'
+              : sources.length === 0
+                ? 'Searched available public sources but found no claim-ready evidence leads.'
+                : `Indexed ${sources.length} public discovery lead${sources.length === 1 ? '' : 's'} without treating them as proof.`,
           now,
         ),
       ],
     },
     message:
-      parsed.data.status === 'unavailable'
-        ? 'Live public-source search was unavailable. A filming mission can still fill the gap.'
-        : sources.length === 0
-          ? 'Public-source search finished without a usable lead. A filming mission can fill the gap.'
-          : `Indexed ${sources.length} public lead${sources.length === 1 ? '' : 's'}. None is treated as proof until reviewed.`,
+      uniqueReusableRecords.length > 0
+        ? `Reused ${uniqueReusableRecords.length} reviewed network recording${uniqueReusableRecords.length === 1 ? '' : 's'}. The answer is now ${networkAnswer.status}.`
+        : parsed.data.status === 'unavailable'
+          ? 'Live public-source search was unavailable. A filming mission can still fill the gap.'
+          : sources.length === 0
+            ? 'Public-source search finished without a usable lead. A filming mission can fill the gap.'
+            : `Indexed ${sources.length} public lead${sources.length === 1 ? '' : 's'}. None is treated as proof until reviewed.`,
   };
 }
 
@@ -740,6 +898,7 @@ function publishReviewedEvidence(
     rights: parsed.data.rights,
     provenance: parsed.data.provenance,
     continuity: parsed.data.continuity,
+    reuseScope: parsed.data.reuseScope,
     contributorLabel: parsed.data.contributorLabel,
     createdAt: parsed.data.capturedAt,
     streamUid: parsed.data.streamUid ?? null,

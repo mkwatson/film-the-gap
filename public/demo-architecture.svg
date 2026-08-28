@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title description">
-  <title id="title">ChatGPT asks someone with a product to film missing evidence</title>
-  <desc id="description">A five-step flow from ChatGPT identifying an evidence gap, through native WebMCP mission creation and a contributor phone recording, to human-reviewed AI analysis and a timestamped changed answer.</desc>
+  <title id="title">ChatGPT asks someone to film missing product evidence once, then reuses it</title>
+  <desc id="description">A five-step flow from ChatGPT identifying an evidence gap, through native WebMCP mission creation and a contributor phone recording, to human-reviewed AI analysis and a timestamped result reused for later matching questions.</desc>
   <defs>
     <radialGradient id="background" cx="50%" cy="8%" r="95%">
       <stop offset="0" stop-color="#14352b" />
@@ -33,9 +33,9 @@
   <rect width="1920" height="1080" fill="url(#background)" />
   <circle cx="960" cy="520" r="450" fill="none" stroke="#a9ffe2" stroke-opacity="0.04" stroke-width="130" filter="url(#glow)" />
 
-  <text x="80" y="88" class="sans eyebrow" fill="#9df5d0">QUESTION → NEW EVIDENCE → BETTER ANSWER</text>
-  <text x="80" y="180" class="sans title" fill="#f3f8f5">ChatGPT asks someone to film the missing proof.</text>
-  <text x="82" y="232" class="sans subtitle" fill="#9eb2aa">Native WebMCP lets an agent identify one missing fact; a person films and reviews the proof.</text>
+  <text x="80" y="88" class="sans eyebrow" fill="#9df5d0">QUESTION → NEW EVIDENCE → COMPOUNDING ANSWERS</text>
+  <text x="80" y="180" class="sans title" fill="#f3f8f5">Film the missing proof once. Reuse it.</text>
+  <text x="82" y="232" class="sans subtitle" fill="#9eb2aa">Native WebMCP identifies one missing fact; a person reviews the proof; later agents find it first.</text>
 
   <g fill="none" stroke="#9df5d0" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)">
     <path d="M 378 505 H 423" />
@@ -96,19 +96,19 @@
     <rect width="344" height="366" rx="28" fill="url(#card)" stroke="#b69cff" stroke-opacity="0.68" stroke-width="2" />
     <circle cx="44" cy="48" r="21" fill="#b69cff" fill-opacity="0.13" stroke="#b69cff" stroke-opacity="0.72" />
     <text x="44" y="54" class="mono step" fill="#d3c7ff" text-anchor="middle">05</text>
-    <text x="28" y="104" class="mono step" fill="#c7b7ff">NEW ANSWER</text>
+    <text x="28" y="104" class="mono step" fill="#c7b7ff">EVIDENCE NETWORK</text>
     <text x="28" y="148" class="sans node-title" fill="#f5f2ff">Cited result</text>
-    <text x="28" y="198" class="sans body" fill="#b9b2c4">ChatGPT says what changed</text>
-    <text x="28" y="228" class="sans body" fill="#b9b2c4">and where to verify it.</text>
+    <text x="28" y="198" class="sans body" fill="#b9b2c4">The first answer changes;</text>
+    <text x="28" y="228" class="sans body" fill="#b9b2c4">later matching questions reuse it.</text>
     <rect x="28" y="294" width="288" height="44" rx="12" fill="#b69cff" fill-opacity="0.09" stroke="#b69cff" stroke-opacity="0.3" />
-    <text x="46" y="322" class="mono receipt" fill="#d3c7ff">before → after + timestamp</text>
+    <text x="46" y="322" class="mono receipt" fill="#d3c7ff">D1 receipt · no new mission</text>
   </g>
 
   <rect x="210" y="758" width="1500" height="112" rx="24" fill="#a9ffe2" fill-opacity="0.055" stroke="#a9ffe2" stroke-opacity="0.22" />
-  <text x="960" y="808" class="sans node-title" fill="#e7f6ef" text-anchor="middle">The agent identifies the gap. The person supplies the evidence. The answer changes.</text>
-  <text x="960" y="843" class="mono receipt" fill="#8cebc6" text-anchor="middle">INSPECT → MISSION → PHONE HANDOFF → REVIEWED VIDEO → ANSWER DIFF</text>
+  <text x="960" y="808" class="sans node-title" fill="#e7f6ef" text-anchor="middle">The agent identifies the gap. A person films once. The evidence keeps answering.</text>
+  <text x="960" y="843" class="mono receipt" fill="#8cebc6" text-anchor="middle">INSPECT → MISSION → PHONE → HUMAN REVIEW → ANSWER DIFF → REUSE</text>
 
   <line x1="80" y1="934" x2="1840" y2="934" stroke="#a9ffe2" stroke-opacity="0.16" />
-  <text x="960" y="982" class="sans subtitle" fill="#aebeb7" text-anchor="middle">Vercel: Next.js + AI Gateway · Cloudflare: Durable Object + Stream</text>
-  <text x="960" y="1023" class="mono eyebrow" fill="#8cebc6" text-anchor="middle">THE MODEL PROPOSES · THE HUMAN PUBLISHES · THE VIDEO REMAINS INSPECTABLE</text>
+  <text x="960" y="982" class="sans subtitle" fill="#aebeb7" text-anchor="middle">Vercel: Next.js + AI Gateway · Cloudflare: Durable Object + Stream + D1 + Cron</text>
+  <text x="960" y="1023" class="mono eyebrow" fill="#8cebc6" text-anchor="middle">THE MODEL PROPOSES · THE HUMAN PUBLISHES · THE NETWORK REUSES EXACT EVIDENCE</text>
 </svg>

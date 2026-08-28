@@ -5,6 +5,9 @@ import {
   applyEvidenceNetworkCommand,
   createDemoEvidenceNetworkState,
   createEmptyEvidenceNetworkState,
+  publicNetworkEvidenceRetentionDays,
+  qualifiesForPublicNetworkReuse,
+  reusableEvidenceRecordSchema,
   type EvidenceNetworkState,
   type ReviewedEvidenceInput,
 } from '../../src/lib/evidence-network/model';
@@ -32,6 +35,7 @@ import {
   type AuthorizedVideoAnalysisInput,
   type VideoEvidenceProposal,
 } from '../../src/lib/evidence-network/video-analysis';
+import { indexReusableEvidence } from './evidence-library';
 
 export interface ProductEvidenceWorkerEnv {
   readonly CASES: DurableObjectNamespace<ProductEvidenceCaseObject>;
@@ -43,6 +47,7 @@ export interface ProductEvidenceWorkerEnv {
   readonly STREAM_OUTBOUND?: Fetcher;
   readonly AI_GATEWAY_API_KEY?: string;
   readonly AI_ANALYSIS_OUTBOUND?: Fetcher;
+  readonly EVIDENCE_LIBRARY?: D1Database;
 }
 
 interface StoredUploadReservation {
@@ -170,6 +175,7 @@ const defaultCaseTtlSeconds = 86_400;
 const maximumCaseTtlSeconds = 7 * 86_400;
 const analysisLockMilliseconds = 60_000;
 const streamRetentionMilliseconds = 31 * 86_400_000;
+const reusableEvidenceRetentionMilliseconds = publicNetworkEvidenceRetentionDays * 86_400_000;
 
 function jsonResponse(body: object, status = 200, headers?: HeadersInit): Response {
   const responseHeaders = new Headers(headers);
@@ -1061,6 +1067,10 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
     ) {
       return jsonResponse({ error: 'invalid_contributor_token' }, 403);
     }
+    const evidenceCase = stored.state.activeCase;
+    if (evidenceCase?.mission?.status !== 'open') {
+      return jsonResponse({ error: 'no_open_filming_mission' }, 409);
+    }
     const digest = await sha256Hex(JSON.stringify(raw));
     const duplicate = this.duplicateResponse(parsed.data.commandId, digest);
     if (duplicate !== null) {
@@ -1107,11 +1117,89 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
       streamUid: parsed.data.uploadId,
       ...(video.previewUrl === null ? {} : { videoUrl: video.previewUrl }),
     };
-    const transition = applyEvidenceNetworkCommand(stored.state, {
-      kind: 'publish-reviewed-evidence',
-      actor: 'contributor',
-      input: evidenceInput,
-    });
+    const reviewedAt = new Date().toISOString();
+    const transition = applyEvidenceNetworkCommand(
+      stored.state,
+      {
+        kind: 'publish-reviewed-evidence',
+        actor: 'contributor',
+        input: evidenceInput,
+      },
+      reviewedAt,
+    );
+    if (transition.ok && parsed.data.review.reuseScope === 'public_network') {
+      if (!qualifiesForPublicNetworkReuse(parsed.data.review)) {
+        return jsonResponse(
+          {
+            error: 'evidence_not_reusable',
+            message:
+              'Network reuse requires a conclusive, medium-or-high-confidence continuous recording. Choose case-only publication or strengthen the review.',
+          },
+          422,
+        );
+      }
+      if (this.workerEnv.EVIDENCE_LIBRARY === undefined) {
+        return jsonResponse(
+          {
+            error: 'evidence_library_unavailable',
+            message:
+              'This deployment cannot make the clip reusable yet. Choose case-only publication or retry later.',
+          },
+          503,
+        );
+      }
+      if (video.previewUrl === null) {
+        return jsonResponse(
+          {
+            error: 'video_playback_unavailable',
+            message:
+              'Cloudflare Stream has not exposed a reusable playback URL yet. Retry after processing finishes.',
+          },
+          503,
+        );
+      }
+      const reusableRecord = reusableEvidenceRecordSchema.parse({
+        id: `${this.caseId()}:${parsed.data.uploadId}`,
+        productName: evidenceCase.product.name,
+        productUrl: evidenceCase.product.suppliedUrl,
+        question: evidenceCase.question.text,
+        source: {
+          title: 'Contributor-recorded mission video',
+          videoUrl: video.previewUrl,
+          rights: parsed.data.review.rights,
+          provenance: 'live_capture',
+          continuity: parsed.data.review.continuity,
+          contributorLabel: parsed.data.review.contributorLabel,
+          capturedAt: parsed.data.review.capturedAt,
+          streamUid: parsed.data.uploadId,
+          sha256: parsed.data.review.sha256,
+          durationSeconds: actualDuration,
+        },
+        observation: {
+          result: parsed.data.review.result,
+          confidence: parsed.data.review.confidence,
+          text: parsed.data.review.observation,
+          citationStartSeconds: parsed.data.review.citationStartSeconds,
+          citationEndSeconds: parsed.data.review.citationEndSeconds,
+          reviewedAt,
+        },
+        indexedAt: reviewedAt,
+        expiresAt: new Date(Date.now() + reusableEvidenceRetentionMilliseconds).toISOString(),
+      });
+      try {
+        await indexReusableEvidence(this.workerEnv.EVIDENCE_LIBRARY, reusableRecord);
+      } catch (error: unknown) {
+        console.error('Cloudflare D1 reusable evidence write failed', error);
+        return jsonResponse(
+          {
+            error: 'evidence_library_unavailable',
+            message:
+              'The reusable evidence index did not accept this clip. Choose case-only publication or retry later.',
+          },
+          503,
+        );
+      }
+    }
     await this.recordTransition(
       parsed.data.commandId,
       digest,
@@ -1128,6 +1216,10 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
         uploadId: parsed.data.uploadId,
         readyToStream: video.readyToStream,
         status: video.status,
+      },
+      reuse: {
+        scope: parsed.data.review.reuseScope,
+        indexed: parsed.data.review.reuseScope === 'public_network',
       },
       snapshot: snapshot(this.caseId(), this.stored ?? stored),
     });

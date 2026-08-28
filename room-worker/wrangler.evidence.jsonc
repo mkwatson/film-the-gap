@@ -23,6 +23,15 @@
   "stream": {
     "binding": "STREAM",
   },
+  "d1_databases": [
+    {
+      "binding": "EVIDENCE_LIBRARY",
+      "database_name": "webmcp-product-evidence-library",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "preview_database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+    },
+  ],
   "ratelimits": [
     {
       "name": "CASE_CREATION_PER_CLIENT_RATE_LIMITER",
@@ -44,6 +53,9 @@
   "vars": {
     "ALLOWED_ORIGINS": "http://localhost:3000,http://127.0.0.1:3000",
     "EVIDENCE_CASE_TTL_SECONDS": "86400",
+  },
+  "triggers": {
+    "crons": ["17 5 * * *"],
   },
   "observability": {
     "enabled": true,

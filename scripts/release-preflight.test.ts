@@ -63,6 +63,7 @@ interface ReleaseFetchOptions {
   readonly workerTag?: string;
   readonly contributorCameraAllowed?: boolean;
   readonly globalRateLimitConfigured?: boolean;
+  readonly reusableIndexAvailable?: boolean;
 }
 
 function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
@@ -90,9 +91,26 @@ function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
           globalCaseCreation: options.globalRateLimitConfigured ?? true,
           maximumUploadsPerEvidenceCase,
         },
-        evidenceServices: { stream: true, videoAnalysis: true },
+        evidenceServices: {
+          stream: true,
+          videoAnalysis: true,
+          reusableEvidence: true,
+          reusableEvidenceRetentionDays: 30,
+          expiredEvidencePurge: 'daily',
+        },
         workerVersion: { id: 'room-version', tag: workerTag, timestamp: '2026-08-27T12:00:00Z' },
       });
+    }
+    if (url.href === `${config.roomOrigin}/evidence-library/search` && method === 'POST') {
+      return json(
+        {
+          status: options.reusableIndexAvailable === false ? 'unavailable' : 'complete',
+          records: [],
+          warnings: options.reusableIndexAvailable === false ? ['D1 migration unavailable.'] : [],
+        },
+        200,
+        { 'Access-Control-Allow-Origin': config.appOrigin },
+      );
     }
     if (url.href === `${config.appOrigin}/`) {
       return appPage('If the web cannot prove it, ask someone with the product to film it.', {
@@ -195,6 +213,7 @@ describe('public release preflight', () => {
     expect(report.steps.map((step) => step.name)).toEqual([
       'app health and commit',
       'evidence service health, commit, and cost controls',
+      'reusable evidence index',
       'buyer and contributor pages',
       'evidence service browser boundary and durable case',
     ]);
@@ -212,6 +231,12 @@ describe('public release preflight', () => {
     await expect(
       verifyPublicRelease(config, releaseFetch({ globalRateLimitConfigured: false })),
     ).rejects.toThrow(/invalid response contract/i);
+  });
+
+  it('fails closed when the reusable evidence schema is unavailable', async () => {
+    await expect(
+      verifyPublicRelease(config, releaseFetch({ reusableIndexAvailable: false })),
+    ).rejects.toThrow(/D1 schema or binding unavailable/i);
   });
 
   it('fails closed when the contributor page cannot request its camera', async () => {

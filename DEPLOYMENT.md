@@ -8,7 +8,9 @@ Updated 2026-08-27 PT. Nothing described here is publicly deployed yet. The exis
 | --------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Shopper and contributor app | Next.js 16 on Vercel                               | Native WebMCP tools, human UI, QR handoff, public discovery, video review, playback              |
 | Evidence service            | Cloudflare Worker + SQLite Durable Object          | Revisioned cases, scoped capabilities, WebSocket updates, upload reservations, reviewed evidence |
+| Reusable evidence index     | Cloudflare D1                                      | Exact product/question lookup for explicitly opted-in, decision-grade recordings                 |
 | Video                       | Cloudflare Stream binding                          | One-time direct phone uploads, encoding, authorized MP4 generation, playback                     |
+| Evidence expiry             | Cloudflare Cron Trigger                            | Daily physical deletion of reusable metadata after its 30-day boundary                           |
 | Multimodal proposal         | Vercel AI Gateway + AI SDK 7, called by the Worker | Bounded timestamped proposal from the authorized MP4; never publication authority                |
 | Social-video discovery      | ScrapeCreators, called only by the Vercel app      | Link-only TikTok, Instagram, and YouTube leads; never implied reuse rights                       |
 | Broad-web discovery         | Exa tool through Vercel AI Gateway + AI SDK 7      | At most four claim-aware web/PDP leads from one exact-query-verified call                        |
@@ -29,6 +31,7 @@ These are defense-in-depth controls, not claims of perfect abuse prevention.
 | Reserved duration      | Actual browser-measured duration plus five seconds, bounded by the mission and 90-second maximum        |
 | Upload capability      | One-time Stream URL with a 15-minute expiry and allowed app hostname                                    |
 | Stored video           | Scheduled deletion after 31 days; enough for judging, not indefinite storage                            |
+| Reusable evidence      | Explicit contributor opt-in; exact product/question matching; 30-day expiry and daily D1 purge          |
 | Model calls            | One cached successful proposal per upload and no more than two crash-recovery attempts                  |
 | Video AI spend         | Dedicated AI Gateway key with a hard non-renewing budget and 30-day expiry                              |
 | Broad web search       | One Exa `instant` call, four results, exact-query receipt check, 20-second timeout, and separate budget |
@@ -45,7 +48,17 @@ These steps mutate accounts or authorize spend. Mark must approve them and be pr
 
 1. Choose the public project name and a new Vercel project. Do not reuse the live-market Vercel project.
 2. Enable Cloudflare Stream on the intended account and approve its minimum storage/delivery commitment.
-3. Create two dedicated Vercel AI Gateway keys with a combined hard ceiling of `$25`, non-renewing, with alerts and a 30-day expiry. Separating video analysis from public web discovery limits blast radius and makes each cost visible:
+3. Create a dedicated D1 database in Western North America and replace both all-zero placeholder IDs in `room-worker/wrangler.evidence.jsonc` with the returned UUID. This mutates the Cloudflare account and must not be run until Mark approves:
+
+   ```bash
+   pnpm --dir room-worker exec wrangler d1 create webmcp-product-evidence-library \
+     --location wnam \
+     --config wrangler.evidence.jsonc
+   ```
+
+   Keep the binding name exactly `EVIDENCE_LIBRARY`. Do not deploy while either placeholder UUID remains.
+
+4. Create two dedicated Vercel AI Gateway keys with a combined hard ceiling of `$25`, non-renewing, with alerts and a 30-day expiry. Separating video analysis from public web discovery limits blast radius and makes each cost visible:
 
    ```bash
    pnpm dlx vercel@59.7.0 ai-gateway api-keys create \
@@ -65,8 +78,8 @@ These steps mutate accounts or authorize spend. Mark must approve them and be pr
 
    Do not use `--bypass-all-settings` or `--zdr-exempt`. Copy the video secret only into Cloudflare's encrypted secret prompt. Keep the discovery secret for the new Vercel project's encrypted Production environment.
 
-4. If live social discovery is enabled, create a dedicated ScrapeCreators key with only the credits Mark approves. The app remains truthful and functional without it, but reports discovery as unavailable.
-5. Link this worktree to the new Vercel project only after the public project name is chosen. `.vercel/project.json` must remain uncommitted.
+5. If live social discovery is enabled, create a dedicated ScrapeCreators key with only the credits Mark approves. The app remains truthful and functional without it, but reports discovery as unavailable.
+6. Link this worktree to the new Vercel project only after the public project name is chosen. `.vercel/project.json` must remain uncommitted.
 
 ## Candidate gate before any deployment
 
@@ -82,13 +95,14 @@ pnpm check
 `git status --short` must print nothing. Save the 40-character commit as `RELEASE_SHA`. Run the deterministic native evidence journey locally before changing any public system:
 
 ```bash
+pnpm --dir room-worker d1:migrate:evidence-acceptance
 pnpm --dir room-worker dev:evidence-services
 pnpm --dir room-worker dev:evidence-acceptance
 NEXT_PUBLIC_EVIDENCE_ROOM_URL=http://localhost:8792 pnpm dev
 pnpm acceptance:evidence-network
 ```
 
-Those four commands use separate shells. The acceptance test exercises real Chrome, native dynamic Site Tools, two tabs, the actual app and Durable Object, upload/model-shaped service boundaries, human correction, publication, WebSocket update, and the before/after answer. It replaces only the paid Stream and model calls with strict local services.
+The migration command is one-time local preparation; the next four commands use separate shells. The acceptance test exercises real Chrome, native dynamic Site Tools, two tabs, the actual app, Durable Object, and D1 index, upload/model-shaped service boundaries, human correction, explicit reuse consent, publication, WebSocket update, a fresh matching case, and cross-case reuse. It replaces only the paid Stream and model calls with strict local services.
 
 ## First generic deployment
 
@@ -104,7 +118,16 @@ RELEASE_SHA=$(git rev-parse HEAD)
 
 Then:
 
-1. Bootstrap the new Worker under its separate name. This initial version is not judge-facing:
+1. Apply the reviewed D1 migration remotely and inspect its success before any Worker can advertise reusable evidence:
+
+   ```bash
+   pnpm --dir room-worker exec wrangler d1 migrations apply \
+     webmcp-product-evidence-library \
+     --remote \
+     --config wrangler.evidence.jsonc
+   ```
+
+2. Bootstrap the new Worker under its separate name. This initial version is not judge-facing:
 
    ```bash
    pnpm --dir room-worker exec wrangler deploy \
@@ -116,14 +139,14 @@ Then:
      --var "EVIDENCE_CASE_TTL_SECONDS:86400"
    ```
 
-2. Add the dedicated budgeted video-analysis Gateway key through the encrypted prompt:
+3. Add the dedicated budgeted video-analysis Gateway key through the encrypted prompt:
 
    ```bash
    pnpm --dir room-worker exec wrangler secret put AI_GATEWAY_API_KEY \
      --config wrangler.evidence.jsonc
    ```
 
-3. Redeploy the exact commit and record the final Worker version ID, tag, and timestamp:
+4. Redeploy the exact commit and record the final Worker version ID, tag, and timestamp:
 
    ```bash
    pnpm --dir room-worker exec wrangler deploy \
@@ -135,15 +158,15 @@ Then:
      --var "EVIDENCE_CASE_TTL_SECONDS:86400"
    ```
 
-4. Configure the new Vercel project's Production environment:
+5. Configure the new Vercel project's Production environment:
 
    - `NEXT_PUBLIC_EVIDENCE_ROOM_URL=$ROOM_ORIGIN` — required and compiled at build time.
    - `AI_GATEWAY_DISCOVERY_API_KEY` — optional but expected for the final candidate; the separate `$5` key for bounded Exa search through Vercel AI Gateway.
    - `SCRAPECREATORS_API_KEY` — optional, server-only, dedicated to this demo.
    - Do not add `AI_GATEWAY_API_KEY`; the video-analysis key belongs only on the Worker.
 
-5. Deploy the exact Git commit to Vercel. Prefer a Git-associated Production build so `VERCEL_GIT_COMMIT_SHA` is authoritative. A reviewed prebuilt artifact may use `WEBMCP_RELEASE_COMMIT_SHA=$RELEASE_SHA`, but the room origin must be present during `vercel build`; changing it after the build cannot update the client bundle.
-6. Confirm Vercel Deployment Protection is disabled on the final judge hostname. The page must work logged out with no share parameter, password, trusted IP, or bypass header.
+6. Deploy the exact Git commit to Vercel. Prefer a Git-associated Production build so `VERCEL_GIT_COMMIT_SHA` is authoritative. A reviewed prebuilt artifact may use `WEBMCP_RELEASE_COMMIT_SHA=$RELEASE_SHA`, but the room origin must be present during `vercel build`; changing it after the build cannot update the client bundle.
+7. Confirm Vercel Deployment Protection is disabled on the final judge hostname. The page must work logged out with no share parameter, password, trusted IP, or bypass header.
 
 ## Vercel public-discovery firewall
 
@@ -194,10 +217,11 @@ pnpm release:verify
 The verifier uses manual redirects and bounded bodies. It proves:
 
 1. the app exposes the exact reviewed commit and compiled Worker origin;
-2. the standalone Worker exposes the same commit, both rate-limit bindings, the two-upload cap, Stream, and live video analysis;
-3. buyer and contributor pages have the intended camera, upload, playback, CORS, CSP, referrer, and content-type boundaries;
-4. an untrusted browser origin is rejected; and
-5. one disposable evidence case is created and survives a Durable Object read-back.
+2. the standalone Worker exposes the same commit, both rate-limit bindings, the two-upload cap, Stream, live video analysis, D1, the 30-day reuse boundary, and daily expiry purge;
+3. a real read-only D1 query succeeds through the public evidence-index contract, proving the binding and migration rather than trusting health metadata;
+4. buyer and contributor pages have the intended camera, upload, playback, CORS, CSP, referrer, and content-type boundaries;
+5. an untrusted browser origin is rejected; and
+6. one disposable evidence case is created and survives a Durable Object read-back.
 
 The report contains only public Worker metadata and step timings. It parses but never returns or logs the disposable owner/contributor capabilities.
 
@@ -206,11 +230,13 @@ Then perform one user-approved paid rehearsal on the final origins:
 1. Clean unauthenticated desktop browser: arbitrary product/question, mission, QR/link.
 2. Physical phone: owned unbranded object, continuous recording, real direct Stream upload, real Gateway proposal, explicit correction/review, publish.
    Confirm specifically that the Gateway provider can fetch the generated public MP4 while Stream playback-origin restrictions are active; current Cloudflare documentation describes those restrictions for HLS/DASH playback but does not explicitly guarantee this downstream-download combination.
-3. Desktop reload: same durable case and timestamped evidence still visible.
-4. Current WebMCP-enabled Chrome: complete native Site Tool journey.
-5. Current ChatGPT in-app Browser: complete the same journey and capture the tool transcript.
-6. Ordinary-browser fallback: complete the journey without Site Tools.
-7. Cold tester: understands and completes the canonical flow without coaching.
+3. Contributor explicitly opts into 30-day network reuse; confirm weak/inconclusive evidence cannot be selected for reuse.
+4. Desktop reload: same durable case and timestamped evidence still visible.
+5. Open a fresh case for the exact same product URL and question; confirm D1 returns the reviewed Stream citation and no new filming mission appears.
+6. Current WebMCP-enabled Chrome: complete native Site Tool journey.
+7. Current ChatGPT in-app Browser: complete the same journey and capture the tool transcript.
+8. Ordinary-browser fallback: complete the journey without Site Tools.
+9. Cold tester: understands and completes the canonical flow without coaching.
 
 Record actual result, duration, browser/build versions, Worker version, model ID, Stream UID, and failures. Do not put contributor capabilities, Gateway keys, vendor keys, or raw private URLs in the receipt.
 
@@ -220,7 +246,7 @@ Record actual result, duration, browser/build versions, Worker version, model ID
 | ------------- | ----------------------------------------------------------------------------------- |
 | Git           | Full `RELEASE_SHA`, signed/frozen tag, clean public repository                      |
 | Vercel        | Immutable deployment URL, stable alias, commit receipt, WAF rule ID/state           |
-| Cloudflare    | Worker origin, version ID, version tag, timestamp, rate-limit bindings              |
+| Cloudflare    | Worker origin/version, D1 database ID/migration, Cron Trigger, Stream, rate limits  |
 | Paid edges    | Budgeted Gateway key expiry/cap, Stream retention, discovery credit ceiling         |
 | Runtime tests | Release verifier, Chrome, ChatGPT, physical phone, fallback, cold tester timestamps |
 | Submission    | Final live URL, repository URL, YouTube URL, Devpost export                         |
@@ -235,4 +261,4 @@ Preserve the previous candidate Vercel deployment URL and Worker version ID befo
 - Cloudflare: `pnpm --dir room-worker exec wrangler rollback PREVIOUS_VERSION_ID --config wrangler.evidence.jsonc --message "rollback to known-good generic evidence release"`.
 - WAF: stage the rule back to logging or disable it, inspect `firewall diff`, then Mark publishes the draft.
 
-Cloudflare code rollback does not roll back Durable Object storage. Never roll back across an incompatible stored-case schema. If any required public gate fails, keep the old independent live-market release untouched and remove the generic URL from judge-facing material until the candidate is repaired.
+Cloudflare code rollback does not roll back Durable Object or D1 storage. Never roll back across an incompatible stored schema; migrations need their own forward repair. If any required public gate fails, keep the old independent live-market release untouched and remove the generic URL from judge-facing material until the candidate is repaired.

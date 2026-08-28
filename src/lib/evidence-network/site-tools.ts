@@ -130,6 +130,7 @@ function sourceSnapshot(state: EvidenceNetworkState): readonly object[] {
     rights: source.rights,
     provenance: source.provenance,
     continuity: source.continuity,
+    reuseScope: source.reuseScope,
     ...(source.url === null ? {} : { url: source.url }),
     ...(source.streamUid === null ? {} : { streamUid: source.streamUid }),
     ...(source.sha256 === null ? {} : { sha256: source.sha256 }),
@@ -309,7 +310,7 @@ function allEvidenceSiteTools(
       name: 'search_product_evidence',
       title: 'Search existing product evidence',
       description:
-        'Search supplied product pages, public social video, and the open web for the active product and observable question. Results are stored only as link-only discovery leads and never treated as proof merely because they are public or relevant-looking.',
+        'Search the rights-cleared evidence network, supplied product pages, public social video, and the open web for the active product and observable question. Only previously reviewed network recordings can affect the answer; ordinary public results remain link-only leads.',
       inputSchema: emptyInputSchema,
       annotations: {
         readOnlyHint: false,

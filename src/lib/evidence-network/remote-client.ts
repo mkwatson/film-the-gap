@@ -20,6 +20,12 @@ import {
   videoEvidenceAnalysisResponseSchema,
   type VideoEvidenceAnalysisResponse,
 } from './video-analysis';
+import {
+  productQuestionInputSchema,
+  reusableEvidenceSearchResponseSchema,
+  type ProductQuestionInput,
+  type ReusableEvidenceSearchResponse,
+} from './model';
 
 export type EvidenceFetch = (
   input: string | URL | globalThis.Request,
@@ -131,6 +137,23 @@ export async function readRemoteEvidenceCase(
     `${normalizeServiceUrl(serviceUrl)}/evidence-cases/${encodeURIComponent(caseId)}/snapshot`,
   );
   return remoteEvidenceCaseSnapshotSchema.parse(await checkedJson(response));
+}
+
+export async function searchRemoteReusableEvidence(
+  serviceUrl: string,
+  input: ProductQuestionInput,
+  evidenceFetch: EvidenceFetch = fetch,
+  signal?: AbortSignal,
+): Promise<ReusableEvidenceSearchResponse> {
+  const question = productQuestionInputSchema.parse(input);
+  const response = await evidenceFetch(
+    `${normalizeServiceUrl(serviceUrl)}/evidence-library/search`,
+    {
+      ...jsonRequest(question),
+      ...(signal === undefined ? {} : { signal }),
+    },
+  );
+  return reusableEvidenceSearchResponseSchema.parse(await checkedJson(response));
 }
 
 export async function sendOwnerEvidenceCommand(

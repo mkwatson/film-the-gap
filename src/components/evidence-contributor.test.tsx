@@ -94,6 +94,7 @@ beforeEach(() => {
         confidence: 'high',
         continuity: 'continuous',
         rights: 'owned',
+        reuseScope: 'case_only',
         provenance: 'live_capture',
         capturedAt: '2026-08-27T16:01:00.000Z',
         streamUid: '0123456789abcdef0123456789abcdef',
@@ -165,7 +166,7 @@ describe('EvidenceContributor', () => {
     expect(remoteMocks.read).not.toHaveBeenCalled();
   });
 
-  it('uploads, requires human review, and publishes the changed answer', async () => {
+  it('uploads, requires human review, and explicitly opts into reusable publication', async () => {
     render(<EvidenceContributor caseId="BCDF2345" />);
     const input = await screen.findByLabelText('Record or choose evidence video');
     const file = new File(['ten-second-video'], 'proof.mp4', { type: 'video/mp4' });
@@ -210,6 +211,7 @@ describe('EvidenceContributor', () => {
     expect(screen.getByText('google/gemini-3.7-flash')).toBeTruthy();
     expect(screen.getByText('Proposed citation 00:01–00:10')).toBeTruthy();
 
+    fireEvent.click(screen.getByLabelText('Future matching product questions too'));
     fireEvent.click(screen.getByRole('button', { name: 'Publish reviewed evidence' }));
 
     expect(await screen.findByText('The evidence case updated')).toBeTruthy();
@@ -222,6 +224,7 @@ describe('EvidenceContributor', () => {
         review: expect.objectContaining({
           result: 'supports',
           rights: 'owned',
+          reuseScope: 'public_network',
           confidence: 'high',
           continuity: 'continuous',
           citationStartSeconds: 1,
@@ -264,5 +267,8 @@ describe('EvidenceContributor', () => {
     expect(screen.getByRole('button', { name: 'inconclusive' }).getAttribute('aria-pressed')).toBe(
       'true',
     );
+    expect(
+      screen.getByLabelText('Future matching product questions too').hasAttribute('disabled'),
+    ).toBe(true);
   });
 });

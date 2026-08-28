@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -221,6 +222,11 @@ async function run(): Promise<void> {
   const config = acceptanceConfig(process.env);
   const artifacts = artifactDirectory(process.env);
   const fixture = createFixtureVideo();
+  const runId = randomUUID().replaceAll('-', '').slice(0, 12);
+  const productName = `Acceptance travel bottle ${runId}`;
+  const productUrl = `https://example.com/products/acceptance-travel-bottle-${runId}`;
+  const productQuestion =
+    'Does the closed bottle stay leak-free while upside down for ten seconds?';
   const driver = new NativeBrowserDriver(config);
   const steps: AcceptanceStep[] = [];
   let buyerTab: AcceptanceTab | null = null;
@@ -258,9 +264,9 @@ async function run(): Promise<void> {
           invokeToolScript(
             'ask_product_question',
             {
-              productName: 'Everyday insulated travel bottle',
-              productUrl: 'https://example.com/products/insulated-travel-bottle',
-              question: 'Does the closed bottle stay leak-free while upside down for ten seconds?',
+              productName,
+              productUrl,
+              question: productQuestion,
             },
             `return parsedValues.some((value) => value.ok === true) &&
             serialized.includes('"answerStatus":"insufficient"') &&
@@ -464,6 +470,17 @@ async function run(): Promise<void> {
           end instanceof HTMLInputElement && end.value === '11';
       })()`);
       if (reviewed !== true) throw new Error('The reviewed evidence fields did not stay bounded.');
+      const publicReuseSelected = driver.eval(`(() => {
+        const radio = [...document.querySelectorAll('input[name="reuse-scope"]')].find(
+          (candidate) => candidate.parentElement?.textContent?.includes('Future matching product questions too'),
+        );
+        if (!(radio instanceof HTMLInputElement)) return false;
+        radio.click();
+        return radio.checked;
+      })()`);
+      if (publicReuseSelected !== true) {
+        throw new Error('The contributor could not explicitly opt into bounded network reuse.');
+      }
       if (artifacts !== null) driver.screenshot(join(artifacts, '04-human-review.png'));
       if (driver.eval(clickExactButtonScript('Publish reviewed evidence')) !== true) {
         throw new Error('The reviewed evidence could not publish.');
@@ -471,7 +488,12 @@ async function run(): Promise<void> {
       await waitForBrowserValue(
         driver,
         'contributor publication receipt',
-        pageIncludesScript('The evidence case updated', 'Contradicted'),
+        pageIncludesScript(
+          'The evidence case updated',
+          'Contradicted',
+          'For up to 30 days',
+          'future shopper asks the same product question',
+        ),
         (value) => value === true,
         config.commandTimeoutMs,
       );
@@ -529,6 +551,95 @@ async function run(): Promise<void> {
       );
       if (artifacts !== null) driver.screenshot(join(artifacts, '05-after.png'));
     });
+
+    await recordAcceptanceStep(
+      steps,
+      'reuse the reviewed recording in a fresh WebMCP case',
+      async () => {
+        const asked = driver.eval(
+          invokeToolScript(
+            'ask_product_question',
+            { productName, productUrl, question: productQuestion },
+            `return parsedValues.some((value) => value.ok === true) &&
+              serialized.includes('"answerStatus":"insufficient"') &&
+              serialized.includes('"search_product_evidence"');`,
+          ),
+          'open second matching product case',
+        );
+        if (asked !== true) throw new Error('WebMCP did not open the second matching case.');
+        await waitForBrowserValue(
+          driver,
+          'second-case search tool',
+          toolNamesScript,
+          (value) => isStringArray(value) && sameStringSet(value, searchTools),
+          config.commandTimeoutMs,
+        );
+        const searched = driver.eval(
+          invokeToolScript(
+            'search_product_evidence',
+            {},
+            `return parsedValues.some((value) => value.ok === true) &&
+              serialized.includes('"answerStatus":"contradicted"') &&
+              serialized.includes('"inspect_answer_change"') &&
+              serialized.includes('"create_filming_mission"') === false;`,
+          ),
+          'reuse network evidence in second case',
+        );
+        if (searched !== true) {
+          throw new Error('A fresh case did not reuse the reviewed evidence through WebMCP.');
+        }
+        await waitForBrowserValue(
+          driver,
+          'second-case resolved tool frontier',
+          toolNamesScript,
+          (value) => isStringArray(value) && sameStringSet(value, finalTools),
+          config.commandTimeoutMs,
+        );
+        await waitForBrowserValue(
+          driver,
+          'reusable evidence receipt',
+          pageIncludesScript(
+            '1 reusable reviewed recording found',
+            'Cloudflare D1 reusable evidence',
+            'The evidence network already has a reviewed answer.',
+            'reusable network evidence',
+            'Video 00:01–00:11',
+          ),
+          (value) => value === true,
+          config.commandTimeoutMs,
+        );
+        const inspected = driver.eval(
+          invokeToolScript(
+            'inspect_product_evidence',
+            {},
+            `return serialized.includes('"status":"contradicted"') &&
+              serialized.includes('"reuseScope":"public_network"') &&
+              serialized.includes('"streamUid":"acceptancevideo0000000000000001"') &&
+              serialized.includes(${JSON.stringify(correctedObservation)}) &&
+              serialized.includes('"mission":null') &&
+              serialized.includes('"privateShopperContext"') === false;`,
+          ),
+          'inspect reused network evidence',
+        );
+        if (inspected !== true) {
+          throw new Error('The second case did not expose the reusable evidence receipt safely.');
+        }
+        const diff = driver.eval(
+          invokeToolScript(
+            'inspect_answer_change',
+            {},
+            `return serialized.includes('"changed":true') &&
+              serialized.includes('"status":"insufficient"') &&
+              serialized.includes('"status":"contradicted"') &&
+              serialized.includes('"timestamp":"00:01–00:11"');`,
+          ),
+          'inspect second-case answer change',
+        );
+        if (diff !== true)
+          throw new Error('The reused evidence did not cause a visible answer change.');
+        if (artifacts !== null) driver.screenshot(join(artifacts, '06-reused.png'));
+      },
+    );
 
     process.stdout.write(`${JSON.stringify({ ok: true, steps })}\n`);
   } finally {

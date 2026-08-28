@@ -232,6 +232,70 @@ describe('ProductEvidenceNetwork', () => {
     expect(screen.queryByText('Replay a completed rights-clean mission')).toBeNull();
   });
 
+  it('reuses reviewed network evidence without asking another person to film', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (): Promise<Response> =>
+        Response.json({
+          provider: 'evidence_network',
+          status: 'complete',
+          query: 'Desk lamp brightness memory power loss',
+          searchedPlatforms: [],
+          warnings: [],
+          leads: [],
+          reviewedEvidence: [
+            {
+              id: 'prior-case:networkvideo00000001',
+              productName: 'Desk lamp',
+              productUrl: null,
+              question: 'Does it remember its brightness after losing power?',
+              source: {
+                title: 'Contributor-recorded mission video',
+                videoUrl: 'https://customer-demo.cloudflarestream.com/networkvideo00000001/watch',
+                rights: 'owned',
+                provenance: 'live_capture',
+                continuity: 'continuous',
+                contributorLabel: 'Lamp owner',
+                capturedAt: '2026-08-27T19:00:00.000Z',
+                streamUid: 'networkvideo00000001',
+                sha256: 'a'.repeat(64),
+                durationSeconds: 12,
+              },
+              observation: {
+                result: 'supports',
+                confidence: 'high',
+                text: 'The lamp returned to the same brightness after the complete power cycle.',
+                citationStartSeconds: 2,
+                citationEndSeconds: 11,
+                reviewedAt: '2026-08-27T19:01:00.000Z',
+              },
+              indexedAt: '2026-08-27T19:01:00.000Z',
+              expiresAt: '2026-09-26T19:01:00.000Z',
+            },
+          ],
+        }),
+      ),
+    );
+    setModelContext(undefined);
+    render(<ProductEvidenceNetwork />);
+
+    fireEvent.change(screen.getByLabelText('Product'), {
+      target: { value: 'Desk lamp' },
+    });
+    fireEvent.change(screen.getByLabelText('What do you need to know?'), {
+      target: { value: 'Does it remember its brightness after losing power?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Open new evidence case' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Search existing evidence' }));
+
+    expect(await screen.findByText('1 reusable reviewed recording found')).toBeTruthy();
+    expect(screen.getByText('The evidence network already has a reviewed answer.')).toBeTruthy();
+    expect(screen.getAllByText('Supported')).not.toHaveLength(0);
+    expect(
+      screen.queryByRole('button', { name: 'Create claim-specific filming mission' }),
+    ).toBeNull();
+  });
+
   it('shows the concrete social and broad-web discovery receipt without promoting leads to proof', async () => {
     vi.stubGlobal(
       'fetch',

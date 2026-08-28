@@ -7,12 +7,13 @@ It is a standalone OpenAI WebMCP Challenge entry. It does not use Vidably brandi
 ## The complete loop
 
 1. A shopper or agent adds any product URL and asks one concrete question.
-2. The app keeps a supplied product page as an unreviewed lead, searches public social video through ScrapeCreators, and searches the broader web through Exa on Vercel AI Gateway—while keeping links, rights, and evidence strength distinct.
+2. The app first searches its rights-cleared evidence network for the same product and question. It also keeps a supplied product page as an unreviewed lead, searches public social video through ScrapeCreators, and searches the broader web through Exa on Vercel AI Gateway—while keeping links, rights, and evidence strength distinct.
 3. It shows what is already supported, contradicted, or still unproven—down to claim-level sources and timestamps.
 4. If decisive proof is missing, a narrow WebMCP Site Tool creates a filming mission with one observable instruction and success criterion.
 5. Any opted-in product owner can open a private phone link, record one continuous video, and upload it directly to Cloudflare Stream.
 6. Once Stream produces an authorized MP4, Vercel AI Gateway sends it to a video-capable model for a bounded, timestamped proposal. The contributor must review or correct the result, confidence, continuity, observation, and cited interval before publishing.
-7. The shopper or agent re-runs the question. The new evidence visibly changes what the system can responsibly say.
+7. The contributor chooses whether the reviewed clip is case-only or reusable for matching product questions for up to 30 days. Only a conclusive, medium-or-high-confidence continuous recording can enter the reusable index.
+8. The first shopper's answer changes live. When a later shopper asks the same question about the same product, the reviewed recording and timestamp resolve it immediately instead of creating another filming mission.
 
 This is not a text-review demo and it does not claim that video is impossible to fake. Its useful boundary is narrower: answers cite the contributor-authorized recording, distinguish public leads from reusable media, require human review, expose limitations, and abstain when a recording does not prove the claim.
 
@@ -29,16 +30,18 @@ Question → evidence gap → WebMCP mission → real phone video
 
 ## Load-bearing stack
 
-| Product                    | What it does here                                                                           | Why it belongs                                                                      |
-| -------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| OpenAI WebMCP              | Gives ChatGPT or another compatible browser agent contextual Site Tools                     | It is the collaboration surface, not a decorative integration                       |
-| Cloudflare Durable Objects | Owns revisioned cases, role-scoped credentials, missions, uploads, and reviewed evidence    | One authoritative room coordinates shopper and contributor devices safely           |
-| Cloudflare Stream          | Accepts direct creator uploads and generates the exact MP4 used for analysis                | The app server never needs to proxy a phone recording                               |
-| Vercel AI Gateway          | Routes the authorized MP4 to a current video model and runs one bounded Exa web-search tool | Model/search selection, budgets, receipts, and failure handling stay explicit       |
-| Vercel AI SDK 7            | Sends the video and enforces a typed structured evidence proposal                           | The model cannot publish free-form prose directly into the evidence graph           |
-| Next.js 16 on Vercel       | Serves the shopper, agent, and contributor experience                                       | It keeps the public flow fast and familiar                                          |
-| Vercel Runtime Cache       | Reuses successful public search receipts for 15 minutes per region                          | Repeat judge/agent queries avoid duplicate provider calls                           |
-| ScrapeCreators, optional   | Finds link-only TikTok, Instagram Reels, and YouTube leads                                  | Public discovery broadens coverage without pretending discovery grants reuse rights |
+| Product                    | What it does here                                                                           | Why it belongs                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| OpenAI WebMCP              | Gives ChatGPT or another compatible browser agent contextual Site Tools                     | It is the collaboration surface, not a decorative integration                         |
+| Cloudflare Durable Objects | Owns revisioned cases, role-scoped credentials, missions, uploads, and reviewed evidence    | One authoritative room coordinates shopper and contributor devices safely             |
+| Cloudflare Stream          | Accepts direct creator uploads and generates the exact MP4 used for analysis                | The app server never needs to proxy a phone recording                                 |
+| Cloudflare D1              | Indexes explicitly opted-in, decision-grade recordings for exact product/question reuse     | One recording can answer later matching shoppers instead of being trapped in one case |
+| Cloudflare Cron Triggers   | Deletes expired D1 evidence metadata every day                                              | The stated 30-day reuse boundary is enforced in storage, not merely hidden in queries |
+| Vercel AI Gateway          | Routes the authorized MP4 to a current video model and runs one bounded Exa web-search tool | Model/search selection, budgets, receipts, and failure handling stay explicit         |
+| Vercel AI SDK 7            | Sends the video and enforces a typed structured evidence proposal                           | The model cannot publish free-form prose directly into the evidence graph             |
+| Next.js 16 on Vercel       | Serves the shopper, agent, and contributor experience                                       | It keeps the public flow fast and familiar                                            |
+| Vercel Runtime Cache       | Reuses successful public search receipts for 15 minutes per region                          | Repeat judge/agent queries avoid duplicate provider calls                             |
+| ScrapeCreators, optional   | Finds link-only TikTok, Instagram Reels, and YouTube leads                                  | Public discovery broadens coverage without pretending discovery grants reuse rights   |
 
 The continuous-video path currently targets `google/gemini-3.7-flash` through AI Gateway, with `google/gemini-3.6-flash` as fallback. Exact versions and source receipts are recorded in [EXPERIMENTS.md](EXPERIMENTS.md) and [SPONSOR-PRODUCTS.md](SPONSOR-PRODUCTS.md). No live model or Stream request runs in the default test suite.
 
@@ -50,6 +53,7 @@ Requirements: Node.js 24 or newer and pnpm 11.24.0.
 
 ```bash
 pnpm install --frozen-lockfile
+pnpm --dir room-worker d1:migrate:evidence-local
 pnpm room:dev
 ```
 
@@ -98,9 +102,12 @@ pnpm room:build
 pnpm acceptance:evidence-network
 ```
 
-The generic acceptance journey uses four local processes so its paid edges cannot run accidentally:
+Prepare the local acceptance D1 database once, then run the four local processes. Its paid edges cannot run accidentally:
 
 ```bash
+# One-time schema preparation
+pnpm --dir room-worker d1:migrate:evidence-acceptance
+
 # Shell 1: deterministic Stream + model service
 pnpm --dir room-worker dev:evidence-services
 
@@ -114,16 +121,16 @@ NEXT_PUBLIC_EVIDENCE_ROOM_URL=http://localhost:8792 pnpm dev
 pnpm acceptance:evidence-network
 ```
 
-The runner generates a rights-clean 12-second MP4, drives the complete buyer/contributor journey, corrects the model-shaped proposal, verifies the answer difference through WebMCP, and reloads both credential boundaries. The real Durable Object and public schemas run unchanged; local services replace only Cloudflare Stream and Gemini, and the browser network allowlist excludes their public hosts.
+The runner generates a rights-clean 12-second MP4, drives the complete buyer/contributor journey, corrects the model-shaped proposal, explicitly opts into bounded network reuse, verifies the first answer difference, and then opens a fresh matching case that reuses the same Stream citation without another mission. The real Durable Object, D1 database, migrations, and public schemas run unchanged; local services replace only Cloudflare Stream and Gemini, and the browser network allowlist excludes their public hosts.
 
 ## Current status and honest boundaries
 
 - Generic products and questions are persistent and can be created without code or database changes.
-- Claim-level evidence, provenance, rights, confidence, revisions, dynamic Site Tools, social lead discovery, private contributor URLs, direct Stream uploads, timestamped video proposals, and explicit human review are implemented.
+- Claim-level evidence, provenance, rights, confidence, revisions, dynamic Site Tools, social lead discovery, private contributor URLs, direct Stream uploads, timestamped video proposals, explicit human review, and rights-explicit cross-case reuse are implemented.
 - Conclusive evidence for a continuous-take mission is rejected when the cited interval is invalid or continuity is edited/unknown.
 - The app has deterministic automated coverage for success, denial, stale revisions, manual fallback, dependency failures, simultaneous analysis coalescing, fragment scrubbing, contributor reload, and buyer reconnect. It does not call paid services during tests.
-- The standalone deployable Worker exposes only the evidence API. It rate-limits case creation, permits two upload reservations per temporary case, caps clips at 95 MiB/90 seconds, expires upload URLs, schedules Stream deletion, and bounds model retries. The release runbook adds a budgeted Gateway key and Vercel WAF ceiling.
-- Native Chrome completes the generic arbitrary-product search → mission → phone evidence → answer-change journey in roughly four seconds against a real local Durable Object and deterministic paid-service fixtures.
+- The standalone deployable Worker exposes only the evidence API. It rate-limits case creation, permits two upload reservations per temporary case, caps clips at 95 MiB/90 seconds, expires upload URLs, schedules Stream deletion, bounds model retries, and physically purges expired reusable D1 records daily. The release runbook adds a budgeted Gateway key and Vercel WAF ceiling.
+- Native Chrome completes arbitrary-product search → mission → phone evidence → first answer change → fresh-case evidence reuse in roughly five seconds against real local Durable Object/D1 state and deterministic paid-service fixtures.
 - The prior public release remains the known-good fallback. This generic branch is not yet deployed and has not yet passed a real Stream → Gateway → physical-phone journey.
 - It does not claim universal access to product owners, guaranteed fulfillment, product authenticity, or perfect deepfake detection.
 - It does not place an order, charge a user, contact strangers, scrape private data, or reuse third-party media without rights.

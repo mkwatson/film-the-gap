@@ -53,7 +53,7 @@ const defaultMission = {
 } as const;
 
 const agentStarter =
-  'Use this page’s Site Tools. Inspect the active product question, search existing public product evidence, and treat every result as a lead—not proof. If the sources still do not prove the answer, create the smallest continuous filming mission, then create a phone capture link. Do not infer from marketing copy or predict the result. Wait for reviewed evidence, then inspect exactly how the answer changed.';
+  'Use this page’s Site Tools. Inspect the active product question and search existing evidence. Treat ordinary web results as leads, never proof; only rights-cleared, human-reviewed network recordings may change the answer. If the sources still do not prove it, create the smallest continuous filming mission, then create a phone capture link. Do not infer from marketing copy or predict the result. Wait for reviewed evidence, then inspect exactly how the answer changed.';
 
 const answerLabels: Readonly<Record<EvidenceAnswerStatus, string>> = {
   insufficient: 'Not enough proof',
@@ -102,6 +102,7 @@ function discoveryProviderReceipt(
   provider: EvidenceDiscoveryProvider,
   platforms: readonly EvidenceDiscoveryPlatform[],
   hasSuppliedProductPage: boolean,
+  reusableSourceCount: number,
 ): string {
   if (provider === 'rights_clean_demo') {
     return 'Rights-clean demo fixture';
@@ -114,6 +115,18 @@ function discoveryProviderReceipt(
   }
   const searchedSocial = platforms.some((platform) => platform !== 'web');
   const searchedWeb = platforms.includes('web');
+  if (reusableSourceCount > 0) {
+    if (searchedSocial && searchedWeb) {
+      return 'Cloudflare D1 + ScrapeCreators + Exa through Vercel AI Gateway';
+    }
+    if (searchedSocial) {
+      return 'Cloudflare D1 + ScrapeCreators social search';
+    }
+    if (searchedWeb) {
+      return 'Cloudflare D1 + Exa through Vercel AI Gateway';
+    }
+    return 'Cloudflare D1 reusable evidence';
+  }
   if (searchedSocial && searchedWeb) {
     return 'ScrapeCreators + Exa through Vercel AI Gateway';
   }
@@ -467,6 +480,9 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     evidenceCase?.product.suppliedUrl !== null && evidenceCase?.product.suppliedUrl !== undefined;
   const discoveryCandidateCount =
     (evidenceCase?.discovery?.sourceIds.length ?? 0) + (hasSuppliedProductPage ? 1 : 0);
+  const reusableSourceCount = sources.filter(
+    ({ reuseScope }) => reuseScope === 'public_network',
+  ).length;
   const isDemoCase = isRightsCleanBottleDemo(evidenceCase);
 
   async function copyAgentStarter(): Promise<void> {
@@ -546,6 +562,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
         confidence: 'high',
         continuity: 'continuous',
         rights: 'owned',
+        reuseScope: 'case_only',
         provenance: 'demo_replay',
         capturedAt: new Date().toISOString(),
       },
@@ -588,9 +605,10 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
             If the web cannot prove it, ask someone with the product to film it.
           </h1>
           <p className="evidence-hero-copy">
-            ChatGPT searches product pages, public videos, and the open web for a shopper’s exact
-            question. If none proves it, ChatGPT creates the smallest useful filming request; a
-            person with the product records it, and the answer changes with a timestamped citation.
+            ChatGPT searches reviewed network evidence, product pages, public videos, and the open
+            web for a shopper’s exact question. If none proves it, ChatGPT creates the smallest
+            useful filming request; a person with the product records it, and the answer changes
+            with a timestamped citation.
           </p>
         </div>
         <ol className="evidence-flow" aria-label="Complete product evidence loop">
@@ -612,15 +630,17 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
             className={
               evidenceCase?.discovery === null
                 ? 'flow-waiting'
-                : evidenceCase?.mission === null
-                  ? 'flow-current'
-                  : 'flow-complete'
+                : answerChanged
+                  ? 'flow-complete'
+                  : evidenceCase?.mission === null
+                    ? 'flow-current'
+                    : 'flow-complete'
             }
           >
             <span>3</span>
             <p>
-              <strong>Film</strong>
-              One bounded mission
+              <strong>Reuse / film</strong>
+              Never recapture known proof
             </p>
           </li>
           <li className={answerChanged ? 'flow-complete' : 'flow-waiting'}>
@@ -722,24 +742,27 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                 </span>
                 <p>
                   <strong>
-                    {evidenceCase.discovery.status === 'unavailable'
-                      ? 'Live public search unavailable'
-                      : evidenceCase.discovery.status === 'partial'
-                        ? evidenceCase.discovery.searchedPlatforms.length === 0 &&
-                          hasSuppliedProductPage
-                          ? 'Only the supplied product page is available'
-                          : `${evidenceCase.discovery.searchedPlatforms.length} source ${evidenceCase.discovery.searchedPlatforms.length === 1 ? 'channel' : 'channels'} searched; others unavailable`
-                        : `${evidenceCase.discovery.searchedPlatforms.length} public source ${evidenceCase.discovery.searchedPlatforms.length === 1 ? 'channel' : 'channels'} searched`}
+                    {reusableSourceCount > 0
+                      ? `${reusableSourceCount} reusable reviewed recording${reusableSourceCount === 1 ? '' : 's'} found`
+                      : evidenceCase.discovery.status === 'unavailable'
+                        ? 'Live public search unavailable'
+                        : evidenceCase.discovery.status === 'partial'
+                          ? evidenceCase.discovery.searchedPlatforms.length === 0 &&
+                            hasSuppliedProductPage
+                            ? 'Only the supplied product page is available'
+                            : `${evidenceCase.discovery.searchedPlatforms.length} source ${evidenceCase.discovery.searchedPlatforms.length === 1 ? 'channel' : 'channels'} searched; others unavailable`
+                          : `${evidenceCase.discovery.searchedPlatforms.length} public source ${evidenceCase.discovery.searchedPlatforms.length === 1 ? 'channel' : 'channels'} searched`}
                   </strong>
                   <small>
                     {discoveryProviderReceipt(
                       evidenceCase.discovery.provider,
                       evidenceCase.discovery.searchedPlatforms,
                       hasSuppliedProductPage,
+                      reusableSourceCount,
                     )}{' '}
                     · {discoveryCandidateCount} candidate source
-                    {discoveryCandidateCount === 1 ? '' : 's'} retained · public leads never count
-                    as proof
+                    {discoveryCandidateCount === 1 ? '' : 's'} retained · unreviewed public leads
+                    never count as proof
                   </small>
                   {evidenceCase.discovery.warnings.map((warning) => (
                     <small className="evidence-search-warning" key={warning}>
@@ -769,6 +792,9 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                           <small>
                             {source.mediaType.replaceAll('_', ' ')} ·{' '}
                             {source.provenance.replaceAll('_', ' ')}
+                            {source.reuseScope === 'public_network'
+                              ? ' · reusable network evidence'
+                              : ''}
                           </small>
                         </p>
                         <em>{source.rights.replaceAll('_', ' ')}</em>
@@ -843,6 +869,16 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
               >
                 {searchPhase === 'searching' ? 'Searching…' : 'Search before filming'}
               </button>
+            </div>
+          ) : mission === null && answer !== null && answer.status !== 'insufficient' ? (
+            <div className="mission-empty mission-resolved">
+              <span aria-hidden="true">✓</span>
+              <h2>The evidence network already has a reviewed answer.</h2>
+              <p>
+                This recording was made once for the same product question. Its rights, human
+                review, exact interval, and file receipt carried forward, so nobody needs to film it
+                again.
+              </p>
             </div>
           ) : mission === null ? (
             <div className="mission-empty">

@@ -1,4 +1,6 @@
-import { cloudflareTest } from '@cloudflare/vitest-plugin';
+import path from 'node:path';
+
+import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-plugin';
 import { defineConfig } from 'vitest/config';
 
 function json(body: object, status = 200): Response {
@@ -190,26 +192,32 @@ async function mockVideoAnalysis(request: Request): Promise<Response> {
   });
 }
 
-export default defineConfig({
-  plugins: [
-    cloudflareTest({
-      wrangler: { configPath: './wrangler.jsonc' },
-      miniflare: {
-        bindings: {
-          UCP_BUSINESS_URL: 'https://merchant.example',
-          UCP_VARIANT_ID: 'gid://shopify/ProductVariant/test-variant',
-          UCP_PLATFORM_PROFILE_URL: 'https://platform.example/.well-known/ucp',
+export default defineConfig(async () => {
+  const migrations = await readD1Migrations(path.join(import.meta.dirname, 'migrations'));
+  return {
+    plugins: [
+      cloudflareTest({
+        wrangler: { configPath: './wrangler.jsonc' },
+        miniflare: {
+          d1Databases: { EVIDENCE_LIBRARY: 'test-evidence-library' },
+          bindings: {
+            UCP_BUSINESS_URL: 'https://merchant.example',
+            UCP_VARIANT_ID: 'gid://shopify/ProductVariant/test-variant',
+            UCP_PLATFORM_PROFILE_URL: 'https://platform.example/.well-known/ucp',
+            TEST_EVIDENCE_LIBRARY_MIGRATIONS: migrations,
+          },
+          serviceBindings: {
+            UCP_OUTBOUND: mockUcpMerchant,
+            STREAM_OUTBOUND: mockCloudflareStream,
+            AI_ANALYSIS_OUTBOUND: mockVideoAnalysis,
+          },
         },
-        serviceBindings: {
-          UCP_OUTBOUND: mockUcpMerchant,
-          STREAM_OUTBOUND: mockCloudflareStream,
-          AI_ANALYSIS_OUTBOUND: mockVideoAnalysis,
-        },
-      },
-    }),
-  ],
-  test: {
-    include: ['test/**/*.test.ts'],
-    exclude: ['test/evidence-index.test.ts'],
-  },
+      }),
+    ],
+    test: {
+      include: ['test/**/*.test.ts'],
+      exclude: ['test/evidence-index.test.ts', 'test/evidence-library.test.ts'],
+      setupFiles: ['./test/apply-evidence-library-migrations.ts'],
+    },
+  };
 });
