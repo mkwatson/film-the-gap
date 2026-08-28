@@ -77,6 +77,12 @@ TypeScript 7.0.2 and ESLint 10.9.1 were tested as an upgrade candidate. Next.js 
 - [Vercel AI Gateway](https://vercel.com/docs/ai-gateway)
 - [Google Gemini video understanding](https://ai.google.dev/gemini-api/docs/video-understanding)
 
+## Read-only release-account audit
+
+The current Vercel, Cloudflare, and GitHub CLIs authenticated successfully on August 28 without creating or changing a resource. A standalone Vercel scope is available and its existing projects receive clean unsuffixed `*.vercel.app` hostnames. No candidate-specific Gateway budget or key exists yet. The exact candidate Cloudflare Worker name does not exist, the account has no D1 databases, and the current Wrangler OAuth token can manage Workers/D1 but cannot establish whether Stream has been enabled. The intended public GitHub repository is already public with a detected MIT license, but its `main` branch remains on the older prototype revision; the generic candidate has deliberately not been pushed.
+
+The worktree's ignored Vercel link still names the older project. The approved release session must create and explicitly link a new standalone project before any environment, budget, firewall, or deployment mutation. Cloudflare Stream enablement remains the sole dashboard-only account preflight.
+
 ## Gates not yet passed
 
 Do not convert these into public claims until each is recorded against the frozen release:

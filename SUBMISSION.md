@@ -1,6 +1,6 @@
 # Submission control packet
 
-Updated 2026-08-27 PT. This is the candidate Devpost copy, judge runbook, claims ledger, and freeze checklist for the standalone product-evidence network.
+Updated 2026-08-28 PT. This is the candidate Devpost copy, judge runbook, claims ledger, and freeze checklist for the standalone product-evidence network.
 
 Mark has reserved the final submitted name. Every label below is descriptive until he chooses it.
 
@@ -30,7 +30,7 @@ Product pages answer the questions their authors anticipated. Shoppers often nee
 
 This app lets ChatGPT inspect the evidence for any product question. If existing pages and public videos do not prove the answer, WebMCP gives ChatGPT narrow tools to create one observable filming mission and, with explicit confirmation, publish only its product/question/recording fields to a 24-hour open request board. The board receives no shopper identity, preferences, history, budget, or ChatGPT conversation. Anyone who already owns the product can discover that request without a store partnership or customer list, open its no-login phone recorder, capture a continuous video, and say or show a random mission phrase that bounds the recording to after the request. They review or correct the AI's timestamped proposal before publishing. The original answer then visibly changes from “not enough proof” to supported, contradicted, mixed, or still inconclusive—with the decisive interval attached.
 
-The contributor explicitly chooses whether the clip stays in one case or can answer matching product questions for up to 30 days. Only conclusive, medium-or-high-confidence continuous recordings enter that reusable index. The prototype therefore demonstrates a compounding open-web loop: agents identify exactly what knowledge is missing; people capture the physical evidence only they can provide; and the next agent reuses verified work instead of interrupting another person.
+The contributor explicitly chooses whether the clip stays in one case or can answer matching product questions for up to 30 days. Only conclusive, medium-or-high-confidence continuous recordings enter that reusable index. The prototype therefore demonstrates a compounding open-web loop: agents identify exactly what knowledge is missing; people capture the physical evidence only they can provide; and the next agent reuses reviewed evidence instead of interrupting another person.
 
 ## Required Devpost answers
 
@@ -142,6 +142,7 @@ The criteria are equally weighted. WebMCP Leverage is the first tie-breaker, so 
 - Social search requires same-origin JSON before it can reach the optional vendor, and the release runbook requires a staged Vercel WAF ceiling plus dedicated vendor credits.
 - Broad-web discovery is implemented with the current AI SDK/Gateway-native Exa tool, exact-query receipt verification, four-result/20-second bounds, automatically refreshed Vercel OIDC under a non-renewing project budget, and Vercel Runtime Cache. Its malformed, rewritten-query, provider-error, duplicate, OIDC-without-stored-key, and outage paths pass offline tests; a real Gateway search on the final Vercel origin remains an external-account acceptance gate.
 - The deterministic native-Chrome acceptance test opens an arbitrary product, searches through its dynamically registered Site Tool, preserves the supplied page as an inconclusive link-only lead, then completes mission → explicit public-board publication → fresh board context inspection/claim → phone handoff → upload → model-shaped proposal → human correction → explicit reuse consent → publication → timestamped answer diff. It finally opens a fresh matching case and proves the same reviewed Stream citation changes the answer without another mission. The real app, Durable Object, D1 database, migrations, and revocable capability boundary run unchanged; only the paid Stream and model edges are strict local fixtures.
+- A separate Chrome acceptance run starts with WebMCP explicitly disabled and completes the same arbitrary-product → search → public mission → stranger claim → recorder → review → live answer change → fresh-case reuse loop through visible controls only. This proves the app remains a coherent ordinary website rather than an agent-only façade.
 - Strict TypeScript, formatting, linting, application tests, Workerd tests, Worker dry runs, and a Next.js production build pass on the current branch.
 
 ### Must pass before equivalent public claims
@@ -177,7 +178,8 @@ The criteria are equally weighted. WebMCP Leverage is the first tie-breaker, so 
 - [ ] Public generic live URL is free, unprotected, and stable through the judging period.
 - [ ] Final app, Worker, and video identify the same frozen commit.
 - [ ] Real Stream/Gateway path and truthful manual fallback both pass on the final origins.
-- [ ] ChatGPT in-app Browser, clean WebMCP Chrome, physical phone, and ordinary-browser fallback all pass.
+- [x] Deterministic native WebMCP Chrome and WebMCP-disabled ordinary-browser journeys both pass locally.
+- [ ] ChatGPT in-app Browser, clean public-origin WebMCP Chrome, and physical phone all pass.
 - [ ] Every visible object, image, clip, font, sound, mark, and notification is owned, licensed, masked, or omitted.
 - [ ] Demo is public on YouTube, has clear audio and corrected captions, is under `3:00`, and works logged out.
 - [ ] Devpost draft contains the four required answers, live URL, repository URL, video URL, and exact judge instructions.

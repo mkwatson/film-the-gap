@@ -1,6 +1,6 @@
 # Generic evidence-network release runbook
 
-Updated 2026-08-27 PT. Nothing described here is publicly deployed yet. This runbook uses a new Vercel project and the separate Cloudflare Worker name `webmcp-product-evidence`, so it cannot overwrite an existing deployment.
+Updated 2026-08-28 PT. Nothing described here is publicly deployed yet. This runbook uses a new Vercel project and the separate Cloudflare Worker name `webmcp-product-evidence`, so it cannot overwrite an existing deployment.
 
 ## Candidate topology
 
