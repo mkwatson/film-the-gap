@@ -236,7 +236,7 @@ export function PublicMissionBoard(): React.JSX.Element {
           </span>
           <span>
             <strong>Open evidence requests</strong>
-            <small>Own the product? Film the missing fact.</small>
+            <small>Have access to the product? Film the missing fact.</small>
           </span>
         </Link>
         <div className="evidence-topbar-actions">
@@ -261,8 +261,8 @@ export function PublicMissionBoard(): React.JSX.Element {
         <h1>Turn unanswered product questions into tiny public filming jobs.</h1>
         <p>
           Shoppers publish only the product, the question, and exactly what must be recorded. Anyone
-          who already owns that product can film the answer on a phone. Every clip stays unpublished
-          until its contributor reviews what the AI observed.
+          who has access to that product can film the answer on a phone. Every clip stays
+          unpublished until its contributor reviews what the AI observed.
         </p>
         <div className="mission-board-summary" aria-live="polite">
           <strong>{phase === 'loading' ? 'Checking…' : missionCountLabel}</strong>
@@ -347,7 +347,7 @@ export function PublicMissionBoard(): React.JSX.Element {
                     });
                   }}
                 >
-                  {claimingId === mission.id ? 'Opening recorder…' : 'I have this product'}
+                  {claimingId === mission.id ? 'Opening recorder…' : 'I can film this product'}
                 </button>
                 {selected && claimed !== null ? (
                   <div className="public-mission-claim" role="status">

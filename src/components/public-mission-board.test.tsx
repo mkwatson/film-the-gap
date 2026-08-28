@@ -81,7 +81,7 @@ describe('PublicMissionBoard', () => {
     expect(await screen.findByText(mission.productName)).toBeTruthy();
     expect(screen.getByText(`“${mission.question}”`)).toBeTruthy();
     expect(screen.getByText(/shopper.?s identity/i)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'I have this product' }));
+    fireEvent.click(screen.getByRole('button', { name: 'I can film this product' }));
 
     const recorder = await screen.findByRole('link', { name: 'Open on this device →' });
     expect(recorder.getAttribute('href')).toBe(
