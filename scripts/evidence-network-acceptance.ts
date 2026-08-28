@@ -33,6 +33,17 @@ const missionTools = [
   'ask_product_question',
   'create_phone_capture_link',
 ] as const;
+const publicMissionPublishTools = [
+  'inspect_product_evidence',
+  'ask_product_question',
+  'publish_filming_mission',
+] as const;
+const publicMissionRemoveTools = [
+  'inspect_product_evidence',
+  'ask_product_question',
+  'remove_public_filming_mission',
+] as const;
+const boardTools = ['inspect_open_filming_missions', 'open_filming_mission'] as const;
 const finalTools = [
   'inspect_product_evidence',
   'ask_product_question',
@@ -365,15 +376,126 @@ async function run(): Promise<void> {
       await waitForBrowserValue(
         driver,
         'private contributor handoff',
-        pageIncludesScript('Scan with a phone that has the product.', 'Open contributor link'),
+        pageIncludesScript(
+          'Scan with a phone that has the product.',
+          'Open private contributor link',
+        ),
+        (value) => value === true,
+        config.commandTimeoutMs,
+      );
+      await waitForBrowserValue(
+        driver,
+        'public mission publication frontier',
+        toolNamesScript,
+        (value) => isStringArray(value) && sameStringSet(value, publicMissionPublishTools),
+        config.commandTimeoutMs,
+      );
+      const published = driver.eval(
+        invokeToolScript(
+          'publish_filming_mission',
+          { confirmPublicListing: true },
+          `return parsedValues.some((value) => value.ok === true) &&
+            serialized.includes(${JSON.stringify(productName)}) &&
+            serialized.includes(${JSON.stringify(productQuestion)}) &&
+            serialized.includes('"privateShopperContext":"not collected"');`,
+        ),
+        'publish filming mission to public board',
+      );
+      if (published !== true) {
+        throw new Error('WebMCP did not publish the privacy-bounded public mission.');
+      }
+      await waitForBrowserValue(
+        driver,
+        'public mission removal frontier',
+        toolNamesScript,
+        (value) => isStringArray(value) && sameStringSet(value, publicMissionRemoveTools),
+        config.commandTimeoutMs,
+      );
+      await waitForBrowserValue(
+        driver,
+        'public mission receipt',
+        pageIncludesScript(
+          'Anyone who owns this product can now record the answer.',
+          'No shopper identity, preferences, history, or budget are included.',
+        ),
         (value) => value === true,
         config.commandTimeoutMs,
       );
       if (artifacts !== null) driver.screenshot(join(artifacts, '03-mission.png'));
     });
 
+    const buyerAndExistingTabs = driver.listTabs();
+    driver.openLinkInNewTab('a[href="/missions"]');
+    const boardTab = await waitForNewTab(driver, buyerAndExistingTabs, config.commandTimeoutMs);
+    driver.switchTab(boardTab);
+
+    await recordAcceptanceStep(
+      steps,
+      'discover and claim the mission without a customer list',
+      async () => {
+        await waitForBrowserValue(
+          driver,
+          'public mission board tools',
+          toolNamesScript,
+          (value) => isStringArray(value) && sameStringSet(value, boardTools),
+          config.commandTimeoutMs,
+        );
+        await waitForBrowserValue(
+          driver,
+          'public mission board listing',
+          pageIncludesScript(productName, productQuestion, 'I have this product'),
+          (value) => value === true,
+          config.commandTimeoutMs,
+        );
+        const inspected = driver.eval(
+          invokeToolScript(
+            'inspect_open_filming_missions',
+            {},
+            `return serialized.includes(${JSON.stringify(productName)}) &&
+              serialized.includes(${JSON.stringify(productQuestion)}) &&
+              serialized.includes('"contributorToken"') === false &&
+              serialized.includes('"ownerToken"') === false;`,
+          ),
+          'inspect public filming missions',
+        );
+        if (inspected !== true) {
+          throw new Error(
+            'The public mission listing exposed private data or omitted the request.',
+          );
+        }
+        const missionId = driver.eval(`(() => {
+          const article = document.querySelector('article[id^="mission-"]');
+          return article?.id.slice('mission-'.length) ?? null;
+        })()`);
+        if (typeof missionId !== 'string') {
+          throw new Error('The public mission identifier was not rendered.');
+        }
+        const opened = driver.eval(
+          invokeToolScript(
+            'open_filming_mission',
+            { missionId },
+            `return parsedValues.some((value) => value.ok === true) &&
+              serialized.includes('/contribute/') &&
+              serialized.includes('#token=');`,
+          ),
+          'open public filming mission',
+        );
+        if (opened !== true) {
+          throw new Error('WebMCP did not open the bounded public contributor path.');
+        }
+        await waitForBrowserValue(
+          driver,
+          'public contributor handoff',
+          pageIncludesScript('Open the bounded recorder.', 'Review before publishing.'),
+          (value) => value === true,
+          config.commandTimeoutMs,
+        );
+        if (artifacts !== null) driver.screenshot(join(artifacts, '04-open-board.png'));
+      },
+    );
+
     const existingTabs = driver.listTabs();
-    driver.openLinkInNewTab('a[target="_blank"][href*="/contribute/"]');
+    driver.openLinkInNewTab('a[href*="/contribute/"]');
     const contributorTab = await waitForNewTab(driver, existingTabs, config.commandTimeoutMs);
     driver.switchTab(contributorTab);
 
@@ -481,7 +603,7 @@ async function run(): Promise<void> {
       if (publicReuseSelected !== true) {
         throw new Error('The contributor could not explicitly opt into bounded network reuse.');
       }
-      if (artifacts !== null) driver.screenshot(join(artifacts, '04-human-review.png'));
+      if (artifacts !== null) driver.screenshot(join(artifacts, '05-human-review.png'));
       if (driver.eval(clickExactButtonScript('Publish reviewed evidence')) !== true) {
         throw new Error('The reviewed evidence could not publish.');
       }
@@ -549,7 +671,7 @@ async function run(): Promise<void> {
         (value) => value === true,
         config.commandTimeoutMs,
       );
-      if (artifacts !== null) driver.screenshot(join(artifacts, '05-after.png'));
+      if (artifacts !== null) driver.screenshot(join(artifacts, '06-after.png'));
     });
 
     await recordAcceptanceStep(
@@ -637,7 +759,7 @@ async function run(): Promise<void> {
         );
         if (diff !== true)
           throw new Error('The reused evidence did not cause a visible answer change.');
-        if (artifacts !== null) driver.screenshot(join(artifacts, '06-reused.png'));
+        if (artifacts !== null) driver.screenshot(join(artifacts, '07-reused.png'));
       },
     );
 

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { reusableEvidenceSearchResponseSchema } from '../src/lib/evidence-network/model.ts';
 import {
   maximumUploadsPerEvidenceCase,
+  publicEvidenceMissionListSchema,
   remoteEvidenceCaseCredentialsSchema,
   remoteEvidenceCaseSnapshotSchema,
   remoteEvidenceProtocolVersion,
@@ -70,6 +71,8 @@ const roomHealthSchema = z.strictObject({
     reusableEvidence: z.literal(true),
     reusableEvidenceRetentionDays: z.literal(30),
     expiredEvidencePurge: z.literal('daily'),
+    publicMissionBoard: z.literal(true),
+    publicMissionRetentionHours: z.literal(24),
   }),
   workerVersion: workerVersionSchema,
 });
@@ -367,7 +370,18 @@ export async function verifyPublicRelease(
     }
   });
 
-  await step('buyer and contributor pages', async () => {
+  await step('public filming mission board', async () => {
+    const label = 'public filming mission board';
+    const response = await probe(fetcher, config, label, `${config.roomOrigin}/public-missions`, {
+      headers: { Origin: config.appOrigin },
+    });
+    requireStatus(response, 200, label);
+    requireHeader(response, 'Access-Control-Allow-Origin', config.appOrigin, label);
+    requireHeaderIncludes(response, 'Cache-Control', 'no-store', label);
+    parseWithSchema(publicEvidenceMissionListSchema, await jsonBody(response, label), label);
+  });
+
+  await step('buyer, mission board, and contributor pages', async () => {
     const buyerLabel = 'buyer page';
     const buyerResponse = await probe(fetcher, config, buyerLabel, `${config.appOrigin}/`);
     requireStatus(buyerResponse, 200, buyerLabel);
@@ -380,6 +394,20 @@ export async function verifyPublicRelease(
       allowCamera: false,
       allowCreatorUpload: false,
       allowStreamPlayback: true,
+    });
+
+    const boardLabel = 'mission board page';
+    const boardResponse = await probe(fetcher, config, boardLabel, `${config.appOrigin}/missions`);
+    requireStatus(boardResponse, 200, boardLabel);
+    requireMarker(
+      await htmlBody(boardResponse, boardLabel),
+      'Turn unanswered product questions into tiny public filming jobs.',
+      boardLabel,
+    );
+    requireAppSecurityPolicy(boardResponse, boardLabel, config.roomOrigin, {
+      allowCamera: false,
+      allowCreatorUpload: false,
+      allowStreamPlayback: false,
     });
 
     const contributorLabel = 'contributor page';

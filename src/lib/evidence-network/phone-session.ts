@@ -4,6 +4,8 @@ import { contributorPath } from './remote-client';
 import {
   remoteEvidenceCaseCredentialsSchema,
   remoteEvidenceCaseIdPattern,
+  publicEvidenceMissionSchema,
+  type PublicEvidenceMission,
   type RemoteEvidenceCaseCredentials,
 } from './remote-protocol';
 
@@ -16,6 +18,7 @@ export interface EvidencePhoneCaptureReceipt {
 export interface EvidencePhoneConnection {
   readonly credentials: RemoteEvidenceCaseCredentials;
   readonly receipt: EvidencePhoneCaptureReceipt;
+  readonly publicMission?: PublicEvidenceMission;
 }
 
 export const evidencePhoneSessionStorageKey = 'product-evidence-phone-session:v1' as const;
@@ -32,6 +35,7 @@ const storedEvidencePhoneSessionSchema = z.strictObject({
   appOrigin: z.url(),
   credentials: remoteEvidenceCaseCredentialsSchema,
   receipt: evidencePhoneCaptureReceiptSchema,
+  publicMission: publicEvidenceMissionSchema.optional(),
 });
 
 function normalizedOrigin(value: string): string | null {
@@ -82,6 +86,9 @@ export function persistEvidencePhoneConnection(
         appOrigin,
         credentials: connection.credentials,
         receipt: connection.receipt,
+        ...(connection.publicMission === undefined
+          ? {}
+          : { publicMission: connection.publicMission }),
       }),
     );
     return true;
@@ -123,7 +130,10 @@ export function restoreEvidencePhoneConnection(
     parsed.data.appOrigin !== appOrigin ||
     parsed.data.credentials.expiresAt <= now ||
     parsed.data.receipt.expiresAt !== parsed.data.credentials.expiresAt ||
-    parsed.data.receipt.caseId !== parsed.data.credentials.caseId
+    parsed.data.receipt.caseId !== parsed.data.credentials.caseId ||
+    (parsed.data.publicMission !== undefined &&
+      (parsed.data.publicMission.caseId !== parsed.data.credentials.caseId ||
+        Date.parse(parsed.data.publicMission.expiresAt) > parsed.data.credentials.expiresAt))
   ) {
     discard(storage);
     return null;
@@ -136,8 +146,14 @@ export function restoreEvidencePhoneConnection(
     discard(storage);
     return null;
   }
+  const publicMission =
+    parsed.data.publicMission?.status === 'open' &&
+    Date.parse(parsed.data.publicMission.expiresAt) <= now
+      ? undefined
+      : parsed.data.publicMission;
   return {
     credentials: parsed.data.credentials,
     receipt: parsed.data.receipt,
+    ...(publicMission === undefined ? {} : { publicMission }),
   };
 }

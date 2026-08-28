@@ -194,6 +194,89 @@ describe('product evidence Site Tools', () => {
     ]);
   });
 
+  it('requires explicit confirmation to publish and revoke a privacy-bounded public mission', async () => {
+    const { runtime: runtimeValue } = runtime();
+    await tool(runtimeValue, 'create_filming_mission').execute(
+      {
+        instruction: 'Invert the filled bottle over dry paper for ten seconds.',
+        successCriterion: 'Keep the closed lid and dry paper visible throughout.',
+        minimumSeconds: 10,
+        continuousTakeRequired: true,
+      },
+      { signal: new AbortController().signal },
+    );
+    const receipt = {
+      caseId: 'BCDF2345',
+      contributorUrl: 'https://app.example/contribute/BCDF2345#token=private-bounded-token',
+      expiresAt: 1_800_000_000_000,
+    };
+    const mission = {
+      id: '123e4567-e89b-42d3-a456-426614174000',
+      caseId: receipt.caseId,
+      productName: 'Everyday insulated travel bottle',
+      productUrl: null,
+      question: 'Does the filled bottle stay leak-free when held upside down for 10 seconds?',
+      instruction: 'Invert the filled bottle over dry paper for ten seconds.',
+      successCriterion: 'Keep the closed lid and dry paper visible throughout.',
+      minimumSeconds: 10,
+      continuousTakeRequired: true,
+      status: 'open',
+      createdAt: '2026-08-27T16:00:00.000Z',
+      expiresAt: '2026-08-28T16:00:00.000Z',
+      fulfilledAt: null,
+    } as const;
+    let currentMission: typeof mission | null = null;
+    let publications = 0;
+    let removals = 0;
+    const runtimeWithBoard = {
+      ...runtimeValue,
+      phoneCapture: {
+        available: true,
+        current: () => receipt,
+        create: async () => receipt,
+      },
+      missionBoard: {
+        available: true,
+        current: () => currentMission,
+        publish: async () => {
+          publications += 1;
+          currentMission = mission;
+          return mission;
+        },
+        remove: async () => {
+          removals += 1;
+          currentMission = null;
+          return { ...mission, status: 'removed' as const };
+        },
+      },
+    } satisfies EvidenceSiteToolRuntime;
+
+    const publishTool = tool(runtimeWithBoard, 'publish_filming_mission');
+    expect(publishTool.annotations).toMatchObject({ readOnlyHint: false });
+    await expect(
+      publishTool.execute({}, { signal: new AbortController().signal }),
+    ).resolves.toMatchObject({ ok: false, error: 'invalid_input' });
+    await expect(
+      publishTool.execute({ confirmPublicListing: true }, { signal: new AbortController().signal }),
+    ).resolves.toMatchObject({
+      ok: true,
+      mission: { id: mission.id },
+      privateShopperContext: 'not collected',
+    });
+    expect(publications).toBe(1);
+    expect(createEvidenceSiteTools(runtimeWithBoard).map(({ name }) => name)).toContain(
+      'remove_public_filming_mission',
+    );
+
+    await expect(
+      tool(runtimeWithBoard, 'remove_public_filming_mission').execute(
+        { confirmRemoval: true },
+        { signal: new AbortController().signal },
+      ),
+    ).resolves.toMatchObject({ ok: true, mission: { status: 'removed' } });
+    expect(removals).toBe(1);
+  });
+
   it('returns compact claim, rights, provenance, and citation state', () => {
     const state = createDemoEvidenceNetworkState();
     const snapshot = evidenceCaseSnapshot(state);

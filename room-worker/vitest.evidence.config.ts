@@ -18,7 +18,11 @@ export default defineConfig(async () => {
       }),
     ],
     test: {
-      include: ['test/evidence-index.test.ts', 'test/evidence-library.test.ts'],
+      include: [
+        'test/evidence-index.test.ts',
+        'test/evidence-library.test.ts',
+        'test/public-mission-board.test.ts',
+      ],
       setupFiles: ['./test/apply-evidence-library-migrations.ts'],
     },
   };

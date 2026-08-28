@@ -6,11 +6,11 @@ Updated 2026-08-27 PT. Nothing described here is publicly deployed yet. The exis
 
 | Surface                     | Runtime                                            | Responsibility                                                                                   |
 | --------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Shopper and contributor app | Next.js 16 on Vercel                               | Native WebMCP tools, human UI, QR handoff, public discovery, video review, playback              |
+| Shopper, board, contributor | Next.js 16 on Vercel                               | Native WebMCP tools, open requests, human UI, QR handoff, discovery, video review, playback      |
 | Evidence service            | Cloudflare Worker + SQLite Durable Object          | Revisioned cases, scoped capabilities, WebSocket updates, upload reservations, reviewed evidence |
-| Reusable evidence index     | Cloudflare D1                                      | Exact product/question lookup for explicitly opted-in, decision-grade recordings                 |
+| Mission/reuse index         | Cloudflare D1                                      | 24-hour public filming requests plus exact opted-in product/question evidence lookup             |
 | Video                       | Cloudflare Stream binding                          | One-time direct phone uploads, encoding, authorized MP4 generation, playback                     |
-| Evidence expiry             | Cloudflare Cron Trigger                            | Daily physical deletion of reusable metadata after its 30-day boundary                           |
+| Evidence expiry             | Cloudflare Cron Trigger                            | Daily physical deletion of expired 24-hour requests and 30-day reusable metadata                 |
 | Multimodal proposal         | Vercel AI Gateway + AI SDK 7, called by the Worker | Bounded timestamped proposal from the authorized MP4; never publication authority                |
 | Social-video discovery      | ScrapeCreators, called only by the Vercel app      | Link-only TikTok, Instagram, and YouTube leads; never implied reuse rights                       |
 | Broad-web discovery         | Exa tool through Vercel AI Gateway + AI SDK 7      | At most four claim-aware web/PDP leads from one exact-query-verified call                        |
@@ -32,6 +32,8 @@ These are defense-in-depth controls, not claims of perfect abuse prevention.
 | Upload capability      | One-time Stream URL with a 15-minute expiry and allowed app hostname                                    |
 | Stored video           | Scheduled deletion after 31 days; enough for judging, not indefinite storage                            |
 | Reusable evidence      | Explicit contributor opt-in; exact product/question matching; 30-day expiry and daily D1 purge          |
+| Public mission board   | Explicit shopper confirmation; public fields only; 24-hour expiry; daily purge; fulfilled jobs hidden   |
+| Public recorder path   | Separate case-scoped capability; removal revokes it without invalidating the private contributor link   |
 | Model calls            | One cached successful proposal per upload and no more than two crash-recovery attempts                  |
 | Video AI spend         | Dedicated AI Gateway key with a hard non-renewing budget and 30-day expiry                              |
 | Broad web search       | One Exa `instant` call, four results, exact-query receipt check, 20-second timeout, and separate budget |
@@ -102,7 +104,7 @@ NEXT_PUBLIC_EVIDENCE_ROOM_URL=http://localhost:8792 pnpm dev
 pnpm acceptance:evidence-network
 ```
 
-The migration command is one-time local preparation; the next four commands use separate shells. The acceptance test exercises real Chrome, native dynamic Site Tools, two tabs, the actual app, Durable Object, and D1 index, upload/model-shaped service boundaries, human correction, explicit reuse consent, publication, WebSocket update, a fresh matching case, and cross-case reuse. It replaces only the paid Stream and model calls with strict local services.
+The migration command is one-time local preparation; the next four commands use separate shells. The acceptance test exercises real Chrome, native dynamic Site Tools on both shopper and board pages, three browser contexts, explicit public disclosure, privacy-minimized listing, revocable public capability, the actual app, Durable Object, and D1 index, upload/model-shaped service boundaries, human correction, explicit reuse consent, publication, WebSocket update, a fresh matching case, and cross-case reuse. It replaces only the paid Stream and model calls with strict local services.
 
 ## First generic deployment
 
@@ -218,8 +220,8 @@ The verifier uses manual redirects and bounded bodies. It proves:
 
 1. the app exposes the exact reviewed commit and compiled Worker origin;
 2. the standalone Worker exposes the same commit, both rate-limit bindings, the two-upload cap, Stream, live video analysis, D1, the 30-day reuse boundary, and daily expiry purge;
-3. a real read-only D1 query succeeds through the public evidence-index contract, proving the binding and migration rather than trusting health metadata;
-4. buyer and contributor pages have the intended camera, upload, playback, CORS, CSP, referrer, and content-type boundaries;
+3. real read-only D1 queries succeed through both the reusable-evidence and open-mission contracts, proving the binding and both migrations rather than trusting health metadata;
+4. shopper, mission-board, and contributor pages have the intended camera, upload, playback, CORS, CSP, referrer, and content-type boundaries;
 5. an untrusted browser origin is rejected; and
 6. one disposable evidence case is created and survives a Durable Object read-back.
 

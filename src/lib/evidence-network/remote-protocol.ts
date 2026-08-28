@@ -25,12 +25,15 @@ import { publicHttpUrlSchema } from './url-policy';
 
 export const remoteEvidenceProtocolVersion = '1' as const;
 export const remoteEvidenceCaseIdPattern = /^[A-Z2-9]{8}$/;
+export const publicEvidenceMissionIdPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 export const maximumDirectUploadBytes = maximumAnalyzableVideoBytes;
 export const maximumUploadsPerEvidenceCase = 2;
 
 const idSchema = z.string().min(1).max(160);
 const tokenSchema = z.string().min(32).max(256);
 const timestampSchema = z.iso.datetime();
+const publicEvidenceMissionIdSchema = z.string().regex(publicEvidenceMissionIdPattern);
 const evidenceSourceSchema = z.strictObject({
   id: idSchema,
   title: z.string().min(1).max(240),
@@ -148,6 +151,88 @@ export const createRemoteEvidenceCaseRequestSchema = z.discriminatedUnion('seed'
   createFromQuestionSchema,
 ]);
 export type CreateRemoteEvidenceCaseRequest = z.infer<typeof createRemoteEvidenceCaseRequestSchema>;
+
+export const publicEvidenceMissionStatuses = ['open', 'fulfilled', 'removed'] as const;
+export type PublicEvidenceMissionStatus = (typeof publicEvidenceMissionStatuses)[number];
+
+export interface PublicEvidenceMission {
+  readonly id: string;
+  readonly caseId: string;
+  readonly productName: string;
+  readonly productUrl: string | null;
+  readonly question: string;
+  readonly instruction: string;
+  readonly successCriterion: string;
+  readonly minimumSeconds: number;
+  readonly continuousTakeRequired: boolean;
+  readonly status: PublicEvidenceMissionStatus;
+  readonly createdAt: string;
+  readonly expiresAt: string;
+  readonly fulfilledAt: string | null;
+}
+
+export const publicEvidenceMissionSchema: z.ZodType<PublicEvidenceMission> = z
+  .strictObject({
+    id: publicEvidenceMissionIdSchema,
+    caseId: z.string().regex(remoteEvidenceCaseIdPattern),
+    productName: productQuestionInputSchema.shape.productName,
+    productUrl: publicHttpUrlSchema.nullable(),
+    question: productQuestionInputSchema.shape.question,
+    instruction: filmingMissionInputSchema.shape.instruction,
+    successCriterion: filmingMissionInputSchema.shape.successCriterion,
+    minimumSeconds: filmingMissionInputSchema.shape.minimumSeconds,
+    continuousTakeRequired: filmingMissionInputSchema.shape.continuousTakeRequired,
+    status: z.enum(publicEvidenceMissionStatuses),
+    createdAt: timestampSchema,
+    expiresAt: timestampSchema,
+    fulfilledAt: timestampSchema.nullable(),
+  })
+  .superRefine((mission, context) => {
+    if (Date.parse(mission.expiresAt) <= Date.parse(mission.createdAt)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['expiresAt'],
+        message: 'A public mission must expire after it is created.',
+      });
+    }
+    if ((mission.status === 'fulfilled') !== (mission.fulfilledAt !== null)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['fulfilledAt'],
+        message: 'Only a fulfilled public mission may carry a fulfillment timestamp.',
+      });
+    }
+  });
+
+export const publicEvidenceMissionListSchema = z.strictObject({
+  missions: z.array(publicEvidenceMissionSchema).max(24),
+});
+export type PublicEvidenceMissionList = z.infer<typeof publicEvidenceMissionListSchema>;
+
+export const publishPublicEvidenceMissionRequestSchema = z.strictObject({
+  missionId: publicEvidenceMissionIdSchema,
+  caseId: z.string().regex(remoteEvidenceCaseIdPattern),
+  ownerToken: tokenSchema,
+  contributorToken: tokenSchema,
+  confirmPublicListing: z.literal(true),
+});
+export type PublishPublicEvidenceMissionRequest = z.infer<
+  typeof publishPublicEvidenceMissionRequestSchema
+>;
+
+export const removePublicEvidenceMissionRequestSchema = z.strictObject({
+  ownerToken: tokenSchema,
+  confirmRemoval: z.literal(true),
+});
+export type RemovePublicEvidenceMissionRequest = z.infer<
+  typeof removePublicEvidenceMissionRequestSchema
+>;
+
+export const publicEvidenceMissionClaimSchema = z.strictObject({
+  mission: publicEvidenceMissionSchema,
+  contributorToken: tokenSchema,
+});
+export type PublicEvidenceMissionClaim = z.infer<typeof publicEvidenceMissionClaimSchema>;
 
 export interface RemoteEvidenceCaseCredentials {
   readonly protocolVersion: typeof remoteEvidenceProtocolVersion;

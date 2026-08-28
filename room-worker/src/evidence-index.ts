@@ -5,6 +5,7 @@ import {
 import { publicNetworkEvidenceRetentionDays } from '../../src/lib/evidence-network/model';
 import { deleteExpiredReusableEvidence, routeReusableEvidenceRequest } from './evidence-library';
 import { routeProductEvidenceRequest, type ProductEvidenceWorkerEnv } from './product-evidence';
+import { deleteExpiredPublicMissions, routePublicMissionRequest } from './public-mission-board';
 
 export { ProductEvidenceCaseObject } from './product-evidence';
 
@@ -64,12 +65,22 @@ async function route(request: Request, env: EvidenceWorkerEnv): Promise<Response
         reusableEvidence: env.EVIDENCE_LIBRARY !== undefined,
         reusableEvidenceRetentionDays: publicNetworkEvidenceRetentionDays,
         expiredEvidencePurge: 'daily',
+        publicMissionBoard: env.EVIDENCE_LIBRARY !== undefined,
+        publicMissionRetentionHours: 24,
       },
       workerVersion: env.CF_VERSION_METADATA,
     });
   }
   if (!requestOriginAllowed(request, env)) {
     return jsonResponse({ error: 'origin_not_allowed' }, 403);
+  }
+  const publicMissionResponse = await routePublicMissionRequest(
+    request,
+    env,
+    corsHeaders(request, env),
+  );
+  if (publicMissionResponse !== null) {
+    return publicMissionResponse;
   }
   const reusableEvidenceResponse = await routeReusableEvidenceRequest(
     request,
@@ -101,10 +112,14 @@ export default {
       console.warn('Skipped expired evidence purge because the D1 binding is unavailable.');
       return;
     }
-    const deleted = await deleteExpiredReusableEvidence(
-      env.EVIDENCE_LIBRARY,
-      new Date(controller.scheduledTime).toISOString(),
-    );
-    console.log('Expired reusable evidence purge completed.', { deleted });
+    const now = new Date(controller.scheduledTime).toISOString();
+    const [reusableEvidence, publicMissions] = await Promise.all([
+      deleteExpiredReusableEvidence(env.EVIDENCE_LIBRARY, now),
+      deleteExpiredPublicMissions(env.EVIDENCE_LIBRARY, now),
+    ]);
+    console.log('Expired evidence network purge completed.', {
+      reusableEvidence,
+      publicMissions,
+    });
   },
 } satisfies ExportedHandler<EvidenceWorkerEnv>;

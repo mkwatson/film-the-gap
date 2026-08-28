@@ -97,6 +97,8 @@ function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
           reusableEvidence: true,
           reusableEvidenceRetentionDays: 30,
           expiredEvidencePurge: 'daily',
+          publicMissionBoard: true,
+          publicMissionRetentionHours: 24,
         },
         workerVersion: { id: 'room-version', tag: workerTag, timestamp: '2026-08-27T12:00:00Z' },
       });
@@ -112,11 +114,21 @@ function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
         { 'Access-Control-Allow-Origin': config.appOrigin },
       );
     }
+    if (url.href === `${config.roomOrigin}/public-missions` && method === 'GET') {
+      return json({ missions: [] }, 200, { 'Access-Control-Allow-Origin': config.appOrigin });
+    }
     if (url.href === `${config.appOrigin}/`) {
       return appPage('If the web cannot prove it, ask someone with the product to film it.', {
         allowCamera: false,
         allowCreatorUpload: false,
         allowStreamPlayback: true,
+      });
+    }
+    if (url.href === `${config.appOrigin}/missions`) {
+      return appPage('Turn unanswered product questions into tiny public filming jobs.', {
+        allowCamera: false,
+        allowCreatorUpload: false,
+        allowStreamPlayback: false,
       });
     }
     if (url.href === `${config.appOrigin}/contribute/${caseId}`) {
@@ -214,7 +226,8 @@ describe('public release preflight', () => {
       'app health and commit',
       'evidence service health, commit, and cost controls',
       'reusable evidence index',
-      'buyer and contributor pages',
+      'public filming mission board',
+      'buyer, mission board, and contributor pages',
       'evidence service browser boundary and durable case',
     ]);
     expect(serialized).not.toContain(ownerToken);

@@ -37,6 +37,15 @@ const nextConfig: NextConfig = {
           }),
         ],
       },
+      {
+        source: '/missions/:path*',
+        headers: [
+          ...buildAppSecurityHeaders({
+            ...commonOptions,
+            allowCamera: false,
+          }),
+        ],
+      },
     ];
   },
   reactStrictMode: true,

@@ -2,19 +2,29 @@ import {
   analyzeEvidenceVideoRequestSchema,
   createRemoteEvidenceCaseRequestSchema,
   ownerEvidenceCommandRequestSchema,
+  publicEvidenceMissionClaimSchema,
+  publicEvidenceMissionListSchema,
+  publicEvidenceMissionSchema,
   publishRemoteEvidenceRequestSchema,
+  publishPublicEvidenceMissionRequestSchema,
   remoteEvidenceCaseCredentialsSchema,
   remoteEvidenceCaseSnapshotSchema,
   reserveEvidenceUploadRequestSchema,
   reservedEvidenceUploadSchema,
+  removePublicEvidenceMissionRequestSchema,
   type AnalyzeEvidenceVideoRequest,
   type CreateRemoteEvidenceCaseRequest,
   type OwnerEvidenceCommandRequest,
+  type PublicEvidenceMission,
+  type PublicEvidenceMissionClaim,
+  type PublicEvidenceMissionList,
   type PublishRemoteEvidenceRequest,
+  type PublishPublicEvidenceMissionRequest,
   type RemoteEvidenceCaseCredentials,
   type RemoteEvidenceCaseSnapshot,
   type ReserveEvidenceUploadRequest,
   type ReservedEvidenceUpload,
+  type RemovePublicEvidenceMissionRequest,
 } from './remote-protocol';
 import {
   videoEvidenceAnalysisResponseSchema,
@@ -154,6 +164,64 @@ export async function searchRemoteReusableEvidence(
     },
   );
   return reusableEvidenceSearchResponseSchema.parse(await checkedJson(response));
+}
+
+export async function listPublicEvidenceMissions(
+  serviceUrl: string,
+  evidenceFetch: EvidenceFetch = fetch,
+): Promise<PublicEvidenceMissionList> {
+  const response = await evidenceFetch(`${normalizeServiceUrl(serviceUrl)}/public-missions`);
+  return publicEvidenceMissionListSchema.parse(await checkedJson(response));
+}
+
+export async function readPublicEvidenceMission(
+  serviceUrl: string,
+  missionId: string,
+  evidenceFetch: EvidenceFetch = fetch,
+): Promise<PublicEvidenceMission> {
+  const response = await evidenceFetch(
+    `${normalizeServiceUrl(serviceUrl)}/public-missions/${encodeURIComponent(missionId)}`,
+  );
+  return publicEvidenceMissionSchema.parse(await checkedJson(response));
+}
+
+export async function publishPublicEvidenceMission(
+  serviceUrl: string,
+  request: PublishPublicEvidenceMissionRequest,
+  evidenceFetch: EvidenceFetch = fetch,
+): Promise<PublicEvidenceMission> {
+  const input = publishPublicEvidenceMissionRequestSchema.parse(request);
+  const response = await evidenceFetch(
+    `${normalizeServiceUrl(serviceUrl)}/public-missions`,
+    jsonRequest(input),
+  );
+  return publicEvidenceMissionSchema.parse(await checkedJson(response));
+}
+
+export async function claimPublicEvidenceMission(
+  serviceUrl: string,
+  missionId: string,
+  evidenceFetch: EvidenceFetch = fetch,
+): Promise<PublicEvidenceMissionClaim> {
+  const response = await evidenceFetch(
+    `${normalizeServiceUrl(serviceUrl)}/public-missions/${encodeURIComponent(missionId)}/claim`,
+    { method: 'POST' },
+  );
+  return publicEvidenceMissionClaimSchema.parse(await checkedJson(response));
+}
+
+export async function removePublicEvidenceMission(
+  serviceUrl: string,
+  missionId: string,
+  request: RemovePublicEvidenceMissionRequest,
+  evidenceFetch: EvidenceFetch = fetch,
+): Promise<PublicEvidenceMission> {
+  const input = removePublicEvidenceMissionRequestSchema.parse(request);
+  const response = await evidenceFetch(
+    `${normalizeServiceUrl(serviceUrl)}/public-missions/${encodeURIComponent(missionId)}/remove`,
+    jsonRequest(input),
+  );
+  return publicEvidenceMissionSchema.parse(await checkedJson(response));
 }
 
 export async function sendOwnerEvidenceCommand(

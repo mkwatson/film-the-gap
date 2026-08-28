@@ -4,6 +4,8 @@ import { createDemoEvidenceNetworkState } from './model';
 import {
   createRemoteEvidenceCaseRequestSchema,
   evidenceNetworkStateSchema,
+  publicEvidenceMissionClaimSchema,
+  publicEvidenceMissionListSchema,
   publishRemoteEvidenceRequestSchema,
   remoteEvidenceCaseCredentialsSchema,
 } from './remote-protocol';
@@ -91,5 +93,52 @@ describe('remote product evidence protocol', () => {
         review: { ...base.review, sha256: 'a'.repeat(64) },
       }).success,
     ).toBe(true);
+  });
+
+  it('keeps public board listings capability-free while claims stay case-scoped', () => {
+    const mission = {
+      id: '123e4567-e89b-42d3-a456-426614174000',
+      caseId: 'BCDF2345',
+      productName: 'Desk lamp',
+      productUrl: null,
+      question: 'Does it remember its brightness after losing power?',
+      instruction: 'Record one complete power cycle with the brightness visible.',
+      successCriterion: 'Keep the lamp and power control visible throughout.',
+      minimumSeconds: 10,
+      continuousTakeRequired: true,
+      status: 'open',
+      createdAt: '2026-08-27T16:00:00.000Z',
+      expiresAt: '2026-08-28T16:00:00.000Z',
+      fulfilledAt: null,
+    } as const;
+
+    expect(publicEvidenceMissionListSchema.safeParse({ missions: [mission] }).success).toBe(true);
+    expect(
+      publicEvidenceMissionListSchema.safeParse({
+        missions: [{ ...mission, contributorToken: 'c'.repeat(43) }],
+      }).success,
+    ).toBe(false);
+    expect(
+      publicEvidenceMissionClaimSchema.safeParse({
+        mission,
+        contributorToken: 'p'.repeat(43),
+      }).success,
+    ).toBe(true);
+    expect(
+      publicEvidenceMissionListSchema.safeParse({
+        missions: [
+          {
+            ...mission,
+            status: 'fulfilled',
+            fulfilledAt: null,
+          },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      publicEvidenceMissionListSchema.safeParse({
+        missions: [{ ...mission, expiresAt: mission.createdAt }],
+      }).success,
+    ).toBe(false);
   });
 });

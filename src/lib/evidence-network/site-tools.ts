@@ -11,6 +11,7 @@ import {
   type EvidenceNetworkTransition,
 } from './model';
 import type { EvidencePhoneCaptureReceipt } from './phone-session';
+import type { PublicEvidenceMission } from './remote-protocol';
 
 export type { EvidencePhoneCaptureReceipt } from './phone-session';
 
@@ -76,12 +77,42 @@ const filmingMissionJsonSchema = {
 } as const;
 
 const emptyObjectSchema = z.strictObject({});
+const confirmPublicListingSchema = z.strictObject({ confirmPublicListing: z.literal(true) });
+const confirmPublicRemovalSchema = z.strictObject({ confirmRemoval: z.literal(true) });
+
+const confirmPublicListingJsonSchema = {
+  type: 'object',
+  properties: {
+    confirmPublicListing: {
+      type: 'boolean',
+      const: true,
+      description:
+        'Must be true only after the user explicitly asks to publish the product question and filming instructions on the public mission board.',
+    },
+  },
+  required: ['confirmPublicListing'],
+  additionalProperties: false,
+} as const;
+
+const confirmPublicRemovalJsonSchema = {
+  type: 'object',
+  properties: {
+    confirmRemoval: {
+      type: 'boolean',
+      const: true,
+      description: 'Must be true to remove this filming request from the public mission board.',
+    },
+  },
+  required: ['confirmRemoval'],
+  additionalProperties: false,
+} as const;
 
 export interface EvidenceSiteToolRuntime {
   readonly readState: () => EvidenceNetworkState;
   readonly dispatch: (command: EvidenceNetworkCommand) => Promise<EvidenceNetworkTransition>;
   readonly evidenceSearch?: EvidenceSearchRuntime;
   readonly phoneCapture?: EvidencePhoneCaptureRuntime;
+  readonly missionBoard?: EvidenceMissionBoardRuntime;
 }
 
 export interface EvidenceSearchRuntime {
@@ -92,6 +123,13 @@ export interface EvidencePhoneCaptureRuntime {
   readonly available: boolean;
   readonly current: () => EvidencePhoneCaptureReceipt | null;
   readonly create: () => Promise<EvidencePhoneCaptureReceipt>;
+}
+
+export interface EvidenceMissionBoardRuntime {
+  readonly available: boolean;
+  readonly current: () => PublicEvidenceMission | null;
+  readonly publish: () => Promise<PublicEvidenceMission>;
+  readonly remove: () => Promise<PublicEvidenceMission>;
 }
 
 interface ValidationIssue {
@@ -155,12 +193,24 @@ function availableToolNames(runtime: EvidenceSiteToolRuntime): readonly string[]
   ) {
     names.push('create_phone_capture_link');
   }
+  if (
+    runtime.missionBoard?.available === true &&
+    runtime.phoneCapture?.current() !== null &&
+    mission?.status === 'open'
+  ) {
+    if (runtime.missionBoard.current() === null) {
+      names.push('publish_filming_mission');
+    } else if (runtime.missionBoard.current()?.status === 'open') {
+      names.push('remove_public_filming_mission');
+    }
+  }
   return names;
 }
 
 export function evidenceCaseSnapshot(
   state: EvidenceNetworkState,
   phoneCapture?: EvidencePhoneCaptureRuntime,
+  missionBoard?: EvidenceMissionBoardRuntime,
 ): object {
   const runtime = {
     readState: () => state,
@@ -170,6 +220,7 @@ export function evidenceCaseSnapshot(
       message: 'Snapshot-only runtime.',
     }),
     ...(phoneCapture === undefined ? {} : { phoneCapture }),
+    ...(missionBoard === undefined ? {} : { missionBoard }),
   } satisfies EvidenceSiteToolRuntime;
   const evidenceCase = state.activeCase;
   if (evidenceCase === null) {
@@ -211,6 +262,7 @@ export function evidenceCaseSnapshot(
             connected: phoneCapture.current() !== null,
             ...(phoneCapture.current() === null ? {} : phoneCapture.current()),
           },
+    publicMission: runtime.missionBoard?.current() ?? null,
     privacyReceipt: {
       accepted: ['product name', 'optional public product URL', 'product question'],
       notCollected: ['identity', 'budget', 'purchase history', 'private preferences'],
@@ -278,7 +330,11 @@ function allEvidenceSiteTools(
         if (!parsed.success) {
           return validationFailure(parsed.error);
         }
-        return evidenceCaseSnapshot(runtime.readState(), runtime.phoneCapture);
+        return evidenceCaseSnapshot(
+          runtime.readState(),
+          runtime.phoneCapture,
+          runtime.missionBoard,
+        );
       },
     },
     {
@@ -365,7 +421,7 @@ function allEvidenceSiteTools(
       inputSchema: emptyInputSchema,
       annotations: {
         readOnlyHint: false,
-        untrustedContentHint: false,
+        untrustedContentHint: true,
       },
       execute: async (input, options?: WebMCP.ToolExecuteCallbackOptions): Promise<object> => {
         checkAbort(options);
@@ -409,6 +465,73 @@ function allEvidenceSiteTools(
           return validationFailure(parsed.error);
         }
         return answerChangeSnapshot(runtime.readState());
+      },
+    },
+    {
+      name: 'publish_filming_mission',
+      title: 'Publish filming mission to the open board',
+      description:
+        'Only after the user explicitly requests public recruitment, publish the active product name, optional public URL, question, filming instruction, acceptance criterion, duration, and continuity requirement for up to 24 hours. Never publishes shopper identity, preferences, history, or budget.',
+      inputSchema: confirmPublicListingJsonSchema,
+      annotations: {
+        readOnlyHint: false,
+        untrustedContentHint: true,
+      },
+      execute: async (input, options?: WebMCP.ToolExecuteCallbackOptions): Promise<object> => {
+        checkAbort(options);
+        const parsed = confirmPublicListingSchema.safeParse(input);
+        if (!parsed.success) {
+          return validationFailure(parsed.error);
+        }
+        const board = runtime.missionBoard;
+        if (board === undefined || !board.available || runtime.phoneCapture?.current() === null) {
+          return {
+            ok: false,
+            error: 'public_mission_board_unavailable',
+            message: 'Create the bounded phone case before publishing its mission.',
+          };
+        }
+        const existing = board.current();
+        const mission = existing ?? (await board.publish());
+        return {
+          ok: true,
+          mission,
+          message:
+            'The mission is public for up to 24 hours. Anyone with the product can open its bounded contributor path; no shopper context was published.',
+          privateShopperContext: 'not collected',
+        };
+      },
+    },
+    {
+      name: 'remove_public_filming_mission',
+      title: 'Remove public filming mission',
+      description:
+        'Remove the active filming request from the open mission board and revoke its public contributor capability. The separate private contributor link and evidence case remain available until their normal expiry.',
+      inputSchema: confirmPublicRemovalJsonSchema,
+      annotations: {
+        readOnlyHint: false,
+        untrustedContentHint: true,
+      },
+      execute: async (input, options?: WebMCP.ToolExecuteCallbackOptions): Promise<object> => {
+        checkAbort(options);
+        const parsed = confirmPublicRemovalSchema.safeParse(input);
+        if (!parsed.success) {
+          return validationFailure(parsed.error);
+        }
+        const board = runtime.missionBoard;
+        if (board === undefined || !board.available || board.current() === null) {
+          return {
+            ok: false,
+            error: 'public_mission_not_active',
+            message: 'There is no active public mission to remove.',
+          };
+        }
+        const mission = await board.remove();
+        return {
+          ok: true,
+          mission,
+          message: 'The filming request was removed from the public board.',
+        };
       },
     },
   ];

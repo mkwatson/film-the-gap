@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -25,11 +26,14 @@ import {
   configuredEvidenceServiceUrl,
   contributorPath,
   createRemoteEvidenceCase,
+  publishPublicEvidenceMission,
   remoteEvidenceWebSocketUrl,
+  removePublicEvidenceMission,
 } from '@/lib/evidence-network/remote-client';
 import {
   parseRemoteEvidenceServerMessage,
   type CreateRemoteEvidenceCaseRequest,
+  type PublicEvidenceMission,
 } from '@/lib/evidence-network/remote-protocol';
 import {
   clearEvidencePhoneConnection,
@@ -244,6 +248,11 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     'idle' | 'connecting' | 'waiting' | 'complete' | 'error'
   >('idle');
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [boardConsent, setBoardConsent] = useState(false);
+  const [boardPhase, setBoardPhase] = useState<
+    'idle' | 'publishing' | 'published' | 'removing' | 'removed' | 'error'
+  >('idle');
+  const [boardError, setBoardError] = useState<string | null>(null);
   const serviceUrl = configuredEvidenceServiceUrl();
   const stateRef = useRef(state);
   const phoneConnectionRef = useRef(phoneConnection);
@@ -254,6 +263,9 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     setPhoneConnection(null);
     setPhonePhase('idle');
     setPhoneError(null);
+    setBoardConsent(false);
+    setBoardPhase('idle');
+    setBoardError(null);
   }, []);
 
   const readState = useCallback((): EvidenceNetworkState => stateRef.current, []);
@@ -400,14 +412,98 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     }),
     [createPhoneCapture, serviceUrl],
   );
+  const publishMissionToBoard = useCallback(async (): Promise<PublicEvidenceMission> => {
+    const connection = phoneConnectionRef.current;
+    if (serviceUrl === null || connection === null) {
+      throw new Error('Create the bounded phone case before publishing its filming mission.');
+    }
+    if (connection.publicMission?.status === 'open') {
+      return connection.publicMission;
+    }
+    setBoardPhase('publishing');
+    setBoardError(null);
+    try {
+      const publicMission = await publishPublicEvidenceMission(serviceUrl, {
+        missionId: crypto.randomUUID(),
+        caseId: connection.credentials.caseId,
+        ownerToken: connection.credentials.ownerToken,
+        contributorToken: connection.credentials.contributorToken,
+        confirmPublicListing: true,
+      });
+      const updatedConnection: EvidencePhoneConnection = { ...connection, publicMission };
+      phoneConnectionRef.current = updatedConnection;
+      setPhoneConnection(updatedConnection);
+      persistEvidencePhoneConnection(
+        window.sessionStorage,
+        serviceUrl,
+        window.location.origin,
+        updatedConnection,
+      );
+      setBoardPhase('published');
+      setBoardConsent(false);
+      return publicMission;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      setBoardError(message);
+      setBoardPhase('error');
+      throw error;
+    }
+  }, [serviceUrl]);
+  const removeMissionFromBoard = useCallback(async (): Promise<PublicEvidenceMission> => {
+    const connection = phoneConnectionRef.current;
+    const publicMission = connection?.publicMission;
+    if (serviceUrl === null || connection === null || publicMission?.status !== 'open') {
+      throw new Error('There is no active public filming mission to remove.');
+    }
+    setBoardPhase('removing');
+    setBoardError(null);
+    try {
+      const removedMission = await removePublicEvidenceMission(serviceUrl, publicMission.id, {
+        ownerToken: connection.credentials.ownerToken,
+        confirmRemoval: true,
+      });
+      const updatedConnection: EvidencePhoneConnection = {
+        ...connection,
+        publicMission: removedMission,
+      };
+      phoneConnectionRef.current = updatedConnection;
+      setPhoneConnection(updatedConnection);
+      persistEvidencePhoneConnection(
+        window.sessionStorage,
+        serviceUrl,
+        window.location.origin,
+        updatedConnection,
+      );
+      setBoardPhase('removed');
+      return removedMission;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      setBoardError(message);
+      setBoardPhase('error');
+      throw error;
+    }
+  }, [serviceUrl]);
+  const missionBoardRuntime = useMemo(
+    () => ({
+      available: serviceUrl !== null,
+      current: (): PublicEvidenceMission | null => {
+        const publicMission = phoneConnectionRef.current?.publicMission;
+        return publicMission?.status === 'open' ? publicMission : null;
+      },
+      publish: publishMissionToBoard,
+      remove: removeMissionFromBoard,
+    }),
+    [publishMissionToBoard, removeMissionFromBoard, serviceUrl],
+  );
   const siteToolRuntime = useMemo<EvidenceSiteToolRuntime>(
     () => ({
       readState,
       dispatch,
       evidenceSearch: evidenceSearchRuntime,
       phoneCapture: phoneCaptureRuntime,
+      missionBoard: missionBoardRuntime,
     }),
-    [dispatch, evidenceSearchRuntime, phoneCaptureRuntime, readState],
+    [dispatch, evidenceSearchRuntime, missionBoardRuntime, phoneCaptureRuntime, readState],
   );
   const createTools = useCallback(
     () => createEvidenceSiteTools(siteToolRuntime),
@@ -420,6 +516,17 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     state.activeCase?.mission?.status === 'open'
   ) {
     availableToolNames.push('create_phone_capture_link');
+  }
+  if (
+    serviceUrl !== null &&
+    phoneConnection !== null &&
+    state.activeCase?.mission?.status === 'open'
+  ) {
+    if (phoneConnection.publicMission?.status === 'open') {
+      availableToolNames.push('remove_public_filming_mission');
+    } else {
+      availableToolNames.push('publish_filming_mission');
+    }
   }
   const siteToolStatus = useDynamicSiteTools(createTools, availableToolNames.join('|'));
 
@@ -455,6 +562,25 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
         setLastMessage(message.lastMessage);
         if (message.state.activeCase?.mission?.status === 'fulfilled') {
           setPhonePhase('complete');
+          const liveConnection = phoneConnectionRef.current;
+          if (liveConnection?.publicMission?.status === 'open') {
+            const completedConnection: EvidencePhoneConnection = {
+              ...liveConnection,
+              publicMission: {
+                ...liveConnection.publicMission,
+                status: 'fulfilled',
+                fulfilledAt: new Date().toISOString(),
+              },
+            };
+            phoneConnectionRef.current = completedConnection;
+            setPhoneConnection(completedConnection);
+            persistEvidencePhoneConnection(
+              window.sessionStorage,
+              serviceUrl,
+              window.location.origin,
+              completedConnection,
+            );
+          }
         }
       } else if (message?.type === 'case-expired') {
         clearPhoneConnection();
@@ -582,6 +708,9 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
           </span>
         </div>
         <div className="evidence-topbar-actions">
+          <Link className="evidence-quiet-link" href="/missions">
+            Open filming requests
+          </Link>
           <span className={`evidence-runtime runtime-${siteToolStatus.phase}`}>
             <span aria-hidden="true" />
             {siteToolStatus.phase === 'ready'
@@ -936,7 +1065,11 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                         className="evidence-primary-button"
                         type="button"
                         disabled={serviceUrl === null || phonePhase === 'connecting'}
-                        onClick={() => void createPhoneCapture()}
+                        onClick={() => {
+                          void createPhoneCapture().catch(() => {
+                            // The visible phone error is the human recovery path.
+                          });
+                        }}
                       >
                         {phonePhase === 'connecting'
                           ? 'Creating shared case…'
@@ -947,32 +1080,103 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                       {phoneError === null ? null : <p role="alert">{phoneError}</p>}
                     </div>
                   ) : (
-                    <div className="mission-phone-live">
-                      <div className="mission-phone-qr" aria-label="Contributor link QR code">
-                        <QRCodeSVG
-                          value={phoneConnection.receipt.contributorUrl}
-                          size={132}
-                          bgColor="transparent"
-                          fgColor="#ecf5ef"
-                          level="M"
-                        />
+                    <div className="mission-phone-stack">
+                      <div className="mission-phone-live">
+                        <div className="mission-phone-qr">
+                          <QRCodeSVG
+                            value={phoneConnection.receipt.contributorUrl}
+                            size={132}
+                            bgColor="transparent"
+                            fgColor="#ecf5ef"
+                            level="M"
+                            title="Private contributor phone link QR code"
+                          />
+                        </div>
+                        <div>
+                          <small>Private live case {phoneConnection.receipt.caseId}</small>
+                          <strong>Scan with a phone that has the product.</strong>
+                          <p>
+                            {phonePhase === 'complete'
+                              ? 'Reviewed video arrived and changed the shared evidence state.'
+                              : 'Waiting through a hibernating Cloudflare Durable Object. No account is required.'}
+                          </p>
+                          <a
+                            href={phoneConnection.receipt.contributorUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Open private contributor link ↗
+                          </a>
+                        </div>
                       </div>
-                      <div>
-                        <small>Live case {phoneConnection.receipt.caseId}</small>
-                        <strong>Scan with a phone that has the product.</strong>
-                        <p>
-                          {phonePhase === 'complete'
-                            ? 'Reviewed video arrived and changed the shared evidence state.'
-                            : 'Waiting through a hibernating Cloudflare Durable Object. No account is required.'}
-                        </p>
-                        <a
-                          href={phoneConnection.receipt.contributorUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Open contributor link ↗
-                        </a>
-                      </div>
+
+                      {phoneConnection.publicMission?.status === 'open' ? (
+                        <div className="mission-board-receipt" role="status">
+                          <div>
+                            <small>Public request · expires automatically</small>
+                            <strong>Anyone who owns this product can now record the answer.</strong>
+                            <p>
+                              Only the public product, question, and filming instructions are
+                              listed. No shopper identity, preferences, history, or budget are
+                              included.
+                            </p>
+                            <Link href={`/missions#mission-${phoneConnection.publicMission.id}`}>
+                              View on open requests →
+                            </Link>
+                          </div>
+                          <button
+                            className="evidence-quiet-button"
+                            type="button"
+                            disabled={boardPhase === 'removing'}
+                            onClick={() => {
+                              void removeMissionFromBoard().catch(() => {
+                                // The visible board error is the human recovery path.
+                              });
+                            }}
+                          >
+                            {boardPhase === 'removing' ? 'Removing…' : 'Remove public request'}
+                          </button>
+                        </div>
+                      ) : mission.status === 'open' ? (
+                        <div className="mission-board-opt-in">
+                          <div>
+                            <small>Do not know someone with the product?</small>
+                            <strong>Ask the open evidence network.</strong>
+                            <p>
+                              Publish only this product question and filming recipe for up to 24
+                              hours. A volunteer with the product can fulfill it from any phone.
+                            </p>
+                          </div>
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={boardConsent}
+                              onChange={(event) => setBoardConsent(event.currentTarget.checked)}
+                            />
+                            I understand this product request will be public. No shopper context is
+                            included.
+                          </label>
+                          <button
+                            className="evidence-primary-button"
+                            type="button"
+                            disabled={!boardConsent || boardPhase === 'publishing'}
+                            onClick={() => {
+                              void publishMissionToBoard().catch(() => {
+                                // The visible board error is the human recovery path.
+                              });
+                            }}
+                          >
+                            {boardPhase === 'publishing'
+                              ? 'Publishing request…'
+                              : 'Publish open filming request'}
+                          </button>
+                          {phoneConnection.publicMission?.status === 'removed' ? (
+                            <p role="status">The previous public path was removed and revoked.</p>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      {boardError === null ? null : <p role="alert">{boardError}</p>}
                     </div>
                   )}
 

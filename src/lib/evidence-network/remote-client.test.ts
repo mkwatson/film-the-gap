@@ -4,9 +4,13 @@ import { createDemoEvidenceNetworkState } from './model';
 import {
   RemoteEvidenceError,
   analyzeRemoteEvidenceVideo,
+  claimPublicEvidenceMission,
   contributorPath,
   createRemoteEvidenceCase,
+  listPublicEvidenceMissions,
+  publishPublicEvidenceMission,
   remoteEvidenceWebSocketUrl,
+  removePublicEvidenceMission,
   uploadEvidenceVideo,
 } from './remote-client';
 
@@ -93,5 +97,72 @@ describe('remote evidence client', () => {
       status: 403,
       code: 'origin_not_allowed',
     } satisfies Partial<RemoteEvidenceError>);
+  });
+
+  it('publishes, lists, claims, and removes only through the board endpoints', async () => {
+    const publicContributorToken = 'p'.repeat(43);
+    const mission = {
+      id: '123e4567-e89b-42d3-a456-426614174000',
+      caseId: 'BCDF2345',
+      productName: 'Desk lamp',
+      productUrl: null,
+      question: 'Does it remember its brightness after losing power?',
+      instruction: 'Record one complete power cycle with the brightness visible.',
+      successCriterion: 'Keep the lamp and power control visible throughout.',
+      minimumSeconds: 10,
+      continuousTakeRequired: true,
+      status: 'open',
+      createdAt: '2026-08-27T16:00:00.000Z',
+      expiresAt: '2026-08-28T16:00:00.000Z',
+      fulfilledAt: null,
+    } as const;
+    const evidenceFetch = vi.fn(async (input: string | URL | Request): Promise<Response> => {
+      const url = new URL(input instanceof Request ? input.url : input);
+      if (url.pathname.endsWith('/claim')) {
+        return Response.json({ mission, contributorToken: publicContributorToken });
+      }
+      if (url.pathname.endsWith('/remove')) {
+        return Response.json({ ...mission, status: 'removed' });
+      }
+      if (url.pathname === '/public-missions' && evidenceFetch.mock.calls.length === 2) {
+        return Response.json({ missions: [mission] });
+      }
+      return Response.json(mission, { status: 201 });
+    });
+
+    await expect(
+      publishPublicEvidenceMission(
+        'https://rooms.example/path',
+        {
+          missionId: mission.id,
+          caseId: mission.caseId,
+          ownerToken: 'o'.repeat(43),
+          contributorToken: 'c'.repeat(43),
+          confirmPublicListing: true,
+        },
+        evidenceFetch,
+      ),
+    ).resolves.toEqual(mission);
+    await expect(
+      listPublicEvidenceMissions('https://rooms.example', evidenceFetch),
+    ).resolves.toEqual({ missions: [mission] });
+    await expect(
+      claimPublicEvidenceMission('https://rooms.example', mission.id, evidenceFetch),
+    ).resolves.toMatchObject({ contributorToken: publicContributorToken });
+    await expect(
+      removePublicEvidenceMission(
+        'https://rooms.example',
+        mission.id,
+        { ownerToken: 'o'.repeat(43), confirmRemoval: true },
+        evidenceFetch,
+      ),
+    ).resolves.toMatchObject({ status: 'removed' });
+
+    expect(evidenceFetch.mock.calls.map(([input]) => new URL(String(input)).pathname)).toEqual([
+      '/public-missions',
+      '/public-missions',
+      `/public-missions/${mission.id}/claim`,
+      `/public-missions/${mission.id}/remove`,
+    ]);
   });
 });

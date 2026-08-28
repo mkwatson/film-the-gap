@@ -3908,6 +3908,29 @@ select:focus-visible {
   background: transparent;
 }
 
+.evidence-quiet-link,
+.evidence-primary-link {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 15px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.evidence-quiet-link {
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.evidence-primary-link {
+  color: #07100c;
+  background: var(--lime);
+}
+
 .evidence-hero {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(420px, 0.9fr);
@@ -4646,6 +4669,408 @@ select:focus-visible {
   font-size: 10px;
   font-weight: 800;
   text-decoration: none;
+}
+
+.mission-phone-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.mission-board-opt-in,
+.mission-board-receipt {
+  display: grid;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid rgba(185, 243, 107, 0.24);
+  border-radius: 12px;
+  background: rgba(185, 243, 107, 0.04);
+}
+
+.mission-board-opt-in small,
+.mission-board-opt-in strong,
+.mission-board-receipt small,
+.mission-board-receipt strong {
+  display: block;
+}
+
+.mission-board-opt-in small,
+.mission-board-receipt small {
+  color: var(--lime);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mission-board-opt-in strong,
+.mission-board-receipt strong {
+  margin-top: 5px;
+  font-size: 13px;
+}
+
+.mission-board-opt-in p,
+.mission-board-receipt p,
+.mission-phone-stack > p[role='alert'] {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.mission-board-opt-in label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.mission-board-opt-in input {
+  margin: 2px 0 0;
+  accent-color: var(--lime);
+}
+
+.mission-board-opt-in button:disabled,
+.mission-board-receipt button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.mission-board-receipt {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.mission-board-receipt a {
+  display: inline-block;
+  margin-top: 9px;
+  color: var(--lime);
+  font-size: 10px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+/* Public missing-proof board. */
+.mission-board-shell {
+  width: min(1320px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 22px clamp(16px, 3vw, 46px) 72px;
+}
+
+.mission-board-brand {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mission-board-hero {
+  max-width: 980px;
+  padding: clamp(56px, 8vw, 104px) 0 42px;
+}
+
+.mission-board-hero h1 {
+  max-width: 930px;
+  margin: 0;
+  font-size: clamp(48px, 7vw, 92px);
+  font-weight: 780;
+  letter-spacing: -0.065em;
+  line-height: 0.93;
+}
+
+.mission-board-hero > p:last-of-type {
+  max-width: 760px;
+  margin: 24px 0 0;
+  color: var(--muted);
+  font-size: clamp(15px, 1.6vw, 20px);
+  line-height: 1.55;
+}
+
+.mission-board-summary {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-top: 28px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.mission-board-summary strong {
+  color: var(--lime);
+  font-size: 13px;
+}
+
+.mission-board-summary span {
+  flex: 1;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.mission-board-summary button {
+  min-height: 32px;
+}
+
+.mission-board-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.public-mission-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 20px;
+  scroll-margin-top: 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 90% 0, rgba(185, 243, 107, 0.07), transparent 45%), var(--panel);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+}
+
+.public-mission-card:target {
+  border-color: rgba(185, 243, 107, 0.6);
+  box-shadow: 0 0 0 3px rgba(185, 243, 107, 0.08);
+}
+
+.public-mission-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.public-mission-card-head span {
+  padding: 5px 7px;
+  color: #07100c;
+  border-radius: 999px;
+  background: var(--lime);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+
+.public-mission-card-head small {
+  color: var(--dim);
+  font-size: 9px;
+}
+
+.public-mission-card h2 {
+  margin: 21px 0 0;
+  font-size: 21px;
+  letter-spacing: -0.035em;
+}
+
+.public-mission-question {
+  min-height: 48px;
+  margin: 8px 0 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.public-mission-card dl {
+  display: grid;
+  gap: 0;
+  margin: 18px 0;
+  border-block: 1px solid var(--line);
+}
+
+.public-mission-card dl > div {
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.public-mission-card dl > div:last-child {
+  border-bottom: 0;
+}
+
+.public-mission-card dt {
+  color: var(--dim);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.public-mission-card dd {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.public-mission-card > a {
+  margin: auto 0 13px;
+  color: var(--cyan);
+  font-size: 10px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.public-mission-card > button {
+  width: 100%;
+}
+
+.public-mission-error {
+  margin: 10px 0 0;
+  color: var(--coral);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.public-mission-claim {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  margin-top: 13px;
+  padding: 12px;
+  border: 1px solid rgba(95, 224, 170, 0.28);
+  border-radius: 12px;
+  background: rgba(95, 224, 170, 0.045);
+}
+
+.public-mission-claim > div {
+  display: grid;
+  padding: 7px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--canvas);
+}
+
+.public-mission-claim strong,
+.public-mission-claim small,
+.public-mission-claim a {
+  display: block;
+}
+
+.public-mission-claim strong {
+  font-size: 11px;
+}
+
+.public-mission-claim small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.public-mission-claim a {
+  margin-top: 9px;
+  color: var(--mint);
+  font-size: 10px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.mission-board-empty {
+  display: grid;
+  min-height: 340px;
+  place-items: center;
+  padding: 54px 24px;
+  text-align: center;
+  border: 1px dashed var(--line-bright);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.mission-board-empty > span {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  color: var(--canvas);
+  border-radius: 50%;
+  background: var(--lime);
+  font-weight: 900;
+}
+
+.mission-board-empty h2 {
+  margin: 18px 0 0;
+}
+
+.mission-board-empty p {
+  max-width: 520px;
+  margin: 8px 0 20px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.mission-board-privacy {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.4fr) minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.mission-board-privacy strong {
+  color: var(--cyan);
+  font-size: 12px;
+}
+
+.mission-board-privacy p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+@media (max-width: 1040px) {
+  .mission-board-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .mission-board-shell {
+    padding: 16px 13px 42px;
+  }
+
+  .mission-board-hero {
+    padding-top: 50px;
+  }
+
+  .mission-board-hero h1 {
+    font-size: clamp(44px, 14vw, 66px);
+  }
+
+  .mission-board-summary,
+  .mission-board-privacy,
+  .mission-board-receipt {
+    grid-template-columns: 1fr;
+  }
+
+  .mission-board-summary {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mission-board-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .public-mission-question {
+    min-height: 0;
+  }
+
+  .public-mission-claim,
+  .mission-phone-live {
+    grid-template-columns: 1fr;
+  }
 }
 
 .mission-replay {

@@ -28,6 +28,8 @@ describe('standalone evidence Worker', () => {
         reusableEvidence: true,
         reusableEvidenceRetentionDays: 30,
         expiredEvidencePurge: 'daily',
+        publicMissionBoard: true,
+        publicMissionRetentionHours: 24,
       },
     });
   });

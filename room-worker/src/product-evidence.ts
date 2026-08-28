@@ -17,10 +17,14 @@ import {
   evidenceNetworkStateSchema,
   ownerEvidenceCommandRequestSchema,
   publishRemoteEvidenceRequestSchema,
+  publishPublicEvidenceMissionRequestSchema,
+  publicEvidenceMissionIdPattern,
+  publicEvidenceMissionSchema,
   remoteEvidenceCaseIdPattern,
   remoteEvidenceProtocolVersion,
   maximumUploadsPerEvidenceCase,
   requestDiscovery,
+  removePublicEvidenceMissionRequestSchema,
   requestMission,
   requestQuestion,
   reserveEvidenceUploadRequestSchema,
@@ -36,6 +40,7 @@ import {
   type VideoEvidenceProposal,
 } from '../../src/lib/evidence-network/video-analysis';
 import { indexReusableEvidence } from './evidence-library';
+import { markPublicMissionFulfilled } from './public-mission-board';
 
 export interface ProductEvidenceWorkerEnv {
   readonly CASES: DurableObjectNamespace<ProductEvidenceCaseObject>;
@@ -76,6 +81,9 @@ interface StoredEvidenceCase {
   readonly protocolVersion: typeof remoteEvidenceProtocolVersion;
   readonly ownerTokenDigest: string;
   readonly contributorTokenDigest: string;
+  readonly publicMissionId: string | null;
+  readonly publicContributorTokenDigest: string | null;
+  readonly publicMissionExpiresAt: number | null;
   readonly createdAt: number;
   readonly expiresAt: number;
   readonly state: EvidenceNetworkState;
@@ -129,6 +137,13 @@ const storedEvidenceCaseSchema: z.ZodType<StoredEvidenceCase> = z.strictObject({
   protocolVersion: z.literal(remoteEvidenceProtocolVersion),
   ownerTokenDigest: z.string().regex(/^[a-f0-9]{64}$/),
   contributorTokenDigest: z.string().regex(/^[a-f0-9]{64}$/),
+  publicMissionId: z.string().regex(publicEvidenceMissionIdPattern).nullable().default(null),
+  publicContributorTokenDigest: z
+    .string()
+    .regex(/^[a-f0-9]{64}$/)
+    .nullable()
+    .default(null),
+  publicMissionExpiresAt: z.number().int().positive().nullable().default(null),
   createdAt: z.number().int().positive(),
   expiresAt: z.number().int().positive(),
   state: evidenceNetworkStateSchema,
@@ -145,6 +160,14 @@ const initializeEvidenceCaseSchema = z.strictObject({
   expiresAt: z.number().int().positive(),
   state: evidenceNetworkStateSchema,
   lastMessage: z.string().min(1).max(500),
+});
+
+const publishPublicMissionInternalRequestSchema = publishPublicEvidenceMissionRequestSchema.extend({
+  publicContributorToken: z.string().min(32).max(256),
+});
+
+const removePublicMissionInternalRequestSchema = removePublicEvidenceMissionRequestSchema.extend({
+  missionId: z.string().regex(publicEvidenceMissionIdPattern),
 });
 
 const streamUploadResponseSchema = z.strictObject({
@@ -540,6 +563,12 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
     if (request.method === 'POST' && url.pathname === '/owner-command') {
       return this.ownerCommand(request);
     }
+    if (request.method === 'POST' && url.pathname === '/publish-public-mission') {
+      return this.publishPublicMission(request);
+    }
+    if (request.method === 'POST' && url.pathname === '/remove-public-mission') {
+      return this.removePublicMission(request);
+    }
     if (request.method === 'POST' && url.pathname === '/reserve-upload') {
       return this.reserveUpload(request);
     }
@@ -598,6 +627,9 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
     const stored: StoredEvidenceCase = {
       protocolVersion: remoteEvidenceProtocolVersion,
       ...parsed.data,
+      publicMissionId: null,
+      publicContributorTokenDigest: null,
+      publicMissionExpiresAt: null,
       uploads: [],
       uploadReservationsCreated: 0,
       processedCommands: [],
@@ -623,8 +655,113 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
     return new Response(null, { status: 101, webSocket: client });
   }
 
+  private async publishPublicMission(request: Request): Promise<Response> {
+    const parsed = publishPublicMissionInternalRequestSchema.safeParse(
+      parseJson(await request.text()),
+    );
+    if (!parsed.success) {
+      return jsonResponse({ error: 'invalid_public_mission', issues: parsed.error.issues }, 400);
+    }
+    const stored = this.stored;
+    if (
+      stored === null ||
+      parsed.data.caseId !== this.caseId() ||
+      !(await this.authenticate(parsed.data.ownerToken, stored.ownerTokenDigest)) ||
+      !(await this.authenticate(parsed.data.contributorToken, stored.contributorTokenDigest))
+    ) {
+      return jsonResponse({ error: 'invalid_public_mission_capability' }, 403);
+    }
+    const evidenceCase = stored.state.activeCase;
+    const mission = evidenceCase?.mission;
+    if (evidenceCase === null || evidenceCase === undefined || mission?.status !== 'open') {
+      return jsonResponse({ error: 'no_open_filming_mission' }, 409);
+    }
+    // A retry may arrive with a newly generated client ID after the original
+    // response was lost. Recover the already-authorized board capability
+    // instead of creating an unreachable second listing.
+    const activePublicMission =
+      stored.publicMissionId !== null &&
+      stored.publicMissionExpiresAt !== null &&
+      Date.now() < stored.publicMissionExpiresAt;
+    const publicMissionId = activePublicMission
+      ? (stored.publicMissionId ?? parsed.data.missionId)
+      : parsed.data.missionId;
+    const publicMissionExpiresAt =
+      activePublicMission && stored.publicMissionExpiresAt !== null
+        ? stored.publicMissionExpiresAt
+        : Math.min(stored.expiresAt, Date.now() + 24 * 60 * 60 * 1_000);
+    this.stored = {
+      ...stored,
+      publicMissionId,
+      publicContributorTokenDigest: await sha256Hex(parsed.data.publicContributorToken),
+      publicMissionExpiresAt,
+    };
+    await this.persistAndBroadcast();
+    return jsonResponse(
+      publicEvidenceMissionSchema.parse({
+        id: publicMissionId,
+        caseId: this.caseId(),
+        productName: evidenceCase.product.name,
+        productUrl: evidenceCase.product.suppliedUrl,
+        question: evidenceCase.question.text,
+        instruction: mission.instruction,
+        successCriterion: mission.successCriterion,
+        minimumSeconds: mission.minimumSeconds,
+        continuousTakeRequired: mission.continuousTakeRequired,
+        status: 'open',
+        createdAt: mission.createdAt,
+        expiresAt: new Date(publicMissionExpiresAt).toISOString(),
+        fulfilledAt: null,
+      }),
+    );
+  }
+
+  private async removePublicMission(request: Request): Promise<Response> {
+    const parsed = removePublicMissionInternalRequestSchema.safeParse(
+      parseJson(await request.text()),
+    );
+    if (!parsed.success) {
+      return jsonResponse(
+        { error: 'invalid_public_mission_removal', issues: parsed.error.issues },
+        400,
+      );
+    }
+    const stored = this.stored;
+    if (
+      stored === null ||
+      !(await this.authenticate(parsed.data.ownerToken, stored.ownerTokenDigest))
+    ) {
+      return jsonResponse({ error: 'invalid_owner_token' }, 403);
+    }
+    if (stored.publicMissionId !== parsed.data.missionId) {
+      return jsonResponse({ error: 'public_mission_not_active' }, 409);
+    }
+    this.stored = {
+      ...stored,
+      publicMissionId: null,
+      publicContributorTokenDigest: null,
+      publicMissionExpiresAt: null,
+    };
+    await this.persistAndBroadcast();
+    return jsonResponse({ ok: true, missionId: parsed.data.missionId });
+  }
+
   private async authenticate(token: string, expectedDigest: string): Promise<boolean> {
     return constantTimeEqual(await sha256Hex(token), expectedDigest);
+  }
+
+  private async authenticateContributor(
+    token: string,
+    stored: StoredEvidenceCase,
+  ): Promise<boolean> {
+    const tokenDigest = await sha256Hex(token);
+    return (
+      constantTimeEqual(tokenDigest, stored.contributorTokenDigest) ||
+      (stored.publicContributorTokenDigest !== null &&
+        stored.publicMissionExpiresAt !== null &&
+        Date.now() < stored.publicMissionExpiresAt &&
+        constantTimeEqual(tokenDigest, stored.publicContributorTokenDigest))
+    );
   }
 
   private findProcessed(commandId: string): ProcessedEvidenceCommand | null {
@@ -735,10 +872,7 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
       return jsonResponse({ error: 'invalid_upload_request', issues: parsed.error.issues }, 400);
     }
     const stored = this.stored;
-    if (
-      stored === null ||
-      !(await this.authenticate(parsed.data.token, stored.contributorTokenDigest))
-    ) {
+    if (stored === null || !(await this.authenticateContributor(parsed.data.token, stored))) {
       return jsonResponse({ error: 'invalid_contributor_token' }, 403);
     }
     if (stored.state.activeCase?.mission?.status !== 'open') {
@@ -848,10 +982,7 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
       return jsonResponse({ error: 'invalid_video_analysis_request' }, 400);
     }
     const stored = this.stored;
-    if (
-      stored === null ||
-      !(await this.authenticate(parsed.data.token, stored.contributorTokenDigest))
-    ) {
+    if (stored === null || !(await this.authenticateContributor(parsed.data.token, stored))) {
       return jsonResponse({ error: 'invalid_contributor_token' }, 403);
     }
     const evidenceCase = stored.state.activeCase;
@@ -1061,10 +1192,7 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
       return jsonResponse({ error: 'invalid_evidence_review', issues: parsed.error.issues }, 400);
     }
     const stored = this.stored;
-    if (
-      stored === null ||
-      !(await this.authenticate(parsed.data.token, stored.contributorTokenDigest))
-    ) {
+    if (stored === null || !(await this.authenticateContributor(parsed.data.token, stored))) {
       return jsonResponse({ error: 'invalid_contributor_token' }, 403);
     }
     const evidenceCase = stored.state.activeCase;
@@ -1207,6 +1335,21 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
       transition.message,
       transition.state,
     );
+    if (
+      transition.ok &&
+      stored.publicMissionId !== null &&
+      this.workerEnv.EVIDENCE_LIBRARY !== undefined
+    ) {
+      try {
+        await markPublicMissionFulfilled(
+          this.workerEnv.EVIDENCE_LIBRARY,
+          stored.publicMissionId,
+          reviewedAt,
+        );
+      } catch (error: unknown) {
+        console.error('Cloudflare D1 public mission fulfillment update failed', error);
+      }
+    }
     return jsonResponse({
       ok: transition.ok,
       duplicate: false,

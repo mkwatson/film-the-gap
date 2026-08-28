@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import {
   maximumDirectUploadBytes,
   parseRemoteEvidenceServerMessage,
+  publicEvidenceMissionSchema,
   remoteEvidenceCaseCredentialsSchema,
   remoteEvidenceCaseSnapshotSchema,
   reservedEvidenceUploadSchema,
@@ -16,6 +17,7 @@ import {
   streamAllowedOriginDomains,
 } from '../src/product-evidence';
 import { searchReusableEvidence } from '../src/evidence-library';
+import { insertPublicMission } from '../src/public-mission-board';
 
 const origin = 'http://localhost:3000';
 const evidenceLibrary = (env as unknown as { readonly EVIDENCE_LIBRARY: D1Database })
@@ -410,6 +412,88 @@ describe('generic product evidence cases', () => {
       readyToStream: true,
     });
     socket.close(1000, 'Test complete');
+  });
+
+  it('lets a public-board capability fulfill its case and closes the listing', async () => {
+    const { credentials } = await createCase();
+    const missionId = crypto.randomUUID();
+    const publicContributorToken = 'p'.repeat(43);
+    const cases = (
+      env as unknown as {
+        readonly CASES: DurableObjectNamespace;
+      }
+    ).CASES;
+    const stub = cases.get(cases.idFromName(credentials.caseId));
+    const boardResponse = await stub.fetch('https://evidence.internal/publish-public-mission', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        missionId,
+        caseId: credentials.caseId,
+        ownerToken: credentials.ownerToken,
+        contributorToken: credentials.contributorToken,
+        publicContributorToken,
+        confirmPublicListing: true,
+      }),
+    });
+    const publicMission = publicEvidenceMissionSchema.parse(await boardResponse.json());
+    await insertPublicMission(evidenceLibrary, publicMission, publicContributorToken);
+
+    const uploadResponse = await SELF.fetch(
+      `https://rooms.example/evidence-cases/${credentials.caseId}/uploads`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({
+          token: publicContributorToken,
+          fileSizeBytes: 2_000_000,
+          maxDurationSeconds: 30,
+          mimeType: 'video/mp4',
+        }),
+      },
+    );
+    const upload = reservedEvidenceUploadSchema.parse(await uploadResponse.json());
+    expect(uploadResponse.status).toBe(201);
+
+    const publishResponse = await SELF.fetch(
+      `https://rooms.example/evidence-cases/${credentials.caseId}/evidence`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({
+          token: publicContributorToken,
+          commandId: crypto.randomUUID(),
+          expectedRevision: credentials.state.revision,
+          uploadId: upload.uploadId,
+          review: {
+            result: 'supports',
+            observation: 'No water reached the paper during the continuous inversion.',
+            contributorLabel: 'Public mission contributor',
+            durationSeconds: 10,
+            citationStartSeconds: 1,
+            citationEndSeconds: 10,
+            confidence: 'high',
+            continuity: 'continuous',
+            rights: 'owned',
+            reuseScope: 'case_only',
+            capturedAt: new Date().toISOString(),
+            sha256: 'c'.repeat(64),
+          },
+        }),
+      },
+    );
+    expect(publishResponse.status).toBe(200);
+    expect(await publishResponse.json()).toMatchObject({
+      ok: true,
+      snapshot: { state: { activeCase: { mission: { status: 'fulfilled' } } } },
+    });
+
+    await expect(
+      evidenceLibrary
+        .prepare('SELECT status FROM public_evidence_missions WHERE mission_id = ?')
+        .bind(missionId)
+        .first<{ readonly status: string }>(),
+    ).resolves.toEqual({ status: 'fulfilled' });
   });
 
   it('keeps weak evidence case-only instead of poisoning the reusable index', async () => {

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title description">
-  <title id="title">ChatGPT asks someone to film missing product evidence once, then reuses it</title>
-  <desc id="description">A five-step flow from ChatGPT identifying an evidence gap, through native WebMCP mission creation and a contributor phone recording, to human-reviewed AI analysis and a timestamped result reused for later matching questions.</desc>
+  <title id="title">ChatGPT publishes missing product proof for any owner to film once, then reuses it</title>
+  <desc id="description">A five-step flow from ChatGPT identifying an evidence gap, through native WebMCP mission creation and privacy-minimized public recruitment, to a product-owner phone recording, human-reviewed AI analysis, and a timestamped result reused for later matching questions.</desc>
   <defs>
     <radialGradient id="background" cx="50%" cy="8%" r="95%">
       <stop offset="0" stop-color="#14352b" />
@@ -35,7 +35,7 @@
 
   <text x="80" y="88" class="sans eyebrow" fill="#9df5d0">QUESTION → NEW EVIDENCE → COMPOUNDING ANSWERS</text>
   <text x="80" y="180" class="sans title" fill="#f3f8f5">Film the missing proof once. Reuse it.</text>
-  <text x="82" y="232" class="sans subtitle" fill="#9eb2aa">Native WebMCP identifies one missing fact; a person reviews the proof; later agents find it first.</text>
+  <text x="82" y="232" class="sans subtitle" fill="#9eb2aa">Native WebMCP posts one missing fact; any product owner can film it; later agents find the reviewed proof first.</text>
 
   <g fill="none" stroke="#9df5d0" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)">
     <path d="M 378 505 H 423" />
@@ -62,22 +62,22 @@
     <text x="44" y="54" class="mono step" fill="#a9ffe2" text-anchor="middle">02</text>
     <text x="28" y="104" class="mono step" fill="#8af2cb">NATIVE WEBMCP</text>
     <text x="28" y="148" class="sans node-title" fill="#f4f8f6">Evidence page</text>
-    <text x="28" y="198" class="sans body" fill="#b3b9b6">Exposes the one action valid</text>
-    <text x="28" y="228" class="sans body" fill="#b3b9b6">for the live evidence state.</text>
+    <text x="28" y="198" class="sans body" fill="#b3b9b6">Creates the exact test and posts</text>
+    <text x="28" y="228" class="sans body" fill="#b3b9b6">only safe fields to the board.</text>
     <rect x="28" y="294" width="264" height="44" rx="12" fill="#a9ffe2" fill-opacity="0.09" stroke="#a9ffe2" stroke-opacity="0.3" />
-    <text x="46" y="322" class="mono receipt" fill="#a9ffe2">create filming mission</text>
+    <text x="46" y="322" class="mono receipt" fill="#a9ffe2">mission → open request</text>
   </g>
 
   <g transform="translate(788 322)">
     <rect width="320" height="366" rx="28" fill="url(#card)" stroke="#ffd36d" stroke-opacity="0.7" stroke-width="2" />
     <circle cx="44" cy="48" r="21" fill="#ffd36d" fill-opacity="0.13" stroke="#ffd36d" stroke-opacity="0.72" />
     <text x="44" y="54" class="mono step" fill="#ffd36d" text-anchor="middle">03</text>
-    <text x="28" y="104" class="mono step" fill="#ffd36d">HUMAN SENSOR</text>
-    <text x="28" y="148" class="sans node-title" fill="#f8f5ed">Contributor phone</text>
-    <text x="28" y="198" class="sans body" fill="#bbb8ac">Records one bounded,</text>
-    <text x="28" y="228" class="sans body" fill="#bbb8ac">continuous physical test.</text>
+    <text x="28" y="104" class="mono step" fill="#ffd36d">OPEN PRODUCT OWNER</text>
+    <text x="28" y="148" class="sans node-title" fill="#f8f5ed">Owner phone</text>
+    <text x="28" y="198" class="sans body" fill="#bbb8ac">Finds the request and records</text>
+    <text x="28" y="228" class="sans body" fill="#bbb8ac">one bounded physical test.</text>
     <rect x="28" y="294" width="264" height="44" rx="12" fill="#ffd36d" fill-opacity="0.08" stroke="#ffd36d" stroke-opacity="0.3" />
-    <text x="46" y="322" class="mono receipt" fill="#ffe19b">no account · exact mission</text>
+    <text x="46" y="322" class="mono receipt" fill="#ffe19b">no store · no customer list</text>
   </g>
 
   <g transform="translate(1153 322)">
@@ -105,8 +105,8 @@
   </g>
 
   <rect x="210" y="758" width="1500" height="112" rx="24" fill="#a9ffe2" fill-opacity="0.055" stroke="#a9ffe2" stroke-opacity="0.22" />
-  <text x="960" y="808" class="sans node-title" fill="#e7f6ef" text-anchor="middle">The agent identifies the gap. A person films once. The evidence keeps answering.</text>
-  <text x="960" y="843" class="mono receipt" fill="#8cebc6" text-anchor="middle">INSPECT → MISSION → PHONE → HUMAN REVIEW → ANSWER DIFF → REUSE</text>
+  <text x="960" y="808" class="sans node-title" fill="#e7f6ef" text-anchor="middle">The agent publishes the gap. Any owner films once. The evidence keeps answering.</text>
+  <text x="960" y="843" class="mono receipt" fill="#8cebc6" text-anchor="middle">INSPECT → MISSION → OPEN BOARD → PHONE → HUMAN REVIEW → ANSWER DIFF → REUSE</text>
 
   <line x1="80" y1="934" x2="1840" y2="934" stroke="#a9ffe2" stroke-opacity="0.16" />
   <text x="960" y="982" class="sans subtitle" fill="#aebeb7" text-anchor="middle">Vercel: Next.js + AI Gateway · Cloudflare: Durable Object + Stream + D1 + Cron</text>

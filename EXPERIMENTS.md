@@ -856,3 +856,29 @@ Results:
 - Three still samples cannot honestly prove continuous stabilization. A future gimbal or motion test would need a condition whose outcome actually depends on multiple ordered moments and must preserve that claim boundary.
 
 Decision: do not make the episode the default or include it in the first release. Reconsider only if the evidence rule consumes at least two distinct samples, the model boundary understands and cites ordered offsets, portrait and landscape physical-phone runs pass ten times consecutively, capture-to-review stays under 5.5 seconds p95, and three cold viewers understand both why the samples were necessary and that raw video was not uploaded. Permanent origins, the exact ChatGPT run, and the final submission cut outrank this experiment.
+
+### E16 — Permissionless missing-proof supply
+
+Frozen claim:
+
+> A shopper can turn one unanswered product question into a privacy-minimized public filming request, and a stranger who already owns the product can discover and fulfill it without a store partnership, customer list, account, or private shopper context.
+
+Status: **local product and native-WebMCP pass; public cold-user/physical-phone gate pending.**
+
+Protocol:
+
+1. Require a real open mission and bounded private phone case before public publication; require `confirmPublicListing: true` through both WebMCP and the human control.
+2. Store only the product, optional public URL, exact question, filming instruction, proof check, duration, continuity requirement, status, and timestamps in the listing. Never copy identity, preferences, history, budget, conversation, owner token, or private contributor token into a public response.
+3. Give the board a separate case-scoped public contributor capability. Remove the listing, prove the old public capability receives `403`, and prove the independent private capability can still republish the open case. Hide fulfilled and expired requests; physically purge expired rows daily.
+4. Give `/missions` its own native `inspect_open_filming_missions` and `open_filming_mission` tools plus matching human controls, no-login QR handoff, desktop/mobile UI, strict schemas, and release-policy checks.
+5. Extend the native acceptance so it must use the public route rather than the already-known private link: arbitrary product → search → mission → public publication → fresh board context → inspect/claim → contributor video → AI-shaped proposal → human correction/reuse consent → first answer change → fresh matching shopper reuses the citation.
+
+Results:
+
+- The public list contains no capability fields. D1 stores a random 256-bit public recorder capability that is distinct from the visible mission ID and private contributor token; list/read responses omit it, and the Durable Object stores only its digest. Removal clears the public digest, and replacing a removed listing atomically invalidates the old public URL while retaining one board row per case.
+- Publication lasts at most 24 hours even if a case is configured for longer. A daily Cloudflare Cron path purges expired requests beside expired reusable evidence. Case-creation limits and the two-upload lifetime cap still bound the cost surface.
+- Native Chrome completed the eight-step public-supply and two-shopper loop in about seven seconds against the real local Next.js, Durable Object, D1 schema, WebSocket, and WebMCP runtime. Only paid Stream/model edges were deterministic strict fixtures.
+- The board rendered coherently at desktop and `390×844`, exposed the exact no-login QR after claim, produced no framework/console error, and reached zero axe WCAG A/AA violations after adding explicit SVG QR titles. Layered-gradient contrast remains an automated-audit incomplete and was visually inspected.
+- The public release verifier now requires board health metadata, a live no-store/CORS D1 list query, the `/missions` page marker, and its no-camera/no-upload/no-playback policy before a deployment can pass.
+
+Decision: keep the board in the hero. It closes the largest product-credibility gap—how an unknown product owner receives a request—while deepening WebMCP across a second coherent surface and avoiding merchant dependencies. Do not add bounties, contributor accounts, feeds, voting, messaging, or fulfillment promises before the final public/phone/ChatGPT/cold-user gates. The board is permissionless discoverability plus a working bounded fulfillment path, not yet a mature marketplace.
