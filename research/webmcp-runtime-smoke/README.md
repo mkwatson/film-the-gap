@@ -1,6 +1,6 @@
 # WebMCP native runtime smoke probe
 
-This deliberately tiny page distinguishes the current draft API from the exact installed browser behavior. It is research evidence, not product code and not a substitute for the full human-in-the-loop acceptance matrix in [RESOURCES.md](../../RESOURCES.md).
+This deliberately tiny page distinguishes the current draft API from the exact installed browser behavior. It is research evidence, not product code and not a substitute for the full human-in-the-loop acceptance matrix in [VERIFICATION.md](../../VERIFICATION.md).
 
 ## Run locally
 

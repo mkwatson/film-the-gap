@@ -6,16 +6,14 @@
 .env.test.local
 .vercel/
 .next/
+next-env.d.ts
 coverage/
 room-worker/dist/
 room-worker/.wrangler/
 room-worker/test/fixtures/.wrangler/
-merchant-worker/dist/
-merchant-worker/.wrangler/
 node_modules/
 out/
 tmp/
-proof/.lake/
 *.private.md
 *.log
 *.tsbuildinfo

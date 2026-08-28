@@ -8,7 +8,7 @@ This packet does not authorize a deployment, paid Stream/Gateway use, external r
 
 > ChatGPT turns the exact fact missing from the web into a tiny public filming request; anyone with the product can record it once, and future shoppers reuse the reviewed video.
 
-Every shot must reinforce that sentence. Commerce, UCP, Lean, the prior auction, sponsor logos, and implementation history stay out of the primary cut.
+Every shot must reinforce that sentence. Sponsor logos and implementation history stay out of the primary cut.
 
 ## Demo object and truth contract
 

@@ -1,6 +1,6 @@
 # Generic evidence-network release runbook
 
-Updated 2026-08-27 PT. Nothing described here is publicly deployed yet. The existing live-market release remains an independent known-good fallback; this candidate uses a new Vercel project and the separate Cloudflare Worker name `webmcp-product-evidence`, so releasing it cannot overwrite that fallback.
+Updated 2026-08-27 PT. Nothing described here is publicly deployed yet. This runbook uses a new Vercel project and the separate Cloudflare Worker name `webmcp-product-evidence`, so it cannot overwrite an existing deployment.
 
 ## Candidate topology
 
@@ -16,7 +16,7 @@ Updated 2026-08-27 PT. Nothing described here is publicly deployed yet. The exis
 | Broad-web discovery         | Exa tool through Vercel AI Gateway + AI SDK 7      | At most four claim-aware web/PDP leads from one exact-query-verified call                                        |
 | Discovery reuse             | Vercel Runtime Cache                               | Reuses successful public-query receipts for 15 minutes per region                                                |
 
-The deployable Worker is [evidence-index.ts](room-worker/src/evidence-index.ts), configured by [wrangler.evidence.jsonc](room-worker/wrangler.evidence.jsonc). It intentionally exposes no live-market rooms, UCP cart, merchant, checkout, or legacy image-model endpoint.
+The deployable Worker is [evidence-index.ts](room-worker/src/evidence-index.ts), configured by [wrangler.evidence.jsonc](room-worker/wrangler.evidence.jsonc). It exposes only the evidence API required by this product.
 
 ## Cost and abuse envelope
 
@@ -50,7 +50,7 @@ Turnstile is not on the canonical judge path yet. Its server validation would ad
 
 These steps mutate accounts or authorize spend. Mark must approve them and be present.
 
-1. Choose a globally distinct public project name and create a new Vercel project. Its generated `*.vercel.app` hostname is based on that name, so choose a name that does not acquire a company/team suffix and remains visibly standalone. Do not reuse or rename the live-market fallback project. A custom domain is optional polish after the generated hostname passes every gate.
+1. Choose a globally distinct public project name and create a new Vercel project. Its generated `*.vercel.app` hostname is based on that name, so choose a name that does not acquire a company/team suffix and remains visibly standalone. Do not reuse or rename an existing project. A custom domain is optional polish after the generated hostname passes every gate.
 2. Enable Cloudflare Stream on the intended account and approve its minimum storage/delivery commitment.
 3. Create a dedicated D1 database in Western North America and replace both all-zero placeholder IDs in `room-worker/wrangler.evidence.jsonc` with the returned UUID. This mutates the Cloudflare account and must not be run until Mark approves:
 
@@ -198,7 +198,7 @@ Vercel WAF rate limiting is available on all plans, but the first rule may show 
    pnpm dlx vercel@59.9.1 firewall diff
    ```
 
-2. Mark runs `pnpm dlx vercel@59.9.1 firewall publish --yes`, exercises buyer and ChatGPT searches, and reviews matched traffic in the Vercel Firewall dashboard.
+2. Mark runs `pnpm dlx vercel@59.9.1 firewall publish --yes`, exercises shopper and ChatGPT searches, and reviews matched traffic in the Vercel Firewall dashboard.
 3. After legitimate traffic is confirmed, retain the rule and change overflow to HTTP 429:
 
    ```bash
@@ -272,4 +272,4 @@ Preserve the previous candidate Vercel deployment URL and Worker version ID befo
 - Cloudflare: `pnpm --dir room-worker exec wrangler rollback PREVIOUS_VERSION_ID --config wrangler.evidence.jsonc --message "rollback to known-good generic evidence release"`.
 - WAF: stage the rule back to logging or disable it, inspect `firewall diff`, then Mark publishes the draft.
 
-Cloudflare code rollback does not roll back Durable Object or D1 storage. Never roll back across an incompatible stored schema; migrations need their own forward repair. If any required public gate fails, keep the old independent live-market release untouched and remove the generic URL from judge-facing material until the candidate is repaired.
+Cloudflare code rollback does not roll back Durable Object or D1 storage. Never roll back across an incompatible stored schema; migrations need their own forward repair. If any required public gate fails, remove the URL from submission material until the candidate is repaired.

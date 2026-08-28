@@ -1,8 +1,8 @@
-# Standalone product-evidence network
+# Product-evidence network
 
-This repository is the challenge-period implementation workspace for a simple idea: **when a shopper asks a question that product pages and reviews cannot prove, an agent can find existing evidence or ask a real person to film the missing proof—then use that reviewed, timestamped video to improve its answer.** The heading is descriptive; the public project name is deliberately not frozen yet.
+This is an open-source website with native WebMCP Site Tools for one simple idea: **when a shopper asks a question that product pages and reviews cannot prove, ChatGPT can find existing evidence or ask a real product owner to film the missing proof—then use that reviewed, timestamped video to improve its answer.** The heading is descriptive; Mark has reserved the final submitted name.
 
-It is a standalone OpenAI WebMCP Challenge entry. It does not use Vidably branding, private code, private data, or a Vidably dependency.
+The shopper, public-request board, and phone recorder are ordinary web pages. WebMCP lets ChatGPT understand and operate the same state-dependent actions a person sees, while the contributor records and reviews evidence in any normal mobile browser.
 
 ## The complete loop
 
@@ -22,7 +22,7 @@ This is not a text-review demo and it does not claim that video is impossible to
 
 WebMCP exposes the product's real, state-dependent actions to a browser agent without hiding a parallel API behind the demo. On the shopper page, the agent can inspect evidence, search permitted sources, create one missing-proof mission, create its private phone case, explicitly publish or remove its public request, and consume the newly published result. On the open board, WebMCP can inspect current requests and open one exact bounded recorder. Human controls mirror the same contracts. Mutating tools are narrow, confirmation-gated where public disclosure is involved, cancellable where applicable, and protected against stale state.
 
-The judge-facing before/after is therefore causal and inspectable:
+The demo's before/after is therefore causal and inspectable:
 
 ```text
 Question → evidence gap → WebMCP mission → open request board → product owner
@@ -40,13 +40,17 @@ Question → evidence gap → WebMCP mission → open request board → product 
 | Cloudflare Cron Triggers   | Deletes expired public requests and reusable evidence metadata every day                     | The 24-hour request and 30-day reuse boundaries are enforced in storage                 |
 | Vercel AI Gateway          | Routes the authorized MP4 to a current video model and runs one bounded Exa web-search tool  | Model/search selection, budgets, receipts, and failure handling stay explicit           |
 | Vercel AI SDK 7            | Sends the video and enforces a typed structured evidence proposal                            | The model cannot publish free-form prose directly into the evidence graph               |
-| Next.js 16 on Vercel       | Serves the shopper, open-request board, agent, and contributor experience                    | It keeps all three no-login surfaces fast and familiar                                  |
+| Next.js 16 on Vercel       | Serves the shopper, open-request board, and contributor experience                           | It keeps all three no-login surfaces fast and familiar                                  |
 | Vercel Runtime Cache       | Reuses successful public search receipts for 15 minutes per region                           | Repeat judge/agent queries avoid duplicate provider calls                               |
 | ScrapeCreators, optional   | Finds link-only TikTok, Instagram Reels, and YouTube leads                                   | Public discovery broadens coverage without pretending discovery grants reuse rights     |
 
-The continuous-video path currently targets `google/gemini-3.7-flash` through AI Gateway, with `google/gemini-3.6-flash` as fallback. Exact versions and source receipts are recorded in [EXPERIMENTS.md](EXPERIMENTS.md) and [SPONSOR-PRODUCTS.md](SPONSOR-PRODUCTS.md). No live model or Stream request runs in the default test suite.
+The continuous-video path currently targets `google/gemini-3.7-flash` through AI Gateway, with `google/gemini-3.6-flash` as fallback. No live model or Stream request runs in the default test suite.
 
-UCP, the prior live-shopping market, and the Lean capability proof remain in Git history as independently working research rungs. Their implementation and public routes are intentionally absent from this candidate because adding checkout or a formal proof does not improve the core product-evidence story yet.
+The direct WebMCP implementation is in [site-tools.ts](src/lib/evidence-network/site-tools.ts), with dynamic registration in [use-dynamic-site-tools.ts](src/lib/webmcp/use-dynamic-site-tools.ts) and independent browser-evaluation cases documented in [evals/README.md](evals/README.md).
+
+## Challenge-period provenance
+
+This repository was created entirely during the OpenAI WebMCP Challenge submission period. Its first commit is `be76c558a8a53c4d7e2f318961fd1dc7460980e7`, dated August 26, 2026 at 6:28 a.m. PT—after the submission period opened on August 25, 2026 at 11:00 a.m. PT.
 
 ## Run locally
 
@@ -134,10 +138,10 @@ The runner generates a rights-clean 12-second MP4 and drives the complete strang
 - The app has deterministic automated coverage for success, denial, stale revisions, manual fallback, dependency failures, simultaneous analysis coalescing, fragment scrubbing, contributor reload, and buyer reconnect. It does not call paid services during tests.
 - The standalone deployable Worker exposes only the evidence API. It rate-limits case creation, permits two upload reservations per temporary case, caps clips at 95 MiB/90 seconds, expires upload URLs, schedules Stream deletion, bounds model retries, and physically purges expired board/reuse D1 records daily. Public board listings last at most 24 hours, carry only public product/filming fields, and use a capability that can be revoked independently of the private link. The release runbook adds one budgeted cross-cloud Gateway key, automatic Vercel OIDC for search, and a Vercel WAF ceiling.
 - Native Chrome completes arbitrary-product search → mission → public board → stranger claim → phone evidence → first answer change → fresh-case evidence reuse in roughly five seconds against real local Durable Object/D1 state and deterministic paid-service fixtures.
-- The prior public release remains the known-good fallback. This generic branch is not yet deployed and has not yet passed a real Stream → Gateway → physical-phone journey.
+- This candidate is not yet deployed and has not yet passed a real Stream → Gateway → physical-phone journey. Those remain mandatory release gates, not inferred claims.
 - It does not claim universal access to product owners, guaranteed fulfillment, independent contributor verification, product authenticity, or perfect deepfake detection. The board demonstrates permissionless discoverability, not a mature incentive marketplace.
 - It does not place an order, charge a user, contact strangers, scrape private data, or reuse third-party media without rights.
 
 Before submission, a fresh judge must be able to complete the whole public no-login loop in current ChatGPT's in-app browser, WebMCP-enabled Chrome, an ordinary-browser fallback, and a physical phone. The three-minute video must show the answer before the mission, the phone recording and human review, and the materially improved answer after publication.
 
-See [SUBMISSION.md](SUBMISSION.md) for the judge packet, [DEMO.md](DEMO.md) for the capture plan, [DEPLOYMENT.md](DEPLOYMENT.md) for release and rollback, [EXPERIMENTS.md](EXPERIMENTS.md) for falsification receipts, [RESOURCES.md](RESOURCES.md) for current documentation, [SPONSOR-PRODUCTS.md](SPONSOR-PRODUCTS.md) for the sponsor atlas, and [STRATEGY.md](STRATEGY.md) for the winning-probability framework.
+See [SUBMISSION.md](SUBMISSION.md) for the submission packet, [DEMO.md](DEMO.md) for the capture plan, [DEPLOYMENT.md](DEPLOYMENT.md) for release and rollback, [VERIFICATION.md](VERIFICATION.md) for exact receipts and open gates, and [evals/README.md](evals/README.md) for browser-agent evaluation.

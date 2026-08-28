@@ -1,8 +1,8 @@
 # Submission control packet
 
-Updated 2026-08-27 PT. This is the candidate Devpost copy, judge runbook, claims ledger, and freeze checklist for the standalone product-evidence network. It describes only the generic evidence branch. The older live-shopping, private-price, UCP, and Lean rungs remain in challenge-period history, but their routes are absent from this candidate and they are not the submission hero.
+Updated 2026-08-27 PT. This is the candidate Devpost copy, judge runbook, claims ledger, and freeze checklist for the standalone product-evidence network.
 
-The official FAQ says the entrant—not AI—must name the project. Every label below is descriptive until Mark chooses the submitted name.
+Mark has reserved the final submitted name. Every label below is descriptive until he chooses it.
 
 ## The whole product in one sentence
 
@@ -12,7 +12,7 @@ The official FAQ says the entrant—not AI—must name the project. Every label 
 
 | Submission asset         | Final value                                                          |
 | ------------------------ | -------------------------------------------------------------------- |
-| Project name             | **[MARK CHOOSES — AI MUST NOT NAME]**                                |
+| Project name             | **[MARK TO CHOOSE]**                                                 |
 | One-line hook            | If the web cannot prove it, ask someone with the product to film it. |
 | Live URL                 | **[PENDING USER-APPROVED GENERIC DEPLOYMENT]**                       |
 | Public repository        | **[PENDING USER-APPROVED GENERIC BRANCH PUBLICATION]**               |
@@ -21,6 +21,8 @@ The official FAQ says the entrant—not AI—must name the project. Every label 
 | Primary judged clients   | ChatGPT in-app Browser; Chrome 149+ with WebMCP enabled              |
 | Entrant / representative | **[MARK CONFIRMS]**                                                  |
 | Open-source license      | [MIT](LICENSE), copyright Mark Watson                                |
+
+The project was created entirely during the submission period. Its first commit, `be76c558a8a53c4d7e2f318961fd1dc7460980e7`, is dated August 26, 2026 at 6:28 a.m. PT, after the challenge opened on August 25 at 11:00 a.m. PT.
 
 ## Devpost short description
 
@@ -106,7 +108,7 @@ unproven answer
     → ChatGPT cites the evidence and changes its answer
 ```
 
-Commerce, UCP, Lean, the previous live market, sponsor logos, and long architecture explanations do not belong in the primary cut. They dilute the judge-visible product transformation.
+Sponsor logos and long architecture explanations do not belong in the primary cut. They dilute the judge-visible product transformation.
 
 ## Rubric proof matrix
 
@@ -137,7 +139,7 @@ The criteria are equally weighted. WebMCP Leverage is the first tie-breaker, so 
 - A contributor must explicitly opt into reusable publication. The D1 index accepts only conclusive, medium-or-high-confidence continuous recordings, matches supplied product URLs exactly after safe canonicalization, expires records after 30 days, and has a daily physical purge.
 - The buyer reconnects to the same Durable Object after reload, and receives live answer updates over WebSocket.
 - The deployable generic Worker has a separate name and exposes only the evidence API. Public case creation has per-client and aggregate Cloudflare rate-limit bindings; each temporary case has a hard two-upload ceiling, and clips are bounded by bytes, duration, expiry, and retention.
-- The obsolete public image-model route and legacy live-market/UCP pages are absent from this candidate. Social search requires same-origin JSON before it can reach the optional vendor, and the release runbook requires a staged Vercel WAF ceiling plus dedicated vendor credits.
+- Social search requires same-origin JSON before it can reach the optional vendor, and the release runbook requires a staged Vercel WAF ceiling plus dedicated vendor credits.
 - Broad-web discovery is implemented with the current AI SDK/Gateway-native Exa tool, exact-query receipt verification, four-result/20-second bounds, automatically refreshed Vercel OIDC under a non-renewing project budget, and Vercel Runtime Cache. Its malformed, rewritten-query, provider-error, duplicate, OIDC-without-stored-key, and outage paths pass offline tests; a real Gateway search on the final Vercel origin remains an external-account acceptance gate.
 - The deterministic native-Chrome acceptance test opens an arbitrary product, searches through its dynamically registered Site Tool, preserves the supplied page as an inconclusive link-only lead, then completes mission → explicit public-board publication → fresh board context inspection/claim → phone handoff → upload → model-shaped proposal → human correction → explicit reuse consent → publication → timestamped answer diff. It finally opens a fresh matching case and proves the same reviewed Stream citation changes the answer without another mission. The real app, Durable Object, D1 database, migrations, and revocable capability boundary run unchanged; only the paid Stream and model edges are strict local fixtures.
 - Strict TypeScript, formatting, linting, application tests, Workerd tests, Worker dry runs, and a Next.js production build pass on the current branch.
@@ -162,7 +164,7 @@ The criteria are equally weighted. WebMCP Leverage is the first tie-breaker, so 
 - The model is authoritative, or a contributor's statement proves a hidden historical fact.
 - A replay fixture is a live person, a live model call, or fresh physical evidence.
 - The generic branch is publicly deployed before it actually is.
-- Shopify, UCP, checkout, payment, Vidably production systems, private research, and customer data are not part of the judged product.
+- Checkout, payment, private systems, private research, and customer data are not part of the judged product.
 
 ## Repository, rights, and release checklist
 

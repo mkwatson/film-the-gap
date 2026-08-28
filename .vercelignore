@@ -1,6 +1,5 @@
 tmp/
 **/.wrangler/
 **/dist/
-proof/.lake/
 *.private.md
 *.tsbuildinfo
