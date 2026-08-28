@@ -169,7 +169,7 @@ describe('ProductEvidenceNetwork', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Search existing evidence' }));
 
-    expect(await screen.findByText('Live social search unavailable')).toBeTruthy();
+    expect(await screen.findByText('Live public search unavailable')).toBeTruthy();
     expect(
       screen.getByRole('button', { name: 'Create claim-specific filming mission' }),
     ).toBeTruthy();
@@ -178,5 +178,57 @@ describe('ProductEvidenceNetwork', () => {
 
     expect(await screen.findByText('Put this exact mission on any phone.')).toBeTruthy();
     expect(screen.queryByText('Replay a completed rights-clean mission')).toBeNull();
+  });
+
+  it('shows the concrete social and broad-web discovery receipt without promoting leads to proof', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (): Promise<Response> =>
+        Response.json({
+          provider: 'evidence_network',
+          status: 'complete',
+          query: 'Desk lamp brightness memory after power loss',
+          searchedPlatforms: ['youtube', 'web'],
+          warnings: [],
+          leads: [
+            {
+              platform: 'youtube',
+              title: 'Desk lamp power-cycle video',
+              url: 'https://www.youtube.com/watch?v=abc123',
+              summary: 'Candidate only; the video has not been reviewed.',
+              creatorLabel: 'YouTube · Test Lab',
+            },
+            {
+              platform: 'web',
+              title: 'Desk lamp owner report',
+              url: 'https://reviews.example/desk-lamp',
+              summary: 'Search excerpt only; the page has not been claim-reviewed.',
+              creatorLabel: 'Open web · Exa via Vercel AI Gateway',
+            },
+          ],
+        }),
+      ),
+    );
+    setModelContext(undefined);
+    render(<ProductEvidenceNetwork />);
+
+    fireEvent.change(screen.getByLabelText('Product'), {
+      target: { value: 'Desk lamp' },
+    });
+    fireEvent.change(screen.getByLabelText('What do you need to know?'), {
+      target: { value: 'Does it remember its brightness after losing power?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Open new evidence case' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Search existing evidence' }));
+
+    expect(await screen.findByText(/ScrapeCreators \+ Exa through Vercel AI Gateway/)).toBeTruthy();
+    expect(screen.getAllByText('inconclusive')).toHaveLength(2);
+    expect(screen.getAllByText(/public leads never count as proof/)).toHaveLength(1);
+    expect(screen.getByRole('link', { name: 'Watch cited video ↗' }).getAttribute('href')).toBe(
+      'https://www.youtube.com/watch?v=abc123',
+    );
+    expect(screen.getByRole('link', { name: 'Open source page ↗' }).getAttribute('href')).toBe(
+      'https://reviews.example/desk-lamp',
+    );
   });
 });

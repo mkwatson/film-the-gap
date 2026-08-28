@@ -21,6 +21,7 @@ import {
   type ReviewedEvidenceInput,
 } from './model';
 import { maximumAnalyzableVideoBytes } from './video-analysis';
+import { publicHttpUrlSchema } from './url-policy';
 
 export const remoteEvidenceProtocolVersion = '1' as const;
 export const remoteEvidenceCaseIdPattern = /^[A-Z2-9]{8}$/;
@@ -30,16 +31,10 @@ export const maximumUploadsPerEvidenceCase = 2;
 const idSchema = z.string().min(1).max(160);
 const tokenSchema = z.string().min(32).max(256);
 const timestampSchema = z.iso.datetime();
-const httpUrlSchema = z
-  .url()
-  .refine((value) => ['http:', 'https:'].includes(new URL(value).protocol), {
-    message: 'Use an HTTP or HTTPS URL.',
-  });
-
 const evidenceSourceSchema = z.strictObject({
   id: idSchema,
   title: z.string().min(1).max(240),
-  url: httpUrlSchema.nullable(),
+  url: publicHttpUrlSchema.nullable(),
   mediaType: z.enum(['web_page', 'video', 'image']),
   rights: z.enum(sourceRights),
   provenance: z.enum(sourceProvenanceKinds),
@@ -107,7 +102,7 @@ const productEvidenceCaseSchema = z.strictObject({
   product: z.strictObject({
     id: idSchema,
     name: z.string().min(2).max(120),
-    suppliedUrl: httpUrlSchema.nullable(),
+    suppliedUrl: publicHttpUrlSchema.nullable(),
   }),
   question: z.strictObject({
     id: idSchema,
@@ -208,7 +203,7 @@ export interface ReservedEvidenceUpload {
 export const reservedEvidenceUploadSchema: z.ZodType<ReservedEvidenceUpload> = z.strictObject({
   provider: z.literal('cloudflare_stream'),
   uploadId: z.string().regex(/^[a-zA-Z0-9_-]{16,128}$/),
-  uploadUrl: httpUrlSchema,
+  uploadUrl: publicHttpUrlSchema,
   maxDurationSeconds: z.number().int().min(2).max(90),
   expiresAt: timestampSchema,
 });

@@ -6,11 +6,13 @@ Updated 2026-08-27 PT. Nothing described here is publicly deployed yet. The exis
 
 | Surface                     | Runtime                                            | Responsibility                                                                                   |
 | --------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Shopper and contributor app | Next.js 16 on Vercel                               | Native WebMCP tools, human UI, QR handoff, social discovery, video review, playback              |
+| Shopper and contributor app | Next.js 16 on Vercel                               | Native WebMCP tools, human UI, QR handoff, public discovery, video review, playback              |
 | Evidence service            | Cloudflare Worker + SQLite Durable Object          | Revisioned cases, scoped capabilities, WebSocket updates, upload reservations, reviewed evidence |
 | Video                       | Cloudflare Stream binding                          | One-time direct phone uploads, encoding, authorized MP4 generation, playback                     |
 | Multimodal proposal         | Vercel AI Gateway + AI SDK 7, called by the Worker | Bounded timestamped proposal from the authorized MP4; never publication authority                |
-| Optional discovery          | ScrapeCreators, called only by the Vercel app      | Link-only TikTok, Instagram, and YouTube leads; never implied reuse rights                       |
+| Social-video discovery      | ScrapeCreators, called only by the Vercel app      | Link-only TikTok, Instagram, and YouTube leads; never implied reuse rights                       |
+| Broad-web discovery         | Exa tool through Vercel AI Gateway + AI SDK 7      | At most four claim-aware web/PDP leads from one exact-query-verified call                        |
+| Discovery reuse             | Vercel Runtime Cache                               | Reuses successful public-query receipts for 15 minutes per region                                |
 
 The deployable Worker is [evidence-index.ts](room-worker/src/evidence-index.ts), configured by [wrangler.evidence.jsonc](room-worker/wrangler.evidence.jsonc). It intentionally exposes no live-market rooms, UCP cart, merchant, checkout, or legacy image-model endpoint.
 
@@ -28,8 +30,10 @@ These are defense-in-depth controls, not claims of perfect abuse prevention.
 | Upload capability      | One-time Stream URL with a 15-minute expiry and allowed app hostname                                    |
 | Stored video           | Scheduled deletion after 31 days; enough for judging, not indefinite storage                            |
 | Model calls            | One cached successful proposal per upload and no more than two crash-recovery attempts                  |
-| AI spend               | Dedicated AI Gateway key with a hard non-renewing budget and 30-day expiry                              |
-| Social search          | Same-origin JSON only, Vercel WAF fixed-window limit, and a dedicated/fixed-credit vendor key           |
+| Video AI spend         | Dedicated AI Gateway key with a hard non-renewing budget and 30-day expiry                              |
+| Broad web search       | One Exa `instant` call, four results, exact-query receipt check, 20-second timeout, and separate budget |
+| Discovery reuse        | SHA-256 cache key; successful configured searches reused for 15 minutes through Vercel Runtime Cache    |
+| Public discovery       | Same-origin JSON only, Vercel WAF fixed-window limit, and dedicated budgeted/fixed-credit vendor keys   |
 
 Cloudflare's current Worker rate-limit binding is deliberately permissive, eventually consistent, and local to a Cloudflare location. It is useful overload protection, not exact global accounting. The hard upload-count cap, model-attempt cap, expiring capabilities, AI Gateway budget, and vendor credit limit remain necessary. See [Workers Rate Limiting](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/), [Stream Direct Creator Uploads](https://developers.cloudflare.com/stream/uploading-videos/direct-creator-uploads/), [Vercel WAF Rate Limiting](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting), and [AI Gateway key budgets](https://vercel.com/changelog/budgets-for-api-keys-on-ai-gateway).
 
@@ -41,18 +45,25 @@ These steps mutate accounts or authorize spend. Mark must approve them and be pr
 
 1. Choose the public project name and a new Vercel project. Do not reuse the live-market Vercel project.
 2. Enable Cloudflare Stream on the intended account and approve its minimum storage/delivery commitment.
-3. Create a dedicated Vercel AI Gateway key with a hard budget. A sensible rehearsal/judging ceiling is `$25`, non-renewing, with alerts and a 30-day expiry:
+3. Create two dedicated Vercel AI Gateway keys with a combined hard ceiling of `$25`, non-renewing, with alerts and a 30-day expiry. Separating video analysis from public web discovery limits blast radius and makes each cost visible:
 
    ```bash
    pnpm dlx vercel@59.7.0 ai-gateway api-keys create \
-     --name webmcp-product-evidence-judging \
-     --budget 25 \
+     --name webmcp-product-evidence-video \
+     --budget 20 \
+     --refresh-period none \
+     --alert-thresholds 50,75,100 \
+     --expiration 30d
+
+   pnpm dlx vercel@59.7.0 ai-gateway api-keys create \
+     --name webmcp-product-evidence-discovery \
+     --budget 5 \
      --refresh-period none \
      --alert-thresholds 50,75,100 \
      --expiration 30d
    ```
 
-   Do not use `--bypass-all-settings` or `--zdr-exempt`. Copy the returned secret only into Cloudflare's encrypted secret prompt.
+   Do not use `--bypass-all-settings` or `--zdr-exempt`. Copy the video secret only into Cloudflare's encrypted secret prompt. Keep the discovery secret for the new Vercel project's encrypted Production environment.
 
 4. If live social discovery is enabled, create a dedicated ScrapeCreators key with only the credits Mark approves. The app remains truthful and functional without it, but reports discovery as unavailable.
 5. Link this worktree to the new Vercel project only after the public project name is chosen. `.vercel/project.json` must remain uncommitted.
@@ -105,7 +116,7 @@ Then:
      --var "EVIDENCE_CASE_TTL_SECONDS:86400"
    ```
 
-2. Add the dedicated budgeted Gateway key through the encrypted prompt:
+2. Add the dedicated budgeted video-analysis Gateway key through the encrypted prompt:
 
    ```bash
    pnpm --dir room-worker exec wrangler secret put AI_GATEWAY_API_KEY \
@@ -127,13 +138,14 @@ Then:
 4. Configure the new Vercel project's Production environment:
 
    - `NEXT_PUBLIC_EVIDENCE_ROOM_URL=$ROOM_ORIGIN` — required and compiled at build time.
+   - `AI_GATEWAY_DISCOVERY_API_KEY` — optional but expected for the final candidate; the separate `$5` key for bounded Exa search through Vercel AI Gateway.
    - `SCRAPECREATORS_API_KEY` — optional, server-only, dedicated to this demo.
-   - Do not add `AI_GATEWAY_API_KEY`; the legacy Vercel model endpoint was removed and the budgeted key belongs only on the Worker.
+   - Do not add `AI_GATEWAY_API_KEY`; the video-analysis key belongs only on the Worker.
 
 5. Deploy the exact Git commit to Vercel. Prefer a Git-associated Production build so `VERCEL_GIT_COMMIT_SHA` is authoritative. A reviewed prebuilt artifact may use `WEBMCP_RELEASE_COMMIT_SHA=$RELEASE_SHA`, but the room origin must be present during `vercel build`; changing it after the build cannot update the client bundle.
 6. Confirm Vercel Deployment Protection is disabled on the final judge hostname. The page must work logged out with no share parameter, password, trusted IP, or bypass header.
 
-## Vercel social-search firewall
+## Vercel public-discovery firewall
 
 Vercel WAF rate limiting is available on all plans, but the first rule may show a pricing acknowledgement. Stage and inspect it; Mark publishes each stage.
 

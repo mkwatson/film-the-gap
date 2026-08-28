@@ -12,6 +12,7 @@ type DiscoveryFetch = (url: string, init: RequestInit) => Promise<Response>;
 interface SearchDependencies {
   readonly apiKey: string | undefined;
   readonly fetchImpl?: DiscoveryFetch;
+  readonly signal?: AbortSignal;
 }
 
 interface PlatformSearchResult {
@@ -243,7 +244,15 @@ export function buildEvidenceSearchQuery(input: ProductQuestionInput): string {
     .replace(/[?!.,]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-  return `${input.productName} ${questionTerms}`.slice(0, 420);
+  const query = `${input.productName} ${questionTerms}`;
+  let bounded = '';
+  for (const character of query) {
+    if (bounded.length + character.length > 420) {
+      break;
+    }
+    bounded += character;
+  }
+  return bounded;
 }
 
 async function searchPlatform(
@@ -251,11 +260,13 @@ async function searchPlatform(
   path: string,
   apiKey: string,
   fetchImpl: DiscoveryFetch,
+  signal: AbortSignal | undefined,
 ): Promise<PlatformSearchResult> {
   try {
+    const timeout = AbortSignal.timeout(25_000);
     const response = await fetchImpl(`${scrapeCreatorsOrigin}${path}`, {
       headers: { 'x-api-key': apiKey },
-      signal: AbortSignal.timeout(25_000),
+      signal: signal === undefined ? timeout : AbortSignal.any([signal, timeout]),
     });
     if (!response.ok) {
       return {
@@ -300,18 +311,21 @@ export async function searchScrapeCreatorsEvidence(
       `/v1/tiktok/search/keyword?query=${encodedQuery}&sort_by=relevance&trim=true`,
       apiKey,
       fetchImpl,
+      dependencies.signal,
     ),
     searchPlatform(
       'instagram',
       `/v2/instagram/reels/search?query=${encodedQuery}&page=1`,
       apiKey,
       fetchImpl,
+      dependencies.signal,
     ),
     searchPlatform(
       'youtube',
       `/v1/youtube/search?query=${encodedQuery}&sortBy=relevance&includeExtras=false`,
       apiKey,
       fetchImpl,
+      dependencies.signal,
     ),
   ]);
   const successful = results.filter(({ ok }) => ok);

@@ -17,6 +17,7 @@ import {
   type EvidenceResult,
   type EvidenceDiscoveryInput,
   type EvidenceDiscoveryPlatform,
+  type EvidenceDiscoveryProvider,
   type ProductQuestionInput,
 } from '@/lib/evidence-network/model';
 import {
@@ -94,6 +95,34 @@ function discoveryPlatformForUrl(url: string): EvidenceDiscoveryPlatform {
     return 'youtube';
   }
   return 'web';
+}
+
+function discoveryProviderReceipt(
+  provider: EvidenceDiscoveryProvider,
+  platforms: readonly EvidenceDiscoveryPlatform[],
+  sourceCount: number,
+): string {
+  if (provider === 'rights_clean_demo') {
+    return 'Rights-clean demo fixture';
+  }
+  if (provider === 'scrapecreators') {
+    return 'ScrapeCreators social search';
+  }
+  if (provider === 'vercel_ai_gateway') {
+    return 'Exa through Vercel AI Gateway';
+  }
+  const searchedSocial = platforms.some((platform) => platform !== 'web');
+  const searchedWeb = platforms.includes('web');
+  if (searchedSocial && searchedWeb) {
+    return 'ScrapeCreators + Exa through Vercel AI Gateway';
+  }
+  if (searchedSocial) {
+    return 'ScrapeCreators social search';
+  }
+  if (searchedWeb) {
+    return 'Exa through Vercel AI Gateway';
+  }
+  return sourceCount > 0 ? 'Supplied page only' : 'No live provider completed';
 }
 
 function remoteDiscoveryForState(state: EvidenceNetworkState): EvidenceDiscoveryInput | undefined {
@@ -649,11 +678,14 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
               </span>
               <em>{sources.length}</em>
             </div>
-            {evidenceCase?.discovery === null ? (
+            {evidenceCase === null || evidenceCase.discovery === null ? (
               <div className="evidence-search-strip">
                 <div>
-                  <strong>Search public video before requesting new footage.</strong>
-                  <p>TikTok, Instagram Reels, and YouTube results stay link-only until reviewed.</p>
+                  <strong>Search existing sources before requesting new footage.</strong>
+                  <p>
+                    Product pages, public social video, and open-web results stay link-only until
+                    reviewed.
+                  </p>
                 </div>
                 <button
                   className="evidence-secondary-button"
@@ -662,24 +694,42 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                   onClick={() => void searchEvidence('human')}
                 >
                   {searchPhase === 'searching'
-                    ? 'Searching three platforms…'
+                    ? 'Searching public sources…'
                     : 'Search existing evidence'}
                 </button>
               </div>
             ) : (
               <div className="evidence-search-receipt">
-                <span>{evidenceCase?.discovery.status === 'unavailable' ? '○' : '✓'}</span>
+                <span>
+                  {evidenceCase.discovery.status === 'unavailable'
+                    ? '○'
+                    : evidenceCase.discovery.status === 'partial'
+                      ? '◐'
+                      : '✓'}
+                </span>
                 <p>
                   <strong>
-                    {evidenceCase?.discovery.status === 'unavailable'
-                      ? 'Live social search unavailable'
-                      : `${evidenceCase?.discovery.searchedPlatforms.length ?? 0} public platforms searched`}
+                    {evidenceCase.discovery.status === 'unavailable'
+                      ? 'Live public search unavailable'
+                      : evidenceCase.discovery.status === 'partial'
+                        ? `${evidenceCase.discovery.searchedPlatforms.length} source channels completed; some unavailable`
+                        : `${evidenceCase.discovery.searchedPlatforms.length} public source channels searched`}
                   </strong>
                   <small>
-                    {evidenceCase?.discovery.sourceIds.length ?? 0} discovered source
-                    {(evidenceCase?.discovery.sourceIds.length ?? 0) === 1 ? '' : 's'} · public
-                    leads never count as proof
+                    {discoveryProviderReceipt(
+                      evidenceCase.discovery.provider,
+                      evidenceCase.discovery.searchedPlatforms,
+                      evidenceCase.discovery.sourceIds.length,
+                    )}{' '}
+                    · {evidenceCase.discovery.sourceIds.length} discovered source
+                    {evidenceCase.discovery.sourceIds.length === 1 ? '' : 's'} · public leads never
+                    count as proof
                   </small>
+                  {evidenceCase.discovery.warnings.map((warning) => (
+                    <small className="evidence-search-warning" key={warning}>
+                      {warning}
+                    </small>
+                  ))}
                 </p>
               </div>
             )}
@@ -728,8 +778,15 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                           {source.url === null ? (
                             <span />
                           ) : (
-                            <a href={source.url} target="_blank" rel="noreferrer">
-                              Watch cited source ↗
+                            <a
+                              href={source.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              data-stream-uid={source.streamUid ?? undefined}
+                            >
+                              {source.mediaType === 'video'
+                                ? 'Watch cited video ↗'
+                                : 'Open source page ↗'}
                             </a>
                           )}
                           {source.streamUid === null ? null : (

@@ -358,6 +358,11 @@ export async function recordAcceptanceStep(
   action: () => Promise<void> | void,
 ): Promise<void> {
   const startedAt = performance.now();
-  await action();
+  try {
+    await action();
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'Unknown step failure.';
+    throw new Error(`Acceptance step “${name}” failed: ${detail}`);
+  }
   steps.push({ name, durationMs: Math.round(performance.now() - startedAt) });
 }

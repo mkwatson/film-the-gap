@@ -21,7 +21,9 @@ export type DynamicSiteToolFactory = () => readonly WebMCP.ModelContextTool[];
 
 interface SiteToolRegistration {
   readonly controller: AbortController;
-  readonly settled: Promise<void>;
+  settled: Promise<void>;
+  activeExecutions: number;
+  abortRequested: boolean;
 }
 
 const checkingStatus: DynamicSiteToolStatus = {
@@ -35,6 +37,45 @@ function unregisterAll(registrations: Map<string, SiteToolRegistration>): void {
     controller.abort();
   }
   registrations.clear();
+}
+
+function requestUnregister(
+  name: string,
+  registration: SiteToolRegistration,
+  registrations: Map<string, SiteToolRegistration>,
+): void {
+  if (registration.activeExecutions > 0) {
+    registration.abortRequested = true;
+    return;
+  }
+  registration.controller.abort();
+  if (registrations.get(name) === registration) {
+    registrations.delete(name);
+  }
+}
+
+function invocationAwareTool(
+  tool: WebMCP.ModelContextTool,
+  registration: SiteToolRegistration,
+  registrations: Map<string, SiteToolRegistration>,
+): WebMCP.ModelContextTool {
+  return {
+    ...tool,
+    execute: async (input, options): Promise<unknown> => {
+      if (registration.abortRequested) {
+        throw new DOMException('This Site Tool is no longer available.', 'AbortError');
+      }
+      registration.activeExecutions += 1;
+      try {
+        return await tool.execute(input, options);
+      } finally {
+        registration.activeExecutions -= 1;
+        if (registration.abortRequested && registration.activeExecutions === 0) {
+          requestUnregister(tool.name, registration, registrations);
+        }
+      }
+    },
+  };
 }
 
 function errorMessage(error: unknown): string {
@@ -81,23 +122,29 @@ export function useDynamicSiteTools(
 
     for (const [name, registration] of registrations) {
       if (!desiredTools.has(name)) {
-        registration.controller.abort();
-        registrations.delete(name);
+        requestUnregister(name, registration, registrations);
       }
     }
 
     for (const [name, tool] of desiredTools) {
-      if (registrations.has(name)) {
+      const existing = registrations.get(name);
+      if (existing !== undefined) {
+        existing.abortRequested = false;
         continue;
       }
       const controller = new AbortController();
-      const settled = Promise.resolve(
-        modelContext.registerTool(tool, { signal: controller.signal }),
-      );
-      registrations.set(name, {
+      const registration: SiteToolRegistration = {
         controller,
-        settled,
-      });
+        settled: Promise.resolve(),
+        activeExecutions: 0,
+        abortRequested: false,
+      };
+      const registeredTool = invocationAwareTool(tool, registration, registrations);
+      const settled = Promise.resolve(
+        modelContext.registerTool(registeredTool, { signal: controller.signal }),
+      );
+      registration.settled = settled;
+      registrations.set(name, registration);
     }
 
     queueMicrotask(() => {

@@ -309,10 +309,10 @@ function allEvidenceSiteTools(
       name: 'search_product_evidence',
       title: 'Search existing product evidence',
       description:
-        'Search public social video for the active product and observable question. Results are stored only as link-only discovery leads and never treated as proof merely because they are public or relevant-looking.',
+        'Search supplied product pages, public social video, and the open web for the active product and observable question. Results are stored only as link-only discovery leads and never treated as proof merely because they are public or relevant-looking.',
       inputSchema: emptyInputSchema,
       annotations: {
-        readOnlyHint: true,
+        readOnlyHint: false,
         untrustedContentHint: true,
       },
       execute: async (input, options?: WebMCP.ToolExecuteCallbackOptions): Promise<object> => {

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { publicHttpUrlSchema } from './url-policy';
+
 export const evidenceAnswerStatuses = [
   'insufficient',
   'supported',
@@ -37,18 +39,17 @@ export type EvidenceDiscoveryPlatform = (typeof evidenceDiscoveryPlatforms)[numb
 export const evidenceDiscoveryStatuses = ['complete', 'partial', 'unavailable'] as const;
 export type EvidenceDiscoveryStatus = (typeof evidenceDiscoveryStatuses)[number];
 
-export const evidenceDiscoveryProviders = ['scrapecreators', 'rights_clean_demo'] as const;
+export const evidenceDiscoveryProviders = [
+  'evidence_network',
+  'scrapecreators',
+  'vercel_ai_gateway',
+  'rights_clean_demo',
+] as const;
 export type EvidenceDiscoveryProvider = (typeof evidenceDiscoveryProviders)[number];
-
-const httpUrlSchema = z
-  .url()
-  .refine((value) => ['http:', 'https:'].includes(new URL(value).protocol), {
-    message: 'Use an HTTP or HTTPS URL.',
-  });
 
 export const productQuestionInputSchema = z.strictObject({
   productName: z.string().trim().min(2).max(120),
-  productUrl: httpUrlSchema.optional(),
+  productUrl: publicHttpUrlSchema.optional(),
   question: z.string().trim().min(8).max(280),
 });
 
@@ -65,7 +66,7 @@ export const evidenceDiscoveryInputSchema = z.strictObject({
       z.strictObject({
         platform: z.enum(evidenceDiscoveryPlatforms),
         title: z.string().trim().min(1).max(240),
-        url: httpUrlSchema,
+        url: publicHttpUrlSchema,
         summary: z.string().trim().min(1).max(360),
         creatorLabel: z.string().trim().min(1).max(120),
       }),
@@ -97,7 +98,7 @@ export const reviewedEvidenceInputSchema = z
     rights: z.enum(['owned', 'authorized']),
     provenance: z.enum(['live_capture', 'authorized_import', 'demo_replay']),
     capturedAt: z.iso.datetime(),
-    videoUrl: httpUrlSchema.optional(),
+    videoUrl: publicHttpUrlSchema.optional(),
     streamUid: z
       .string()
       .regex(/^[a-zA-Z0-9_-]{16,128}$/)

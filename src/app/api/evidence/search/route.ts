@@ -1,10 +1,22 @@
+import { getCache } from '@vercel/functions';
+
 import {
   evidenceDiscoveryInputSchema,
   productQuestionInputSchema,
 } from '@/lib/evidence-network/model';
-import { searchScrapeCreatorsEvidence } from '@/lib/evidence-network/server/scrape-creators';
+import {
+  searchPublicProductEvidence,
+  type EvidenceDiscoveryCache,
+} from '@/lib/evidence-network/server/public-evidence-search';
 
 export const runtime = 'nodejs';
+export const maxDuration = 30;
+
+const runtimeCache = getCache({ namespace: 'product-evidence-discovery-v1' });
+const discoveryCache: EvidenceDiscoveryCache = {
+  get: (key) => runtimeCache.get(key),
+  set: (key, value, options) => runtimeCache.set(key, value, options),
+};
 
 function json(body: object, status = 200): Response {
   return Response.json(body, {
@@ -43,8 +55,14 @@ export async function POST(request: Request): Promise<Response> {
   if (!parsed.success) {
     return json({ error: 'invalid_product_question', issues: parsed.error.issues }, 400);
   }
-  const result = await searchScrapeCreatorsEvidence(parsed.data, {
-    apiKey: process.env.SCRAPECREATORS_API_KEY,
-  });
+  const result = await searchPublicProductEvidence(
+    parsed.data,
+    {
+      scrapeCreatorsApiKey: process.env.SCRAPECREATORS_API_KEY,
+      gatewayApiKey: process.env.AI_GATEWAY_DISCOVERY_API_KEY,
+      cache: discoveryCache,
+    },
+    request.signal,
+  );
   return json(evidenceDiscoveryInputSchema.parse(result));
 }

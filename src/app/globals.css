@@ -4317,6 +4317,10 @@ select:focus-visible {
   font-size: 9px;
 }
 
+.evidence-search-receipt .evidence-search-warning {
+  color: #e6b879;
+}
+
 .evidence-sources > ul,
 .evidence-tool-list,
 .evidence-privacy ul,

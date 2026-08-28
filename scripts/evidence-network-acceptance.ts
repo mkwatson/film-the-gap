@@ -22,6 +22,11 @@ const initialTools = [
   'ask_product_question',
   'create_filming_mission',
 ] as const;
+const searchTools = [
+  'inspect_product_evidence',
+  'ask_product_question',
+  'search_product_evidence',
+] as const;
 const missionTools = [
   'inspect_product_evidence',
   'ask_product_question',
@@ -239,10 +244,73 @@ async function run(): Promise<void> {
             serialized.includes('"rights":"owned"') &&
             serialized.includes('"privateShopperContext"') === false;`,
         ),
+        'invoke inspect_product_evidence',
       );
       if (inspected !== true) throw new Error('Initial evidence inspection did not fail closed.');
       if (artifacts !== null) driver.screenshot(join(artifacts, '01-before.png'));
     });
+
+    await recordAcceptanceStep(
+      steps,
+      'open and search an arbitrary product through WebMCP',
+      async () => {
+        const asked = driver.eval(
+          invokeToolScript(
+            'ask_product_question',
+            {
+              productName: 'Everyday insulated travel bottle',
+              productUrl: 'https://example.com/products/insulated-travel-bottle',
+              question: 'Does the closed bottle stay leak-free while upside down for ten seconds?',
+            },
+            `return parsedValues.some((value) => value.ok === true) &&
+            serialized.includes('"answerStatus":"insufficient"') &&
+            serialized.includes('"search_product_evidence"');`,
+          ),
+          'invoke ask_product_question',
+        );
+        if (asked !== true) throw new Error('WebMCP did not open the arbitrary product case.');
+        await waitForBrowserValue(
+          driver,
+          'claim-aware search tool',
+          toolNamesScript,
+          (value) => isStringArray(value) && sameStringSet(value, searchTools),
+          config.commandTimeoutMs,
+        );
+        const searched = driver.eval(
+          invokeToolScript(
+            'search_product_evidence',
+            {},
+            `return parsedValues.some((value) => value.ok === true) &&
+            serialized.includes('"answerStatus":"insufficient"') &&
+            serialized.includes('"create_filming_mission"');`,
+          ),
+          'invoke search_product_evidence',
+        );
+        if (searched !== true) throw new Error('WebMCP did not complete bounded public discovery.');
+        await waitForBrowserValue(
+          driver,
+          'post-search mission frontier',
+          toolNamesScript,
+          (value) => isStringArray(value) && sameStringSet(value, initialTools),
+          config.commandTimeoutMs,
+        );
+        const inspected = driver.eval(
+          invokeToolScript(
+            'inspect_product_evidence',
+            {},
+            `return serialized.includes('"provider":"evidence_network"') &&
+            serialized.includes('"status":"partial"') &&
+            serialized.includes('"rights":"link_only"') &&
+            serialized.includes('"privateShopperContext"') === false;`,
+          ),
+          'inspect bounded public discovery',
+        );
+        if (inspected !== true) {
+          throw new Error('Public discovery was not preserved as an inconclusive link-only lead.');
+        }
+        if (artifacts !== null) driver.screenshot(join(artifacts, '02-search.png'));
+      },
+    );
 
     await recordAcceptanceStep(steps, 'create bounded mission through WebMCP', async () => {
       const created = driver.eval(
@@ -257,6 +325,7 @@ async function run(): Promise<void> {
           `return parsedValues.some((value) => value.ok === true) &&
             serialized.includes('"missionStatus":"open"');`,
         ),
+        'invoke create_filming_mission',
       );
       if (created !== true) throw new Error('WebMCP did not create the bounded mission.');
       await waitForBrowserValue(
@@ -273,6 +342,7 @@ async function run(): Promise<void> {
           `return parsedValues.some((value) => value.ok === true) &&
             serialized.includes('bounded contributor link');`,
         ),
+        'invoke create_phone_capture_link',
       );
       if (linked !== true) throw new Error('WebMCP did not create the phone handoff.');
       await waitForBrowserValue(
@@ -282,7 +352,7 @@ async function run(): Promise<void> {
         (value) => value === true,
         config.commandTimeoutMs,
       );
-      if (artifacts !== null) driver.screenshot(join(artifacts, '02-mission.png'));
+      if (artifacts !== null) driver.screenshot(join(artifacts, '03-mission.png'));
     });
 
     const existingTabs = driver.listTabs();
@@ -383,7 +453,7 @@ async function run(): Promise<void> {
           end instanceof HTMLInputElement && end.value === '11';
       })()`);
       if (reviewed !== true) throw new Error('The reviewed evidence fields did not stay bounded.');
-      if (artifacts !== null) driver.screenshot(join(artifacts, '03-human-review.png'));
+      if (artifacts !== null) driver.screenshot(join(artifacts, '04-human-review.png'));
       if (driver.eval(clickExactButtonScript('Publish reviewed evidence')) !== true) {
         throw new Error('The reviewed evidence could not publish.');
       }
@@ -407,11 +477,12 @@ async function run(): Promise<void> {
         config.commandTimeoutMs,
       );
       const playbackBound = driver.eval(`(() => {
-        const link = [...document.querySelectorAll('a')].find(
-          (candidate) => candidate.textContent?.includes('Watch cited source'),
+        const link = document.querySelector(
+          'a[data-stream-uid="acceptancevideo0000000000000001"]',
         );
         return link instanceof HTMLAnchorElement &&
           link.href === 'https://customer-acceptance.cloudflarestream.com/acceptancevideo0000000000000001/watch' &&
+          link.textContent?.includes('Watch cited video') === true &&
           link.rel.includes('noreferrer');
       })()`);
       if (playbackBound !== true) {
@@ -434,6 +505,7 @@ async function run(): Promise<void> {
             serialized.includes('"timestamp":"00:01–00:11"') &&
             serialized.includes(${JSON.stringify(correctedObservation)});`,
         ),
+        'invoke inspect_answer_change',
       );
       if (diff !== true) throw new Error('WebMCP did not expose the causal answer difference.');
       driver.reload();
@@ -444,7 +516,7 @@ async function run(): Promise<void> {
         (value) => value === true,
         config.commandTimeoutMs,
       );
-      if (artifacts !== null) driver.screenshot(join(artifacts, '04-after.png'));
+      if (artifacts !== null) driver.screenshot(join(artifacts, '05-after.png'));
     });
 
     process.stdout.write(`${JSON.stringify({ ok: true, steps })}\n`);

@@ -19,6 +19,17 @@ describe('ScrapeCreators evidence discovery', () => {
     );
   });
 
+  it('bounds multilingual queries without splitting a Unicode code point', () => {
+    const query = buildEvidenceSearchQuery({
+      productName: 'Portable speaker',
+      question: `Does it keep playing? ${'🎵'.repeat(280)}`,
+    });
+
+    expect(query.length).toBeLessThanOrEqual(420);
+    expect(query).not.toContain('\uFFFD');
+    expect(query.endsWith('\uD83C')).toBe(false);
+  });
+
   it('returns an honest unavailable result without an API key', async () => {
     const fetchImpl = vi.fn();
 

@@ -114,10 +114,12 @@ describe('product evidence Site Tools', () => {
     expect(createEvidenceSiteTools(runtimeWithSearch).map(({ name }) => name)).toContain(
       'search_product_evidence',
     );
-    const result = await tool(runtimeWithSearch, 'search_product_evidence').execute(
-      {},
-      { signal: new AbortController().signal },
-    );
+    const searchTool = tool(runtimeWithSearch, 'search_product_evidence');
+    expect(searchTool.annotations).toMatchObject({
+      readOnlyHint: false,
+      untrustedContentHint: true,
+    });
+    const result = await searchTool.execute({}, { signal: new AbortController().signal });
 
     expect(result).toMatchObject({ ok: true, answerStatus: 'insufficient' });
     expect(readState().activeCase?.sources.at(-1)?.rights).toBe('link_only');
