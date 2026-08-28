@@ -389,7 +389,7 @@ export async function verifyPublicRelease(
     parseWithSchema(publicEvidenceMissionListSchema, await jsonBody(response, label), label);
   });
 
-  await step('buyer, mission board, and contributor pages', async () => {
+  await step('buyer, demo product, mission board, and contributor pages', async () => {
     const buyerLabel = 'buyer page';
     const buyerResponse = await probe(fetcher, config, buyerLabel, `${config.appOrigin}/`);
     requireStatus(buyerResponse, 200, buyerLabel);
@@ -404,6 +404,32 @@ export async function verifyPublicRelease(
       allowCreatorUpload: false,
       allowStreamPlayback: true,
     });
+
+    const demoProductLabel = 'demo product page';
+    const demoProductResponse = await probe(
+      fetcher,
+      config,
+      demoProductLabel,
+      `${config.appOrigin}/demo-product`,
+    );
+    requireStatus(demoProductResponse, 200, demoProductLabel);
+    requireMarker(
+      await htmlBody(demoProductResponse, demoProductLabel),
+      'Everyday insulated travel bottle',
+      demoProductLabel,
+    );
+    requireAppSecurityPolicy(demoProductResponse, demoProductLabel, config.roomOrigin, {
+      allowCamera: false,
+      allowMicrophone: false,
+      allowCreatorUpload: false,
+      allowStreamPlayback: false,
+    });
+    requireHeader(
+      demoProductResponse,
+      'Content-Signal',
+      'search=yes, ai-input=yes, ai-train=no',
+      demoProductLabel,
+    );
 
     const boardLabel = 'mission board page';
     const boardResponse = await probe(fetcher, config, boardLabel, `${config.appOrigin}/missions`);

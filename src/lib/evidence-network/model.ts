@@ -586,6 +586,47 @@ export function createDemoEvidenceQuestionState(): EvidenceNetworkState {
   };
 }
 
+export function attachDemoProductPageUrl(
+  state: EvidenceNetworkState,
+  value: string,
+): EvidenceNetworkState {
+  const parsed = publicHttpUrlSchema.safeParse(value);
+  const evidenceCase = state.activeCase;
+  if (
+    !parsed.success ||
+    new URL(parsed.data).protocol !== 'https:' ||
+    evidenceCase?.id !== 'case-1' ||
+    evidenceCase.product.name !== 'Everyday insulated travel bottle'
+  ) {
+    return state;
+  }
+  const sourceIndex = evidenceCase.sources.findIndex(
+    ({ id, title, rights, provenance }) =>
+      id === 'source-1' &&
+      title === 'Rights-cleared demo product page' &&
+      rights === 'owned' &&
+      provenance === 'authored_fixture',
+  );
+  if (sourceIndex < 0) {
+    return state;
+  }
+  const url = new URL(parsed.data).toString();
+  const source = evidenceCase.sources[sourceIndex];
+  if (evidenceCase.product.suppliedUrl === url && source?.url === url) {
+    return state;
+  }
+  return {
+    ...state,
+    activeCase: {
+      ...evidenceCase,
+      product: { ...evidenceCase.product, suppliedUrl: url },
+      sources: evidenceCase.sources.map((existingSource, index) =>
+        index === sourceIndex ? { ...existingSource, url } : existingSource,
+      ),
+    },
+  };
+}
+
 export function createDemoEvidenceNetworkState(): EvidenceNetworkState {
   const state = createDemoEvidenceQuestionState();
   const evidenceCase = state.activeCase;
@@ -782,8 +823,10 @@ function recordEvidenceDiscovery(
       return key === null ? [] : [[key, source] as const];
     }),
   );
-  const existingSourceIdsWithObservations = new Set(
-    evidenceCase.observations.map(({ citation }) => citation.sourceId),
+  const existingLeadObservationKeys = new Set(
+    evidenceCase.observations.map(
+      ({ citation, reviewedBy, text }) => `${citation.sourceId}\u0000${reviewedBy}\u0000${text}`,
+    ),
   );
   const matchedExistingSourceIds = new Set<string>();
   const existingLeadObservations: EvidenceObservation[] = [];
@@ -802,8 +845,9 @@ function recordEvidenceDiscovery(
     const existingSource = existingSourcesByUrl.get(key);
     if (existingSource !== undefined) {
       matchedExistingSourceIds.add(existingSource.id);
-      if (!existingSourceIdsWithObservations.has(existingSource.id)) {
-        existingSourceIdsWithObservations.add(existingSource.id);
+      const observationKey = `${existingSource.id}\u0000${lead.creatorLabel}\u0000${lead.summary}`;
+      if (!existingLeadObservationKeys.has(observationKey)) {
+        existingLeadObservationKeys.add(observationKey);
         existingLeadObservations.push({
           id: `observation-${revision}-existing-${index + 1}`,
           claim: evidenceCase.question.text,

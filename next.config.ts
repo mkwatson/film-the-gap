@@ -50,6 +50,20 @@ const nextConfig: NextConfig = {
           }),
         ],
       },
+      {
+        source: '/demo-product',
+        headers: [
+          ...buildAppSecurityHeaders({
+            ...commonOptions,
+            allowCamera: false,
+            allowMicrophone: false,
+          }),
+          {
+            key: 'Content-Signal',
+            value: 'search=yes, ai-input=yes, ai-train=no',
+          },
+        ],
+      },
     ];
   },
   reactStrictMode: true,

@@ -4,6 +4,8 @@ Film the Gap is an open product-evidence network with native WebMCP Site Tools f
 
 Instead of stopping at product search or summarizing the claims already online, Film the Gap creates the exact piece of evidence the web is missing and makes it reusable.
 
+The public demo needs no merchant or borrowed catalog. It includes an owned, same-origin `/demo-product` page for an unbranded bottle. On a public HTTPS deployment, the default case points to that real page automatically, so Cloudflare Browser Run reads the exact source a judge can inspect; the page's “leak resistant” copy remains explicitly insufficient until someone records the requested physical test.
+
 The shopper, public-request board, and phone recorder are ordinary web pages. WebMCP lets ChatGPT understand and operate the same state-dependent actions a person sees, while the contributor records and reviews evidence in any normal mobile browser.
 
 ## The complete loop
@@ -142,6 +144,7 @@ The two runners generate a rights-clean 12-second MP4 and drive the same complet
 ## Current status and honest boundaries
 
 - Generic products and questions are persistent and can be created without code or database changes.
+- The default public-HTTPS case is bound to a rights-clean, inspectable product page at `/demo-product`; reset preserves that binding, and the release verifier enforces both its restrictive browser policy and its explicit `search=yes, ai-input=yes, ai-train=no` Content Signal.
 - Claim-level evidence, provenance, capture timing, random mission phrases, rights, confidence, revisions, dynamic Site Tools, bounded product-page reading, social lead discovery, private contributor URLs, a public missing-proof board, revocable public recorder paths, direct Stream uploads, timestamped video proposals, explicit human review, and rights-explicit cross-case reuse are implemented.
 - Conclusive evidence for a continuous-take mission is rejected when the cited interval is invalid or continuity is edited/unknown.
 - The app has deterministic automated coverage for success, denial, stale revisions, manual fallback, dependency failures, simultaneous analysis coalescing, fragment scrubbing, contributor reload, and buyer reconnect. It does not call paid services during tests.

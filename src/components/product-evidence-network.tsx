@@ -7,6 +7,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { discoverProductEvidence } from '@/lib/evidence-network/discovery-client';
 import {
   applyEvidenceNetworkCommand,
+  attachDemoProductPageUrl,
   createDemoEvidenceQuestionState,
   currentEvidenceAnswer,
   getEvidenceNetworkToolNames,
@@ -46,6 +47,7 @@ import {
   type EvidencePhoneCaptureReceipt,
   type EvidenceSiteToolRuntime,
 } from '@/lib/evidence-network/site-tools';
+import { isPublicHttpUrl } from '@/lib/evidence-network/url-policy';
 import { useDynamicSiteTools } from '@/lib/webmcp/use-dynamic-site-tools';
 
 const defaultMission = {
@@ -155,6 +157,16 @@ function isRightsCleanBottleDemo(evidenceCase: ProductEvidenceCase | null | unde
   );
 }
 
+function attachCurrentDemoProductPage(
+  state: EvidenceNetworkState,
+  locationHref: string,
+): EvidenceNetworkState {
+  const demoProductUrl = new URL('/demo-product', locationHref);
+  return demoProductUrl.protocol === 'https:' && isPublicHttpUrl(demoProductUrl.toString())
+    ? attachDemoProductPageUrl(state, demoProductUrl.toString())
+    : state;
+}
+
 function remoteDiscoveryForState(state: EvidenceNetworkState): EvidenceDiscoveryInput | undefined {
   const evidenceCase = state.activeCase;
   const discovery = evidenceCase?.discovery;
@@ -258,6 +270,15 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
   const serviceUrl = configuredEvidenceServiceUrl();
   const stateRef = useRef(state);
   const phoneConnectionRef = useRef(phoneConnection);
+
+  useEffect(() => {
+    const nextState = attachCurrentDemoProductPage(stateRef.current, window.location.href);
+    if (nextState === stateRef.current) {
+      return;
+    }
+    stateRef.current = nextState;
+    setState(nextState);
+  }, []);
 
   const clearPhoneConnection = useCallback((): void => {
     clearEvidencePhoneConnection(window.sessionStorage);
@@ -664,7 +685,10 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
       );
       return;
     }
-    const nextState = createDemoEvidenceQuestionState();
+    const nextState = attachCurrentDemoProductPage(
+      createDemoEvidenceQuestionState(),
+      window.location.href,
+    );
     stateRef.current = nextState;
     setState(nextState);
     setLastMessage('Demo reset to one indexed source and one unresolved product question.');

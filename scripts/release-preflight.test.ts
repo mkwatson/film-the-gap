@@ -67,6 +67,7 @@ interface ReleaseFetchOptions {
   readonly globalRateLimitConfigured?: boolean;
   readonly missionBoundCapture?: boolean;
   readonly reusableIndexAvailable?: boolean;
+  readonly demoProductContentSignal?: string;
 }
 
 function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
@@ -129,6 +130,19 @@ function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
         allowCreatorUpload: false,
         allowStreamPlayback: true,
       });
+    }
+    if (url.href === `${config.appOrigin}/demo-product`) {
+      const response = appPage('Everyday insulated travel bottle', {
+        allowCamera: false,
+        allowMicrophone: false,
+        allowCreatorUpload: false,
+        allowStreamPlayback: false,
+      });
+      response.headers.set(
+        'Content-Signal',
+        options.demoProductContentSignal ?? 'search=yes, ai-input=yes, ai-train=no',
+      );
+      return response;
     }
     if (url.href === `${config.appOrigin}/missions`) {
       return appPage('Turn unanswered product questions into tiny public filming jobs.', {
@@ -235,7 +249,7 @@ describe('public release preflight', () => {
       'evidence service health, commit, and cost controls',
       'reusable evidence index',
       'public filming mission board',
-      'buyer, mission board, and contributor pages',
+      'buyer, demo product, mission board, and contributor pages',
       'evidence service browser boundary and durable case',
     ]);
     expect(serialized).not.toContain(ownerToken);
@@ -270,6 +284,15 @@ describe('public release preflight', () => {
     await expect(
       verifyPublicRelease(config, releaseFetch({ contributorCameraAllowed: false })),
     ).rejects.toThrow(/contributor page.*Permissions-Policy mismatch/i);
+  });
+
+  it('fails closed when the owned demo page does not publish its reviewed Content Signal', async () => {
+    await expect(
+      verifyPublicRelease(
+        config,
+        releaseFetch({ demoProductContentSignal: 'search=no, ai-input=no, ai-train=no' }),
+      ),
+    ).rejects.toThrow(/demo product page.*Content-Signal mismatch/i);
   });
 
   it('fails closed when the contributor page cannot record a spoken mission phrase', async () => {

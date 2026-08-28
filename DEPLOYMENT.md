@@ -145,7 +145,7 @@ pnpm check
 pnpm --dir room-worker d1:migrate:evidence-acceptance
 pnpm --dir room-worker dev:evidence-services
 pnpm --dir room-worker dev:evidence-acceptance
-ALLOWED_DEV_ORIGINS=127.0.0.1 NEXT_PUBLIC_EVIDENCE_ROOM_URL=http://localhost:8792 pnpm dev
+ALLOWED_DEV_ORIGINS=127.0.0.1 NEXT_PUBLIC_EVIDENCE_ROOM_URL=http://localhost:8792 EVIDENCE_PAGE_READER_TOKEN=acceptance-only-page-reader-secret pnpm dev
 pnpm acceptance:evidence-network
 pnpm acceptance:evidence-network:fallback
 ```
@@ -293,7 +293,7 @@ The verifier uses manual redirects and bounded bodies. It proves:
 1. the app exposes the exact reviewed commit and compiled Worker origin;
 2. the standalone Worker exposes the same commit, both rate-limit bindings, the two-upload cap, Stream, Browser Run, live video analysis, D1, the 30-day reuse boundary, and daily expiry purge;
 3. real read-only D1 queries succeed through both the reusable-evidence and open-mission contracts, proving the binding and migrations rather than trusting health metadata;
-4. shopper, mission-board, and contributor pages have the intended route-scoped camera, microphone, upload, playback, CORS, CSP, referrer, and content-type boundaries;
+4. shopper, owned demo-product, mission-board, and contributor pages have the intended route-scoped camera, microphone, upload, playback, CORS, CSP, referrer, and content-type boundaries; the demo-product page also exposes exactly `search=yes, ai-input=yes, ai-train=no`;
 5. an untrusted browser origin is rejected; and
 6. one disposable evidence case is created and survives a Durable Object read-back.
 
@@ -301,7 +301,7 @@ The report contains only public Worker metadata and step timings. It parses but 
 
 Then perform one user-approved paid rehearsal on the final origins:
 
-1. Clean unauthenticated desktop browser: arbitrary product URL/question, a real Browser Run page receipt whose text remains non-decisive, mission, QR/link.
+1. Clean unauthenticated desktop browser: open the same-origin `/demo-product` source, then search the default question and confirm a real Browser Run receipt whose page text remains non-decisive. Also repeat once with an arbitrary public product URL/question before creating the mission and QR/link.
 2. Physical phone: owned unbranded object, say or show the issued phrase with the product visible, continuous recording, real direct Stream upload, real Gateway proposal and phrase check, explicit correction/review, publish.
    Confirm specifically that the Gateway provider can fetch the generated public MP4 while Stream playback-origin restrictions are active; current Cloudflare documentation describes those restrictions for HLS/DASH playback but does not explicitly guarantee this downstream-download combination.
 3. Contributor explicitly opts into 30-day network reuse; confirm weak/inconclusive evidence cannot be selected for reuse.

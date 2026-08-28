@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applyEvidenceNetworkCommand,
+  attachDemoProductPageUrl,
   createDemoEvidenceQuestionState,
   createDemoEvidenceNetworkState,
   createEmptyEvidenceNetworkState,
@@ -73,6 +74,17 @@ describe('product evidence network model', () => {
     expect(state.activeCase?.discovery).toBeNull();
     expect(getEvidenceNetworkToolNames(state)).toContain('search_product_evidence');
     expect(getEvidenceNetworkToolNames(state)).not.toContain('create_filming_mission');
+  });
+
+  it('binds the rights-clean demo listing only on a public HTTPS origin', () => {
+    const state = createDemoEvidenceQuestionState();
+    const attached = attachDemoProductPageUrl(state, 'https://film-the-gap.example/demo-product');
+
+    expect(attached.activeCase?.product.suppliedUrl).toBe(
+      'https://film-the-gap.example/demo-product',
+    );
+    expect(attached.activeCase?.sources[0]?.url).toBe('https://film-the-gap.example/demo-product');
+    expect(attachDemoProductPageUrl(state, 'http://localhost:3000/demo-product')).toBe(state);
   });
 
   it('requires an existing-evidence search before requesting new footage', () => {
@@ -212,6 +224,47 @@ describe('product evidence network model', () => {
       }),
     ]);
     expect(result.state.activeCase?.discovery?.sourceIds).toEqual(['source-1']);
+    expect(currentEvidenceAnswer(result.state)?.status).toBe('insufficient');
+  });
+
+  it('adds a live page-reader receipt alongside the authored demo claim', () => {
+    const initial = attachDemoProductPageUrl(
+      createDemoEvidenceQuestionState(),
+      'https://film-the-gap.example/demo-product',
+    );
+    const result = applyEvidenceNetworkCommand(
+      initial,
+      {
+        kind: 'record-evidence-discovery',
+        actor: 'agent',
+        input: {
+          provider: 'evidence_network',
+          status: 'partial',
+          query: 'travel bottle continuous upside-down leak test',
+          searchedPlatforms: ['web'],
+          warnings: [],
+          leads: [
+            {
+              platform: 'web',
+              title: 'Everyday insulated travel bottle · supplied product page',
+              url: 'https://film-the-gap.example/demo-product',
+              summary:
+                'Untrusted product-page excerpt read by Cloudflare Browser Run. Page copy remains a lead, never proof.',
+              creatorLabel: 'Product page · Cloudflare Browser Run',
+            },
+          ],
+        },
+      },
+      missionTime,
+    );
+
+    expect(result.state.activeCase?.sources).toHaveLength(1);
+    expect(result.state.activeCase?.observations).toHaveLength(2);
+    expect(result.state.activeCase?.observations.at(-1)).toMatchObject({
+      reviewedBy: 'Product page · Cloudflare Browser Run',
+      confidence: 'low',
+      result: 'inconclusive',
+    });
     expect(currentEvidenceAnswer(result.state)?.status).toBe('insufficient');
   });
 
