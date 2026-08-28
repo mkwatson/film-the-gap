@@ -28,8 +28,13 @@ import {
 import {
   parseRemoteEvidenceServerMessage,
   type CreateRemoteEvidenceCaseRequest,
-  type RemoteEvidenceCaseCredentials,
 } from '@/lib/evidence-network/remote-protocol';
+import {
+  clearEvidencePhoneConnection,
+  persistEvidencePhoneConnection,
+  restoreEvidencePhoneConnection,
+  type EvidencePhoneConnection,
+} from '@/lib/evidence-network/phone-session';
 import { formatEvidenceTimestamp } from '@/lib/evidence-network/video-analysis';
 import {
   createEvidenceSiteTools,
@@ -75,11 +80,6 @@ function parseJsonString(value: string): unknown {
   } catch {
     return null;
   }
-}
-
-interface PhoneConnection {
-  readonly credentials: RemoteEvidenceCaseCredentials;
-  readonly receipt: EvidencePhoneCaptureReceipt;
 }
 
 function discoveryPlatformForUrl(url: string): EvidenceDiscoveryPlatform {
@@ -184,7 +184,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     'idle',
   );
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [phoneConnection, setPhoneConnection] = useState<PhoneConnection | null>(null);
+  const [phoneConnection, setPhoneConnection] = useState<EvidencePhoneConnection | null>(null);
   const [phonePhase, setPhonePhase] = useState<
     'idle' | 'connecting' | 'waiting' | 'complete' | 'error'
   >('idle');
@@ -193,16 +193,27 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
   const stateRef = useRef(state);
   const phoneConnectionRef = useRef(phoneConnection);
 
+  const clearPhoneConnection = useCallback((): void => {
+    clearEvidencePhoneConnection(window.sessionStorage);
+    phoneConnectionRef.current = null;
+    setPhoneConnection(null);
+    setPhonePhase('idle');
+    setPhoneError(null);
+  }, []);
+
   const readState = useCallback((): EvidenceNetworkState => stateRef.current, []);
   const dispatch = useCallback(
     async (command: EvidenceNetworkCommand): Promise<EvidenceNetworkTransition> => {
       const result = applyEvidenceNetworkCommand(stateRef.current, command);
+      if (result.ok && ['ask-product-question', 'create-filming-mission'].includes(command.kind)) {
+        clearPhoneConnection();
+      }
       stateRef.current = result.state;
       setState(result.state);
       setLastMessage(result.message);
       return result;
     },
-    [],
+    [clearPhoneConnection],
   );
   const createPhoneCapture = useCallback(async (): Promise<EvidencePhoneCaptureReceipt> => {
     const existing = phoneConnectionRef.current;
@@ -229,6 +240,12 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
         expiresAt: credentials.expiresAt,
       };
       const connection = { credentials, receipt };
+      persistEvidencePhoneConnection(
+        window.sessionStorage,
+        serviceUrl,
+        window.location.origin,
+        connection,
+      );
       phoneConnectionRef.current = connection;
       setPhoneConnection(connection);
       stateRef.current = credentials.state;
@@ -242,6 +259,39 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
       setPhonePhase('error');
       throw error;
     }
+  }, [serviceUrl]);
+
+  useEffect(() => {
+    if (serviceUrl === null || phoneConnectionRef.current !== null) {
+      return;
+    }
+    const restored = restoreEvidencePhoneConnection(
+      window.sessionStorage,
+      serviceUrl,
+      window.location.origin,
+    );
+    if (restored === null) {
+      return;
+    }
+    let active = true;
+    queueMicrotask(() => {
+      if (!active || phoneConnectionRef.current !== null) {
+        return;
+      }
+      phoneConnectionRef.current = restored;
+      setPhoneConnection(restored);
+      stateRef.current = restored.credentials.state;
+      setState(restored.credentials.state);
+      setLastMessage('Reconnected to the existing durable product-evidence case.');
+      setPhonePhase(
+        restored.credentials.state.activeCase?.mission?.status === 'fulfilled'
+          ? 'complete'
+          : 'waiting',
+      );
+    });
+    return () => {
+      active = false;
+    };
   }, [serviceUrl]);
   const searchEvidence = useCallback(
     async (
@@ -331,6 +381,20 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
       const raw: unknown = typeof event.data === 'string' ? parseJsonString(event.data) : null;
       const message = parseRemoteEvidenceServerMessage(raw);
       if (message?.type === 'case-snapshot') {
+        const currentConnection = phoneConnectionRef.current;
+        if (currentConnection !== null) {
+          const updatedConnection: EvidencePhoneConnection = {
+            ...currentConnection,
+            credentials: { ...currentConnection.credentials, state: message.state },
+          };
+          phoneConnectionRef.current = updatedConnection;
+          persistEvidencePhoneConnection(
+            window.sessionStorage,
+            serviceUrl,
+            window.location.origin,
+            updatedConnection,
+          );
+        }
         stateRef.current = message.state;
         setState(message.state);
         setLastMessage(message.lastMessage);
@@ -338,6 +402,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
           setPhonePhase('complete');
         }
       } else if (message?.type === 'case-expired') {
+        clearPhoneConnection();
         setPhoneError(message.message);
         setPhonePhase('error');
       }
@@ -347,7 +412,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
       setPhonePhase('error');
     });
     return () => socket.close(1000, 'Evidence page changed');
-  }, [phoneConnection, serviceUrl]);
+  }, [clearPhoneConnection, phoneConnection, serviceUrl]);
 
   const evidenceCase = state.activeCase;
   const answer = currentEvidenceAnswer(state);
@@ -381,20 +446,14 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     setCopyStatus('idle');
     setSearchPhase('idle');
     setSearchError(null);
-    phoneConnectionRef.current = null;
-    setPhoneConnection(null);
-    setPhonePhase('idle');
-    setPhoneError(null);
+    clearPhoneConnection();
     setSearchPhase('idle');
     setSearchError(null);
   }
 
   function submitQuestion(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
-    phoneConnectionRef.current = null;
-    setPhoneConnection(null);
-    setPhonePhase('idle');
-    setPhoneError(null);
+    clearPhoneConnection();
     void dispatch({
       kind: 'ask-product-question',
       actor: 'human',

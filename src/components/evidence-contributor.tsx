@@ -62,9 +62,27 @@ async function sha256File(file: File): Promise<string> {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-function fragmentToken(): string | null {
+function contributorTokenStorageKey(caseId: string): string {
+  return `product-evidence-contributor:${caseId}`;
+}
+
+function validContributorToken(value: string | null): value is string {
+  return value !== null && value.length >= 32 && value.length <= 256;
+}
+
+function contributorToken(caseId: string): string | null {
   const token = new URLSearchParams(window.location.hash.slice(1)).get('token');
-  return token === null || token.length < 32 ? null : token;
+  if (validContributorToken(token)) {
+    window.sessionStorage.setItem(contributorTokenStorageKey(caseId), token);
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${window.location.pathname}${window.location.search}`,
+    );
+    return token;
+  }
+  const stored = window.sessionStorage.getItem(contributorTokenStorageKey(caseId));
+  return validContributorToken(stored) ? stored : null;
 }
 
 export function EvidenceContributor({ caseId }: EvidenceContributorProps): React.JSX.Element {
@@ -118,7 +136,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
         active = false;
       };
     }
-    const capability = fragmentToken();
+    const capability = contributorToken(caseId);
     if (capability === null) {
       fail('This contribution link is missing its private one-time capability.');
       return () => {

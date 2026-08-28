@@ -10,6 +10,9 @@ import {
   type EvidenceNetworkState,
   type EvidenceNetworkTransition,
 } from './model';
+import type { EvidencePhoneCaptureReceipt } from './phone-session';
+
+export type { EvidencePhoneCaptureReceipt } from './phone-session';
 
 const emptyInputSchema = {
   type: 'object',
@@ -83,12 +86,6 @@ export interface EvidenceSiteToolRuntime {
 
 export interface EvidenceSearchRuntime {
   readonly run: (signal?: AbortSignal) => Promise<EvidenceNetworkTransition>;
-}
-
-export interface EvidencePhoneCaptureReceipt {
-  readonly caseId: string;
-  readonly contributorUrl: string;
-  readonly expiresAt: number;
 }
 
 export interface EvidencePhoneCaptureRuntime {

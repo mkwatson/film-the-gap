@@ -17,6 +17,7 @@
     "test:ucp-schema": "UCP_RELEASE_SCHEMA_LIVE=1 vitest run src/lib/ucp/released-schema.live.test.ts",
     "test:watch": "vitest",
     "acceptance:native": "tsx scripts/native-browser-acceptance.ts",
+    "acceptance:evidence-network": "tsx scripts/evidence-network-acceptance.ts",
     "release:verify": "tsx scripts/release-preflight-cli.ts",
     "proof:generate": "tsx scripts/proof-receipt-cli.ts --write",
     "proof:verify": "tsx scripts/proof-receipt-cli.ts --check",

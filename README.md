@@ -93,18 +93,36 @@ pnpm test:app
 pnpm test:room
 pnpm typecheck
 pnpm room:build
+pnpm acceptance:evidence-network
 pnpm acceptance:native
 ```
 
-The native acceptance runner exercises the earlier live-market rung. A generic evidence-network acceptance journey and physical-phone capture are required release gates before this branch can replace the public fallback.
+The generic acceptance journey uses four local processes so its paid edges cannot run accidentally:
+
+```bash
+# Shell 1: deterministic Stream + model service
+pnpm --dir room-worker dev:evidence-services
+
+# Shell 2: real room Worker + Durable Object, bound to that service
+pnpm --dir room-worker dev:evidence-acceptance
+
+# Shell 3: app
+NEXT_PUBLIC_EVIDENCE_ROOM_URL=http://localhost:8792 pnpm dev
+
+# Shell 4: native Chrome 150+ with WebMCP
+pnpm acceptance:evidence-network
+```
+
+The runner generates a rights-clean 12-second MP4, drives the complete buyer/contributor journey, corrects the model-shaped proposal, verifies the answer difference through WebMCP, and reloads both credential boundaries. The real Durable Object and public schemas run unchanged; local services replace only Cloudflare Stream and Gemini, and the browser network allowlist excludes their public hosts. `acceptance:native` separately preserves the earlier live-market/UCP rung.
 
 ## Current status and honest boundaries
 
 - Generic products and questions are persistent and can be created without code or database changes.
 - Claim-level evidence, provenance, rights, confidence, revisions, dynamic Site Tools, social lead discovery, private contributor URLs, direct Stream uploads, timestamped video proposals, and explicit human review are implemented.
 - Conclusive evidence for a continuous-take mission is rejected when the cited interval is invalid or continuity is edited/unknown.
-- The app has deterministic automated coverage for success, denial, stale revisions, manual fallback, and dependency failures. It does not call paid services during tests.
-- The prior public release remains the known-good fallback. This generic branch is not yet deployed and has not yet passed a real Stream → Gateway → phone journey.
+- The app has deterministic automated coverage for success, denial, stale revisions, manual fallback, dependency failures, simultaneous analysis coalescing, fragment scrubbing, contributor reload, and buyer reconnect. It does not call paid services during tests.
+- Native Chrome completes the five-phase generic acceptance journey in roughly five seconds against a real local Durable Object and deterministic paid-service fixtures.
+- The prior public release remains the known-good fallback. This generic branch is not yet deployed and has not yet passed a real Stream → Gateway → physical-phone journey.
 - It does not claim universal access to product owners, guaranteed fulfillment, product authenticity, or perfect deepfake detection.
 - It does not place an order, charge a user, contact strangers, scrape private data, or reuse third-party media without rights.
 

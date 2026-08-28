@@ -1,0 +1,6 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "webmcp-evidence-services-fixture",
+  "main": "./evidence-services.ts",
+  "compatibility_date": "2026-08-27",
+}

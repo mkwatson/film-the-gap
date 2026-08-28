@@ -53,6 +53,7 @@ function snapshot(state = openMissionState()): RemoteEvidenceCaseSnapshot {
 }
 
 beforeEach(() => {
+  window.sessionStorage.clear();
   window.location.hash = `token=${'c'.repeat(43)}`;
   remoteMocks.read.mockResolvedValue(snapshot());
   remoteMocks.reserve.mockResolvedValue({
@@ -117,6 +118,7 @@ beforeEach(() => {
 
 afterEach(() => {
   window.location.hash = '';
+  window.sessionStorage.clear();
   vi.clearAllMocks();
 });
 
@@ -136,8 +138,25 @@ describe('EvidenceContributor', () => {
     expect(screen.queryByText(/sign in/i)).toBeNull();
   });
 
+  it('scrubs the bearer capability from the URL and recovers it after reload', async () => {
+    const capability = 'c'.repeat(43);
+    const first = render(<EvidenceContributor caseId="BCDF2345" />);
+
+    expect(await screen.findByText('Everyday insulated travel bottle')).toBeTruthy();
+    expect(window.location.hash).toBe('');
+    expect(window.sessionStorage.getItem('product-evidence-contributor:BCDF2345')).toBe(capability);
+
+    first.unmount();
+    remoteMocks.read.mockClear();
+    render(<EvidenceContributor caseId="BCDF2345" />);
+
+    expect(await screen.findByText('Everyday insulated travel bottle')).toBeTruthy();
+    expect(remoteMocks.read).toHaveBeenCalledOnce();
+  });
+
   it('refuses a link whose contributor capability is missing', async () => {
     window.location.hash = '';
+    window.sessionStorage.clear();
     render(<EvidenceContributor caseId="BCDF2345" />);
 
     expect(

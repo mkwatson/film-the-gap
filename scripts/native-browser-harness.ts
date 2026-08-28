@@ -255,6 +255,14 @@ export class NativeBrowserDriver {
     this.execute(label, ['click', selector, '--new-tab'], undefined);
   }
 
+  fill(selector: string, value: string, label = 'fill expected field'): void {
+    this.execute(label, ['fill', selector, value], undefined);
+  }
+
+  upload(selector: string, filePath: string, label = 'choose expected file'): void {
+    this.execute(label, ['upload', selector, filePath], undefined);
+  }
+
   back(): void {
     this.execute('return to evidence room', ['back'], undefined);
   }
