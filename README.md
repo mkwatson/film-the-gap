@@ -4,15 +4,17 @@ Film the Gap is an open product-evidence network with native WebMCP Site Tools f
 
 Instead of stopping at product search or summarizing the claims already online, Film the Gap creates the exact piece of evidence the web is missing and makes it reusable.
 
-**Live release rehearsal:** [film-the-gap.vercel.app](https://film-the-gap.vercel.app) · [open filming requests](https://film-the-gap.vercel.app/missions) · [rights-clean product page](https://film-the-gap.vercel.app/demo-product). Real UCP discovery, public-web discovery, evidence cases, the open request board, and no-login phone handoff are live. The paid Stream → video-model → reviewed-publication segment remains explicitly release-gated until its private account setup and physical-phone rehearsal pass.
+**Live release rehearsal:** [film-the-gap.vercel.app](https://film-the-gap.vercel.app) · [full evidence lab](https://film-the-gap.vercel.app/lab) · [open filming requests](https://film-the-gap.vercel.app/missions) · [rights-clean product page](https://film-the-gap.vercel.app/demo-product). Real UCP discovery, public-web discovery, evidence cases, the open request board, and no-login phone handoff are live. The paid Stream → video-model → reviewed-publication segment remains explicitly release-gated until its private account setup and physical-phone rehearsal pass.
 
-## Judge it in 90 seconds
+## Judge it in 60 seconds
 
-Open the [live app](https://film-the-gap.vercel.app) in ChatGPT's in-app Browser or WebMCP-enabled Chrome, then ask:
+Open the [live app](https://film-the-gap.vercel.app). The whole idea is visible before the first click: one shopper exposes a product fact that listings cannot prove, one person with the product records a tiny test, and every future shopper can reuse the cited answer. Click **Check for real video proof** → **Ask someone to film it** → **Put this exact test on a phone** to get a real, no-login contributor QR code.
 
-> Use this page's Site Tools. Find a compact USB-C microphone sold in the US, choose one exact current variant, and ask whether speech stays intelligible outdoors in steady wind. Search existing evidence, but never treat catalog copy or ordinary web results as proof. If the answer is still missing, create the smallest continuous filming mission, inspect and tighten it, create its phone handoff, and ask before publishing the minimized request.
+For the native agent path, open the same page in ChatGPT's in-app Browser or WebMCP-enabled Chrome and ask:
 
-Watch `open_catalog_product_question` appear only after live Shopify UCP results, `search_product_evidence` disappear after bounded discovery, mission refinement disappear after contributor handoff, and public publication require explicit confirmation. Then open [the request board](https://film-the-gap.vercel.app/missions) in a fresh context: it exposes only the product, observable question, filming recipe, and a no-login recorder—not the shopper's identity, budget, history, preferences, or conversation.
+> Use this page's Site Tools to answer the product question shown. Treat product claims and public links as leads, not proof. If reviewed video is missing, create the smallest continuous filming request, then stop before making it public.
+
+The homepage keeps the judging path deliberately small. [Open the full lab](https://film-the-gap.vercel.app/lab) to try live Shopify UCP discovery, an arbitrary product, the complete state-aware WebMCP frontier, provenance receipts, and attributable activity. The [request board](https://film-the-gap.vercel.app/missions) exposes only the product, observable question, filming recipe, and no-login recorder—not the shopper's identity, budget, history, preferences, or conversation.
 
 The root page needs no merchant integration: its Site Tool searches real new products across participating merchants through Shopify Global Catalog and the Universal Commerce Protocol (UCP), while sending only a generic query and country. Catalog copy stays explicitly unverified. For a rights-clean complete loop, the app also includes an owned, same-origin `/demo-product` page for an unbranded bottle. Before evidence exists, that page distinguishes its “leak resistant” claim from the unproven ten-second test. After reviewed video arrives, the shopper's scoped recommendation changes and the original page gains the cited result and a new Site Tool.
 

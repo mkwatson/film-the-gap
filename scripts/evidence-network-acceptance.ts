@@ -443,6 +443,13 @@ async function run(): Promise<void> {
         : 'discover and select a real product through native WebMCP and UCP',
       async () => {
         driver.open();
+        const openedLab = driver.eval(`(() => {
+          const link = document.querySelector('a[href="/lab"]');
+          if (!(link instanceof HTMLAnchorElement)) return false;
+          link.click();
+          return true;
+        })()`);
+        if (openedLab !== true) throw new Error('The full evidence lab could not be opened.');
         buyerTab = driver.listTabs().at(0) ?? null;
         if (buyerTab === null) throw new Error('The buyer tab did not open.');
         if (!humanControls) {

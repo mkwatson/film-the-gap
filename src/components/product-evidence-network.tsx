@@ -79,6 +79,9 @@ const defaultMission = demoProduct.mission;
 const agentStarter =
   'Use this page’s Site Tools. If I name a category instead of an exact item, search the real product catalog through UCP using only public criteria I approve, then open one observable question for the selected variant. Inspect the active case and search existing evidence. Treat catalog copy and ordinary web results as leads, never proof; only rights-cleared, human-reviewed network recordings may change the answer. If proof is missing, create the smallest continuous filming mission, inspect it, and refine it if ambiguous. Then create a phone capture link. Never send my identity, preferences, history, budget, or conversation. Do not infer the result; after reviewed evidence arrives, inspect exactly how the answer changed.';
 
+const judgeAgentStarter =
+  'Use this page’s Site Tools to answer the product question shown. Treat product claims and public links as leads, not proof. If reviewed video is missing, create the smallest continuous filming request, then stop before making it public.';
+
 const answerLabels: Readonly<Record<EvidenceAnswerStatus, string>> = {
   insufficient: 'Not enough proof',
   supported: 'Supported',
@@ -371,10 +374,12 @@ function phoneConnectionMatchesHandoff(
 
 interface ProductEvidenceNetworkProps {
   readonly initialHandoff?: EvidenceCaseHandoff;
+  readonly presentation?: 'judge' | 'lab';
 }
 
 export function ProductEvidenceNetwork({
   initialHandoff,
+  presentation = 'judge',
 }: ProductEvidenceNetworkProps = {}): React.JSX.Element {
   const [state, setState] = useState<EvidenceNetworkState>(() =>
     initialHandoff === undefined
@@ -953,13 +958,13 @@ export function ProductEvidenceNetwork({
   const pageReaderUsed = allObservations.some(
     ({ reviewedBy }) => reviewedBy === 'Product page · Cloudflare Browser Run',
   );
-  async function copyAgentStarter(): Promise<void> {
+  async function copyAgentStarter(prompt: string): Promise<void> {
     if (navigator.clipboard === undefined) {
       setCopyStatus('error');
       return;
     }
     try {
-      await navigator.clipboard.writeText(agentStarter);
+      await navigator.clipboard.writeText(prompt);
       setCopyStatus('copied');
     } catch {
       setCopyStatus('error');
@@ -1043,6 +1048,518 @@ export function ProductEvidenceNetwork({
             continuousTakeRequired: true,
           },
     });
+  }
+
+  const judgeStage =
+    answerChanged || (answer !== null && answer.status !== 'insufficient')
+      ? 'answered'
+      : phoneConnection !== null
+        ? 'waiting'
+        : mission !== null
+          ? 'mission'
+          : evidenceCase === null || evidenceCase.discovery === null
+            ? 'check'
+            : 'gap';
+  const decisiveObservation = allObservations.find((observation) =>
+    answer?.decisiveObservationIds.includes(observation.id),
+  );
+  const decisiveSource = sources.find(({ id }) => id === decisiveObservation?.citation.sourceId);
+  const isDemoCase = isRightsCleanBottleDemo(evidenceCase);
+
+  if (presentation === 'judge') {
+    return (
+      <main className="judge-shell">
+        <header className="judge-topbar">
+          <Link className="judge-brand" href="/">
+            <span aria-hidden="true">●</span>
+            <strong>Film the Gap</strong>
+          </Link>
+          <div className="judge-topbar-actions">
+            <span className={`evidence-runtime runtime-${siteToolStatus.phase}`}>
+              <span aria-hidden="true" />
+              {siteToolStatus.phase === 'ready'
+                ? `WebMCP · ${siteToolStatus.registeredNames.length} tools live`
+                : siteToolStatus.phase === 'unsupported'
+                  ? 'Web demo ready'
+                  : siteToolStatus.phase === 'error'
+                    ? 'WebMCP needs attention'
+                    : 'Connecting WebMCP'}
+            </span>
+            <Link className="evidence-quiet-link" href="/missions">
+              Filming requests
+            </Link>
+          </div>
+        </header>
+
+        <section className="judge-hero" aria-labelledby="judge-page-title">
+          <div className="judge-hero-copy">
+            <p className="evidence-eyebrow">Video answers for the questions product pages dodge</p>
+            <h1 id="judge-page-title">Turn any product question into video proof.</h1>
+            <p>
+              ChatGPT turns a shopper’s exact question into a tiny filming request. One person with
+              the product records the answer. Every future shopper can reuse the cited proof.
+            </p>
+            <div className="judge-hero-actions">
+              <a className="judge-primary-link" href="#live-proof-loop">
+                See it work ↓
+              </a>
+              <span>No store partnership or app install required.</span>
+            </div>
+          </div>
+
+          <div
+            className="judge-value-loop"
+            role="group"
+            aria-label="The reusable product proof loop"
+          >
+            <article>
+              <small>1 · Shopper asks</small>
+              <strong>“Will it leak upside down?”</strong>
+              <span>Product copy cannot prove it.</span>
+            </article>
+            <b aria-hidden="true">→</b>
+            <article>
+              <small>2 · One owner films</small>
+              <strong>10-second test</strong>
+              <span>Continuous, reviewed, and cited.</span>
+            </article>
+            <b aria-hidden="true">→</b>
+            <article className="judge-value-result">
+              <small>3 · Everyone benefits</small>
+              <strong>A real answer</strong>
+              <span>The same fact never needs filming again.</span>
+            </article>
+          </div>
+        </section>
+
+        <section
+          className={`judge-demo judge-stage-${judgeStage}`}
+          id="live-proof-loop"
+          aria-labelledby="judge-demo-title"
+        >
+          <div className="judge-demo-heading">
+            <span>
+              <small>Live example · click through the loop</small>
+              <strong id="judge-demo-title">
+                {evidenceCase?.product.name ?? 'Choose a product'}
+              </strong>
+            </span>
+            <button
+              className="evidence-quiet-button"
+              type="button"
+              disabled={boardPhase === 'removing'}
+              onClick={() => void resetDemo()}
+            >
+              {boardPhase === 'removing' ? 'Cleaning up…' : 'Start over'}
+            </button>
+          </div>
+
+          <ol className="judge-progress" aria-label="Product proof progress">
+            <li className="is-complete">
+              <span>1</span>
+              Ask
+            </li>
+            <li className={judgeStage === 'check' ? 'is-current' : 'is-complete'}>
+              <span>2</span>
+              Check
+            </li>
+            <li
+              className={
+                judgeStage === 'gap'
+                  ? 'is-current'
+                  : ['mission', 'waiting', 'answered'].includes(judgeStage)
+                    ? 'is-complete'
+                    : ''
+              }
+            >
+              <span>3</span>
+              Film
+            </li>
+            <li className={judgeStage === 'answered' ? 'is-complete' : ''}>
+              <span>4</span>
+              Reuse
+            </li>
+          </ol>
+
+          <div className="judge-question">
+            <small>The shopper’s exact question</small>
+            <blockquote>
+              {evidenceCase?.question.text ?? 'Ask a product question to begin.'}
+            </blockquote>
+            <div className="judge-claim-boundary">
+              <span>PRODUCT PAGE SAYS</span>
+              <strong>
+                “{isDemoCase ? demoProduct.authoredClaim : 'See listing for details.'}”
+              </strong>
+              <em>claim, not proof</em>
+            </div>
+          </div>
+
+          <div className="judge-action-stage">
+            {judgeStage === 'check' ? (
+              <div className="judge-stage-content">
+                <span className="judge-stage-icon" aria-hidden="true">
+                  ?
+                </span>
+                <p className="evidence-eyebrow">Current answer</p>
+                <h2>Not enough proof.</h2>
+                <p>
+                  The listing makes a claim, but there is no reviewed video showing this exact test.
+                </p>
+                <button
+                  className="judge-primary-button"
+                  type="button"
+                  disabled={searchPhase === 'searching'}
+                  onClick={() => void searchEvidence('human')}
+                >
+                  {searchPhase === 'searching' ? 'Checking the web…' : 'Check for real video proof'}
+                </button>
+                {searchError === null ? null : <p role="alert">{searchError}</p>}
+              </div>
+            ) : judgeStage === 'gap' ? (
+              <div className="judge-stage-content">
+                <span className="judge-stage-icon judge-stage-icon-gap" aria-hidden="true">
+                  0
+                </span>
+                <p className="evidence-eyebrow">Search complete</p>
+                <h2>No video answers this yet.</h2>
+                <p>
+                  Product pages and public sources were checked. Most shopping agents would now
+                  guess or stop. Film the Gap creates the missing proof.
+                </p>
+                <button className="judge-primary-button" type="button" onClick={createMission}>
+                  Ask someone to film it
+                </button>
+              </div>
+            ) : judgeStage === 'mission' && mission !== null ? (
+              <div className="judge-stage-content judge-mission mission-card">
+                <div className="mission-card-head">
+                  <span aria-hidden="true">REC</span>
+                  <p>
+                    <small>The smallest useful request</small>
+                    <strong>{mission.minimumSeconds}-second continuous test</strong>
+                  </p>
+                </div>
+                <dl>
+                  <div>
+                    <dt>Record</dt>
+                    <dd>{mission.instruction}</dd>
+                  </div>
+                  <div>
+                    <dt>Proof requires</dt>
+                    <dd>{mission.successCriterion}</dd>
+                  </div>
+                </dl>
+                {phoneConnection === null ? (
+                  <MissionRefinementEditor
+                    key={`${mission.id}:${state.revision}`}
+                    mission={mission}
+                    refine={refineMission}
+                  />
+                ) : null}
+                <button
+                  className="judge-primary-button"
+                  type="button"
+                  disabled={serviceUrl === null || phonePhase === 'connecting'}
+                  onClick={() => {
+                    void createPhoneCapture().catch(() => {
+                      // The visible phone error is the human recovery path.
+                    });
+                  }}
+                >
+                  {phonePhase === 'connecting'
+                    ? 'Creating phone link…'
+                    : serviceUrl === null
+                      ? 'Phone service not configured'
+                      : 'Put this exact test on a phone'}
+                </button>
+                {phoneError === null ? null : <p role="alert">{phoneError}</p>}
+              </div>
+            ) : judgeStage === 'waiting' && phoneConnection !== null && mission !== null ? (
+              <div className="judge-stage-content judge-phone-stage">
+                <div className="judge-phone-handoff">
+                  <div className="mission-phone-qr">
+                    <QRCodeSVG
+                      value={phoneConnection.receipt.contributorUrl}
+                      size={148}
+                      bgColor="transparent"
+                      fgColor="#ecf5ef"
+                      level="M"
+                      title="Private contributor phone link QR code"
+                    />
+                  </div>
+                  <div>
+                    <p className="evidence-eyebrow">Someone with the product</p>
+                    <h2>Scan. Film. Done.</h2>
+                    <p>
+                      No account or app. The phone receives only the product, the question, and the
+                      exact test—not the shopper’s identity, history, or budget.
+                    </p>
+                    <a
+                      href={phoneConnection.receipt.contributorUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open the phone recorder ↗
+                    </a>
+                  </div>
+                </div>
+
+                {phoneConnection.publicMission?.status === 'open' ? (
+                  <div className="judge-public-receipt" role="status">
+                    <strong>Public request is live.</strong>
+                    <span>Anyone with this product can record the answer.</span>
+                    <Link href={`/missions#mission-${phoneConnection.publicMission.id}`}>
+                      View request →
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="judge-public-option">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={boardConsent}
+                        onChange={(event) => setBoardConsent(event.currentTarget.checked)}
+                      />
+                      I understand this product question will be public. No shopper context is
+                      included.
+                    </label>
+                    <button
+                      className="evidence-secondary-button"
+                      type="button"
+                      disabled={!boardConsent || boardPhase === 'publishing'}
+                      onClick={() => {
+                        void publishMissionToBoard().catch(() => {
+                          // The visible board error is the human recovery path.
+                        });
+                      }}
+                    >
+                      {boardPhase === 'publishing'
+                        ? 'Posting request…'
+                        : 'Post this request publicly'}
+                    </button>
+                  </div>
+                )}
+                {boardError === null ? null : <p role="alert">{boardError}</p>}
+              </div>
+            ) : (
+              <div className="judge-stage-content judge-answer-stage">
+                <span className="judge-stage-icon judge-stage-icon-answer" aria-hidden="true">
+                  ✓
+                </span>
+                <p className="evidence-eyebrow">Reviewed video changed the answer</p>
+                <div className="judge-answer-diff" aria-label="Evidence-caused answer change">
+                  <span>
+                    <small>Before</small>
+                    <strong>
+                      {beforeAnswer === null ? 'No answer' : answerLabels[beforeAnswer.status]}
+                    </strong>
+                  </span>
+                  <b aria-hidden="true">→</b>
+                  <span>
+                    <small>After</small>
+                    <strong>{answer === null ? 'No answer' : answerLabels[answer.status]}</strong>
+                  </span>
+                </div>
+                {recommendationImpact === null ? null : (
+                  <div className="judge-recommendation">
+                    <small>Shopping recommendation</small>
+                    <strong>{recommendationImpact.headline}</strong>
+                    <p>{recommendationImpact.guidance}</p>
+                  </div>
+                )}
+                {decisiveObservation === undefined ? null : (
+                  <div className="judge-citation">
+                    <span>VIDEO</span>
+                    <p>
+                      <strong>{decisiveObservation.text}</strong>
+                      <small>
+                        {citationSeconds(
+                          decisiveObservation.citation.startSeconds,
+                          decisiveObservation.citation.endSeconds,
+                          decisiveObservation.citation.label,
+                        )}{' '}
+                        · reviewed · {decisiveObservation.confidence} confidence
+                      </small>
+                    </p>
+                    {decisiveSource?.url === null || decisiveSource?.url === undefined ? null : (
+                      <a href={decisiveSource.url} target="_blank" rel="noreferrer">
+                        Watch ↗
+                      </a>
+                    )}
+                  </div>
+                )}
+                <p className="judge-reuse-line">
+                  This fact is now reusable. The next shopper gets the cited answer immediately.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <p className="judge-live-message" role="status" aria-live="polite">
+            {lastMessage}
+          </p>
+        </section>
+
+        <section className="judge-chatgpt" aria-labelledby="judge-chatgpt-title">
+          <div>
+            <small>Native WebMCP path</small>
+            <strong id="judge-chatgpt-title">ChatGPT can run this same loop itself.</strong>
+            <p>
+              The page exposes state-aware tools; ChatGPT sees only the next safe action, while
+              private shopping context stays in the conversation.
+            </p>
+          </div>
+          <code>{judgeAgentStarter}</code>
+          <button type="button" onClick={() => void copyAgentStarter(judgeAgentStarter)}>
+            {copyStatus === 'copied' ? 'Copied ✓' : 'Copy prompt'}
+          </button>
+          <span role="status" aria-live="polite">
+            {copyStatus === 'error' ? 'Clipboard unavailable—select the prompt.' : null}
+          </span>
+        </section>
+
+        <section className="judge-compounding" aria-label="Why product evidence compounds">
+          <span aria-hidden="true">↗</span>
+          <div>
+            <small>The compounding advantage</small>
+            <strong>Every unanswered question expands the evidence network.</strong>
+            <p>
+              Search first. Film only the missing fact. Reuse every reviewed answer across future
+              products, merchants, shoppers, and agents.
+            </p>
+          </div>
+        </section>
+
+        <div className="judge-expanders">
+          <details>
+            <summary>
+              <span>Try any product</span>
+              <small>Open a fresh question without product-specific code</small>
+            </summary>
+            <section className="evidence-try-panel" aria-labelledby="judge-try-title">
+              <div>
+                <p className="evidence-eyebrow">Any physical product</p>
+                <h2 id="judge-try-title">What do you wish the listing actually showed?</h2>
+              </div>
+              <form onSubmit={submitQuestion}>
+                <label>
+                  Product
+                  <input
+                    required
+                    minLength={2}
+                    maxLength={120}
+                    value={productName}
+                    onChange={(event) => setProductName(event.currentTarget.value)}
+                  />
+                </label>
+                <label>
+                  Public product URL <small>optional</small>
+                  <input
+                    type="url"
+                    placeholder="https://…"
+                    value={productUrl}
+                    onChange={(event) => setProductUrl(event.currentTarget.value)}
+                  />
+                </label>
+                <label className="question-field">
+                  What do you need to know?
+                  <textarea
+                    required
+                    minLength={8}
+                    maxLength={280}
+                    value={question}
+                    onChange={(event) => setQuestion(event.currentTarget.value)}
+                  />
+                </label>
+                <button className="evidence-secondary-button" type="submit">
+                  Open new evidence case
+                </button>
+              </form>
+            </section>
+          </details>
+
+          <details>
+            <summary>
+              <span>Find real products through UCP</span>
+              <small>Search Shopify’s global catalog, then ask what its copy cannot prove</small>
+            </summary>
+            <ProductCatalogDiscovery
+              country={catalogCountry}
+              error={catalogError}
+              evidenceQuestion={catalogQuestion}
+              phase={catalogPhase}
+              query={catalogQuery}
+              result={catalogResult}
+              onCountryChange={setCatalogCountry}
+              onEvidenceQuestionChange={setCatalogQuestion}
+              onOpenQuestion={openHumanCatalogQuestion}
+              onQueryChange={setCatalogQuery}
+              onSearch={runCatalogSearch}
+            />
+          </details>
+
+          <details>
+            <summary>
+              <span>Inspect the implementation</span>
+              <small>Live tools, evidence provenance, and attributable state</small>
+            </summary>
+            <div className="judge-technical-grid">
+              <section className="evidence-panel">
+                <div className="evidence-section-heading compact">
+                  <span>
+                    <small>Live WebMCP Site Tools</small>
+                    <strong>Available in this state</strong>
+                  </span>
+                  <em>{availableToolNames.length}</em>
+                </div>
+                <p className="evidence-tool-status">{siteToolStatus.message}</p>
+                <ul className="evidence-tool-list">
+                  {availableToolNames.map((name) => (
+                    <li key={name}>
+                      <span aria-hidden="true">◇</span>
+                      <code>{name}</code>
+                      <small>
+                        {siteToolStatus.registeredNames.includes(name)
+                          ? 'registered'
+                          : 'page contract'}
+                      </small>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section
+                className="evidence-activity evidence-panel"
+                aria-labelledby="activity-title"
+              >
+                <div className="evidence-section-heading compact">
+                  <span>
+                    <small>Shared, attributable state</small>
+                    <strong id="activity-title">What people and agents changed</strong>
+                  </span>
+                </div>
+                <ol>
+                  {[...state.activity].reverse().map((event) => (
+                    <li key={event.id}>
+                      <span>{actorLabel(event.actor)}</span>
+                      <p>
+                        <strong>{event.action.replaceAll('_', ' ')}</strong>
+                        {event.summary}
+                      </p>
+                      <small>r{event.id.split('-').at(-1)}</small>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            </div>
+            <div className="judge-lab-link">
+              <Link href="/lab">Open the full evidence lab →</Link>
+            </div>
+          </details>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -1157,7 +1674,7 @@ export function ProductEvidenceNetwork({
           <strong id="agent-brief-title">Let ChatGPT direct the missing proof.</strong>
           <p>{agentStarter}</p>
         </div>
-        <button type="button" onClick={() => void copyAgentStarter()}>
+        <button type="button" onClick={() => void copyAgentStarter(agentStarter)}>
           {copyStatus === 'copied' ? 'Prompt copied ✓' : 'Copy ChatGPT prompt'}
         </button>
         <span role="status" aria-live="polite">

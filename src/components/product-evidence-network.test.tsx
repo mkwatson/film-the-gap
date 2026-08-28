@@ -104,10 +104,46 @@ afterEach(() => {
 });
 
 describe('ProductEvidenceNetwork', () => {
+  it('gives a cold judge one clear proof loop while keeping native WebMCP live', async () => {
+    const modelContext = new RecordingModelContext();
+    setModelContext(modelContext);
+    render(<ProductEvidenceNetwork />);
+
+    expect(
+      screen.getByRole('heading', { name: 'Turn any product question into video proof.' }),
+    ).toBeTruthy();
+    expect(screen.getByText(/One person with the product records the answer/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Check for real video proof' })).toBeTruthy();
+
+    await waitFor(() => {
+      expect(modelContext.activeToolNames()).toEqual([
+        'search_product_catalog',
+        'inspect_product_evidence',
+        'ask_product_question',
+        'search_product_evidence',
+      ]);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Check for real video proof' }));
+    expect(await screen.findByRole('heading', { name: 'No video answers this yet.' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Ask someone to film it' }));
+
+    expect(await screen.findByText('The smallest useful request')).toBeTruthy();
+    expect(screen.getAllByText(demoProduct.mission.instruction)).toHaveLength(2);
+    expect(
+      (
+        screen.getByRole('button', {
+          name: 'Phone service not configured',
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+  });
+
   it('opens directly on the exact public question handed off by a product page', async () => {
     setModelContext(undefined);
     render(
       <ProductEvidenceNetwork
+        presentation="lab"
         initialHandoff={{
           version: evidenceCaseHandoffVersion,
           source: evidenceCaseHandoffSource,
@@ -136,7 +172,7 @@ describe('ProductEvidenceNetwork', () => {
 
   it('keeps the search and filming handoff usable without native Site Tools', async () => {
     setModelContext(undefined);
-    render(<ProductEvidenceNetwork />);
+    render(<ProductEvidenceNetwork presentation="lab" />);
 
     expect(screen.getByText('Everyday insulated travel bottle')).toBeTruthy();
     expect(
@@ -163,7 +199,7 @@ describe('ProductEvidenceNetwork', () => {
   it('reconciles the native tool frontier as evidence state changes', async () => {
     const modelContext = new RecordingModelContext();
     setModelContext(modelContext);
-    render(<ProductEvidenceNetwork />);
+    render(<ProductEvidenceNetwork presentation="lab" />);
 
     await waitFor(() => {
       expect(modelContext.activeToolNames()).toEqual([
@@ -250,7 +286,7 @@ describe('ProductEvidenceNetwork', () => {
     vi.stubGlobal('fetch', fetcher);
     const modelContext = new RecordingModelContext();
     setModelContext(modelContext);
-    render(<ProductEvidenceNetwork />);
+    render(<ProductEvidenceNetwork presentation="lab" />);
 
     const catalogOutput = await modelContext
       .latestTool('search_product_catalog')
@@ -311,7 +347,7 @@ describe('ProductEvidenceNetwork', () => {
       ),
     );
     setModelContext(undefined);
-    render(<ProductEvidenceNetwork />);
+    render(<ProductEvidenceNetwork presentation="lab" />);
 
     fireEvent.change(screen.getByLabelText('Product'), {
       target: { value: 'USB-C lavalier microphone' },
@@ -394,7 +430,7 @@ describe('ProductEvidenceNetwork', () => {
     }
     vi.stubGlobal('WebSocket', QuietWebSocket);
     setModelContext(undefined);
-    render(<ProductEvidenceNetwork />);
+    render(<ProductEvidenceNetwork presentation="lab" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Search existing evidence' }));
     fireEvent.click(
@@ -455,7 +491,7 @@ describe('ProductEvidenceNetwork', () => {
       ),
     );
     setModelContext(undefined);
-    render(<ProductEvidenceNetwork />);
+    render(<ProductEvidenceNetwork presentation="lab" />);
 
     fireEvent.change(screen.getByLabelText('Product'), {
       target: { value: 'Everyday insulated travel bottle' },
@@ -488,7 +524,7 @@ describe('ProductEvidenceNetwork', () => {
 
   it('lets an ordinary-browser shopper refine the mission before creating its phone link', async () => {
     setModelContext(undefined);
-    render(<ProductEvidenceNetwork />);
+    render(<ProductEvidenceNetwork presentation="lab" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Search existing evidence' }));
     fireEvent.click(
@@ -571,7 +607,7 @@ describe('ProductEvidenceNetwork', () => {
       ),
     );
     setModelContext(undefined);
-    render(<ProductEvidenceNetwork />);
+    render(<ProductEvidenceNetwork presentation="lab" />);
 
     fireEvent.change(screen.getByLabelText('Product'), {
       target: { value: 'Desk lamp' },
@@ -621,7 +657,7 @@ describe('ProductEvidenceNetwork', () => {
       ),
     );
     setModelContext(undefined);
-    render(<ProductEvidenceNetwork />);
+    render(<ProductEvidenceNetwork presentation="lab" />);
 
     fireEvent.change(screen.getByLabelText('Product'), {
       target: { value: 'Desk lamp' },
@@ -670,7 +706,7 @@ describe('ProductEvidenceNetwork', () => {
       ),
     );
     setModelContext(undefined);
-    render(<ProductEvidenceNetwork />);
+    render(<ProductEvidenceNetwork presentation="lab" />);
 
     fireEvent.change(screen.getByLabelText('Product'), {
       target: { value: 'Trail Flask 24 oz' },
