@@ -109,7 +109,8 @@ The resources FAQ explicitly welcomes AI assistance for scaffolding, debugging, 
 
 ## Submission controls
 
-- Treat the rules' contradictory multiple-submission sentence conservatively: prepare **one** submission for this entrant.
+- The live Official Rules fetched again on August 27 now say an entrant **may submit more than one Submission**, provided each is unique and substantially different. An earlier rules snapshot supplied during planning said an entrant may not submit more than one. Because the rules may change and the live Official Rules control, recheck this exact clause before acting.
+- Strategic default: finish and freeze one flagship submission first. Consider a substantially different second entry only if it cannot reduce the flagship's execution, demo clarity, testing time, or submission quality. Never submit either without Mark's approval.
 - Save and verify a draft before the deadline.
 - After the submission period, substantive changes to the submission are not allowed unless specifically permitted for narrow cleanup such as rights or personal-information issues.
 - The FAQ gives a stricter operational instruction: after September 3 at 1:00 p.m. PT, do not change the Devpost submission, submitted repository, or live site until winners are announced. Freeze all three. If continued work is necessary, make a separate fork that judges cannot confuse with the submitted revision.

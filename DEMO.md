@@ -1,128 +1,128 @@
 # Demo production packet
 
-Updated 2026-08-27 PT. This packet turns the tested product lifecycle into one honest `2:45` story. It does not authorize recording a rights-cleared object, publishing a video, or using a final project name; Mark owns those choices.
+Updated 2026-08-27 PT. The target cut is `2:40`: one physical product, one question the web cannot prove, one native WebMCP mission, one real phone recording, one reviewed finding, and one visibly changed ChatGPT answer.
+
+This packet does not authorize a deployment, paid Stream/Gateway use, external recording, YouTube publication, or a final project name. Mark controls those actions.
 
 ## The one thing viewers must remember
 
-> A private agent can ask the physical world for the smallest missing fact, let one human answer many private decisions, and expose a new action only when the resulting evidence makes it safe.
+> ChatGPT finds the exact fact missing from the web, asks a person with the product to film it, and changes its answer using the reviewed video.
 
-The opening must land that idea before the audience hears “Durable Object,” “AI Gateway,” or “UCP.” The technical stack is the receipt, not the premise.
+Every shot must reinforce that sentence. Commerce, UCP, Lean, the prior auction, sponsor logos, and implementation history stay out of the primary cut.
+
+## Demo object and truth contract
+
+Use an owned, unbranded travel bottle and plain dry paper. The question is:
+
+> Does the filled bottle stay leak-free when held upside down for ten seconds?
+
+Record the test honestly. The result may be **Supported**, **Contradicted**, or **Inconclusive**. Do not choose the result for narrative convenience. After the physical take, replace every `[ACTUAL RESULT]`, `[OBSERVATION]`, and `[TIMESTAMP]` placeholder with exactly what the reviewed recording supports.
+
+A contradiction is as valid as support: the product value is that ChatGPT stops guessing and changes its answer either way.
+
+## Exact ChatGPT prompts
+
+Primary prompt:
+
+> Use this page's Site Tools. Inspect the active product question. If the current sources do not prove the answer, create the smallest continuous filming mission and then create a phone capture link. Do not infer the result from marketing copy. Stop and wait for reviewed evidence.
+
+After the contributor publishes:
+
+> Re-inspect the product evidence and use the new answer-change tool. Tell me only what changed, what the reviewed video establishes, and the exact cited interval.
+
+Do not mention internal tool names in the prompt. If ChatGPT needs rescue, preserve the failed take, improve the page contract or prompt, reset, and try again.
 
 ## Primary capture layout
 
-- Record a clean `1920×1080`, 30 fps source with browser zoom and text large enough to survive Devpost/YouTube compression.
-- Keep ChatGPT and the buyer page together for the first minute. Site Tools calls, their compact outputs, and the corresponding visible page change must appear in the same causal sequence.
-- Before recording, reveal the private phone QR, scan it, confirm the phone is linked, then hide it. Do not put a live bearer QR in the published video; if a setup capture is indispensable, wait for the invite and room to expire and still mask it in the edit.
-- Introduce the already-linked host phone only when the request arrives. Crop away notifications, status-bar personal data, room credentials, device logos, and unrelated apps. The phone browser does not need WebMCP.
-- Show the merchant as a visibly separate origin only after evidence and the hold unlock it.
-- Record narration cleanly without music. Preserve a full uninterrupted source take; edits may remove waiting time but must not reorder or fabricate tool results.
-- Use an owned, unbranded physical object and a rights-cleared background. Check every visible mark, image, sound, notification, and browser profile before capture.
+- Record a clean `1920×1080`, 30 fps screen master. Use browser zoom large enough for Site Tool calls, the current answer, and timestamps to remain readable after YouTube compression.
+- Keep ChatGPT's in-app Browser and the product-evidence page visible together when possible. A viewer must see each Site Tool call cause the corresponding page change.
+- Record the phone separately at native resolution, then place it beside the buyer view only from mission arrival through publication.
+- A live contributor QR or bearer link must never be usable from the published video. Crop it, mask it, or use only footage captured after the case expires.
+- Crop notifications, personal tabs, status-bar details, browser profiles, device marks, development origins, secrets, and unrelated apps.
+- Use no music. Record clean narration after the visual timing is locked, and correct the final captions manually.
+- Waiting time may be shortened transparently, but do not reorder, fabricate, or splice the evidence test itself. Preserve the original continuous product-test video.
 
-## Exact prompts
+## `2:40` visual and narration contract
 
-Private setup, entered only in ChatGPT:
+The narration is intentionally short enough to leave room for the product to explain itself.
 
-> My maximum all-in price is $450. Keep that private and never send it to the website.
+| Time        | Required visual proof                                                                                                            | Narration                                                                                                                                                                                                                          |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0:00–0:13` | Owned bottle beside the page. Highlight the question, marketing-copy source, and **Not enough proof** answer.                    | “Product pages answer the questions someone thought to write down. This bottle says leak resistant—but that does not prove it stays dry upside down for ten seconds.”                                                              |
+| `0:13–0:32` | Send the primary prompt. ChatGPT calls native **Inspect product evidence** and reports that the existing source is inconclusive. | “So I ask ChatGPT the question I actually care about. Through this page's native Site Tools, it can distinguish a product claim from evidence that really answers me.”                                                             |
+| `0:32–0:50` | ChatGPT creates the ten-second continuous mission and phone handoff. Show `create_filming_mission` disappear and the QR receipt. | “The web does not have the proof. Instead of guessing, ChatGPT creates the smallest test that would settle it: fill the bottle, close it, invert it over dry paper, and keep everything visible for ten continuous seconds.”       |
+| `0:50–1:12` | On the ordinary phone browser, show the exact mission and record the complete continuous test.                                   | “Anyone who has the product and receives this link can help—no account and no app. The phone sees only this public question and recording instruction. The contributor decides what to record.”                                    |
+| `1:12–1:33` | Select the video, show direct Stream upload, then the bounded proposal with a cited interval. Waiting may be cut.                | “The video uploads directly to Cloudflare Stream. Through Vercel AI Gateway, a video model proposes the result and the smallest relevant interval. It cannot publish anything.”                                                    |
+| `1:33–1:52` | Scrub the clip; visibly review or correct the result, observation, confidence, continuity, timestamp, rights, and attribution.   | “The person who made the recording reviews every material field. Here I [confirm or correct] the proposal to say: ‘[OBSERVATION].’ Only this reviewed finding can affect the answer.”                                              |
+| `1:52–2:10` | Publish. Buyer updates live to **Before: Not enough proof → After: [ACTUAL RESULT]**; `inspect_answer_change` appears.           | “When I publish, the original page changes live. The answer is now [ACTUAL RESULT], and a new answer-change tool appears. That capability did not exist before the evidence arrived.”                                              |
+| `2:10–2:26` | Send the second prompt. ChatGPT calls the new tool and cites `[TIMESTAMP]` plus the reviewed observation.                        | “ChatGPT re-inspects and tells me exactly what changed, what the video establishes, and where to verify it. The recommendation is now grounded in the recording—not copied from marketing text.”                                   |
+| `2:26–2:40` | Show the minimal architecture card, then briefly open the blank generic-product form. End on the before/after answer.            | “This works for any observable product question. Agents identify the missing knowledge; people supply the physical evidence; and over time those reviewed videos can become a shared evidence layer for better product decisions.” |
 
-Product-only starter, copied from the page:
+If the real Gateway falls back to manual review during the recorded take, narrate “The contributor reviews the exact uploaded video” and omit the model/Gateway sentence. Never describe a call that the video does not show.
 
-> Inspect this live show using its Site Tools. Keep the private maximum I gave you in our conversation and never send it to the website. I need a 154–158 cm board, visible edge evidence, and no prior base repair. Share only those four product-evidence fields, ask the host for any missing evidence, and stop before creating a hold.
+## Minimal architecture card
 
-After the host publishes:
-
-> Re-inspect. If all requirements are supported and the exact quote is within my private maximum, create only the reversible hold at the exact current quote. Then prepare the authoritative merchant cart. Stop before any checkout or payment.
-
-On the merchant continuation:
-
-> Inspect this exact cart, then cancel it. Do not order or pay.
-
-Back in the evidence room:
-
-> Reconcile the merchant cancellation, release the hold, and confirm that the private handoff is gone.
-
-Do not rescue the model with tool names during the recorded primary take. If the prompt needs rescue, preserve the failed take, improve the product contract or prompt, and rerun from reset.
-
-## Timed cut and narration
-
-The narration below is roughly 330 words. Read it conversationally, leaving the visual transitions room to breathe.
-
-| Time        | Required visual proof                                                                                                               | Narration                                                                                                                                                                                                                                                                                                    |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `0:00–0:12` | ChatGPT beside the buyer page; host phone visible but idle.                                                                         | “Shopping agents are powerful when a page already knows the answer. But many decisions depend on a physical fact nobody captured: an edge, a noise, or whether this board was ever repaired.”                                                                                                                |
-| `0:12–0:28` | Enter `$450` only in ChatGPT; paste the product-only starter. The page still has no private input.                                  | “Here I tell ChatGPT my real all-in limit—four hundred fifty dollars. That stays in our conversation. The live market has no budget or identity field; I send only four things the product must prove.”                                                                                                      |
-| `0:28–0:48` | Native inspect and requirements calls; visible `154–158`, edge required, repair forbidden; hold absent.                             | “Through native Site Tools, ChatGPT reads the exact live lot and shares a 154-to-158-centimeter range, visible edges, and no prior base repair. Length and edges resolve. Repair history is still unknown, so no hold tool exists.”                                                                          |
-| `0:48–1:06` | Host request call; phone changes to `8 private decisions need one fact`; host receipt excludes private fields.                      | “Instead of guessing, the agent asks the host one product question. Seven other test-agent decisions need the same fact. On the seller’s phone, eight private needs become one useful public request—without eight profiles or budgets.”                                                                     |
-| `1:06–1:30` | Explicit video-only camera start, owned item, selected frame, bounded proposal, host review, separate history attestation, publish. | “The host chooses what to show. Camera access is video-only and explicit. One selected frame gets a timestamp, dimensions, and a SHA-256 fingerprint. AI proposes only what pixels support; the host reviews it and separately attests repair history. Continuous video never enters the room.”              |
-| `1:30–1:48` | Buyer turns supported; hold tool appears; exact `$423` hold after ChatGPT's private comparison.                                     | “That one answer updates every waiting decision. The page now registers a hold tool that literally did not exist before. ChatGPT compares the public four-hundred-twenty-three-dollar quote to my private ceiling and creates only a reversible hold.”                                                       |
-| `1:48–2:10` | Prepare Cart; second-origin receipt shows UCP `2026-08-25` and `$375 + $48 = $423`.                                                 | “Now the evidence room can ask a separate merchant to prepare a UCP Cart. The merchant—not this demo page—owns its lifecycle and exact math: three hundred seventy-five dollars plus forty-eight shipping equals four hundred twenty-three. No identity, address, payment, or ceiling crossed the boundary.” |
-| `2:10–2:27` | Merchant inspect/cancel; return to room; handoff purged, cancel gone, release present.                                              | “On that second origin, WebMCP can inspect or cancel, but cannot order or pay. I cancel. Back in the room, the private continuation is purged, the cancel capability disappears, and the hold becomes releasable.”                                                                                           |
-| `2:27–2:40` | Minimal architecture card, then crop to the green machine-checked gate beside the registered hold tool.                             | “Underneath, native Site Tools, Cloudflare state, Vercel vision, and UCP commerce compose one action. A Lean-checked table gates the hold—not camera truth, only authority.”                                                                                                                                 |
-| `2:40–2:45` | Buyer and host privacy receipts side by side.                                                                                       | “The market learned what proof to show—not what I would pay.”                                                                                                                                                                                                                                                |
-
-If the live Gateway returns the manual-review fallback during the final take, replace “AI proposes” with “The host reviews exactly one selected frame” and omit AI Gateway from the architecture line. Never narrate a model call that the recorded take did not complete.
-
-## Architecture card
-
-Use only five labeled nodes and one highlighted causal chain:
+Show this for at most five seconds, without logos:
 
 ```text
-private ChatGPT mandate
-        │ four evidence fields
-        ▼
-native WebMCP buyer page ── one normalized question ──▶ human host camera
-        │ reviewed public evidence                           │
-        ▼                                                    │
-Cloudflare evidence authority ◀──────────────────────────────┘
-        │ exact quote + fixed variant; no private mandate
-        ▼
-separate UCP merchant ──▶ reversible Cart; no order or payment
+ChatGPT
+   ↕ native, state-aware WebMCP Site Tools
+Next.js product-evidence page on Vercel
+   ↕ revisioned case and live updates
+Cloudflare Durable Object ↔ contributor phone → Cloudflare Stream
+   ↑ reviewed evidence                         ↓ authorized MP4
+   └──────────────── human review ← Vercel AI Gateway proposal
 ```
 
-Animate or highlight only the active arrow; do not add sponsor logos or a product-name title. Three seconds is enough because the audience has already seen every boundary operate.
+Highlight only the causal path the viewer just watched. “Human review” must sit between model proposal and published evidence.
 
-The ready-to-capture, original `1920×1080` card is [public/demo-architecture.svg](public/demo-architecture.svg). Use the final verified asset directly; do not rebuild it in a presentation tool that may substitute fonts, add template marks, or expose editor chrome.
+The ready-to-capture `1920×1080` asset is [public/demo-architecture.svg](public/demo-architecture.svg). Use the verified SVG directly so an editor cannot silently substitute fonts, add marks, or reintroduce the discarded commerce architecture.
 
-## Reproducible continuity capture
+## Required take matrix
 
-The native acceptance runner can emit thirteen full-page milestone stills from the same journey it asserts when its authenticated-crowd lane is enabled. This is useful for edit planning, backup inserts, submission screenshots, and visual regression—not as a substitute for model-driven ChatGPT evidence.
+1. **Primary real take:** final public origins, current ChatGPT in-app Browser, physical phone, owned object, real Stream upload, real Gateway proposal if available, explicit human review, and the resulting answer-change tool.
+2. **Uninterrupted product test:** the original phone file and a clean close-up showing the full continuous duration. Keep it as the truth source even if the edited demo shows only part of the wait.
+3. **Phone close-up:** mission → capture → upload → proposal → review → publication, with no credentials or personal data visible.
+4. **Buyer close-up:** initial insufficient answer → dynamic Site Tool changes → WebSocket update → before/after answer → timestamped ChatGPT response.
+5. **Manual-fallback take:** the same real upload with the model proposal unavailable. Prove a contributor can still review conservatively and that inconclusive remains a valid outcome.
+6. **Deterministic replay take:** the explicitly labeled replay path. Keep it for judge-safe recovery and screenshots, never present it as fresh footage or a model call.
+7. **Unknown-product insert:** open a new case for the USB-C lavalier microphone question and show that the same tool contract adapts without a code change. Do not attempt a second full mission in the primary cut.
+8. **Silent screen master and narration master:** capture separately so a browser pause or spoken mistake cannot force a fabricated edit.
+
+## Reproducible acceptance and edit receipts
+
+Before recording, run the offline native acceptance journey:
 
 ```bash
-EVIDENCE_ACCEPTANCE_APP_URL=https://app.example \
-EVIDENCE_ACCEPTANCE_ROOM_ORIGIN=https://room.example \
-EVIDENCE_ACCEPTANCE_MERCHANT_ORIGIN=https://merchant.example \
-EVIDENCE_ACCEPTANCE_AUTHENTICATED_CROWD=1 \
-EVIDENCE_ACCEPTANCE_ARTIFACT_DIR=tmp/final-demo-rehearsal \
-EVIDENCE_ACCEPTANCE_CAPTURE_PAUSE_MS=750 \
-EVIDENCE_ACCEPTANCE_RECORD_VIDEO=1 \
-pnpm acceptance:native
+pnpm acceptance:evidence-network
 ```
 
-The optional WebM records only the buyer-tab state progression; the thirteen stills cover buyer, authenticated-crowd, host, and merchant surfaces. Omit `EVIDENCE_ACCEPTANCE_AUTHENTICATED_CROWD` for the faster canonical journey and twelve stills. `tmp/` is ignored. All role fragments are scrubbed before capture, and successful runner output still contains only phase timings. Before using any still, visually inspect it for a development hostname, personal data, third-party marks, and private credentials.
+It generates an owned 12-second MP4 and drives the real Next.js page and Durable Object through native Chrome WebMCP. Deterministic local services replace only Stream and the model; the browser is blocked from the public paid-service hosts. The runner must prove:
 
-## Take matrix
+1. the initial answer is insufficient;
+2. WebMCP creates a bounded mission and phone link;
+3. the contributor capability survives reload after its URL fragment is scrubbed;
+4. upload and model-shaped proposal reach explicit human review;
+5. the reviewer can correct **Supports** to **Contradicts**;
+6. publication updates the buyer over WebSocket;
+7. `inspect_answer_change` returns insufficient → contradicted with the exact `00:01–00:11` citation; and
+8. a buyer reload reconnects to the same Durable Object state.
 
-Capture these independently so one permission or network failure cannot destroy the edit:
-
-1. **Primary real take:** final ChatGPT build, final public origins, physical phone linked through the private QR before recording, owned object, real camera, live reviewed model proposal if it passes. Preload the seven attendee sessions before capture so the buyer and host can show `8 live · 0 fixture` without displaying any bearer invite.
-2. **Permission-free take:** exact same native Site Tools/UCP sequence with **Show base · no repair**. Keep as judge-safe proof and edit insurance; label the fixture if shown.
-3. **Phone close-up:** request arrival → camera/review → published receipt, with no buyer screen visible.
-4. **Merchant close-up:** active Cart → native inspect → cancel → cancelled state.
-5. **Recovery take:** reset once from a stale or interrupted state; retain as backup, not the primary cut.
-6. **Silent screen master:** uninterrupted full journey with no narration, notifications, mouse wandering, or editor overlays.
-7. **Narration master:** clean audio recorded separately after the visual timing is locked.
-8. **Authenticated-crowd insert:** a one- or two-second buyer/host receipt showing `8 live · 0 fixture`; never record the expanded invite panel or imply the sessions are external people.
+This receipt proves the product flow and failure boundaries, not a live Stream/model call or physical truth. The public physical-phone rehearsal remains a separate mandatory gate.
 
 ## Pass/fail review before upload
 
-- A first-time viewer can answer by `0:30`: what stayed private, what crossed to the page, and why ChatGPT needed WebMCP.
-- By `1:10`, the viewer has seen the host receive one useful request from eight private decisions.
-- By `1:50`, the viewer has seen physical evidence cause a real tool to appear—not merely a green badge.
-- By `2:15`, the separate merchant owns an exact Cart and the numbers reconcile visibly.
-- Cancellation and capability removal are visible, not narrated off-screen.
-- “Native Site Tools,” human page change, and second-origin WebMCP are visible enough to score the first tie-breaker.
-- No claim exceeds the exact take: fixture/live composition is visible; authenticated test sessions are not called external buyers; the hash is a fingerprint, not authenticity; host attestation owns history; no checkout/payment exists.
-- No live QR, secrets, host fragments, continuation paths, personal notifications, unlicensed media, or unrelated trademarks appear.
-- Audio is intelligible at phone volume; captions are corrected manually; final duration is below `3:00`.
-- The public YouTube link works logged out and matches the frozen commit/live deployment recorded in `SUBMISSION.md`.
+- By `0:15`, a cold viewer can state the problem: a product claim does not prove the shopper's exact question.
+- By `0:35`, native Site Tools—not generic browsing or DOM automation—are visibly how ChatGPT understands the evidence gap.
+- By `0:55`, ChatGPT has created a concrete filming mission and the page's available tools have changed.
+- The viewer sees an ordinary phone record an owned physical product for the full required continuous duration.
+- The model is visibly a proposal, and the human's review is visibly authoritative.
+- By `2:10`, the same buyer page shows **before → after** and a newly available answer-change tool.
+- ChatGPT's final statement includes the reviewed result and exact timestamp rather than a paraphrased marketing claim.
+- The final fourteen seconds make the scalable future obvious without claiming the prototype already has universal contributor reach or a permanent global index.
+- The video never claims that a hash proves authenticity, AI proves truth, public video grants reuse rights, or every product owner can already be contacted.
+- No live QR, token, secret, personal notification, development hostname, unlicensed physical mark, copyrighted clip, or music appears.
+- Audio is intelligible at phone volume, captions are corrected, the YouTube link works logged out, and final duration is below `3:00`.
+- The live URL, public repository, submitted commit, video behavior, and Devpost claims all match.
 
-Run one silent cold-view test before upload: show the cut once to someone unfamiliar with the project, ask them to explain it without prompts, and record their exact confusion. Fix the edit or interface—not their answer—then repeat.
+Run at least one silent cold-view test: show the cut once to someone unfamiliar with the project, ask them to explain what happened and why WebMCP mattered, record their exact confusion, fix the product or edit, and repeat.

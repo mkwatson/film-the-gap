@@ -66,6 +66,16 @@ The first run found that the contributor fragment was not scrubbed; the implemen
 
 Current Cloudflare [Service Binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/service-bindings/) and [multi-Worker development](https://developers.cloudflare.com/workers/local-development/multi-workers/) docs checked August 27 recommend separate `wrangler dev` processes as the stable local path and report bindings as connected/not connected; Wrangler `4.127.0` showed both fixture bindings connected. The same docs describe one-command multi-config development as experimental, so the committed runbook deliberately uses two Worker processes rather than making an experimental runner part of the acceptance claim.
 
+## E19 — Judge-story convergence
+
+**Frozen claim:** Replacing the obsolete live-auction/UCP/Lean submission narrative and the metaphorical “ask the product” headline with one literal causal story will improve cold comprehension and every judge-facing rubric surface without weakening the working product.
+
+**Pass criteria:** The on-page headline says who acts and what they do; the Devpost draft answers all four required prompts from the generic evidence implementation; the video plan fits under three minutes and visibly proves the before/after answer; current and future capabilities are separated; the architecture visual matches the product; no commerce feature competes with the hero; and the full repository gate remains green.
+
+**Result:** **graduated locally; cold-view and final-client gates remain pending.** The page now says, “If the web cannot prove it, ask someone with the product to film it.” The submission packet, `2:40` demo contract, claims ledger, ninety-second judge path, and new `1920×1080` architecture card all tell the same question → mission → phone video → human review → answer-diff story. The card was rendered in Chrome at exact output resolution and visually inspected. The complete gate passed: formatting, ESLint, strict TypeScript in all projects, 176 active app tests plus two skipped live tests, 18 Workerd room tests, 12 merchant tests, both Worker dry-run bundles, and the Next.js production build.
+
+**Rubric effect:** WebMCP Leverage becomes visible as dynamic capability change rather than protocol exposition; Execution becomes one coherent two-device product; Potential Impact is tied to a specific shopper problem; Creativity & Ambition lands as an agent creating missing knowledge with a human rather than merely searching or shopping.
+
 ## What changed in the evidence
 
 1. The [official challenge page](https://openai.com/webmcp-challenge/) asks for an app that becomes meaningfully better when people and agents use it together. The [Devpost gallery](https://webmcp.devpost.com/project-gallery) was still unpublished on August 26, while the last same-day refresh showed 1,717 participants. We cannot novelty-check private entries, so the interaction itself must be structurally memorable.

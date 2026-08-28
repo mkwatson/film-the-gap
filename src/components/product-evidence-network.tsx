@@ -542,7 +542,9 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
       <section className="evidence-hero" aria-labelledby="evidence-page-title">
         <div>
           <p className="evidence-eyebrow">The missing layer between product claims and decisions</p>
-          <h1 id="evidence-page-title">If the web cannot prove it, ask the product.</h1>
+          <h1 id="evidence-page-title">
+            If the web cannot prove it, ask someone with the product to film it.
+          </h1>
           <p className="evidence-hero-copy">
             ChatGPT searches public product videos for a shopper’s exact question. If none proves
             it, ChatGPT creates the smallest useful filming request; a person with the product

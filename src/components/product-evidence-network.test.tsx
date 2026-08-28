@@ -64,7 +64,9 @@ describe('ProductEvidenceNetwork', () => {
 
     expect(screen.getByText('Everyday insulated travel bottle')).toBeTruthy();
     expect(
-      screen.getByRole('heading', { name: 'If the web cannot prove it, ask the product.' }),
+      screen.getByRole('heading', {
+        name: 'If the web cannot prove it, ask someone with the product to film it.',
+      }),
     ).toBeTruthy();
     expect(await screen.findByText('Human controls ready')).toBeTruthy();
     expect(screen.getByText('Not enough proof')).toBeTruthy();

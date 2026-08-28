@@ -2,7 +2,13 @@
 
 Last full pass: 2026-08-27 PT. The [official Devpost resources page](https://webmcp.devpost.com/resources) is the challenge-specific checklist; the [Official Rules](https://webmcp.devpost.com/rules) control when sources conflict. Recheck both pages because the draft standard, supporter material, FAQ, and browser implementations are moving during the challenge.
 
-The live Devpost renders passed 2,480 participants on August 27 (two same-minute endpoints showed 2,487 and 2,496). Registrations are not completed submissions, the count changes continuously, and the gallery is not reliably inspectable through the research client. The count is context, not a selection metric; it reinforces the need for a structurally memorable interaction and a judge-legible deterministic path.
+The live Devpost renders passed 2,480 participants on August 27; later renders ranged from stale low counts to 2,935. Registrations are not completed submissions, the count changes continuously, and Devpost's endpoints are not consistent enough to treat it as a selection metric. It reinforces only the need for a structurally memorable interaction and a judge-legible deterministic path.
+
+### Same-day rules recheck — 2026-08-27 PT
+
+The live [Official Rules](https://webmcp.devpost.com/rules) were fetched again before rewriting the judge packet. The deadline, required public repository and detected license, live judged URL, four required description answers, public YouTube video with audio under three minutes, stage-one viability gate, four equally weighted criteria, and WebMCP-first tie-break order remain unchanged.
+
+One clause changed relative to the earlier snapshot supplied during planning: the current rules say an entrant may submit more than one project when each is unique and substantially different; the earlier snapshot said an entrant may not. The current official page controls, but this fast-moving discrepancy must be rechecked before any second-entry decision. The operating choice remains one flagship until it is frozen because a second entry is valuable only if it does not weaken the flagship.
 
 ## Current status
 
