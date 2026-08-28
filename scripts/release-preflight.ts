@@ -429,7 +429,7 @@ export async function verifyPublicRelease(
     requireStatus(contributorResponse, 200, contributorLabel);
     requireMarker(
       await htmlBody(contributorResponse, contributorLabel),
-      'Product evidence network',
+      'Film the Gap',
       contributorLabel,
     );
     requireAppSecurityPolicy(contributorResponse, contributorLabel, config.roomOrigin, {

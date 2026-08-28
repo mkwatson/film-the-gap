@@ -382,7 +382,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
             ●
           </span>
           <span>
-            <strong>Product evidence network</strong>
+            <strong>Film the Gap</strong>
             <small>One question · one bounded recording</small>
           </span>
         </div>

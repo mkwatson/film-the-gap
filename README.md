@@ -1,6 +1,6 @@
-# Product-evidence network
+# Film the Gap
 
-This is an open-source website with native WebMCP Site Tools for one simple idea: **when a shopper asks a question that product pages and reviews cannot prove, ChatGPT can find existing evidence or ask a real product owner to film the missing proof—then use that reviewed, timestamped video to improve its answer.** The heading is descriptive; Mark has reserved the final submitted name.
+Film the Gap is an open product-evidence network with native WebMCP Site Tools for one simple idea: **when a shopper asks a question that product pages and reviews cannot prove, ChatGPT can find existing evidence or ask a real product owner to film the missing proof—then use that reviewed, timestamped video to improve its answer.**
 
 The shopper, public-request board, and phone recorder are ordinary web pages. WebMCP lets ChatGPT understand and operate the same state-dependent actions a person sees, while the contributor records and reviews evidence in any normal mobile browser.
 

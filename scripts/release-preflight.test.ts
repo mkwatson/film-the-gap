@@ -138,7 +138,7 @@ function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
       });
     }
     if (url.href === `${config.appOrigin}/contribute/${caseId}`) {
-      return appPage('Product evidence network', {
+      return appPage('Film the Gap', {
         allowCamera: options.contributorCameraAllowed ?? true,
         allowMicrophone: options.contributorMicrophoneAllowed ?? true,
         allowCreatorUpload: true,

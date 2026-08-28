@@ -24,20 +24,20 @@ The exact browser-release candidate `3d1fa4491b9ef640a7e4f943a0c602e5640bf2a5` p
 
 Chrome 151 completed the following sequence against the real local Next.js app, Cloudflare Worker runtime, Durable Object, D1 database, migrations, WebSocket updates, and WebMCP registrations:
 
-1. Open an arbitrary product/question: 975 ms.
-2. Search existing evidence through the current Site Tool: 381 ms.
-3. Create a bounded missing-proof mission and private phone handoff: 540 ms.
-4. Explicitly publish the minimized request, then inspect and claim it from a fresh board context: 377 ms.
-5. Scrub the contributor capability from the URL and recover it after reload: 253 ms.
-6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, choose reuse rights, and publish: 1,035 ms.
-7. Observe the first shopper's live answer change and exact timestamp citation: 519 ms.
-8. Open a fresh matching case and reuse the same reviewed source without another mission: 442 ms.
+1. Open an arbitrary product/question: 978 ms.
+2. Search existing evidence through the current Site Tool: 587 ms.
+3. Create a bounded missing-proof mission and private phone handoff: 590 ms.
+4. Explicitly publish the minimized request, then inspect and claim it from a fresh board context: 424 ms.
+5. Scrub the contributor capability from the URL and recover it after reload: 263 ms.
+6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, choose reuse rights, and publish: 1,119 ms.
+7. Observe the first shopper's live answer change and exact timestamp citation: 559 ms.
+8. Open a fresh matching case and reuse the same reviewed source without another mission: 486 ms.
 
 The fixtures replace only Cloudflare Stream and the video-model response. Browser egress to their public hosts is blocked during this test. The generated clip deliberately omits the random mission phrase, so the system preserves the honest `contributor_attested` label instead of inventing mission-challenge verification.
 
 ## Ordinary-browser end-to-end receipt
 
-The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,421, 133, 501, 245, 270, 1,064, 410, and 588 ms respectively. The run proved that a person can open and search an arbitrary case, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, review and correct the video proposal, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission.
+The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,245, 138, 524, 268, 268, 1,104, 406, and 568 ms respectively. The run proved that a person can open and search an arbitrary case, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, review and correct the video proposal, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission.
 
 This is an independent product-surface receipt, not a substitute for the native WebMCP receipt: together they establish that Site Tools are load-bearing for agent collaboration while every human role still has a complete ordinary web path.
 

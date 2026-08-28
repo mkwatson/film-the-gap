@@ -1,4 +1,4 @@
-# Generic evidence-network release runbook
+# Film the Gap release runbook
 
 Updated 2026-08-28 PT. Nothing described here is publicly deployed yet. This runbook uses a new Vercel project and the separate Cloudflare Worker name `webmcp-product-evidence`, so it cannot overwrite an existing deployment.
 
@@ -71,7 +71,7 @@ These steps mutate accounts or authorize spend. Mark must approve them and be pr
 
    ```bash
    WEBMCP_VERCEL_SCOPE=YOUR-STANDALONE-TEAM-SLUG
-   WEBMCP_VERCEL_PROJECT=YOUR-NEW-STANDALONE-PROJECT
+   WEBMCP_VERCEL_PROJECT=film-the-gap
    test -n "$WEBMCP_VERCEL_SCOPE"
    test -n "$WEBMCP_VERCEL_PROJECT"
 
@@ -99,7 +99,7 @@ These steps mutate accounts or authorize spend. Mark must approve them and be pr
 
    ```bash
    WEBMCP_VERCEL_SCOPE=YOUR-STANDALONE-TEAM-SLUG
-   WEBMCP_VERCEL_PROJECT=YOUR-NEW-STANDALONE-PROJECT
+   WEBMCP_VERCEL_PROJECT=film-the-gap
    test -n "$WEBMCP_VERCEL_SCOPE"
    test -n "$WEBMCP_VERCEL_PROJECT"
 
@@ -156,7 +156,7 @@ Set and inspect explicit shell variables; never paste placeholders into a deploy
 
 ```bash
 WEBMCP_VERCEL_SCOPE=YOUR-STANDALONE-TEAM-SLUG
-WEBMCP_VERCEL_PROJECT=YOUR-NEW-STANDALONE-PROJECT
+WEBMCP_VERCEL_PROJECT=film-the-gap
 APP_ORIGIN="https://$WEBMCP_VERCEL_PROJECT.vercel.app"
 ROOM_ORIGIN=https://webmcp-product-evidence.YOUR-CLOUDFLARE-SUBDOMAIN.workers.dev
 RELEASE_SHA=$(git rev-parse HEAD)

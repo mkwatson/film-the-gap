@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Product evidence network · WebMCP Challenge',
+  title: 'Film the Gap · Open product evidence with WebMCP',
   description:
     'Ask any product question, find the missing proof, and let people with the product record the evidence an agent needs.',
 };

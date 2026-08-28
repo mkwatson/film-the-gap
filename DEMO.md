@@ -1,8 +1,8 @@
-# Demo production packet
+# Film the Gap demo production packet
 
-Updated 2026-08-27 PT. The target cut is `2:58`: one physical product, one question the web cannot prove, one native WebMCP mission published to an open request board, one product owner who finds it without a store/customer list, one real phone recording, one reviewed finding, one visibly changed ChatGPT answer, and a fresh shopper who reuses the same citation without another mission.
+Updated 2026-08-28 PT. The target cut is `2:58`: one physical product, one question the web cannot prove, one native WebMCP mission published to an open request board, one product owner who finds it without a store/customer list, one real phone recording, one reviewed finding, one visibly changed ChatGPT answer, and a fresh shopper who reuses the same citation without another mission.
 
-This packet does not authorize a deployment, paid Stream/Gateway use, external recording, YouTube publication, or a final project name. Mark controls those actions.
+This packet does not authorize a deployment, paid Stream/Gateway use, external recording, or YouTube publication. **Film the Gap** remains a reversible local identity until Mark approves using it externally.
 
 ## The one thing viewers must remember
 

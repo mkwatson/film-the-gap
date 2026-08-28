@@ -2,7 +2,7 @@
 
 Updated 2026-08-28 PT. This is the candidate Devpost copy, judge runbook, claims ledger, and freeze checklist for the standalone product-evidence network.
 
-Mark has reserved the final submitted name. Every label below is descriptive until he chooses it.
+**Film the Gap** is the working submitted identity: an open product-evidence network that asks people to film only what existing sources cannot prove.
 
 ## The whole product in one sentence
 
@@ -12,7 +12,7 @@ Mark has reserved the final submitted name. Every label below is descriptive unt
 
 | Submission asset         | Final value                                                          |
 | ------------------------ | -------------------------------------------------------------------- |
-| Project name             | **[MARK TO CHOOSE]**                                                 |
+| Project name             | **Film the Gap**                                                     |
 | One-line hook            | If the web cannot prove it, ask someone with the product to film it. |
 | Live URL                 | **[PENDING USER-APPROVED GENERIC DEPLOYMENT]**                       |
 | Public repository        | **[PENDING USER-APPROVED GENERIC BRANCH PUBLICATION]**               |
