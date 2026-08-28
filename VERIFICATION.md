@@ -4,17 +4,18 @@ Updated August 27, 2026 PT. This document records what the current product-evide
 
 ## Current release matrix
 
-| Gate                          | Result                                           | What it proves                                                                                                                                                   |
-| ----------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm peers check`            | Pass, zero peer issues                           | The exact pinned dependency graph is internally compatible.                                                                                                      |
-| `pnpm check`                  | Pass                                             | Prettier, zero-warning ESLint, strict TypeScript, all tests, Worker bundle, and production Next.js build.                                                        |
-| App tests                     | 24 files, 146 tests pass                         | Product state, dynamic tools, privacy, review, search, reconnect, failures, and release checks.                                                                  |
-| Worker tests                  | 5 files, 26 tests pass in Workerd                | Durable Object, D1, role capabilities, uploads, model proposal, reuse, expiry, and denial paths.                                                                 |
-| Worker dry run                | Wrangler 4.127.0; 1,120.96 KiB / 187.69 KiB gzip | The standalone evidence Worker bundles with every declared production binding.                                                                                   |
-| Next.js build                 | Next.js 16.3.3; six route entries                | The shopper, board, recorder, search, and health surfaces build for production.                                                                                  |
-| Native Chrome journey         | Eight steps pass                                 | The real app, native WebMCP registration, Durable Object, D1, WebSocket, and browser state complete the causal journey against deterministic paid-edge fixtures. |
-| Chrome Labs independent smoke | 9/9 calls across four cases                      | The exact current source-built WebMCP evaluator independently discovers and executes the generic tool frontier.                                                  |
-| Desktop/mobile visual check   | Pass at desktop and 390×844                      | Shopper, board, and contributor pages remain legible with no horizontal overflow or framework error overlay.                                                     |
+| Gate                          | Result                                             | What it proves                                                                                                                                                   |
+| ----------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm peers check`            | Pass, zero peer issues                             | The exact pinned dependency graph is internally compatible.                                                                                                      |
+| `pnpm check`                  | Pass                                               | Prettier, zero-warning ESLint, strict TypeScript, all tests, Worker bundle, and production Next.js build.                                                        |
+| App tests                     | 24 files, 146 tests pass                           | Product state, dynamic tools, privacy, review, search, reconnect, failures, and release checks.                                                                  |
+| Worker tests                  | 5 files, 26 tests pass in Workerd                  | Durable Object, D1, role capabilities, uploads, model proposal, reuse, expiry, and denial paths.                                                                 |
+| Worker dry run                | Wrangler 4.127.0; 1,120.96 KiB / 187.69 KiB gzip   | The standalone evidence Worker bundles with every declared production binding.                                                                                   |
+| Next.js build                 | Next.js 16.3.3; six route entries                  | The shopper, board, recorder, search, and health surfaces build for production.                                                                                  |
+| Cold clone                    | Frozen install and full gate pass; clean afterward | The repository does not depend on ignored files, generated files, or local package state.                                                                        |
+| Native Chrome journey         | Eight steps pass                                   | The real app, native WebMCP registration, Durable Object, D1, WebSocket, and browser state complete the causal journey against deterministic paid-edge fixtures. |
+| Chrome Labs independent smoke | 9/9 calls across four cases                        | The exact current source-built WebMCP evaluator independently discovers and executes the generic tool frontier.                                                  |
+| Desktop/mobile visual check   | Pass at desktop and 390×844                        | Shopper, board, and contributor pages remain legible with no horizontal overflow or framework error overlay.                                                     |
 
 ## Native end-to-end receipt
 
@@ -74,7 +75,6 @@ Do not convert these into public claims until each is recorded against the froze
 - The current candidate has not been deployed to its final public Vercel and Cloudflare origins.
 - A physical phone has not yet completed this candidate's real Stream upload and real Gateway video-analysis path.
 - The current candidate has not yet completed the full flow in ChatGPT's current in-app Browser.
-- The final branch still needs a cold public clone/install/check rehearsal after release cleanup.
 - An unfamiliar person still needs to complete the no-login flow without coaching.
 - The final rights-clean video, public YouTube URL, stable live URL, and frozen repository revision do not yet exist.
 
