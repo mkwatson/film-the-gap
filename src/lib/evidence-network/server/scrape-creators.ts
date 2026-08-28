@@ -3,6 +3,7 @@ import type {
   EvidenceDiscoveryPlatform,
   ProductQuestionInput,
 } from '../model';
+import { canonicalizePublicDiscoveryUrl } from '../url-policy';
 
 const scrapeCreatorsOrigin = 'https://api.scrapecreators.com';
 const maximumLeadsPerPlatform = 2;
@@ -71,13 +72,12 @@ function canonicalSocialUrl(
   if (value === null) {
     return null;
   }
-  let url: URL;
-  try {
-    url = new URL(value);
-  } catch {
+  const canonical = canonicalizePublicDiscoveryUrl(value);
+  if (canonical === null) {
     return null;
   }
-  if (url.protocol !== 'https:') {
+  const url = new URL(canonical);
+  if (url.protocol !== 'https:' || url.port !== '') {
     return null;
   }
   const hostname = url.hostname.toLowerCase();
@@ -276,7 +276,16 @@ async function searchPlatform(
         warning: `${platform} search returned HTTP ${response.status}.`,
       };
     }
-    return { platform, ok: true, data: await response.json(), warning: null };
+    const data: unknown = await response.json();
+    if (isRecord(data) && data.success === false) {
+      return {
+        platform,
+        ok: false,
+        data: null,
+        warning: `${platform} search reported an upstream failure.`,
+      };
+    }
+    return { platform, ok: true, data, warning: null };
   } catch {
     return {
       platform,

@@ -130,4 +130,64 @@ describe('ScrapeCreators evidence discovery', () => {
     expect(result.searchedPlatforms).toEqual(['tiktok', 'youtube']);
     expect(result.warnings).toEqual(['instagram search returned HTTP 503.']);
   });
+
+  it('treats an explicit vendor failure envelope as a failed platform search', async () => {
+    const fetchImpl = vi.fn(async (url: string): Promise<Response> =>
+      url.includes('/tiktok/') ? json({ success: false, error: 'upstream failure' }) : json({}),
+    );
+
+    const result = await searchScrapeCreatorsEvidence(question, {
+      apiKey: 'test-key',
+      fetchImpl,
+    });
+
+    expect(result.status).toBe('partial');
+    expect(result.searchedPlatforms).toEqual(['instagram', 'youtube']);
+    expect(result.warnings).toEqual(['tiktok search reported an upstream failure.']);
+  });
+
+  it('drops credentialed and non-standard-port social URLs from successful searches', async () => {
+    const fetchImpl = vi.fn(async (url: string): Promise<Response> => {
+      if (url.includes('/tiktok/')) {
+        return json({
+          success: true,
+          search_item_list: [
+            {
+              desc: 'Credentialed URL',
+              url: 'https://user:secret@www.tiktok.com/@tester/video/123',
+            },
+          ],
+        });
+      }
+      if (url.includes('/instagram/')) {
+        return json({
+          success: true,
+          reels: [
+            {
+              caption: 'Non-standard port URL',
+              url: 'https://www.instagram.com:8443/reel/ABC123/',
+            },
+          ],
+        });
+      }
+      return json({
+        success: true,
+        videos: [
+          {
+            title: 'Credentialed URL',
+            url: 'https://user:secret@www.youtube.com/watch?v=video-id',
+          },
+        ],
+      });
+    });
+
+    const result = await searchScrapeCreatorsEvidence(question, {
+      apiKey: 'test-key',
+      fetchImpl,
+    });
+
+    expect(result.status).toBe('complete');
+    expect(result.searchedPlatforms).toEqual(['tiktok', 'instagram', 'youtube']);
+    expect(result.leads).toEqual([]);
+  });
 });
