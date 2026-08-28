@@ -57,7 +57,7 @@ const defaultMission = {
 } as const;
 
 const agentStarter =
-  'Use this page’s Site Tools. Inspect the active product question and search existing evidence. Treat ordinary web results as leads, never proof; only rights-cleared, human-reviewed network recordings may change the answer. If the sources still do not prove it, create the smallest continuous filming mission, then create a phone capture link. Do not infer from marketing copy or predict the result. Wait for reviewed evidence, then inspect exactly how the answer changed.';
+  'Use this page’s Site Tools. Inspect the active product question and search existing evidence. Treat ordinary web results as leads, never proof; only rights-cleared, human-reviewed network recordings may change the answer. If the sources still do not prove it, create the smallest continuous filming mission and a phone capture link, then publish only that mission’s public product, question, and filming fields to the open request board. This is my explicit confirmation to publish those fields—never my identity, preferences, history, budget, or conversation. Do not infer the result. Stop before anyone records; after reviewed evidence arrives, inspect exactly how the answer changed.';
 
 const answerLabels: Readonly<Record<EvidenceAnswerStatus, string>> = {
   insufficient: 'Not enough proof',
@@ -268,10 +268,65 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     setBoardError(null);
   }, []);
 
+  const revokeOpenPublicMission = useCallback(async (): Promise<PublicEvidenceMission | null> => {
+    const connection = phoneConnectionRef.current;
+    const publicMission = connection?.publicMission;
+    if (publicMission?.status !== 'open') {
+      return null;
+    }
+    if (serviceUrl === null || connection === null) {
+      throw new Error('The public filming request cannot be removed without its evidence service.');
+    }
+    setBoardPhase('removing');
+    setBoardError(null);
+    try {
+      const removedMission = await removePublicEvidenceMission(serviceUrl, publicMission.id, {
+        ownerToken: connection.credentials.ownerToken,
+        confirmRemoval: true,
+      });
+      const updatedConnection: EvidencePhoneConnection = {
+        ...connection,
+        publicMission: removedMission,
+      };
+      phoneConnectionRef.current = updatedConnection;
+      setPhoneConnection(updatedConnection);
+      persistEvidencePhoneConnection(
+        window.sessionStorage,
+        serviceUrl,
+        window.location.origin,
+        updatedConnection,
+      );
+      setBoardPhase('removed');
+      return removedMission;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      setBoardError(message);
+      setBoardPhase('error');
+      throw error;
+    }
+  }, [serviceUrl]);
+
   const readState = useCallback((): EvidenceNetworkState => stateRef.current, []);
   const dispatch = useCallback(
     async (command: EvidenceNetworkCommand): Promise<EvidenceNetworkTransition> => {
-      const result = applyEvidenceNetworkCommand(stateRef.current, command);
+      let result = applyEvidenceNetworkCommand(stateRef.current, command);
+      if (result.ok && command.kind === 'ask-product-question') {
+        try {
+          await revokeOpenPublicMission();
+        } catch {
+          const preserved = {
+            ok: false,
+            state: stateRef.current,
+            message:
+              'The existing public filming request could not be removed, so this case was preserved.',
+          } satisfies EvidenceNetworkTransition;
+          setLastMessage(preserved.message);
+          return preserved;
+        }
+        // A contributor may have updated the durable case while public cleanup was in flight.
+        // Reapply the new question to the freshest local snapshot instead of committing stale state.
+        result = applyEvidenceNetworkCommand(stateRef.current, command);
+      }
       if (result.ok && ['ask-product-question', 'create-filming-mission'].includes(command.kind)) {
         clearPhoneConnection();
       }
@@ -280,7 +335,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
       setLastMessage(result.message);
       return result;
     },
-    [clearPhoneConnection],
+    [clearPhoneConnection, revokeOpenPublicMission],
   );
   const createPhoneCapture = useCallback(async (): Promise<EvidencePhoneCaptureReceipt> => {
     const existing = phoneConnectionRef.current;
@@ -450,39 +505,12 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     }
   }, [serviceUrl]);
   const removeMissionFromBoard = useCallback(async (): Promise<PublicEvidenceMission> => {
-    const connection = phoneConnectionRef.current;
-    const publicMission = connection?.publicMission;
-    if (serviceUrl === null || connection === null || publicMission?.status !== 'open') {
+    const removedMission = await revokeOpenPublicMission();
+    if (removedMission === null) {
       throw new Error('There is no active public filming mission to remove.');
     }
-    setBoardPhase('removing');
-    setBoardError(null);
-    try {
-      const removedMission = await removePublicEvidenceMission(serviceUrl, publicMission.id, {
-        ownerToken: connection.credentials.ownerToken,
-        confirmRemoval: true,
-      });
-      const updatedConnection: EvidencePhoneConnection = {
-        ...connection,
-        publicMission: removedMission,
-      };
-      phoneConnectionRef.current = updatedConnection;
-      setPhoneConnection(updatedConnection);
-      persistEvidencePhoneConnection(
-        window.sessionStorage,
-        serviceUrl,
-        window.location.origin,
-        updatedConnection,
-      );
-      setBoardPhase('removed');
-      return removedMission;
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      setBoardError(message);
-      setBoardPhase('error');
-      throw error;
-    }
-  }, [serviceUrl]);
+    return removedMission;
+  }, [revokeOpenPublicMission]);
   const missionBoardRuntime = useMemo(
     () => ({
       available: serviceUrl !== null,
@@ -624,7 +652,15 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     }
   }
 
-  function resetDemo(): void {
+  async function resetDemo(): Promise<void> {
+    try {
+      await revokeOpenPublicMission();
+    } catch {
+      setLastMessage(
+        'Reset stopped because the current public filming request could not be removed. Try again or remove it explicitly.',
+      );
+      return;
+    }
     const nextState = createDemoEvidenceNetworkState();
     stateRef.current = nextState;
     setState(nextState);
@@ -637,7 +673,6 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
 
   function submitQuestion(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
-    clearPhoneConnection();
     void dispatch({
       kind: 'ask-product-question',
       actor: 'human',
@@ -722,8 +757,13 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                   ? 'Tools need attention'
                   : 'Connecting Site Tools'}
           </span>
-          <button className="evidence-quiet-button" type="button" onClick={resetDemo}>
-            Reset proof loop
+          <button
+            className="evidence-quiet-button"
+            type="button"
+            disabled={boardPhase === 'removing'}
+            onClick={() => void resetDemo()}
+          >
+            {boardPhase === 'removing' ? 'Cleaning public request…' : 'Reset proof loop'}
           </button>
         </div>
       </header>

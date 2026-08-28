@@ -1,7 +1,31 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  applyEvidenceNetworkCommand,
+  createDemoEvidenceNetworkState,
+} from '@/lib/evidence-network/model';
+import { remoteEvidenceProtocolVersion } from '@/lib/evidence-network/remote-protocol';
+
 import { ProductEvidenceNetwork } from './product-evidence-network';
+
+const remoteMocks = vi.hoisted(() => ({
+  evidenceServiceUrl: null as string | null,
+  createRemoteEvidenceCase: vi.fn(),
+  publishPublicEvidenceMission: vi.fn(),
+  removePublicEvidenceMission: vi.fn(),
+}));
+
+vi.mock('@/lib/evidence-network/remote-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/evidence-network/remote-client')>();
+  return {
+    ...actual,
+    configuredEvidenceServiceUrl: (): string | null => remoteMocks.evidenceServiceUrl,
+    createRemoteEvidenceCase: remoteMocks.createRemoteEvidenceCase,
+    publishPublicEvidenceMission: remoteMocks.publishPublicEvidenceMission,
+    removePublicEvidenceMission: remoteMocks.removePublicEvidenceMission,
+  };
+});
 
 interface Registration {
   readonly tool: WebMCP.ModelContextTool;
@@ -49,6 +73,10 @@ function setModelContext(modelContext: WebMCP.ModelContext | undefined): void {
 
 beforeEach(() => {
   window.sessionStorage.clear();
+  remoteMocks.evidenceServiceUrl = null;
+  remoteMocks.createRemoteEvidenceCase.mockReset();
+  remoteMocks.publishPublicEvidenceMission.mockReset();
+  remoteMocks.removePublicEvidenceMission.mockReset();
 });
 
 afterEach(() => {
@@ -70,6 +98,7 @@ describe('ProductEvidenceNetwork', () => {
     ).toBeTruthy();
     expect(await screen.findByText('Human controls ready')).toBeTruthy();
     expect(screen.getByText('Not enough proof')).toBeTruthy();
+    expect(screen.getByText(/explicit confirmation to publish those fields/)).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Create claim-specific filming mission' }));
     expect(await screen.findByText('Replay a completed rights-clean mission')).toBeTruthy();
@@ -178,6 +207,92 @@ describe('ProductEvidenceNetwork', () => {
 
     expect(await screen.findByText('Put this exact mission on any phone.')).toBeTruthy();
     expect(screen.queryByText('Replay a completed rights-clean mission')).toBeNull();
+  });
+
+  it('revokes an open public request before resetting its private capability', async () => {
+    const remoteState = applyEvidenceNetworkCommand(createDemoEvidenceNetworkState(), {
+      kind: 'create-filming-mission',
+      actor: 'human',
+      input: {
+        instruction: 'Invert the filled bottle over dry paper for ten seconds.',
+        successCriterion: 'Keep the closed lid and paper visible throughout.',
+        minimumSeconds: 10,
+        continuousTakeRequired: true,
+      },
+    }).state;
+    const mission = remoteState.activeCase?.mission;
+    if (mission === null || mission === undefined) {
+      throw new Error('Expected the test fixture to create a filming mission.');
+    }
+    const publicMission = {
+      id: '123e4567-e89b-42d3-a456-426614174000',
+      caseId: 'BCDF2345',
+      productName: remoteState.activeCase?.product.name ?? 'Travel bottle',
+      productUrl: remoteState.activeCase?.product.suppliedUrl ?? null,
+      question: remoteState.activeCase?.question.text ?? 'Does it leak?',
+      instruction: mission.instruction,
+      successCriterion: mission.successCriterion,
+      minimumSeconds: mission.minimumSeconds,
+      continuousTakeRequired: mission.continuousTakeRequired,
+      status: 'open' as const,
+      createdAt: '2026-08-27T20:00:00.000Z',
+      expiresAt: '2026-08-28T20:00:00.000Z',
+      fulfilledAt: null,
+    };
+    remoteMocks.evidenceServiceUrl = 'https://evidence.example';
+    remoteMocks.createRemoteEvidenceCase.mockResolvedValue({
+      protocolVersion: remoteEvidenceProtocolVersion,
+      caseId: publicMission.caseId,
+      ownerToken: 'o'.repeat(43),
+      contributorToken: 'c'.repeat(43),
+      expiresAt: Date.now() + 60_000,
+      state: remoteState,
+    });
+    remoteMocks.publishPublicEvidenceMission.mockResolvedValue(publicMission);
+    remoteMocks.removePublicEvidenceMission.mockResolvedValue({
+      ...publicMission,
+      status: 'removed',
+    });
+    class QuietWebSocket extends EventTarget {
+      close(): void {
+        // The test exercises lifecycle cleanup without a remote broadcast.
+      }
+    }
+    vi.stubGlobal('WebSocket', QuietWebSocket);
+    setModelContext(undefined);
+    render(<ProductEvidenceNetwork />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create claim-specific filming mission' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Create phone capture link' }));
+    expect(await screen.findByText(/Private live case BCDF2345/)).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole('checkbox', {
+        name: /I understand this product request will be public/i,
+      }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Publish open filming request' }));
+    expect(await screen.findByText(/Anyone who owns this product can now record/)).toBeTruthy();
+
+    remoteMocks.removePublicEvidenceMission.mockRejectedValueOnce(
+      new Error('Evidence service temporarily unavailable.'),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Reset proof loop' }));
+
+    expect(await screen.findByText('Evidence service temporarily unavailable.')).toBeTruthy();
+    expect(screen.getByText(/Private live case BCDF2345/)).toBeTruthy();
+    expect(window.sessionStorage.length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset proof loop' }));
+
+    await waitFor(() => {
+      expect(remoteMocks.removePublicEvidenceMission).toHaveBeenCalledTimes(2);
+      expect(remoteMocks.removePublicEvidenceMission).toHaveBeenLastCalledWith(
+        'https://evidence.example',
+        publicMission.id,
+        { ownerToken: 'o'.repeat(43), confirmRemoval: true },
+      );
+      expect(window.sessionStorage.length).toBe(0);
+    });
   });
 
   it('does not reuse the bottle fixture for a new case that happens to share its name', async () => {

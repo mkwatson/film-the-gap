@@ -3434,6 +3434,27 @@ select:focus-visible {
   line-height: 1.55;
 }
 
+.contributor-review-video {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0 0;
+}
+
+.contributor-review-video video {
+  display: block;
+  width: 100%;
+  max-height: 430px;
+  border: 1px solid var(--line-bright);
+  border-radius: 14px;
+  background: #000;
+}
+
+.contributor-review-video figcaption {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .contributor-ai-proposal,
 .contributor-manual-review {
   margin-top: 18px;

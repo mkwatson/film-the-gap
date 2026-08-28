@@ -536,6 +536,21 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
               <p>
                 Inspect the AI draft, correct every field, and confirm your right to share the clip.
               </p>
+              {localVideoUrl === null ? null : (
+                <figure className="contributor-review-video">
+                  <video
+                    aria-label="Review uploaded evidence video"
+                    controls
+                    playsInline
+                    preload="metadata"
+                    src={localVideoUrl}
+                  />
+                  <figcaption>
+                    Scrub the exact clip you selected. Verify the observable result, continuity, and
+                    cited interval yourself before publishing.
+                  </figcaption>
+                </figure>
+              )}
               {analysis?.kind === 'proposal' ? (
                 <div className="contributor-ai-proposal">
                   <span>AI draft · untrusted until you review it</span>

@@ -149,6 +149,14 @@ Implementation follows current first-party guidance: [D1 local migrations and ex
 
 Unit tests prove deterministic phrase construction, schema boundaries, exact prompt inclusion, the verified server path, imported-video handling, and D1 round-trip. The full native eight-step stranger-supply/two-shopper journey passes in Chrome against real local Durable Object and D1 state. Its synthetic sine-wave video deliberately omits the random phrase; the strict model fixture returns `not_detected`, the phone UI shows that negative result, and both the first and reused evidence remain `contributor_attested`. This prevents the acceptance artifact from manufacturing freshness. The final paid physical run must audibly or visibly include the issued phrase and confirm that the real Gateway model detects it before the submission claims mission-challenge verification.
 
+## E25 — Cold-path cleanup and human-verifiable review
+
+**Frozen claim:** The canonical judge prompt reaches the public stranger-supply loop, and a contributor can independently inspect the exact selected recording while reviewing the model proposal. A shopper cannot accidentally abandon an owned public request by resetting or opening another case.
+
+**Pass criteria:** The copyable ChatGPT prompt explicitly authorizes only the public mission fields and stops before recording; the review phase preserves a controllable local video beside the AI draft; reset revokes an open listing before clearing the private capability; a failed revocation preserves the active case and can be retried; invalid new-case input causes no external cleanup; and the complete native journey still passes.
+
+**Result:** **graduated locally.** The prompt now drives inspection → search → minimum mission → phone handoff → privacy-minimized board publication in one model turn. The phone review keeps the selected blob URL in a labeled video player, and native acceptance fails if that player disappears. Public-listing revocation is shared by explicit removal, reset, and successful new-question transitions; the destructive side effect runs only after the new command validates and fails closed without clearing session storage. Component tests cover outage preservation and successful retry. The full eight-step Chrome journey passed in 7.2 seconds with the stronger review assertion.
+
 ## What changed in the evidence
 
 1. The [official challenge page](https://openai.com/webmcp-challenge/) asks for an app that becomes meaningfully better when people and agents use it together. The [Devpost gallery](https://webmcp.devpost.com/project-gallery) was still unpublished on August 26, while the last same-day refresh showed 1,717 participants. We cannot novelty-check private entries, so the interaction itself must be structurally memorable.

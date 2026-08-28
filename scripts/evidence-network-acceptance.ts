@@ -569,6 +569,7 @@ async function run(): Promise<void> {
           model: text.includes('google/gemini-3.7-flash'),
           citation: text.includes('Proposed citation 00:01–00:11'),
           reviewBoundary: normalized.includes('ai draft · untrusted until you review it'),
+          reviewVideo: document.querySelector('video[aria-label="Review uploaded evidence video"]')?.getAttribute('src')?.startsWith('blob:') === true,
           honestChallengeFallback: text.includes(
             'Fresh-capture check: The synthetic fixture does not contain the mission phrase',
           ),

@@ -202,6 +202,10 @@ describe('EvidenceContributor', () => {
     expect(
       await screen.findByRole('heading', { name: 'What does your video actually show?' }),
     ).toBeTruthy();
+    expect(screen.getByLabelText('Review uploaded evidence video').getAttribute('src')).toBe(
+      'blob:test-video',
+    );
+    expect(screen.getByText(/Scrub the exact clip you selected/)).toBeTruthy();
     expect(remoteMocks.reserve).toHaveBeenCalledOnce();
     expect(remoteMocks.reserve).toHaveBeenCalledWith(
       'https://rooms.example',
