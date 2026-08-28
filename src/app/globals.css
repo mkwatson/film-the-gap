@@ -634,6 +634,22 @@ select:focus-visible {
   text-transform: none;
 }
 
+.contributor-review .contributor-label-note {
+  color: var(--dim);
+  font-family: Inter, ui-sans-serif, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.45;
+  text-transform: none;
+}
+
+.contributor-review fieldset.contributor-review-confirmation {
+  grid-template-columns: 1fr;
+  border-color: color-mix(in srgb, var(--mint) 34%, transparent);
+  background: color-mix(in srgb, var(--mint) 5%, transparent);
+}
+
 .contributor-review > .evidence-primary-button {
   margin-top: 18px;
 }

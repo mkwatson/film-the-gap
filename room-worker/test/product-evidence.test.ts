@@ -379,6 +379,38 @@ describe('generic product evidence cases', () => {
       },
     });
 
+    const review = {
+      result: 'supports',
+      observation: 'No water reached the paper during the continuous inversion.',
+      contributorLabel: 'Bottle owner',
+      durationSeconds: 10,
+      citationStartSeconds: 1,
+      citationEndSeconds: 10,
+      confidence: 'high',
+      continuity: 'continuous',
+      provenance: 'live_capture',
+      rights: 'owned',
+      reuseScope: 'public_network',
+      capturedAt: new Date().toISOString(),
+      sha256: 'a'.repeat(64),
+    } as const;
+    const unconfirmedResponse = await SELF.fetch(
+      `https://rooms.example/evidence-cases/${credentials.caseId}/evidence`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({
+          token: credentials.contributorToken,
+          commandId: crypto.randomUUID(),
+          expectedRevision: credentials.state.revision,
+          uploadId: upload.uploadId,
+          review,
+        }),
+      },
+    );
+    expect(unconfirmedResponse.status).toBe(400);
+    expect(await unconfirmedResponse.json()).toMatchObject({ error: 'invalid_evidence_review' });
+
     const publishResponse = await SELF.fetch(
       `https://rooms.example/evidence-cases/${credentials.caseId}/evidence`,
       {
@@ -389,21 +421,8 @@ describe('generic product evidence cases', () => {
           commandId: crypto.randomUUID(),
           expectedRevision: credentials.state.revision,
           uploadId: upload.uploadId,
-          review: {
-            result: 'supports',
-            observation: 'No water reached the paper during the continuous inversion.',
-            contributorLabel: 'Bottle owner',
-            durationSeconds: 10,
-            citationStartSeconds: 1,
-            citationEndSeconds: 10,
-            confidence: 'high',
-            continuity: 'continuous',
-            provenance: 'live_capture',
-            rights: 'owned',
-            reuseScope: 'public_network',
-            capturedAt: new Date().toISOString(),
-            sha256: 'a'.repeat(64),
-          },
+          confirmReviewedEvidence: true,
+          review,
         }),
       },
     );
@@ -512,6 +531,7 @@ describe('generic product evidence cases', () => {
           commandId: crypto.randomUUID(),
           expectedRevision: credentials.state.revision,
           uploadId: upload.uploadId,
+          confirmReviewedEvidence: true,
           review: {
             result: 'supports',
             observation: 'No water reached the paper during the continuous inversion.',
@@ -580,6 +600,7 @@ describe('generic product evidence cases', () => {
           commandId: crypto.randomUUID(),
           expectedRevision: credentials.state.revision,
           uploadId: upload.uploadId,
+          confirmReviewedEvidence: true,
           review: {
             result: 'inconclusive',
             observation: 'The lid moved out of frame during the test.',

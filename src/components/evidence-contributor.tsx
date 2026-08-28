@@ -105,10 +105,11 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
   const [continuity, setContinuity] = useState<VideoEvidenceContinuity>('unknown');
   const [citationStartSeconds, setCitationStartSeconds] = useState(0);
   const [citationEndSeconds, setCitationEndSeconds] = useState(1);
-  const [contributorLabel, setContributorLabel] = useState('Product owner');
+  const [contributorLabel, setContributorLabel] = useState('Anonymous contributor');
   const [provenance, setProvenance] = useState<'live_capture' | 'authorized_import' | null>(null);
-  const [rights, setRights] = useState<'owned' | 'authorized'>('owned');
+  const [rights, setRights] = useState<'owned' | 'authorized' | null>(null);
   const [reuseScope, setReuseScope] = useState<'case_only' | 'public_network'>('case_only');
+  const [reviewConfirmed, setReviewConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const evidenceCase = snapshot?.state.activeCase ?? null;
@@ -217,6 +218,9 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
     setSha256(null);
     setAnalysis(null);
     setProvenance(null);
+    setRights(null);
+    setReuseScope('case_only');
+    setReviewConfirmed(false);
     setError(null);
     setPhase('hashing');
     try {
@@ -233,6 +237,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
       return;
     }
     setError(null);
+    setReviewConfirmed(false);
     setPhase('reserving');
     try {
       const reserved = await reserveRemoteEvidenceUpload(serviceUrl, caseId, {
@@ -308,6 +313,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
     setResult(nextResult);
     setObservation(resultCopy[nextResult]);
     setConfidence(nextResult === 'inconclusive' ? 'low' : 'medium');
+    setReviewConfirmed(false);
     if (nextResult === 'inconclusive') {
       setReuseScope('case_only');
     }
@@ -315,6 +321,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
 
   function chooseConfidence(nextConfidence: EvidenceConfidence): void {
     setConfidence(nextConfidence);
+    setReviewConfirmed(false);
     if (nextConfidence === 'low') {
       setReuseScope('case_only');
     }
@@ -322,6 +329,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
 
   function chooseContinuity(nextContinuity: VideoEvidenceContinuity): void {
     setContinuity(nextContinuity);
+    setReviewConfirmed(false);
     if (nextContinuity !== 'continuous') {
       setReuseScope('case_only');
     }
@@ -337,7 +345,9 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
       selectedAt === null ||
       durationSeconds === null ||
       sha256 === null ||
-      provenance === null
+      provenance === null ||
+      rights === null ||
+      !reviewConfirmed
     ) {
       return;
     }
@@ -349,6 +359,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
         commandId: crypto.randomUUID(),
         expectedRevision: snapshot.state.revision,
         uploadId: upload.uploadId,
+        confirmReviewedEvidence: true,
         review: {
           result,
           observation,
@@ -603,7 +614,10 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                   minLength={4}
                   maxLength={360}
                   value={observation}
-                  onChange={(event) => setObservation(event.currentTarget.value)}
+                  onChange={(event) => {
+                    setObservation(event.currentTarget.value);
+                    setReviewConfirmed(false);
+                  }}
                 />
               </label>
               <fieldset>
@@ -642,7 +656,10 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                     min={0}
                     max={Math.max(0, citationEndSeconds - 1)}
                     value={citationStartSeconds}
-                    onChange={(event) => setCitationStartSeconds(event.currentTarget.valueAsNumber)}
+                    onChange={(event) => {
+                      setCitationStartSeconds(event.currentTarget.valueAsNumber);
+                      setReviewConfirmed(false);
+                    }}
                   />
                 </label>
                 <label>
@@ -652,19 +669,30 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                     min={citationStartSeconds + 1}
                     max={Math.max(1, Math.round(durationSeconds ?? 1))}
                     value={citationEndSeconds}
-                    onChange={(event) => setCitationEndSeconds(event.currentTarget.valueAsNumber)}
+                    onChange={(event) => {
+                      setCitationEndSeconds(event.currentTarget.valueAsNumber);
+                      setReviewConfirmed(false);
+                    }}
                   />
                 </label>
               </div>
               <label>
                 Public contributor label
                 <input
+                  aria-label="Public contributor label"
                   required
                   minLength={2}
                   maxLength={80}
                   value={contributorLabel}
-                  onChange={(event) => setContributorLabel(event.currentTarget.value)}
+                  onChange={(event) => {
+                    setContributorLabel(event.currentTarget.value);
+                    setReviewConfirmed(false);
+                  }}
                 />
+                <small className="contributor-label-note">
+                  Use a truthful self-description, such as “Customer,” “Retail employee,” or
+                  “Borrower.” The network does not independently verify this label.
+                </small>
               </label>
               <fieldset>
                 <legend>How was this clip made?</legend>
@@ -673,7 +701,10 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                     type="radio"
                     name="provenance"
                     checked={provenance === 'live_capture'}
-                    onChange={() => setProvenance('live_capture')}
+                    onChange={() => {
+                      setProvenance('live_capture');
+                      setReviewConfirmed(false);
+                    }}
                   />
                   I recorded it now for this mission
                 </label>
@@ -682,7 +713,10 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                     type="radio"
                     name="provenance"
                     checked={provenance === 'authorized_import'}
-                    onChange={() => setProvenance('authorized_import')}
+                    onChange={() => {
+                      setProvenance('authorized_import');
+                      setReviewConfirmed(false);
+                    }}
                   />
                   I selected an existing clip I may share
                 </label>
@@ -698,7 +732,10 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                     type="radio"
                     name="rights"
                     checked={rights === 'owned'}
-                    onChange={() => setRights('owned')}
+                    onChange={() => {
+                      setRights('owned');
+                      setReviewConfirmed(false);
+                    }}
                   />
                   I recorded and own it
                 </label>
@@ -707,7 +744,10 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                     type="radio"
                     name="rights"
                     checked={rights === 'authorized'}
-                    onChange={() => setRights('authorized')}
+                    onChange={() => {
+                      setRights('authorized');
+                      setReviewConfirmed(false);
+                    }}
                   />
                   I am authorized to publish it
                 </label>
@@ -719,7 +759,10 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                     type="radio"
                     name="reuse-scope"
                     checked={reuseScope === 'case_only'}
-                    onChange={() => setReuseScope('case_only')}
+                    onChange={() => {
+                      setReuseScope('case_only');
+                      setReviewConfirmed(false);
+                    }}
                   />
                   Only this evidence case
                 </label>
@@ -729,7 +772,10 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                     name="reuse-scope"
                     disabled={!networkReuseEligible}
                     checked={reuseScope === 'public_network'}
-                    onChange={() => setReuseScope('public_network')}
+                    onChange={() => {
+                      setReuseScope('public_network');
+                      setReviewConfirmed(false);
+                    }}
                   />
                   Future matching product questions too
                 </label>
@@ -740,12 +786,26 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                   It never includes shopper identity or private preferences.
                 </small>
               </fieldset>
+              <fieldset className="contributor-review-confirmation">
+                <legend>Final human confirmation</legend>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={reviewConfirmed}
+                    onChange={(event) => setReviewConfirmed(event.currentTarget.checked)}
+                  />
+                  I reviewed the exact video and every field above. These are my statements, not
+                  independently verified facts.
+                </label>
+              </fieldset>
               <button
                 className="evidence-primary-button"
                 type="button"
                 disabled={
                   phase === 'publishing' ||
                   provenance === null ||
+                  rights === null ||
+                  !reviewConfirmed ||
                   observation.trim().length < 4 ||
                   !Number.isInteger(citationStartSeconds) ||
                   !Number.isInteger(citationEndSeconds) ||

@@ -85,6 +85,7 @@ describe('remote product evidence protocol', () => {
       commandId: 'publish-1',
       expectedRevision: 2,
       uploadId: '0123456789abcdef0123456789abcdef',
+      confirmReviewedEvidence: true,
       review: {
         result: 'supports',
         observation: 'No water reached the paper during the continuous inversion.',
@@ -102,6 +103,20 @@ describe('remote product evidence protocol', () => {
     } as const;
 
     expect(publishRemoteEvidenceRequestSchema.safeParse(base).success).toBe(false);
+    expect(
+      publishRemoteEvidenceRequestSchema.safeParse({
+        ...base,
+        confirmReviewedEvidence: undefined,
+        review: { ...base.review, sha256: 'a'.repeat(64) },
+      }).success,
+    ).toBe(false);
+    expect(
+      publishRemoteEvidenceRequestSchema.safeParse({
+        ...base,
+        confirmReviewedEvidence: false,
+        review: { ...base.review, sha256: 'a'.repeat(64) },
+      }).success,
+    ).toBe(false);
     expect(
       publishRemoteEvidenceRequestSchema.safeParse({
         ...base,

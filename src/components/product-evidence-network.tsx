@@ -811,8 +811,8 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
           >
             <span>3</span>
             <p>
-              <strong>Reuse / film</strong>
-              Never recapture known proof
+              <strong>Find or film</strong>
+              Record each fact once
             </p>
           </li>
           <li className={answerChanged ? 'flow-complete' : 'flow-waiting'}>
@@ -878,7 +878,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
           <section className="evidence-sources" aria-labelledby="sources-title">
             <div className="evidence-section-heading compact">
               <span>
-                <small>Claim-aware index</small>
+                <small>Evidence found so far</small>
                 <strong id="sources-title">What the current sources actually show</strong>
               </span>
               <em>{sources.length}</em>
@@ -1028,7 +1028,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
         <article className="evidence-mission-panel evidence-panel">
           <div className="evidence-section-heading">
             <span>
-              <small>Human sensor handoff</small>
+              <small>Someone with the product</small>
               <strong>Film the smallest missing fact</strong>
             </span>
             <em>{mission?.status ?? 'not created'}</em>
@@ -1170,7 +1170,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                         <div className="mission-board-receipt" role="status">
                           <div>
                             <small>Public request · expires automatically</small>
-                            <strong>Anyone who owns this product can now record the answer.</strong>
+                            <strong>Anyone with this product can now record the answer.</strong>
                             <p>
                               Only the public product, question, and filming instructions are
                               listed. No shopper identity, preferences, history, or budget are
@@ -1258,7 +1258,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
         <aside className="evidence-tools-panel evidence-panel" aria-label="Live Site Tool contract">
           <div className="evidence-section-heading">
             <span>
-              <small>Page-owned WebMCP contract</small>
+              <small>Live WebMCP Site Tools</small>
               <strong>Tools available now</strong>
             </span>
             <em>{availableToolNames.length}</em>
@@ -1281,7 +1281,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
           </p>
 
           <section className="evidence-privacy" aria-labelledby="privacy-title">
-            <small>Private-context membrane</small>
+            <small>Private context stays in ChatGPT</small>
             <strong id="privacy-title">The page accepts only three public fields</strong>
             <p>Product name · optional product URL · observable product question</p>
             <ul>

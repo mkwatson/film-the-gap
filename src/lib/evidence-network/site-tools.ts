@@ -310,7 +310,7 @@ export function evidenceCaseSnapshot(
         : answer?.status === 'insufficient' && evidenceCase.mission === null
           ? 'Create a claim-specific filming mission.'
           : evidenceCase.mission?.status === 'open'
-            ? 'Wait for a product owner to publish reviewed evidence.'
+            ? 'Wait for reviewed evidence from a contributor.'
             : 'Inspect how the evidence changed the answer.',
     availableTools: availableToolNames(runtime),
     phoneCapture:

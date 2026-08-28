@@ -276,7 +276,7 @@ describe('ProductEvidenceNetwork', () => {
       }),
     );
     fireEvent.click(screen.getByRole('button', { name: 'Publish open filming request' }));
-    expect(await screen.findByText(/Anyone who owns this product can now record/)).toBeTruthy();
+    expect(await screen.findByText(/Anyone with this product can now record/)).toBeTruthy();
 
     remoteMocks.removePublicEvidenceMission.mockRejectedValueOnce(
       new Error('Evidence service temporarily unavailable.'),

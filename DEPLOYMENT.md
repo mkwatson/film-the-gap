@@ -304,7 +304,7 @@ Then perform one user-approved paid rehearsal on the final origins:
 1. Clean unauthenticated desktop browser: open the same-origin `/demo-product` source, then search the default question and confirm a real Browser Run receipt whose page text remains non-decisive. Also repeat once with an arbitrary public product URL/question before creating the mission and QR/link.
 2. Physical phone: owned unbranded object, say or show the issued phrase with the product visible, continuous recording, real direct Stream upload, real Gateway proposal and phrase check, explicit correction/review, publish.
    Confirm specifically that the Gateway provider can fetch the generated public MP4 while Stream playback-origin restrictions are active; current Cloudflare documentation describes those restrictions for HLS/DASH playback but does not explicitly guarantee this downstream-download combination.
-3. Contributor explicitly opts into 30-day network reuse; confirm weak/inconclusive evidence cannot be selected for reuse.
+3. Contributor deliberately selects publishing rights, explicitly confirms the complete review, and opts into 30-day network reuse; confirm a missing confirmation or missing rights selection cannot publish, and weak/inconclusive evidence cannot be selected for reuse.
 4. Desktop reload: same durable case and timestamped evidence still visible.
 5. Open a fresh case for the exact same product URL and question; confirm D1 returns the reviewed Stream citation and no new filming mission appears.
 6. Current WebMCP-enabled Chrome: complete native Site Tool journey.

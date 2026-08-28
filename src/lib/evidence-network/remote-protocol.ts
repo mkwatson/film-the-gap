@@ -306,6 +306,7 @@ export const publishRemoteEvidenceRequestSchema = z
     commandId: idSchema,
     expectedRevision: z.number().int().nonnegative(),
     uploadId: z.string().regex(/^[a-zA-Z0-9_-]{16,128}$/),
+    confirmReviewedEvidence: z.literal(true),
     review: z.strictObject({
       result: z.enum(evidenceResults),
       observation: z.string().trim().min(4).max(360),

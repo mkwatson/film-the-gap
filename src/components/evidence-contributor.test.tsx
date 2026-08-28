@@ -226,10 +226,25 @@ describe('EvidenceContributor', () => {
     expect(
       screen.getByRole('button', { name: 'Publish reviewed evidence' }).hasAttribute('disabled'),
     ).toBe(true);
+    expect(screen.getByLabelText('Public contributor label')).toHaveProperty(
+      'value',
+      'Anonymous contributor',
+    );
 
     fireEvent.click(screen.getByLabelText('I recorded it now for this mission'));
+    fireEvent.click(screen.getByLabelText('I recorded and own it'));
     fireEvent.click(screen.getByLabelText('Future matching product questions too'));
-    fireEvent.click(screen.getByRole('button', { name: 'Publish reviewed evidence' }));
+    const confirmation = screen.getByLabelText(/I reviewed the exact video and every field above/i);
+    const publishButton = screen.getByRole('button', { name: 'Publish reviewed evidence' });
+    expect(publishButton.hasAttribute('disabled')).toBe(true);
+    fireEvent.click(confirmation);
+    expect(publishButton.hasAttribute('disabled')).toBe(false);
+    fireEvent.change(screen.getByLabelText('Public contributor label'), {
+      target: { value: 'Customer with product access' },
+    });
+    expect(publishButton.hasAttribute('disabled')).toBe(true);
+    fireEvent.click(confirmation);
+    fireEvent.click(publishButton);
 
     expect(await screen.findByText('The evidence case updated')).toBeTruthy();
     expect(screen.getByText('Supported')).toBeTruthy();
@@ -238,6 +253,7 @@ describe('EvidenceContributor', () => {
       'BCDF2345',
       expect.objectContaining({
         uploadId: '0123456789abcdef0123456789abcdef',
+        confirmReviewedEvidence: true,
         review: expect.objectContaining({
           result: 'supports',
           rights: 'owned',
@@ -245,6 +261,7 @@ describe('EvidenceContributor', () => {
           confidence: 'high',
           continuity: 'continuous',
           provenance: 'live_capture',
+          contributorLabel: 'Customer with product access',
           citationStartSeconds: 1,
           citationEndSeconds: 10,
         }),

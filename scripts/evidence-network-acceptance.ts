@@ -465,7 +465,7 @@ async function run(): Promise<void> {
             driver,
             'ordinary-browser public mission receipt',
             pageIncludesScript(
-              'Anyone who owns this product can now record the answer.',
+              'Anyone with this product can now record the answer.',
               'No shopper identity, preferences, history, or budget are included.',
             ),
             (value) => value === true,
@@ -549,7 +549,7 @@ async function run(): Promise<void> {
           driver,
           'public mission receipt',
           pageIncludesScript(
-            'Anyone who owns this product can now record the answer.',
+            'Anyone with this product can now record the answer.',
             'No shopper identity, preferences, history, or budget are included.',
           ),
           (value) => value === true,
@@ -775,6 +775,26 @@ async function run(): Promise<void> {
       if (liveCaptureAttested !== true) {
         throw new Error('The contributor could not attest the clip provenance.');
       }
+      const unconfirmedBlocked = driver.eval(`(() => {
+        const button = [...document.querySelectorAll('button')].find(
+          (candidate) => candidate.textContent?.trim() === 'Publish reviewed evidence',
+        );
+        return button instanceof HTMLButtonElement && button.disabled;
+      })()`);
+      if (unconfirmedBlocked !== true) {
+        throw new Error('Evidence publication did not wait for rights and final confirmation.');
+      }
+      const rightsSelected = driver.eval(`(() => {
+        const radio = [...document.querySelectorAll('input[name="rights"]')].find(
+          (candidate) => candidate.parentElement?.textContent?.includes('I recorded and own it'),
+        );
+        if (!(radio instanceof HTMLInputElement)) return false;
+        radio.click();
+        return radio.checked;
+      })()`);
+      if (rightsSelected !== true) {
+        throw new Error('The contributor could not deliberately select publishing rights.');
+      }
       const publicReuseSelected = driver.eval(`(() => {
         const radio = [...document.querySelectorAll('input[name="reuse-scope"]')].find(
           (candidate) => candidate.parentElement?.textContent?.includes('Future matching product questions too'),
@@ -785,6 +805,18 @@ async function run(): Promise<void> {
       })()`);
       if (publicReuseSelected !== true) {
         throw new Error('The contributor could not explicitly opt into bounded network reuse.');
+      }
+      const reviewConfirmed = driver.eval(`(() => {
+        const checkbox = document.querySelector('.contributor-review-confirmation input[type="checkbox"]');
+        if (!(checkbox instanceof HTMLInputElement)) return false;
+        checkbox.click();
+        const button = [...document.querySelectorAll('button')].find(
+          (candidate) => candidate.textContent?.trim() === 'Publish reviewed evidence',
+        );
+        return checkbox.checked && button instanceof HTMLButtonElement && !button.disabled;
+      })()`);
+      if (reviewConfirmed !== true) {
+        throw new Error('The contributor could not explicitly confirm the final reviewed state.');
       }
       if (artifacts !== null) driver.screenshot(join(artifacts, '05-human-review.png'));
       if (driver.eval(clickExactButtonScript('Publish reviewed evidence')) !== true) {
