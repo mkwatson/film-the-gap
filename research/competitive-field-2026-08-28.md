@@ -62,5 +62,27 @@ A rival that shares one ingredient—video, evidence, commerce, a public board, 
 ## Sponsor-product boundary after the recheck
 
 - Cloudflare Browser Run now documents a WebMCP lab that can list, execute, and re-list changing tools from an external browser session. After the final deployment, use it as an optional independent canary if time and budget permit; do not substitute its Chrome 146 beta runtime for the required current ChatGPT/Chrome receipts.
-- Shopify now supplies native catalog/cart/navigation WebMCP tools on Liquid storefronts and documents a UCP buyer journey across discovery, cart, checkout, and orders. That makes ordinary agentic commerce even more crowded. Film the Gap should remain the evidence layer that can improve a product page before purchase, with Shopify/UCP reserved for a post-core interoperability proof only if it can be added without another account, catalog, or demo branch.
+- Shopify now supplies native catalog/cart/navigation WebMCP tools on Liquid storefronts and documents a UCP buyer journey across discovery, cart, checkout, and orders. That makes ordinary agentic commerce even more crowded. Film the Gap must remain the evidence layer that creates information catalogs do not contain.
 - The official resources explicitly tell agents to list tools on every page load and re-list after every action. The product-page and shopper tool replacements should therefore be shown, not merely described.
+
+## UCP and Shopify Global Catalog frontier
+
+This boundary changed materially on August 28 and now deserves an isolated implementation branch:
+
+- The [latest UCP release, v2026-08-25](https://github.com/Universal-Commerce-Protocol/ucp/releases/tag/v2026-08-25), shipped on August 25—the challenge's opening day. It retains the standard Catalog Search and Lookup capabilities while adding broader protocol work around Actions, authority binding, policies, consent, locations, and cross-vertical composition.
+- [Shopify Global Catalog MCP](https://shopify.dev/docs/agents/catalog/global-catalog) searches products across Shopify merchants through UCP Catalog with no merchant partnership and no API key. It requires only an agent profile and returns stable product/variant IDs, normalized options, offers, seller domains, product media, and explicit inferred-field provenance.
+- Shopify's live endpoint currently negotiates UCP `2026-04-08`, even though UCP's newest release is `2026-08-25`. The implementation must use the newest mutually supported version, not blindly advertise the newest date. The official JavaScript SDK's current `0.4.x` line also targets `2026-04-08`.
+- A direct read-only call on August 28 searched the live Global Catalog for a plain insulated bottle in 344 ms and returned two real multi-merchant products. A follow-up `get_product` returned stable IDs, price, variants, seller domains, images, and inferred merchandising claims such as leak resistance. Those claims are precisely useful context but not observable proof.
+
+The load-bearing integration is therefore not checkout. UCP supplies real cross-merchant product discovery and canonical commerce identity; Film the Gap supplies reviewed, timestamped evidence for the exact questions structured catalogs and merchant claims cannot settle. This finally gives the product a credible `help me find the best X` entry point without owning a store:
+
+```text
+buyer intent
+  → Shopify Global Catalog over UCP finds real new products and offers
+  → the evidence network checks which decision criteria have reviewed video
+  → WebMCP creates the smallest missing filming request
+  → a product owner records and reviews it
+  → that evidence improves this and future recommendations
+```
+
+Implement this cumulatively behind the frozen non-UCP release. First add a strict, bounded server-side UCP client and deterministic fixture. Then add a native WebMCP catalog-search/select rung whose chosen product opens the existing evidence loop unchanged. Only after that works should the UI attempt multi-product evidence-coverage comparison. Do not add cart or checkout to the challenge story unless it becomes necessary to prove the recommendation has a real next step; neither creates the missing information that differentiates the submission.
