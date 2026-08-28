@@ -175,9 +175,14 @@ describe('generic product-evidence WebMCP eval corpus', () => {
       'ask_product_question',
       'search_product_evidence',
       'create_filming_mission',
+      'inspect_product_evidence',
+      'refine_filming_mission',
       'create_phone_capture_link',
       'publish_filming_mission',
     ]);
+    expect(expectedCalls(hero?.expectedCall).at(-3)?.arguments).toMatchObject({
+      expectedRevision: 4,
+    });
     expect(expectedCalls(hero?.expectedCall).at(-1)?.arguments).toEqual({
       confirmPublicListing: true,
     });

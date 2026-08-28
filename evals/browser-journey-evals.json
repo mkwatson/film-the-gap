@@ -5,7 +5,7 @@
       {
         "role": "user",
         "type": "message",
-        "content": "Help me verify a rechargeable desk lamp. After being unplugged and plugged back in, does it return to its last brightness setting? Search existing product evidence first. If it is still unresolved, create a continuous filming mission, create its no-login phone link, and publish the mission to the open board. I explicitly authorize publishing only the product name, this question, and the filming instructions. Keep my identity, home situation, shopping history, preferences, and budget private. Stop before anyone records video."
+        "content": "Help me verify a rechargeable desk lamp. After being unplugged and plugged back in, does it return to its last brightness setting? Search existing product evidence first. If it is still unresolved, create a continuous filming mission, inspect its exact revision, and refine it so the brightness control and complete disconnect/reconnect stay visible. Then create its no-login phone link and publish the mission to the open board. I explicitly authorize publishing only the product name, this question, and the filming instructions. Keep my identity, home situation, shopping history, preferences, and budget private. Stop before anyone records video."
       }
     ],
     "expectedCall": [
@@ -24,6 +24,17 @@
           "successCriterion": "Keep the lamp, power connection, and brightness change visible in one continuous take.",
           "minimumSeconds": 12,
           "continuousTakeRequired": true
+        }
+      },
+      { "functionName": "inspect_product_evidence", "arguments": {} },
+      {
+        "functionName": "refine_filming_mission",
+        "arguments": {
+          "instruction": "Show the brightness control at its dimmest setting, unplug the lamp for five seconds, plug it back in, and keep the returning brightness visible.",
+          "successCriterion": "Keep the lamp, brightness control, and complete power disconnect and reconnect visible in one continuous take.",
+          "minimumSeconds": 15,
+          "continuousTakeRequired": true,
+          "expectedRevision": 4
         }
       },
       { "functionName": "create_phone_capture_link", "arguments": {} },
