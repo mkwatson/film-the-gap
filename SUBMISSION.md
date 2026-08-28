@@ -77,9 +77,9 @@ A Cloudflare Durable Object owns each case, revision, random capture phrase, rol
 
 ## Two-minute judge path
 
-This path requires no account. ChatGPT or WebMCP-enabled Chrome is needed on the buyer page; the contributor phone can use any ordinary browser.
+This path requires no Film the Gap account. For ChatGPT, use the latest desktop app's built-in browser with **Enable site tools** on in **Settings → Browser → Permissions** and select **GPT-5.6 Sol** or **GPT-5.6 Terra**; Luna currently has WebMCP disabled, and Site Tools are not available in Enterprise or Edu workspaces. WebMCP-enabled Chrome is the alternate buyer client. The contributor phone can use any ordinary browser.
 
-1. Open **[LIVE URL]** and confirm the header says **Site Tools live**. The default bottle question starts at **Not enough proof** because “leak resistant” marketing copy is not a continuous leak test.
+1. Open **[LIVE URL]** in ChatGPT's built-in browser and confirm the page header says **Site Tools live**. In the address bar, choose **Site tools → Available site tools** and confirm the page's tools are listed. The default bottle question starts at **Not enough proof** because “leak resistant” marketing copy is not a continuous leak test.
 2. In ChatGPT, send:
 
    > Use this page's Site Tools. Inspect the active product question. If the current sources do not prove the answer, create the smallest continuous filming mission, create its bounded phone case, and publish only that mission to the open request board. Do not infer the result from marketing copy. Stop before anyone records.

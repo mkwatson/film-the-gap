@@ -22,6 +22,8 @@ A contradiction is as valid as support: the product value is that ChatGPT stops 
 
 ## Exact ChatGPT prompts
 
+Before recording, use the latest ChatGPT desktop app—not ChatGPT in an ordinary browser. In **Settings → Browser → Permissions**, turn on **Enable site tools**, select **GPT-5.6 Sol** or **GPT-5.6 Terra** (Luna currently has WebMCP disabled), and open the public app in ChatGPT's built-in browser. Use a non-Enterprise, non-Edu workspace. In the built-in browser's address bar, open **Site tools → Available site tools** and capture the registered tools before sending the prompt.
+
 Primary prompt:
 
 > Use this page's Site Tools. Inspect the active product question. If the current sources do not prove the answer, create the smallest continuous filming mission, create its bounded phone case, and publish only that mission to the open request board. Do not infer the result from marketing copy. Stop before anyone records.

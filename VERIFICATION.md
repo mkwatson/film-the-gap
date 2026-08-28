@@ -72,6 +72,7 @@ The live Vercel AI Gateway catalog was re-read through CLI 59.9.1 on August 28. 
 - [OpenAI WebMCP Challenge](https://openai.com/webmcp-challenge/)
 - [Official rules](https://webmcp.devpost.com/rules)
 - [Official resources](https://webmcp.devpost.com/resources)
+- [OpenAI Site Tools (WebMCP)](https://developers.openai.com/codex/webmcp)
 - [WebMCP draft and explainer](https://github.com/webmachinelearning/webmcp)
 - [Chrome WebMCP guide](https://developer.chrome.com/docs/ai/webmcp)
 - [Chrome secure-tool guidance](https://developer.chrome.com/docs/ai/webmcp/secure-tools)
@@ -82,6 +83,8 @@ The live Vercel AI Gateway catalog was re-read through CLI 59.9.1 on August 28. 
 - [Vercel AI SDK](https://ai-sdk.dev/docs/introduction)
 - [Vercel AI Gateway](https://vercel.com/docs/ai-gateway)
 - [Google Gemini video understanding](https://ai.google.dev/gemini-api/docs/video-understanding)
+
+The OpenAI Site Tools guide was re-read on August 28. It confirms that ChatGPT's judged path is the latest desktop app's built-in browser with Site Tools enabled and GPT-5.6 Sol or Terra; Luna, Enterprise/Edu workspaces, ordinary ChatGPT web, declarative form tools, and tools registered inside iframes are not substitutes. The candidate imperatively registers JavaScript tools from each top-level page, keeps their inputs narrow, returns verifiable state, and preserves the complete ordinary-browser interface. The separately linked OpenAI API MCP guide concerns remote MCP servers and is not the WebMCP implementation source.
 
 ## Read-only release-account audit
 

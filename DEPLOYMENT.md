@@ -302,7 +302,7 @@ Then perform one user-approved paid rehearsal on the final origins:
 4. Desktop reload: same durable case and timestamped evidence still visible.
 5. Open a fresh case for the exact same product URL and question; confirm D1 returns the reviewed Stream citation and no new filming mission appears.
 6. Current WebMCP-enabled Chrome: complete native Site Tool journey.
-7. Current ChatGPT in-app Browser: complete the same journey and capture the tool transcript.
+7. Latest ChatGPT desktop app: use a non-Enterprise, non-Edu workspace; select GPT-5.6 Sol or Terra; turn on **Settings → Browser → Permissions → Enable site tools**; open the app in the built-in browser; confirm **Site tools → Available site tools** lists the native tools; complete the same journey and capture **Recently used → Sources**. Do not substitute ChatGPT in an ordinary web browser or GPT-5.6 Luna, where Site Tools are unavailable.
 8. Ordinary-browser fallback: complete the journey without Site Tools.
 9. Cold tester: understands and completes the canonical flow without coaching.
 
