@@ -31,6 +31,15 @@ export type SourceContinuityKind = (typeof sourceContinuityKinds)[number];
 export const evidenceActors = ['human', 'agent', 'contributor', 'system'] as const;
 export type EvidenceActor = (typeof evidenceActors)[number];
 
+export const evidenceDiscoveryPlatforms = ['tiktok', 'instagram', 'youtube', 'web'] as const;
+export type EvidenceDiscoveryPlatform = (typeof evidenceDiscoveryPlatforms)[number];
+
+export const evidenceDiscoveryStatuses = ['complete', 'partial', 'unavailable'] as const;
+export type EvidenceDiscoveryStatus = (typeof evidenceDiscoveryStatuses)[number];
+
+export const evidenceDiscoveryProviders = ['scrapecreators', 'rights_clean_demo'] as const;
+export type EvidenceDiscoveryProvider = (typeof evidenceDiscoveryProviders)[number];
+
 const httpUrlSchema = z
   .url()
   .refine((value) => ['http:', 'https:'].includes(new URL(value).protocol), {
@@ -44,6 +53,27 @@ export const productQuestionInputSchema = z.strictObject({
 });
 
 export type ProductQuestionInput = z.infer<typeof productQuestionInputSchema>;
+
+export const evidenceDiscoveryInputSchema = z.strictObject({
+  provider: z.enum(evidenceDiscoveryProviders),
+  status: z.enum(evidenceDiscoveryStatuses),
+  query: z.string().trim().min(2).max(420),
+  searchedPlatforms: z.array(z.enum(evidenceDiscoveryPlatforms)).max(4),
+  warnings: z.array(z.string().trim().min(1).max(240)).max(8),
+  leads: z
+    .array(
+      z.strictObject({
+        platform: z.enum(evidenceDiscoveryPlatforms),
+        title: z.string().trim().min(1).max(240),
+        url: httpUrlSchema,
+        summary: z.string().trim().min(1).max(360),
+        creatorLabel: z.string().trim().min(1).max(120),
+      }),
+    )
+    .max(12),
+});
+
+export type EvidenceDiscoveryInput = z.infer<typeof evidenceDiscoveryInputSchema>;
 
 export const filmingMissionInputSchema = z.strictObject({
   instruction: z.string().trim().min(8).max(280),
@@ -150,12 +180,23 @@ export interface EvidenceAnswer {
   readonly createdAt: string;
 }
 
+export interface EvidenceDiscovery {
+  readonly provider: EvidenceDiscoveryProvider;
+  readonly status: EvidenceDiscoveryStatus;
+  readonly query: string;
+  readonly searchedPlatforms: readonly EvidenceDiscoveryPlatform[];
+  readonly warnings: readonly string[];
+  readonly sourceIds: readonly string[];
+  readonly searchedAt: string;
+}
+
 export interface ProductEvidenceCase {
   readonly id: string;
   readonly product: ProductReference;
   readonly question: ProductQuestion;
   readonly sources: readonly EvidenceSource[];
   readonly observations: readonly EvidenceObservation[];
+  readonly discovery: EvidenceDiscovery | null;
   readonly mission: FilmingMission | null;
   readonly answers: readonly EvidenceAnswer[];
 }
@@ -179,6 +220,11 @@ export type EvidenceNetworkCommand =
       readonly kind: 'ask-product-question';
       readonly actor: Extract<EvidenceActor, 'human' | 'agent'>;
       readonly input: ProductQuestionInput;
+    }
+  | {
+      readonly kind: 'record-evidence-discovery';
+      readonly actor: Extract<EvidenceActor, 'human' | 'agent' | 'system'>;
+      readonly input: EvidenceDiscoveryInput;
     }
   | {
       readonly kind: 'create-filming-mission';
@@ -348,6 +394,15 @@ export function createDemoEvidenceNetworkState(): EvidenceNetworkState {
     },
     sources: [source],
     observations: [observation],
+    discovery: {
+      provider: 'rights_clean_demo',
+      status: 'complete',
+      query: 'travel bottle continuous upside-down leak test',
+      searchedPlatforms: ['web'],
+      warnings: [],
+      sourceIds: [source.id],
+      searchedAt: demoTimestamp,
+    },
     mission: null,
     answers: [insufficientAnswer(1, demoTimestamp)],
   };
@@ -381,8 +436,12 @@ export function getEvidenceNetworkToolNames(state: EvidenceNetworkState): readon
     return names;
   }
   const answer = currentEvidenceAnswer(state);
+  if (evidenceCase.discovery === null && evidenceCase.mission === null) {
+    names.push('search_product_evidence');
+  }
   if (
     answer?.status === 'insufficient' &&
+    evidenceCase.discovery !== null &&
     (evidenceCase.mission === null || evidenceCase.mission.status === 'fulfilled')
   ) {
     names.push('create_filming_mission');
@@ -434,6 +493,7 @@ function askProductQuestion(
     },
     sources: suppliedSource === null ? [] : [suppliedSource],
     observations: [],
+    discovery: null,
     mission: null,
     answers: [insufficientAnswer(revision, now)],
   };
@@ -457,6 +517,114 @@ function askProductQuestion(
   };
 }
 
+function recordEvidenceDiscovery(
+  state: EvidenceNetworkState,
+  input: EvidenceDiscoveryInput,
+  actor: Extract<EvidenceActor, 'human' | 'agent' | 'system'>,
+  now: string,
+): EvidenceNetworkTransition {
+  const evidenceCase = state.activeCase;
+  if (evidenceCase === null) {
+    return { ok: false, state, message: 'Ask a product question before searching for evidence.' };
+  }
+  if (evidenceCase.discovery !== null) {
+    return { ok: false, state, message: 'Existing public evidence was already searched.' };
+  }
+  if (evidenceCase.mission !== null) {
+    return { ok: false, state, message: 'Search for existing evidence before creating a mission.' };
+  }
+  const parsed = evidenceDiscoveryInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      state,
+      message: parsed.error.issues[0]?.message ?? 'Invalid evidence discovery result.',
+    };
+  }
+
+  const revision = state.revision + 1;
+  const knownUrls = new Set(evidenceCase.sources.flatMap(({ url }) => (url === null ? [] : [url])));
+  const uniqueLeads = parsed.data.leads.filter(({ url }) => {
+    if (knownUrls.has(url)) {
+      return false;
+    }
+    knownUrls.add(url);
+    return true;
+  });
+  const sources: EvidenceSource[] = uniqueLeads.map((lead, index) => ({
+    id: `source-${revision}-${index + 1}`,
+    title: lead.title,
+    url: lead.url,
+    mediaType: lead.platform === 'web' ? 'web_page' : 'video',
+    rights: 'link_only',
+    provenance: 'external_link',
+    continuity: 'unknown',
+    contributorLabel: lead.creatorLabel,
+    createdAt: now,
+    streamUid: null,
+    sha256: null,
+  }));
+  const observations: EvidenceObservation[] = sources.map((source, index) => ({
+    id: `observation-${revision}-${index + 1}`,
+    claim: evidenceCase.question.text,
+    result: 'inconclusive',
+    confidence: 'low',
+    text:
+      uniqueLeads[index]?.summary ??
+      'This public link is a discovery lead and has not been reviewed for the claim.',
+    citation: {
+      sourceId: source.id,
+      startSeconds: null,
+      endSeconds: null,
+      label: 'Discovery lead · not claim-reviewed',
+    },
+    reviewedBy: 'Automated discovery metadata only',
+    reviewedAt: now,
+  }));
+  const discovery: EvidenceDiscovery = {
+    provider: parsed.data.provider,
+    status: parsed.data.status,
+    query: parsed.data.query,
+    searchedPlatforms: parsed.data.searchedPlatforms,
+    warnings: parsed.data.warnings,
+    sourceIds: sources.map(({ id }) => id),
+    searchedAt: now,
+  };
+
+  return {
+    ok: true,
+    state: {
+      revision,
+      activeCase: {
+        ...evidenceCase,
+        sources: [...evidenceCase.sources, ...sources],
+        observations: [...evidenceCase.observations, ...observations],
+        discovery,
+      },
+      activity: [
+        ...state.activity,
+        activity(
+          revision,
+          actor,
+          'search_product_evidence',
+          parsed.data.status === 'unavailable'
+            ? 'The live public-source provider was unavailable; no result was treated as evidence.'
+            : sources.length === 0
+              ? 'Searched available public sources but found no claim-ready evidence leads.'
+              : `Indexed ${sources.length} public discovery lead${sources.length === 1 ? '' : 's'} without treating them as proof.`,
+          now,
+        ),
+      ],
+    },
+    message:
+      parsed.data.status === 'unavailable'
+        ? 'Live public-source search was unavailable. A filming mission can still fill the gap.'
+        : sources.length === 0
+          ? 'Public-source search finished without a usable lead. A filming mission can fill the gap.'
+          : `Indexed ${sources.length} public lead${sources.length === 1 ? '' : 's'}. None is treated as proof until reviewed.`,
+  };
+}
+
 function createFilmingMission(
   state: EvidenceNetworkState,
   input: FilmingMissionInput,
@@ -466,6 +634,13 @@ function createFilmingMission(
   const evidenceCase = state.activeCase;
   if (evidenceCase === null) {
     return { ok: false, state, message: 'Ask a product question before creating a mission.' };
+  }
+  if (evidenceCase.discovery === null) {
+    return {
+      ok: false,
+      state,
+      message: 'Search existing public evidence before asking someone to film.',
+    };
   }
   const parsed = filmingMissionInputSchema.safeParse(input);
   if (!parsed.success) {
@@ -606,6 +781,9 @@ export function applyEvidenceNetworkCommand(
 ): EvidenceNetworkTransition {
   if (command.kind === 'ask-product-question') {
     return askProductQuestion(state, command.input, command.actor, now);
+  }
+  if (command.kind === 'record-evidence-discovery') {
+    return recordEvidenceDiscovery(state, command.input, command.actor, now);
   }
   if (command.kind === 'create-filming-mission') {
     return createFilmingMission(state, command.input, command.actor, now);

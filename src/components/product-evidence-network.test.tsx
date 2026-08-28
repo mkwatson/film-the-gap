@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ProductEvidenceNetwork } from './product-evidence-network';
 
@@ -49,6 +49,7 @@ function setModelContext(modelContext: WebMCP.ModelContext | undefined): void {
 
 afterEach(() => {
   setModelContext(undefined);
+  vi.unstubAllGlobals();
 });
 
 describe('ProductEvidenceNetwork', () => {
@@ -63,7 +64,7 @@ describe('ProductEvidenceNetwork', () => {
     expect(await screen.findByText('Human controls ready')).toBeTruthy();
     expect(screen.getByText('Not enough proof')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create 10-second filming mission' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create claim-specific filming mission' }));
     expect(await screen.findByText('Replay a completed rights-clean mission')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Replay: test passed' }));
@@ -126,6 +127,19 @@ describe('ProductEvidenceNetwork', () => {
   });
 
   it('opens an unseen product case without a product-specific code path', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (): Promise<Response> =>
+        Response.json({
+          provider: 'scrapecreators',
+          status: 'unavailable',
+          query: 'USB-C lavalier microphone phone charge receiver connected recording',
+          searchedPlatforms: [],
+          warnings: ['Live social search is not configured on this deployment.'],
+          leads: [],
+        }),
+      ),
+    );
     setModelContext(undefined);
     render(<ProductEvidenceNetwork />);
 
@@ -144,6 +158,18 @@ describe('ProductEvidenceNetwork', () => {
       ).toHaveLength(2);
     });
     expect(screen.getByText('No public source has been supplied for this case yet.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Create 10-second filming mission' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Search existing evidence' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Search existing evidence' }));
+
+    expect(await screen.findByText('Live social search unavailable')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Create claim-specific filming mission' }),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create claim-specific filming mission' }));
+
+    expect(await screen.findByText('Put this exact mission on any phone.')).toBeTruthy();
+    expect(screen.queryByText('Replay a completed rights-clean mission')).toBeNull();
   });
 });

@@ -75,6 +75,57 @@ describe('product evidence Site Tools', () => {
     expect(readState().activeCase?.product.name).toBe('Desk lamp');
   });
 
+  it('searches the active question and exposes only link-only leads before a mission', async () => {
+    const { runtime: runtimeValue, readState } = runtime();
+    await tool(runtimeValue, 'ask_product_question').execute(
+      {
+        productName: 'Desk lamp',
+        question: 'Does the lamp retain its last brightness after losing power?',
+      },
+      { signal: new AbortController().signal },
+    );
+    const runtimeWithSearch = {
+      ...runtimeValue,
+      evidenceSearch: {
+        run: async () =>
+          runtimeValue.dispatch({
+            kind: 'record-evidence-discovery',
+            actor: 'agent',
+            input: {
+              provider: 'scrapecreators',
+              status: 'complete',
+              query: 'Desk lamp brightness memory power loss',
+              searchedPlatforms: ['youtube'],
+              warnings: [],
+              leads: [
+                {
+                  platform: 'youtube',
+                  title: 'Desk lamp power-cycle test',
+                  url: 'https://www.youtube.com/watch?v=abc123',
+                  summary: 'Candidate only; the video has not been reviewed.',
+                  creatorLabel: 'YouTube · Test Lab',
+                },
+              ],
+            },
+          }),
+      },
+    } satisfies EvidenceSiteToolRuntime;
+
+    expect(createEvidenceSiteTools(runtimeWithSearch).map(({ name }) => name)).toContain(
+      'search_product_evidence',
+    );
+    const result = await tool(runtimeWithSearch, 'search_product_evidence').execute(
+      {},
+      { signal: new AbortController().signal },
+    );
+
+    expect(result).toMatchObject({ ok: true, answerStatus: 'insufficient' });
+    expect(readState().activeCase?.sources.at(-1)?.rights).toBe('link_only');
+    expect(createEvidenceSiteTools(runtimeWithSearch).map(({ name }) => name)).toContain(
+      'create_filming_mission',
+    );
+  });
+
   it('creates a mission and dynamically removes the now-invalid duplicate action', async () => {
     const { runtime: runtimeValue } = runtime();
     await tool(runtimeValue, 'create_filming_mission').execute(

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
+import { discoverProductEvidence } from '@/lib/evidence-network/discovery-client';
 import {
   applyEvidenceNetworkCommand,
   createDemoEvidenceNetworkState,
@@ -14,6 +15,9 @@ import {
   type EvidenceNetworkState,
   type EvidenceNetworkTransition,
   type EvidenceResult,
+  type EvidenceDiscoveryInput,
+  type EvidenceDiscoveryPlatform,
+  type ProductQuestionInput,
 } from '@/lib/evidence-network/model';
 import {
   configuredEvidenceServiceUrl,
@@ -41,7 +45,7 @@ const defaultMission = {
 } as const;
 
 const agentStarter =
-  'Use this page’s Site Tools. Inspect the active product question. If the sources do not prove the answer, create the smallest continuous filming mission, then create a phone capture link. Do not infer from marketing copy or predict the result. Wait for reviewed evidence, then inspect exactly how the answer changed.';
+  'Use this page’s Site Tools. Inspect the active product question, search existing public product evidence, and treat every result as a lead—not proof. If the sources still do not prove the answer, create the smallest continuous filming mission, then create a phone capture link. Do not infer from marketing copy or predict the result. Wait for reviewed evidence, then inspect exactly how the answer changed.';
 
 const answerLabels: Readonly<Record<EvidenceAnswerStatus, string>> = {
   insufficient: 'Not enough proof',
@@ -57,9 +61,9 @@ function actorLabel(actor: string): string {
   return actor.charAt(0).toUpperCase() + actor.slice(1);
 }
 
-function citationSeconds(start: number | null, end: number | null): string {
+function citationSeconds(start: number | null, end: number | null, fallback: string): string {
   if (start === null || end === null) {
-    return 'Text claim';
+    return fallback;
   }
   return `Video ${String(start).padStart(2, '0')}:${String(0).padStart(2, '0')}–00:${String(end).padStart(2, '0')}`;
 }
@@ -77,6 +81,61 @@ interface PhoneConnection {
   readonly receipt: EvidencePhoneCaptureReceipt;
 }
 
+function discoveryPlatformForUrl(url: string): EvidenceDiscoveryPlatform {
+  const hostname = new URL(url).hostname.toLowerCase();
+  if (hostname === 'tiktok.com' || hostname.endsWith('.tiktok.com')) {
+    return 'tiktok';
+  }
+  if (hostname === 'instagram.com' || hostname.endsWith('.instagram.com')) {
+    return 'instagram';
+  }
+  if (hostname === 'youtube.com' || hostname.endsWith('.youtube.com') || hostname === 'youtu.be') {
+    return 'youtube';
+  }
+  return 'web';
+}
+
+function remoteDiscoveryForState(state: EvidenceNetworkState): EvidenceDiscoveryInput | undefined {
+  const evidenceCase = state.activeCase;
+  const discovery = evidenceCase?.discovery;
+  if (
+    evidenceCase === null ||
+    evidenceCase === undefined ||
+    discovery === null ||
+    discovery === undefined
+  ) {
+    return undefined;
+  }
+  const sourceIds = new Set(discovery.sourceIds);
+  const leads = evidenceCase.sources.flatMap((source) => {
+    if (!sourceIds.has(source.id) || source.url === null) {
+      return [];
+    }
+    const observation = evidenceCase.observations.find(
+      ({ citation }) => citation.sourceId === source.id,
+    );
+    return [
+      {
+        platform: discoveryPlatformForUrl(source.url),
+        title: source.title,
+        url: source.url,
+        summary:
+          observation?.text ??
+          'Public discovery lead; the source has not been reviewed against the question.',
+        creatorLabel: source.contributorLabel,
+      },
+    ];
+  });
+  return {
+    provider: discovery.provider,
+    status: discovery.status,
+    query: discovery.query,
+    searchedPlatforms: [...discovery.searchedPlatforms],
+    warnings: [...discovery.warnings],
+    leads,
+  };
+}
+
 function remoteRequestForState(state: EvidenceNetworkState): CreateRemoteEvidenceCaseRequest {
   const evidenceCase = state.activeCase;
   const mission = evidenceCase?.mission;
@@ -92,6 +151,7 @@ function remoteRequestForState(state: EvidenceNetworkState): CreateRemoteEvidenc
   const isDemoFixture =
     evidenceCase.product.name === 'Everyday insulated travel bottle' &&
     evidenceCase.sources.some(({ id }) => id === 'source-1');
+  const discovery = remoteDiscoveryForState(state);
   return isDemoFixture
     ? { seed: 'travel_bottle', mission: missionInput }
     : {
@@ -103,6 +163,7 @@ function remoteRequestForState(state: EvidenceNetworkState): CreateRemoteEvidenc
             : { productUrl: evidenceCase.product.suppliedUrl }),
           question: evidenceCase.question.text,
         },
+        ...(discovery === undefined ? {} : { discovery }),
         mission: missionInput,
       };
 }
@@ -118,6 +179,10 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     'Can the phone charge while the receiver is connected and recording?',
   );
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
+  const [searchPhase, setSearchPhase] = useState<'idle' | 'searching' | 'complete' | 'error'>(
+    'idle',
+  );
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [phoneConnection, setPhoneConnection] = useState<PhoneConnection | null>(null);
   const [phonePhase, setPhonePhase] = useState<
     'idle' | 'connecting' | 'waiting' | 'complete' | 'error'
@@ -177,6 +242,49 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
       throw error;
     }
   }, [serviceUrl]);
+  const searchEvidence = useCallback(
+    async (
+      actor: Extract<EvidenceNetworkCommand, { kind: 'record-evidence-discovery' }>['actor'],
+      signal?: AbortSignal,
+    ): Promise<EvidenceNetworkTransition> => {
+      const evidenceCase = stateRef.current.activeCase;
+      if (evidenceCase === null) {
+        throw new Error('Ask a product question before searching for evidence.');
+      }
+      const input: ProductQuestionInput = {
+        productName: evidenceCase.product.name,
+        ...(evidenceCase.product.suppliedUrl === null
+          ? {}
+          : { productUrl: evidenceCase.product.suppliedUrl }),
+        question: evidenceCase.question.text,
+      };
+      setSearchPhase('searching');
+      setSearchError(null);
+      try {
+        const discovery = await discoverProductEvidence(input, signal);
+        const result = await dispatch({
+          kind: 'record-evidence-discovery',
+          actor,
+          input: discovery,
+        });
+        setSearchPhase(result.ok ? 'complete' : 'error');
+        if (!result.ok) {
+          setSearchError(result.message);
+        }
+        return result;
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        setSearchPhase('error');
+        setSearchError(message);
+        throw error;
+      }
+    },
+    [dispatch],
+  );
+  const evidenceSearchRuntime = useMemo(
+    () => ({ run: (signal?: AbortSignal) => searchEvidence('agent', signal) }),
+    [searchEvidence],
+  );
   const phoneCaptureRuntime = useMemo(
     () => ({
       available: serviceUrl !== null,
@@ -187,8 +295,13 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     [createPhoneCapture, serviceUrl],
   );
   const siteToolRuntime = useMemo<EvidenceSiteToolRuntime>(
-    () => ({ readState, dispatch, phoneCapture: phoneCaptureRuntime }),
-    [dispatch, phoneCaptureRuntime, readState],
+    () => ({
+      readState,
+      dispatch,
+      evidenceSearch: evidenceSearchRuntime,
+      phoneCapture: phoneCaptureRuntime,
+    }),
+    [dispatch, evidenceSearchRuntime, phoneCaptureRuntime, readState],
   );
   const createTools = useCallback(
     () => createEvidenceSiteTools(siteToolRuntime),
@@ -242,6 +355,9 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
   const sources = evidenceCase?.sources ?? [];
   const allObservations = evidenceCase?.observations ?? [];
   const mission = evidenceCase?.mission ?? null;
+  const isDemoCase =
+    evidenceCase?.product.name === 'Everyday insulated travel bottle' &&
+    evidenceCase.sources.some(({ id }) => id === 'source-1');
 
   async function copyAgentStarter(): Promise<void> {
     if (navigator.clipboard === undefined) {
@@ -262,10 +378,14 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     setState(nextState);
     setLastMessage('Demo reset to one indexed source and one unresolved product question.');
     setCopyStatus('idle');
+    setSearchPhase('idle');
+    setSearchError(null);
     phoneConnectionRef.current = null;
     setPhoneConnection(null);
     setPhonePhase('idle');
     setPhoneError(null);
+    setSearchPhase('idle');
+    setSearchError(null);
   }
 
   function submitQuestion(event: FormEvent<HTMLFormElement>): void {
@@ -286,10 +406,24 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
   }
 
   function createMission(): void {
+    const activeCase = stateRef.current.activeCase;
+    const isBottleDemo = activeCase?.product.name === 'Everyday insulated travel bottle';
     void dispatch({
       kind: 'create-filming-mission',
       actor: 'human',
-      input: defaultMission,
+      input: isBottleDemo
+        ? defaultMission
+        : {
+            instruction:
+              `Record one continuous take that visibly answers: “${activeCase?.question.text ?? 'the product question'}”`.slice(
+                0,
+                280,
+              ),
+            successCriterion:
+              'Keep the product, the relevant control or condition, and the observable result visible throughout.',
+            minimumSeconds: 10,
+            continuousTakeRequired: true,
+          },
     });
   }
 
@@ -347,9 +481,9 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
           <p className="evidence-eyebrow">The missing layer between product claims and decisions</p>
           <h1 id="evidence-page-title">If the web cannot prove it, ask the product.</h1>
           <p className="evidence-hero-copy">
-            ChatGPT turns a shopper’s question into the smallest useful filming request. A person
-            with the product records it, reviews the observation, and the answer changes with a
-            timestamped citation.
+            ChatGPT searches public product videos for a shopper’s exact question. If none proves
+            it, ChatGPT creates the smallest useful filming request; a person with the product
+            records it, and the answer changes with a timestamped citation.
           </p>
         </div>
         <ol className="evidence-flow" aria-label="Complete product evidence loop">
@@ -360,14 +494,22 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
               Any product question
             </p>
           </li>
-          <li className="flow-complete">
+          <li className={evidenceCase?.discovery === null ? 'flow-current' : 'flow-complete'}>
             <span>2</span>
             <p>
               <strong>Find the gap</strong>
               Claims are not proof
             </p>
           </li>
-          <li className={evidenceCase?.mission === null ? 'flow-current' : 'flow-complete'}>
+          <li
+            className={
+              evidenceCase?.discovery === null
+                ? 'flow-waiting'
+                : evidenceCase?.mission === null
+                  ? 'flow-current'
+                  : 'flow-complete'
+            }
+          >
             <span>3</span>
             <p>
               <strong>Film</strong>
@@ -442,6 +584,41 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
               </span>
               <em>{sources.length}</em>
             </div>
+            {evidenceCase?.discovery === null ? (
+              <div className="evidence-search-strip">
+                <div>
+                  <strong>Search public video before requesting new footage.</strong>
+                  <p>TikTok, Instagram Reels, and YouTube results stay link-only until reviewed.</p>
+                </div>
+                <button
+                  className="evidence-secondary-button"
+                  type="button"
+                  disabled={searchPhase === 'searching'}
+                  onClick={() => void searchEvidence('human')}
+                >
+                  {searchPhase === 'searching'
+                    ? 'Searching three platforms…'
+                    : 'Search existing evidence'}
+                </button>
+              </div>
+            ) : (
+              <div className="evidence-search-receipt">
+                <span>{evidenceCase?.discovery.status === 'unavailable' ? '○' : '✓'}</span>
+                <p>
+                  <strong>
+                    {evidenceCase?.discovery.status === 'unavailable'
+                      ? 'Live social search unavailable'
+                      : `${evidenceCase?.discovery.searchedPlatforms.length ?? 0} public platforms searched`}
+                  </strong>
+                  <small>
+                    {evidenceCase?.discovery.sourceIds.length ?? 0} discovered source
+                    {(evidenceCase?.discovery.sourceIds.length ?? 0) === 1 ? '' : 's'} · public
+                    leads never count as proof
+                  </small>
+                </p>
+              </div>
+            )}
+            {searchError === null ? null : <p role="alert">{searchError}</p>}
             {sources.length === 0 ? (
               <p className="evidence-empty">
                 No public source has been supplied for this case yet.
@@ -475,6 +652,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                             {citationSeconds(
                               observation.citation.startSeconds,
                               observation.citation.endSeconds,
+                              observation.citation.label,
                             )}{' '}
                             · {observation.confidence} confidence
                           </code>
@@ -511,16 +689,33 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
             <em>{mission?.status ?? 'not created'}</em>
           </div>
 
-          {mission === null ? (
+          {mission === null && evidenceCase?.discovery === null ? (
+            <div className="mission-empty">
+              <span aria-hidden="true">⌕</span>
+              <h2>First, search what the public web already shows.</h2>
+              <p>
+                If the best existing videos still cannot answer this exact question, the missing
+                shot becomes obvious.
+              </p>
+              <button
+                className="evidence-primary-button"
+                type="button"
+                disabled={searchPhase === 'searching'}
+                onClick={() => void searchEvidence('human')}
+              >
+                {searchPhase === 'searching' ? 'Searching…' : 'Search before filming'}
+              </button>
+            </div>
+          ) : mission === null ? (
             <div className="mission-empty">
               <span aria-hidden="true">◎</span>
-              <h2>The current source makes a claim. It does not show the test.</h2>
+              <h2>The current sources still do not show the answer.</h2>
               <p>
                 ChatGPT can now create a bounded mission whose schema contains only the recording
                 instruction and acceptance check.
               </p>
               <button className="evidence-primary-button" type="button" onClick={createMission}>
-                Create 10-second filming mission
+                Create claim-specific filming mission
               </button>
             </div>
           ) : (
@@ -607,7 +802,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                     </div>
                   )}
 
-                  {phoneConnection === null ? (
+                  {phoneConnection === null && isDemoCase ? (
                     <div className="mission-replay">
                       <div>
                         <small>Judge-safe fallback</small>

@@ -4,12 +4,17 @@ import {
   evidenceActors,
   evidenceAnswerStatuses,
   evidenceConfidences,
+  evidenceDiscoveryPlatforms,
+  evidenceDiscoveryProviders,
+  evidenceDiscoveryStatuses,
+  evidenceDiscoveryInputSchema,
   evidenceResults,
   filmingMissionInputSchema,
   productQuestionInputSchema,
   sourceContinuityKinds,
   sourceProvenanceKinds,
   sourceRights,
+  type EvidenceDiscoveryInput,
   type EvidenceNetworkState,
   type FilmingMissionInput,
   type ProductQuestionInput,
@@ -85,6 +90,16 @@ const evidenceAnswerSchema = z.strictObject({
   createdAt: timestampSchema,
 });
 
+const evidenceDiscoverySchema = z.strictObject({
+  provider: z.enum(evidenceDiscoveryProviders),
+  status: z.enum(evidenceDiscoveryStatuses),
+  query: z.string().min(2).max(420),
+  searchedPlatforms: z.array(z.enum(evidenceDiscoveryPlatforms)).max(4),
+  warnings: z.array(z.string().min(1).max(240)).max(8),
+  sourceIds: z.array(idSchema).max(12),
+  searchedAt: timestampSchema,
+});
+
 const productEvidenceCaseSchema = z.strictObject({
   id: idSchema,
   product: z.strictObject({
@@ -99,6 +114,7 @@ const productEvidenceCaseSchema = z.strictObject({
   }),
   sources: z.array(evidenceSourceSchema).max(128),
   observations: z.array(evidenceObservationSchema).max(256),
+  discovery: evidenceDiscoverySchema.nullable(),
   mission: filmingMissionSchema.nullable(),
   answers: z.array(evidenceAnswerSchema).min(1).max(128),
 });
@@ -125,6 +141,7 @@ const createFromDemoSchema = z.strictObject({
 const createFromQuestionSchema = z.strictObject({
   seed: z.literal('empty'),
   question: productQuestionInputSchema,
+  discovery: evidenceDiscoveryInputSchema.optional(),
   mission: filmingMissionInputSchema.optional(),
 });
 
@@ -269,4 +286,10 @@ export function requestMission(
   request: CreateRemoteEvidenceCaseRequest,
 ): FilmingMissionInput | null {
   return request.mission ?? null;
+}
+
+export function requestDiscovery(
+  request: CreateRemoteEvidenceCaseRequest,
+): EvidenceDiscoveryInput | null {
+  return request.seed === 'empty' ? (request.discovery ?? null) : null;
 }

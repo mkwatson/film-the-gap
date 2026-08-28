@@ -100,6 +100,52 @@ describe('generic product evidence cases', () => {
     expect(text).not.toContain(credentials.contributorToken);
   });
 
+  it('persists arbitrary-product discovery leads before the filming mission', async () => {
+    const response = await SELF.fetch('https://rooms.example/evidence-cases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: origin },
+      body: JSON.stringify({
+        seed: 'empty',
+        question: {
+          productName: 'USB-C lavalier microphone',
+          question: 'Can the phone charge while the receiver is connected and recording?',
+        },
+        discovery: {
+          provider: 'scrapecreators',
+          status: 'complete',
+          query: 'USB-C lavalier microphone charge while recording',
+          searchedPlatforms: ['youtube'],
+          warnings: [],
+          leads: [
+            {
+              platform: 'youtube',
+              title: 'Receiver passthrough test',
+              url: 'https://www.youtube.com/watch?v=abc123',
+              summary: 'Candidate link; the video has not been claim-reviewed.',
+              creatorLabel: 'YouTube · Audio Lab',
+            },
+          ],
+        },
+        mission: {
+          instruction: 'Record the receiver while the phone charges and captures audio.',
+          successCriterion: 'Keep the charging indicator and recording state visible.',
+          minimumSeconds: 10,
+          continuousTakeRequired: true,
+        },
+      }),
+    });
+    const credentials = remoteEvidenceCaseCredentialsSchema.parse(await response.json());
+
+    expect(response.status).toBe(201);
+    expect(credentials.state.activeCase).toMatchObject({
+      product: { name: 'USB-C lavalier microphone' },
+      discovery: { provider: 'scrapecreators', sourceIds: ['source-2-1'] },
+      sources: [{ rights: 'link_only', provenance: 'external_link' }],
+      mission: { status: 'open' },
+    });
+    expect(credentials.state.activeCase?.answers.at(-1)?.status).toBe('insufficient');
+  });
+
   it('lets the owner create a mission but rejects stale or unauthorized mutations', async () => {
     const { credentials } = await createCase(false);
     const command = {

@@ -15,6 +15,7 @@ import {
   publishRemoteEvidenceRequestSchema,
   remoteEvidenceCaseIdPattern,
   remoteEvidenceProtocolVersion,
+  requestDiscovery,
   requestMission,
   requestQuestion,
   reserveEvidenceUploadRequestSchema,
@@ -211,6 +212,18 @@ function initialState(request: CreateRemoteEvidenceCaseRequest, now: string): Ev
     const transition = applyEvidenceNetworkCommand(
       state,
       { kind: 'ask-product-question', actor: 'human', input: question },
+      now,
+    );
+    if (!transition.ok) {
+      throw new Error(transition.message);
+    }
+    state = transition.state;
+  }
+  const discovery = requestDiscovery(request);
+  if (discovery !== null) {
+    const transition = applyEvidenceNetworkCommand(
+      state,
+      { kind: 'record-evidence-discovery', actor: 'system', input: discovery },
       now,
     );
     if (!transition.ok) {

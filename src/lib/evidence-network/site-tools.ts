@@ -77,7 +77,12 @@ const emptyObjectSchema = z.strictObject({});
 export interface EvidenceSiteToolRuntime {
   readonly readState: () => EvidenceNetworkState;
   readonly dispatch: (command: EvidenceNetworkCommand) => Promise<EvidenceNetworkTransition>;
+  readonly evidenceSearch?: EvidenceSearchRuntime;
   readonly phoneCapture?: EvidencePhoneCaptureRuntime;
+}
+
+export interface EvidenceSearchRuntime {
+  readonly run: (signal?: AbortSignal) => Promise<EvidenceNetworkTransition>;
 }
 
 export interface EvidencePhoneCaptureReceipt {
@@ -187,15 +192,18 @@ export function evidenceCaseSnapshot(
       product: evidenceCase.product,
       question: evidenceCase.question.text,
       answer,
+      discovery: evidenceCase.discovery,
       sources: sourceSnapshot(state),
       mission: evidenceCase.mission,
     },
     next:
-      answer?.status === 'insufficient' && evidenceCase.mission === null
-        ? 'Create a claim-specific filming mission.'
-        : evidenceCase.mission?.status === 'open'
-          ? 'Wait for a product owner to publish reviewed evidence.'
-          : 'Inspect how the evidence changed the answer.',
+      evidenceCase.discovery === null
+        ? 'Search existing public product evidence before requesting new video.'
+        : answer?.status === 'insufficient' && evidenceCase.mission === null
+          ? 'Create a claim-specific filming mission.'
+          : evidenceCase.mission?.status === 'open'
+            ? 'Wait for a product owner to publish reviewed evidence.'
+            : 'Inspect how the evidence changed the answer.',
     availableTools: availableToolNames(runtime),
     phoneCapture:
       phoneCapture === undefined
@@ -298,6 +306,32 @@ function allEvidenceSiteTools(
             input: parsed.data,
           }),
         );
+      },
+    },
+    {
+      name: 'search_product_evidence',
+      title: 'Search existing product evidence',
+      description:
+        'Search public social video for the active product and observable question. Results are stored only as link-only discovery leads and never treated as proof merely because they are public or relevant-looking.',
+      inputSchema: emptyInputSchema,
+      annotations: {
+        readOnlyHint: true,
+        untrustedContentHint: true,
+      },
+      execute: async (input, options?: WebMCP.ToolExecuteCallbackOptions): Promise<object> => {
+        checkAbort(options);
+        const parsed = emptyObjectSchema.safeParse(input);
+        if (!parsed.success) {
+          return validationFailure(parsed.error);
+        }
+        if (runtime.evidenceSearch === undefined) {
+          return {
+            ok: false,
+            error: 'evidence_search_unavailable',
+            message: 'Public evidence search is not configured on this page.',
+          };
+        }
+        return transitionSnapshot(await runtime.evidenceSearch.run(options?.signal));
       },
     },
     {

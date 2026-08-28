@@ -28,6 +28,22 @@ describe('remote product evidence protocol', () => {
           productName: 'USB-C lavalier microphone',
           question: 'Can the phone charge while the receiver is recording?',
         },
+        discovery: {
+          provider: 'scrapecreators',
+          status: 'complete',
+          query: 'USB-C lavalier microphone charge while recording',
+          searchedPlatforms: ['youtube'],
+          warnings: [],
+          leads: [
+            {
+              platform: 'youtube',
+              title: 'Receiver passthrough test',
+              url: 'https://www.youtube.com/watch?v=abc123',
+              summary: 'Candidate link; the video has not been claim-reviewed.',
+              creatorLabel: 'YouTube · Audio Lab',
+            },
+          ],
+        },
       }).success,
     ).toBe(true);
   });

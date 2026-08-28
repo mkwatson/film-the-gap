@@ -66,6 +66,92 @@ describe('product evidence network model', () => {
     expect(getEvidenceNetworkToolNames(state)).toContain('create_filming_mission');
   });
 
+  it('requires an existing-evidence search before requesting new footage', () => {
+    const asked = applyEvidenceNetworkCommand(
+      createEmptyEvidenceNetworkState(),
+      {
+        kind: 'ask-product-question',
+        actor: 'human',
+        input: {
+          productName: 'Desk lamp',
+          question: 'Does it remember its brightness after losing power?',
+        },
+      },
+      questionTime,
+    ).state;
+
+    expect(getEvidenceNetworkToolNames(asked)).toContain('search_product_evidence');
+    expect(getEvidenceNetworkToolNames(asked)).not.toContain('create_filming_mission');
+    const mission = applyEvidenceNetworkCommand(
+      asked,
+      {
+        kind: 'create-filming-mission',
+        actor: 'agent',
+        input: {
+          instruction: 'Record the lamp through a complete power cycle.',
+          successCriterion: 'Keep the brightness setting and light output visible.',
+          minimumSeconds: 10,
+          continuousTakeRequired: true,
+        },
+      },
+      missionTime,
+    );
+    expect(mission.ok).toBe(false);
+    expect(mission.message).toContain('Search existing public evidence');
+  });
+
+  it('indexes public social results as non-decisive discovery leads', () => {
+    const asked = applyEvidenceNetworkCommand(
+      createEmptyEvidenceNetworkState(),
+      {
+        kind: 'ask-product-question',
+        actor: 'human',
+        input: {
+          productName: 'Desk lamp',
+          question: 'Does it remember its brightness after losing power?',
+        },
+      },
+      questionTime,
+    ).state;
+    const result = applyEvidenceNetworkCommand(
+      asked,
+      {
+        kind: 'record-evidence-discovery',
+        actor: 'agent',
+        input: {
+          provider: 'scrapecreators',
+          status: 'complete',
+          query: 'Desk lamp brightness memory power loss',
+          searchedPlatforms: ['youtube'],
+          warnings: [],
+          leads: [
+            {
+              platform: 'youtube',
+              title: 'Desk lamp power-cycle test',
+              url: 'https://www.youtube.com/watch?v=abc123',
+              summary: 'Candidate metadata mentions a power-cycle test; video not yet reviewed.',
+              creatorLabel: 'YouTube · Test Lab',
+            },
+          ],
+        },
+      },
+      missionTime,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.state.activeCase?.sources.at(-1)).toMatchObject({
+      rights: 'link_only',
+      provenance: 'external_link',
+    });
+    expect(result.state.activeCase?.observations.at(-1)).toMatchObject({
+      result: 'inconclusive',
+      confidence: 'low',
+    });
+    expect(currentEvidenceAnswer(result.state)?.status).toBe('insufficient');
+    expect(getEvidenceNetworkToolNames(result.state)).not.toContain('search_product_evidence');
+    expect(getEvidenceNetworkToolNames(result.state)).toContain('create_filming_mission');
+  });
+
   it('creates one bounded continuous-video mission and removes the duplicate action', () => {
     const state = createOpenMission();
 
