@@ -32,6 +32,23 @@ Every rung must preserve the earlier one. Dynamic WebMCP is central rather than 
 
 The current default fixture is a rights-clean travel-bottle leak test because a continuous ten-second inversion is instantly understandable, physically observable, and impossible to establish from “leak resistant” copy alone. It is a fixture, not a product-specific architecture or proposed project name.
 
+### Current winning-probability audit — 2026-08-27 PT
+
+The flagship is now locally submission-coherent, not publicly submission-ready. Its strongest differentiated moment is causal: ChatGPT encounters an evidence gap, creates the exact physical test through native WebMCP, a person fulfills it on an ordinary phone, and a reviewed timestamped video changes the answer and available tools. That directly serves all four equally weighted criteria, with dynamic tool leverage also winning the first tie-break.
+
+The decisive remaining factors are multiplicative hard gates rather than more feature breadth:
+
+1. a separate unprotected generic Vercel/Cloudflare release from one reviewed commit;
+2. one real physical-phone → Cloudflare Stream → Vercel AI Gateway → human-review → answer-diff run;
+3. the same native flow in the final ChatGPT in-app Browser and WebMCP-enabled Chrome;
+4. a cold tester who understands the product and completes it without coaching;
+5. an under-three-minute rights-clean video whose first minute visibly proves the causal transformation; and
+6. a public repository, release receipts, Devpost copy, and exact freeze that all describe the same build.
+
+The autonomous implementation now reduces risk around those gates: the deployable Worker is evidence-only and separate from the known-good old release; case, upload, retention, analysis, and discovery costs are bounded; the release verifier checks commit identity, required bindings, security headers, hostile-origin denial, and durable read-back; and the exact standalone entrypoint passes the native two-tab loop locally. Until the public paid rehearsal passes, additional commerce, UCP, Lean, voice, livestreaming, persistent mission marketplaces, contributor rewards, or extra sponsor products have lower expected winning value than deployment, physical causality, and presentation.
+
+After the golden path is publicly green, the highest-upside secondary beat is an **unknown-product proof**: a judge enters something not preloaded, sees honest link-only discovery, and creates a new mission without code or database work. A minimal public mission board or owner registry is worth adding only if it can reuse the same tested case model, stay out of the primary 90-second journey, and make “this becomes a compounding evidence network” visibly credible. UCP or commerce should return only as a compact downstream consumer of the improved evidence, never as a second product story.
+
 ## Strategic reset — 2026-08-26
 
 ### Decision

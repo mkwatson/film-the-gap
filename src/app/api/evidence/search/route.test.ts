@@ -17,12 +17,37 @@ describe('product evidence search route', () => {
     const response = await POST(
       new Request('http://localhost/api/evidence/search', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productName: 'x' }),
       }),
     );
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({ error: 'invalid_product_question' });
+  });
+
+  it('rejects cross-origin and non-JSON browser requests before discovery', async () => {
+    const body = JSON.stringify({
+      productName: 'Desk lamp',
+      question: 'Does it remember its brightness after losing power?',
+    });
+    const crossOrigin = await POST(
+      new Request('https://app.example/api/evidence/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: 'https://untrusted.invalid' },
+        body,
+      }),
+    );
+    expect(crossOrigin.status).toBe(403);
+
+    const nonJson = await POST(
+      new Request('https://app.example/api/evidence/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body,
+      }),
+    );
+    expect(nonJson.status).toBe(403);
   });
 
   it('returns a typed unavailable result when live discovery is not configured', async () => {

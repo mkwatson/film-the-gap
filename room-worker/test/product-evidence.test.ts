@@ -2,12 +2,18 @@ import { SELF } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 
 import {
+  maximumDirectUploadBytes,
   parseRemoteEvidenceServerMessage,
   remoteEvidenceCaseCredentialsSchema,
   remoteEvidenceCaseSnapshotSchema,
   reservedEvidenceUploadSchema,
   type RemoteEvidenceServerMessage,
 } from '../../src/lib/evidence-network/remote-protocol';
+import {
+  enforceCaseCreationRateLimit,
+  maximumUploadsPerEvidenceCase,
+  streamAllowedOriginDomains,
+} from '../src/product-evidence';
 
 const origin = 'http://localhost:3000';
 const mission = {
@@ -81,6 +87,78 @@ function createMessageReader(socket: WebSocket): {
 }
 
 describe('generic product evidence cases', () => {
+  it('rate limits a client without retaining its address or consuming shared capacity', async () => {
+    const globalKeys: string[] = [];
+    const clientKeys: string[] = [];
+    const allowGlobal = {
+      limit: async ({ key }: RateLimitOptions): Promise<RateLimitOutcome> => {
+        globalKeys.push(key);
+        return { success: true };
+      },
+    } satisfies RateLimit;
+    const denyClient = {
+      limit: async ({ key }: RateLimitOptions): Promise<RateLimitOutcome> => {
+        clientKeys.push(key);
+        return { success: false };
+      },
+    } satisfies RateLimit;
+
+    const response = await enforceCaseCreationRateLimit(
+      new Request('https://rooms.example/evidence-cases', {
+        headers: {
+          'CF-Connecting-IP': '203.0.113.42',
+          'User-Agent': 'Judge Browser',
+        },
+      }),
+      { global: allowGlobal, perClient: denyClient },
+      { 'Access-Control-Allow-Origin': origin },
+    );
+
+    expect(response?.status).toBe(429);
+    expect(response?.headers.get('Retry-After')).toBe('60');
+    expect(response?.headers.get('Access-Control-Allow-Origin')).toBe(origin);
+    expect(globalKeys).toEqual([]);
+    expect(clientKeys).toHaveLength(1);
+    expect(clientKeys[0]).toMatch(/^[a-f0-9]{64}$/);
+    expect(clientKeys[0]).not.toContain('203.0.113.42');
+  });
+
+  it('checks shared capacity after a client passes its own limit', async () => {
+    const calls: string[] = [];
+    const allowClient = {
+      limit: async ({ key }: RateLimitOptions): Promise<RateLimitOutcome> => {
+        calls.push(`client:${key}`);
+        return { success: true };
+      },
+    } satisfies RateLimit;
+    const denyGlobal = {
+      limit: async ({ key }: RateLimitOptions): Promise<RateLimitOutcome> => {
+        calls.push(`global:${key}`);
+        return { success: false };
+      },
+    } satisfies RateLimit;
+
+    const response = await enforceCaseCreationRateLimit(
+      new Request('https://rooms.example/evidence-cases', {
+        headers: { 'CF-Connecting-IP': '203.0.113.43', 'User-Agent': 'Judge Browser' },
+      }),
+      { global: denyGlobal, perClient: allowClient },
+    );
+
+    expect(response?.status).toBe(429);
+    expect(calls).toHaveLength(2);
+    expect(calls[0]).toMatch(/^client:[a-f0-9]{64}$/);
+    expect(calls[1]).toBe('global:all-case-creation');
+  });
+
+  it('converts configured app origins to the domain allowlist Stream expects', () => {
+    expect(
+      streamAllowedOriginDomains(
+        'https://app.example, http://localhost:3000, https://app.example, invalid',
+      ),
+    ).toEqual(['app.example', 'localhost']);
+  });
+
   it('creates a durable case with separate owner and contributor capabilities', async () => {
     const { response, credentials } = await createCase();
 
@@ -379,6 +457,32 @@ describe('generic product evidence cases', () => {
     );
     expect(response.status).toBe(403);
     expect(await response.json()).toMatchObject({ error: 'invalid_contributor_token' });
+  });
+
+  it('caps upload attempts and rejects clips larger than the bounded analysis path', async () => {
+    const { credentials } = await createCase();
+    const reserve = (fileSizeBytes: number): Promise<Response> =>
+      SELF.fetch(`https://rooms.example/evidence-cases/${credentials.caseId}/uploads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({
+          token: credentials.contributorToken,
+          fileSizeBytes,
+          maxDurationSeconds: 15,
+          mimeType: 'video/mp4',
+        }),
+      });
+
+    const tooLarge = await reserve(maximumDirectUploadBytes + 1);
+    expect(tooLarge.status).toBe(400);
+    expect(await tooLarge.json()).toMatchObject({ error: 'invalid_upload_request' });
+
+    for (let attempt = 0; attempt < maximumUploadsPerEvidenceCase; attempt += 1) {
+      expect((await reserve(2_000_000)).status).toBe(201);
+    }
+    const exhausted = await reserve(2_000_000);
+    expect(exhausted.status).toBe(429);
+    expect(await exhausted.json()).toMatchObject({ error: 'upload_limit_reached' });
   });
 
   it('does not let the owner token invoke paid analysis for a contributor upload', async () => {

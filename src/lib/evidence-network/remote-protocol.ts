@@ -20,10 +20,12 @@ import {
   type ProductQuestionInput,
   type ReviewedEvidenceInput,
 } from './model';
+import { maximumAnalyzableVideoBytes } from './video-analysis';
 
 export const remoteEvidenceProtocolVersion = '1' as const;
 export const remoteEvidenceCaseIdPattern = /^[A-Z2-9]{8}$/;
-export const maximumDirectUploadBytes = 200 * 1024 * 1024;
+export const maximumDirectUploadBytes = maximumAnalyzableVideoBytes;
+export const maximumUploadsPerEvidenceCase = 2;
 
 const idSchema = z.string().min(1).max(160);
 const tokenSchema = z.string().min(32).max(256);

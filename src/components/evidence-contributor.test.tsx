@@ -60,7 +60,7 @@ beforeEach(() => {
     provider: 'cloudflare_stream',
     uploadId: '0123456789abcdef0123456789abcdef',
     uploadUrl: 'https://upload.videodelivery.net/0123456789abcdef0123456789abcdef',
-    maxDurationSeconds: 30,
+    maxDurationSeconds: 15,
     expiresAt: '2026-08-27T17:00:00.000Z',
   });
   remoteMocks.upload.mockResolvedValue(undefined);
@@ -196,6 +196,15 @@ describe('EvidenceContributor', () => {
       await screen.findByRole('heading', { name: 'What does your video actually show?' }),
     ).toBeTruthy();
     expect(remoteMocks.reserve).toHaveBeenCalledOnce();
+    expect(remoteMocks.reserve).toHaveBeenCalledWith(
+      'https://rooms.example',
+      'BCDF2345',
+      expect.objectContaining({
+        fileSizeBytes: file.size,
+        maxDurationSeconds: 15,
+        mimeType: 'video/mp4',
+      }),
+    );
     expect(remoteMocks.upload).toHaveBeenCalledOnce();
     expect(remoteMocks.analyze).toHaveBeenCalledOnce();
     expect(screen.getByText('google/gemini-3.7-flash')).toBeTruthy();

@@ -1,6 +1,6 @@
 # Submission control packet
 
-Updated 2026-08-27 PT. This is the candidate Devpost copy, judge runbook, claims ledger, and freeze checklist for the standalone product-evidence network. It describes only the generic evidence branch. The older live-shopping, private-price, UCP, and Lean rungs are not the submission hero.
+Updated 2026-08-27 PT. This is the candidate Devpost copy, judge runbook, claims ledger, and freeze checklist for the standalone product-evidence network. It describes only the generic evidence branch. The older live-shopping, private-price, UCP, and Lean rungs remain in challenge-period history, but their routes are absent from this candidate and they are not the submission hero.
 
 The official FAQ says the entrant—not AI—must name the project. Every label below is descriptive until Mark chooses the submitted name.
 
@@ -125,6 +125,8 @@ The criteria are equally weighted. WebMCP Leverage is the first tie-breaker, so 
 - The AI SDK/Gateway path accepts only a bounded, timestamped structured proposal and requires a human to review or correct every material field before publication; the generic branch's live video call is still pending.
 - A continuous-take mission cannot become decision-grade when the reviewed interval is invalid or continuity is edited or unknown.
 - The buyer reconnects to the same Durable Object after reload, and receives live answer updates over WebSocket.
+- The deployable generic Worker has a separate name and exposes only the evidence API. Public case creation has per-client and aggregate Cloudflare rate-limit bindings; each temporary case has a hard two-upload ceiling, and clips are bounded by bytes, duration, expiry, and retention.
+- The obsolete public image-model route and legacy live-market/UCP pages are absent from this candidate. Social search requires same-origin JSON before it can reach the optional vendor, and the release runbook requires a staged Vercel WAF ceiling plus dedicated vendor credits.
 - The deterministic native-Chrome acceptance test completes question inspection → mission → phone handoff → upload → model-shaped proposal → human correction → publication → timestamped answer diff using the real app and Durable Object. Only the paid Stream and model edges are replaced by strict local fixtures.
 - Strict TypeScript, formatting, linting, application tests, Workerd tests, Worker dry runs, and a Next.js production build pass on the current branch.
 

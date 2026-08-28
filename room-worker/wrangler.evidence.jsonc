@@ -1,14 +1,10 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "webmcp-evidence-rooms",
-  "main": "src/index.ts",
-  "compatibility_date": "2026-08-26",
+  "name": "webmcp-product-evidence",
+  "main": "src/evidence-index.ts",
+  "compatibility_date": "2026-08-27",
   "durable_objects": {
     "bindings": [
-      {
-        "name": "ROOMS",
-        "class_name": "EvidenceRoom",
-      },
       {
         "name": "CASES",
         "class_name": "ProductEvidenceCaseObject",
@@ -16,10 +12,6 @@
     ],
   },
   "exports": {
-    "EvidenceRoom": {
-      "type": "durable-object",
-      "storage": "sqlite",
-    },
     "ProductEvidenceCaseObject": {
       "type": "durable-object",
       "storage": "sqlite",
@@ -34,7 +26,7 @@
   "ratelimits": [
     {
       "name": "CASE_CREATION_PER_CLIENT_RATE_LIMITER",
-      "namespace_id": "27182801",
+      "namespace_id": "27182811",
       "simple": {
         "limit": 12,
         "period": 60,
@@ -42,7 +34,7 @@
     },
     {
       "name": "CASE_CREATION_GLOBAL_RATE_LIMITER",
-      "namespace_id": "27182802",
+      "namespace_id": "27182812",
       "simple": {
         "limit": 120,
         "period": 60,
@@ -51,7 +43,6 @@
   ],
   "vars": {
     "ALLOWED_ORIGINS": "http://localhost:3000,http://127.0.0.1:3000",
-    "ROOM_TTL_SECONDS": "7200",
     "EVIDENCE_CASE_TTL_SECONDS": "86400",
   },
   "observability": {

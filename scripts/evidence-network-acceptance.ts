@@ -406,6 +406,17 @@ async function run(): Promise<void> {
         (value) => value === true,
         config.commandTimeoutMs,
       );
+      const playbackBound = driver.eval(`(() => {
+        const link = [...document.querySelectorAll('a')].find(
+          (candidate) => candidate.textContent?.includes('Watch cited source'),
+        );
+        return link instanceof HTMLAnchorElement &&
+          link.href === 'https://customer-acceptance.cloudflarestream.com/acceptancevideo0000000000000001/watch' &&
+          link.rel.includes('noreferrer');
+      })()`);
+      if (playbackBound !== true) {
+        throw new Error('The reviewed citation was not bound to its Stream playback source.');
+      }
       await waitForBrowserValue(
         driver,
         'answer-change Site Tool',

@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import { historicalEvidenceLimitation } from '@/lib/live-market/evidence-proposal';
@@ -242,9 +241,9 @@ export function LiveMarket(): React.JSX.Element {
                   : 'Connecting tools'}
           </span>
           {hostInviteUrl === null ? (
-            <Link className="quiet-button quiet-link" href="/host" target="_blank" rel="noreferrer">
+            <a className="quiet-button quiet-link" href="/host" target="_blank" rel="noreferrer">
               Open host view ↗
-            </Link>
+            </a>
           ) : presence.host === 0 ? (
             <PhoneHostInvite
               key={`${hostInviteUrl}:${inviteResetVersion}`}

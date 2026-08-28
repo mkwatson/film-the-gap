@@ -27,10 +27,6 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: '/host',
-        headers: [...buildAppSecurityHeaders({ ...commonOptions, allowCamera: true })],
-      },
-      {
         source: '/contribute/:path*',
         headers: [
           ...buildAppSecurityHeaders({

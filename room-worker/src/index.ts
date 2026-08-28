@@ -27,7 +27,12 @@ import {
   readUcpRoomConfiguration,
   ucpIdempotencyKey,
 } from './commerce';
-import { routeProductEvidenceRequest, type ProductEvidenceWorkerEnv } from './product-evidence';
+import {
+  enforceCaseCreationRateLimit,
+  maximumUploadsPerEvidenceCase,
+  routeProductEvidenceRequest,
+  type ProductEvidenceWorkerEnv,
+} from './product-evidence';
 
 export { ProductEvidenceCaseObject } from './product-evidence';
 
@@ -834,6 +839,17 @@ export class EvidenceRoom extends DurableObject<WorkerEnv> {
 }
 
 async function createRoom(request: Request, env: WorkerEnv): Promise<Response> {
+  const rateLimited = await enforceCaseCreationRateLimit(
+    request,
+    {
+      perClient: env.CASE_CREATION_PER_CLIENT_RATE_LIMITER,
+      global: env.CASE_CREATION_GLOBAL_RATE_LIMITER,
+    },
+    corsHeaders(request, env),
+  );
+  if (rateLimited !== null) {
+    return rateLimited;
+  }
   const createdAt = Date.now();
   const expiresAt = createdAt + roomTtlMilliseconds(env);
   for (let attempt = 0; attempt < 5; attempt += 1) {
@@ -892,6 +908,17 @@ async function route(request: Request, env: WorkerEnv): Promise<Response> {
       ok: true,
       protocolVersion: remoteRoomProtocolVersion,
       ucpCommerceConfigured: readUcpRoomConfiguration(env) !== null,
+      abuseControls: {
+        perClientCaseCreation: env.CASE_CREATION_PER_CLIENT_RATE_LIMITER !== undefined,
+        globalCaseCreation: env.CASE_CREATION_GLOBAL_RATE_LIMITER !== undefined,
+        maximumUploadsPerEvidenceCase,
+      },
+      evidenceServices: {
+        stream: env.STREAM !== undefined || env.STREAM_OUTBOUND !== undefined,
+        videoAnalysis:
+          env.AI_ANALYSIS_OUTBOUND !== undefined ||
+          (env.AI_GATEWAY_API_KEY?.trim().length ?? 0) > 0,
+      },
       workerVersion: env.CF_VERSION_METADATA,
     });
   }

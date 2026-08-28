@@ -194,7 +194,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
       return;
     }
     if (selected.size > maximumDirectUploadBytes) {
-      setError('Keep this evidence clip under 200 MB.');
+      setError('Keep this evidence clip under 95 MB.');
       return;
     }
     if (localVideoUrl !== null) {
@@ -226,7 +226,10 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
       const reserved = await reserveRemoteEvidenceUpload(serviceUrl, caseId, {
         token,
         fileSizeBytes: file.size,
-        maxDurationSeconds: Math.min(90, Math.max(30, Math.ceil(durationSeconds ?? 30))),
+        maxDurationSeconds: Math.min(
+          90,
+          Math.max(minimumSeconds, Math.ceil(durationSeconds ?? minimumSeconds)) + 5,
+        ),
         mimeType: file.type,
       });
       setUpload(reserved);
@@ -637,9 +640,9 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                 {phase === 'publishing' ? 'Publishing evidence…' : 'Publish reviewed evidence'}
               </button>
               <p className="contributor-fine-print">
-                Cloudflare preserves the uploaded bytes and Vercel AI Gateway only proposes an
-                observation. The digest is provenance—not proof of authenticity—and your reviewed
-                video remains the evidence.
+                Cloudflare Stream hosts the uploaded recording and Vercel AI Gateway only proposes
+                an observation. The client-computed digest is only a file receipt—not independent
+                provenance or authenticity proof—and your reviewed video remains the evidence.
               </p>
             </section>
           ) : null}

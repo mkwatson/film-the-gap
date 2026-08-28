@@ -1,24 +1,15 @@
 import { z } from 'zod';
 
 import {
-  merchantServerName,
-  merchantServerVersion,
-  ucpProtocolVersion as merchantUcpProtocolVersion,
-} from '../merchant-worker/src/protocol.ts';
-import {
-  remoteRoomProtocolVersion,
-  roomCredentialsSchema,
-} from '../src/lib/live-market/remote-room-protocol.ts';
-import {
-  ucpDiscoveryProfileSchema,
-  ucpProtocolVersion,
-  ucpShoppingServiceName,
-} from '../src/lib/ucp/profile.ts';
+  maximumUploadsPerEvidenceCase,
+  remoteEvidenceCaseCredentialsSchema,
+  remoteEvidenceCaseSnapshotSchema,
+  remoteEvidenceProtocolVersion,
+} from '../src/lib/evidence-network/remote-protocol.ts';
 
 export interface ReleaseConfig {
   readonly appOrigin: string;
   readonly roomOrigin: string;
-  readonly merchantOrigin: string;
   readonly expectedCommit: string;
   readonly timeoutMs: number;
 }
@@ -37,10 +28,7 @@ export interface ReleaseWorkerVersion {
 export interface ReleaseReport {
   readonly ok: true;
   readonly commit: string;
-  readonly workerVersions: {
-    readonly room: ReleaseWorkerVersion;
-    readonly merchant: ReleaseWorkerVersion;
-  };
+  readonly workerVersion: ReleaseWorkerVersion;
   readonly steps: readonly ReleaseStep[];
 }
 
@@ -68,15 +56,17 @@ const appHealthSchema = z.strictObject({
 
 const roomHealthSchema = z.strictObject({
   ok: z.literal(true),
-  protocolVersion: z.literal(remoteRoomProtocolVersion),
-  ucpCommerceConfigured: z.literal(true),
-  workerVersion: workerVersionSchema,
-});
-
-const merchantHealthSchema = z.strictObject({
-  ok: z.literal(true),
-  service: z.literal(merchantServerName),
-  version: z.literal(merchantServerVersion),
+  service: z.literal('webmcp-product-evidence'),
+  protocolVersion: z.literal(remoteEvidenceProtocolVersion),
+  abuseControls: z.strictObject({
+    perClientCaseCreation: z.literal(true),
+    globalCaseCreation: z.literal(true),
+    maximumUploadsPerEvidenceCase: z.literal(maximumUploadsPerEvidenceCase),
+  }),
+  evidenceServices: z.strictObject({
+    stream: z.literal(true),
+    videoAnalysis: z.literal(true),
+  }),
   workerVersion: workerVersionSchema,
 });
 
@@ -88,7 +78,6 @@ function releaseOrigin(
   if (value === undefined || value.length === 0) {
     throw new Error(`${key} is required.`);
   }
-
   let parsed: URL;
   try {
     parsed = new URL(value);
@@ -135,14 +124,12 @@ export function readReleaseConfig(
 ): ReleaseConfig {
   const appOrigin = releaseOrigin(environment, 'EVIDENCE_ACCEPTANCE_APP_URL');
   const roomOrigin = releaseOrigin(environment, 'EVIDENCE_ACCEPTANCE_ROOM_ORIGIN');
-  const merchantOrigin = releaseOrigin(environment, 'EVIDENCE_ACCEPTANCE_MERCHANT_ORIGIN');
-  if (new Set([appOrigin, roomOrigin, merchantOrigin]).size !== 3) {
-    throw new Error('Release app, room, and merchant origins must be distinct.');
+  if (appOrigin === roomOrigin) {
+    throw new Error('Release app and evidence-service origins must be distinct.');
   }
   return {
     appOrigin,
     roomOrigin,
-    merchantOrigin,
     expectedCommit: releaseCommit(environment),
     timeoutMs: releaseTimeout(environment),
   };
@@ -154,9 +141,7 @@ function probeError(label: string, detail?: string): Error {
 
 function contentLengthWithin(response: Response, maximumBytes: number, label: string): void {
   const rawLength = response.headers.get('Content-Length');
-  if (rawLength === null) {
-    return;
-  }
+  if (rawLength === null) return;
   const length = Number(rawLength);
   if (!Number.isSafeInteger(length) || length < 0 || length > maximumBytes) {
     throw probeError(label, 'invalid response size');
@@ -170,9 +155,7 @@ async function boundedBody(
 ): Promise<string> {
   contentLengthWithin(response, maximumBytes, label);
   const bytes = await response.arrayBuffer();
-  if (bytes.byteLength > maximumBytes) {
-    throw probeError(label, 'response too large');
-  }
+  if (bytes.byteLength > maximumBytes) throw probeError(label, 'response too large');
   return new TextDecoder().decode(bytes);
 }
 
@@ -195,8 +178,7 @@ async function probe(
 }
 
 async function jsonBody(response: Response, label: string): Promise<unknown> {
-  const contentType = response.headers.get('Content-Type')?.toLowerCase() ?? '';
-  if (!contentType.startsWith('application/json')) {
+  if (!(response.headers.get('Content-Type')?.toLowerCase() ?? '').startsWith('application/json')) {
     throw probeError(label, 'expected JSON');
   }
   const body = await boundedBody(response, maximumJsonBytes, label);
@@ -208,31 +190,24 @@ async function jsonBody(response: Response, label: string): Promise<unknown> {
 }
 
 async function htmlBody(response: Response, label: string): Promise<string> {
-  const contentType = response.headers.get('Content-Type')?.toLowerCase() ?? '';
-  if (!contentType.startsWith('text/html')) {
+  if (!(response.headers.get('Content-Type')?.toLowerCase() ?? '').startsWith('text/html')) {
     throw probeError(label, 'expected HTML');
   }
   return boundedBody(response, maximumHtmlBytes, label);
 }
 
 function requireStatus(response: Response, expected: number, label: string): void {
-  if (response.status !== expected) {
-    throw probeError(label, `HTTP ${response.status}`);
-  }
+  if (response.status !== expected) throw probeError(label, `HTTP ${response.status}`);
 }
 
 function parseWithSchema<T>(schema: z.ZodType<T>, value: unknown, label: string): T {
   const result = schema.safeParse(value);
-  if (!result.success) {
-    throw probeError(label, 'invalid response contract');
-  }
+  if (!result.success) throw probeError(label, 'invalid response contract');
   return result.data;
 }
 
 function requireHeader(response: Response, name: string, expected: string, label: string): void {
-  if (response.headers.get(name) !== expected) {
-    throw probeError(label, `${name} mismatch`);
-  }
+  if (response.headers.get(name) !== expected) throw probeError(label, `${name} mismatch`);
 }
 
 function requireHeaderIncludes(
@@ -241,66 +216,69 @@ function requireHeaderIncludes(
   expected: string,
   label: string,
 ): void {
-  if (!response.headers.get(name)?.includes(expected)) {
-    throw probeError(label, `${name} mismatch`);
+  if (!response.headers.get(name)?.includes(expected)) throw probeError(label, `${name} mismatch`);
+}
+
+function requireHeaderExcludes(
+  response: Response,
+  name: string,
+  forbidden: string,
+  label: string,
+): void {
+  if (response.headers.get(name)?.includes(forbidden)) {
+    throw probeError(label, `${name} is over-permissive`);
   }
 }
 
 function requireMarker(body: string, marker: string, label: string): void {
-  if (!body.includes(marker)) {
-    throw probeError(label, 'expected page marker missing');
-  }
+  if (!body.includes(marker)) throw probeError(label, 'expected page marker missing');
+}
+
+interface AppSecurityExpectation {
+  readonly allowCamera: boolean;
+  readonly allowCreatorUpload: boolean;
+  readonly allowStreamPlayback: boolean;
 }
 
 function requireAppSecurityPolicy(
   response: Response,
   label: string,
   roomOrigin: string,
-  allowCamera: boolean,
+  expectation: AppSecurityExpectation,
 ): void {
   const websocketOrigin = roomOrigin.replace(/^https:/, 'wss:');
-  requireHeaderIncludes(response, 'Content-Security-Policy', "default-src 'self'", label);
-  requireHeaderIncludes(response, 'Content-Security-Policy', `connect-src 'self'`, label);
-  requireHeaderIncludes(response, 'Content-Security-Policy', roomOrigin, label);
-  requireHeaderIncludes(response, 'Content-Security-Policy', websocketOrigin, label);
-  requireHeaderIncludes(response, 'Content-Security-Policy', "object-src 'none'", label);
-  requireHeaderIncludes(response, 'Content-Security-Policy', "frame-ancestors 'none'", label);
+  for (const source of [
+    "default-src 'self'",
+    `connect-src 'self'`,
+    roomOrigin,
+    websocketOrigin,
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+  ]) {
+    requireHeaderIncludes(response, 'Content-Security-Policy', source, label);
+  }
+  const streamSource = 'https://*.cloudflarestream.com';
+  if (expectation.allowStreamPlayback) {
+    requireHeaderIncludes(response, 'Content-Security-Policy', streamSource, label);
+  } else {
+    requireHeaderExcludes(response, 'Content-Security-Policy', streamSource, label);
+  }
+  const uploadSource = 'https://upload.videodelivery.net';
+  if (expectation.allowCreatorUpload) {
+    requireHeaderIncludes(response, 'Content-Security-Policy', uploadSource, label);
+  } else {
+    requireHeaderExcludes(response, 'Content-Security-Policy', uploadSource, label);
+  }
   requireHeaderIncludes(
     response,
     'Permissions-Policy',
-    allowCamera ? 'camera=(self)' : 'camera=()',
+    expectation.allowCamera ? 'camera=(self)' : 'camera=()',
     label,
   );
   requireHeaderIncludes(response, 'Permissions-Policy', 'microphone=()', label);
   requireHeaderIncludes(response, 'Permissions-Policy', 'payment=()', label);
   requireHeader(response, 'Referrer-Policy', 'no-referrer', label);
   requireHeader(response, 'X-Content-Type-Options', 'nosniff', label);
-}
-
-function validateUcpProfile(value: unknown, expectedEndpoint: string | null, label: string): void {
-  const profileResult = ucpDiscoveryProfileSchema.safeParse(value);
-  if (!profileResult.success) {
-    throw probeError(label, 'invalid UCP discovery profile');
-  }
-  const profile = profileResult.data;
-  if (profile.ucp.version !== ucpProtocolVersion) {
-    throw probeError(label, 'unexpected UCP version');
-  }
-  const services = profile.ucp.services[ucpShoppingServiceName];
-  if (services === undefined || services.length === 0) {
-    throw probeError(label, 'shopping service missing');
-  }
-  if (
-    expectedEndpoint !== null &&
-    !services.some(
-      (service) =>
-        service.version === ucpProtocolVersion &&
-        service.transport === 'mcp' &&
-        service.endpoint === expectedEndpoint,
-    )
-  ) {
-    throw probeError(label, 'merchant MCP endpoint mismatch');
-  }
 }
 
 function validateWorkerVersion(
@@ -326,8 +304,6 @@ export async function verifyPublicRelease(
 ): Promise<ReleaseReport> {
   const steps: ReleaseStep[] = [];
   let roomVersion: ReleaseWorkerVersion | null = null;
-  let merchantVersion: ReleaseWorkerVersion | null = null;
-
   async function step(name: string, operation: () => Promise<void>): Promise<void> {
     const startedAt = performance.now();
     await operation();
@@ -348,8 +324,8 @@ export async function verifyPublicRelease(
     }
   });
 
-  await step('room health and commit', async () => {
-    const label = 'room health and commit';
+  await step('evidence service health, commit, and cost controls', async () => {
+    const label = 'evidence service health, commit, and cost controls';
     const response = await probe(fetcher, config, label, `${config.roomOrigin}/healthz`);
     requireStatus(response, 200, label);
     requireHeaderIncludes(response, 'Cache-Control', 'no-store', label);
@@ -358,124 +334,125 @@ export async function verifyPublicRelease(
     roomVersion = health.workerVersion;
   });
 
-  await step('merchant health and commit', async () => {
-    const label = 'merchant health and commit';
-    const response = await probe(fetcher, config, label, `${config.merchantOrigin}/health`);
-    requireStatus(response, 200, label);
-    requireHeaderIncludes(response, 'Cache-Control', 'no-store', label);
-    const health = parseWithSchema(merchantHealthSchema, await jsonBody(response, label), label);
-    validateWorkerVersion(health.workerVersion, config.expectedCommit, label);
-    merchantVersion = health.workerVersion;
-  });
-
-  await step('UCP discovery alignment', async () => {
-    const appLabel = 'app UCP discovery';
-    const appResponse = await probe(
-      fetcher,
-      config,
-      appLabel,
-      `${config.appOrigin}/.well-known/ucp`,
-    );
-    requireStatus(appResponse, 200, appLabel);
-    validateUcpProfile(await jsonBody(appResponse, appLabel), null, appLabel);
-
-    const merchantLabel = 'merchant UCP discovery';
-    const merchantResponse = await probe(
-      fetcher,
-      config,
-      merchantLabel,
-      `${config.merchantOrigin}/.well-known/ucp`,
-    );
-    requireStatus(merchantResponse, 200, merchantLabel);
-    validateUcpProfile(
-      await jsonBody(merchantResponse, merchantLabel),
-      `${config.merchantOrigin}/api/ucp/mcp`,
-      merchantLabel,
-    );
-  });
-
-  await step('judge pages and merchant policy', async () => {
-    const appLabel = 'buyer page';
-    const appResponse = await probe(fetcher, config, appLabel, `${config.appOrigin}/`);
-    requireStatus(appResponse, 200, appLabel);
-    requireMarker(await htmlBody(appResponse, appLabel), 'Agent-attended market', appLabel);
-    requireAppSecurityPolicy(appResponse, appLabel, config.roomOrigin, false);
-
-    const hostLabel = 'host page';
-    const hostResponse = await probe(fetcher, config, hostLabel, `${config.appOrigin}/host`);
-    requireStatus(hostResponse, 200, hostLabel);
-    requireMarker(await htmlBody(hostResponse, hostLabel), 'Host evidence console', hostLabel);
-    requireAppSecurityPolicy(hostResponse, hostLabel, config.roomOrigin, true);
-
-    const merchantLabel = 'merchant product page';
-    const merchantResponse = await probe(
-      fetcher,
-      config,
-      merchantLabel,
-      `${config.merchantOrigin}/products/live-inspected-board`,
-    );
-    requireStatus(merchantResponse, 200, merchantLabel);
+  await step('buyer and contributor pages', async () => {
+    const buyerLabel = 'buyer page';
+    const buyerResponse = await probe(fetcher, config, buyerLabel, `${config.appOrigin}/`);
+    requireStatus(buyerResponse, 200, buyerLabel);
     requireMarker(
-      await htmlBody(merchantResponse, merchantLabel),
-      'Evidence Market',
-      merchantLabel,
+      await htmlBody(buyerResponse, buyerLabel),
+      'If the web cannot prove it, ask someone with the product to film it.',
+      buyerLabel,
     );
-    requireHeaderIncludes(
-      merchantResponse,
-      'Content-Security-Policy',
-      "default-src 'none'",
-      merchantLabel,
+    requireAppSecurityPolicy(buyerResponse, buyerLabel, config.roomOrigin, {
+      allowCamera: false,
+      allowCreatorUpload: false,
+      allowStreamPlayback: true,
+    });
+
+    const contributorLabel = 'contributor page';
+    const contributorResponse = await probe(
+      fetcher,
+      config,
+      contributorLabel,
+      `${config.appOrigin}/contribute/BCDF2345`,
     );
-    requireHeaderIncludes(merchantResponse, 'Permissions-Policy', 'camera=()', merchantLabel);
-    requireHeaderIncludes(merchantResponse, 'Permissions-Policy', 'microphone=()', merchantLabel);
-    requireHeaderIncludes(merchantResponse, 'Permissions-Policy', 'payment=()', merchantLabel);
-    requireHeader(merchantResponse, 'Referrer-Policy', 'no-referrer', merchantLabel);
+    requireStatus(contributorResponse, 200, contributorLabel);
+    requireMarker(
+      await htmlBody(contributorResponse, contributorLabel),
+      'Product evidence network',
+      contributorLabel,
+    );
+    requireAppSecurityPolicy(contributorResponse, contributorLabel, config.roomOrigin, {
+      allowCamera: true,
+      allowCreatorUpload: true,
+      allowStreamPlayback: true,
+    });
   });
 
-  await step('room browser boundary', async () => {
-    const optionsLabel = 'room CORS preflight';
+  await step('evidence service browser boundary and durable case', async () => {
+    const optionsLabel = 'evidence CORS preflight';
     const optionsResponse = await probe(
       fetcher,
       config,
       optionsLabel,
-      `${config.roomOrigin}/rooms`,
+      `${config.roomOrigin}/evidence-cases`,
       {
         method: 'OPTIONS',
         headers: {
           Origin: config.appOrigin,
           'Access-Control-Request-Method': 'POST',
+          'Access-Control-Request-Headers': 'Content-Type',
         },
       },
     );
     requireStatus(optionsResponse, 204, optionsLabel);
     requireHeader(optionsResponse, 'Access-Control-Allow-Origin', config.appOrigin, optionsLabel);
     requireHeaderIncludes(optionsResponse, 'Access-Control-Allow-Methods', 'POST', optionsLabel);
+    requireHeaderIncludes(
+      optionsResponse,
+      'Access-Control-Allow-Headers',
+      'Content-Type',
+      optionsLabel,
+    );
     requireHeader(optionsResponse, 'Vary', 'Origin', optionsLabel);
 
-    const createLabel = 'disposable room creation';
-    const createResponse = await probe(fetcher, config, createLabel, `${config.roomOrigin}/rooms`, {
-      method: 'POST',
-      headers: { Origin: config.appOrigin },
-    });
+    const hostileLabel = 'hostile-origin rejection';
+    const hostileResponse = await probe(
+      fetcher,
+      config,
+      hostileLabel,
+      `${config.roomOrigin}/evidence-cases`,
+      {
+        method: 'POST',
+        headers: { Origin: 'https://untrusted.invalid', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seed: 'travel_bottle' }),
+      },
+    );
+    requireStatus(hostileResponse, 403, hostileLabel);
+
+    const createLabel = 'disposable evidence case';
+    const createResponse = await probe(
+      fetcher,
+      config,
+      createLabel,
+      `${config.roomOrigin}/evidence-cases`,
+      {
+        method: 'POST',
+        headers: { Origin: config.appOrigin, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seed: 'travel_bottle' }),
+      },
+    );
     requireStatus(createResponse, 201, createLabel);
     requireHeader(createResponse, 'Access-Control-Allow-Origin', config.appOrigin, createLabel);
-    parseWithSchema(
-      roomCredentialsSchema,
+    const credentials = parseWithSchema(
+      remoteEvidenceCaseCredentialsSchema,
       await jsonBody(createResponse, createLabel),
       createLabel,
     );
+
+    const readLabel = 'durable evidence case read-back';
+    const readResponse = await probe(
+      fetcher,
+      config,
+      readLabel,
+      `${config.roomOrigin}/evidence-cases/${encodeURIComponent(credentials.caseId)}/snapshot`,
+      { headers: { Origin: config.appOrigin } },
+    );
+    requireStatus(readResponse, 200, readLabel);
+    requireHeader(readResponse, 'Access-Control-Allow-Origin', config.appOrigin, readLabel);
+    const snapshot = parseWithSchema(
+      remoteEvidenceCaseSnapshotSchema,
+      await jsonBody(readResponse, readLabel),
+      readLabel,
+    );
+    if (
+      snapshot.caseId !== credentials.caseId ||
+      snapshot.state.revision !== credentials.state.revision
+    ) {
+      throw probeError(readLabel, 'created case did not survive read-back');
+    }
   });
 
-  if (roomVersion === null || merchantVersion === null) {
-    throw probeError('release report', 'missing worker version');
-  }
-  if (merchantUcpProtocolVersion !== ucpProtocolVersion) {
-    throw probeError('release report', 'source UCP versions disagree');
-  }
-  return {
-    ok: true,
-    commit: config.expectedCommit,
-    workerVersions: { room: roomVersion, merchant: merchantVersion },
-    steps,
-  };
+  if (roomVersion === null) throw probeError('release report', 'missing worker version');
+  return { ok: true, commit: config.expectedCommit, workerVersion: roomVersion, steps };
 }

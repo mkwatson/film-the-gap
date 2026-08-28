@@ -16,6 +16,7 @@ import {
   publishRemoteEvidenceRequestSchema,
   remoteEvidenceCaseIdPattern,
   remoteEvidenceProtocolVersion,
+  maximumUploadsPerEvidenceCase,
   requestDiscovery,
   requestMission,
   requestQuestion,
@@ -36,6 +37,8 @@ export interface ProductEvidenceWorkerEnv {
   readonly CASES: DurableObjectNamespace<ProductEvidenceCaseObject>;
   readonly EVIDENCE_CASE_TTL_SECONDS: string;
   readonly ALLOWED_ORIGINS: string;
+  readonly CASE_CREATION_PER_CLIENT_RATE_LIMITER?: RateLimit;
+  readonly CASE_CREATION_GLOBAL_RATE_LIMITER?: RateLimit;
   readonly STREAM?: StreamBinding;
   readonly STREAM_OUTBOUND?: Fetcher;
   readonly AI_GATEWAY_API_KEY?: string;
@@ -73,6 +76,7 @@ interface StoredEvidenceCase {
   readonly state: EvidenceNetworkState;
   readonly lastMessage: string;
   readonly uploads: readonly StoredUploadReservation[];
+  readonly uploadReservationsCreated: number;
   readonly processedCommands: readonly ProcessedEvidenceCommand[];
 }
 
@@ -91,6 +95,8 @@ interface StreamDownloadDetails {
   readonly percentComplete: number;
   readonly url: string | null;
 }
+
+export { maximumUploadsPerEvidenceCase } from '../../src/lib/evidence-network/remote-protocol';
 
 const storedUploadReservationSchema = z.strictObject({
   uploadId: z.string().regex(/^[a-zA-Z0-9_-]{16,128}$/),
@@ -122,7 +128,8 @@ const storedEvidenceCaseSchema: z.ZodType<StoredEvidenceCase> = z.strictObject({
   expiresAt: z.number().int().positive(),
   state: evidenceNetworkStateSchema,
   lastMessage: z.string().min(1).max(500),
-  uploads: z.array(storedUploadReservationSchema).max(16),
+  uploads: z.array(storedUploadReservationSchema).max(maximumUploadsPerEvidenceCase),
+  uploadReservationsCreated: z.number().int().min(0).max(maximumUploadsPerEvidenceCase),
   processedCommands: z.array(processedEvidenceCommandSchema).max(128),
 });
 
@@ -162,14 +169,14 @@ const maxProcessedCommands = 128;
 const defaultCaseTtlSeconds = 86_400;
 const maximumCaseTtlSeconds = 7 * 86_400;
 const analysisLockMilliseconds = 60_000;
+const streamRetentionMilliseconds = 31 * 86_400_000;
 
 function jsonResponse(body: object, status = 200, headers?: HeadersInit): Response {
+  const responseHeaders = new Headers(headers);
+  responseHeaders.set('Cache-Control', 'no-store');
   return Response.json(body, {
     status,
-    headers: {
-      'Cache-Control': 'no-store',
-      ...headers,
-    },
+    headers: responseHeaders,
   });
 }
 
@@ -219,10 +226,75 @@ function evidenceCaseTtlMilliseconds(env: ProductEvidenceWorkerEnv): number {
   return seconds * 1_000;
 }
 
-function originList(env: ProductEvidenceWorkerEnv): readonly string[] {
-  return env.ALLOWED_ORIGINS.split(',')
-    .map((origin) => origin.trim())
-    .filter((origin) => origin.length > 0);
+export function streamAllowedOriginDomains(allowedOrigins: string): readonly string[] {
+  return [
+    ...new Set(
+      allowedOrigins
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter((origin) => origin.length > 0)
+        .flatMap((origin) => {
+          try {
+            const url = new URL(origin);
+            return ['http:', 'https:'].includes(url.protocol) && url.hostname.length > 0
+              ? [url.hostname]
+              : [];
+          } catch {
+            return [];
+          }
+        }),
+    ),
+  ];
+}
+
+interface CaseCreationRateLimiters {
+  readonly perClient: RateLimit | undefined;
+  readonly global: RateLimit | undefined;
+}
+
+async function rateLimitAllows(limiter: RateLimit | undefined, key: string): Promise<boolean> {
+  if (limiter === undefined) {
+    return true;
+  }
+  try {
+    return (await limiter.limit({ key })).success;
+  } catch (error: unknown) {
+    console.error('Cloudflare case-creation rate limiter was unavailable', error);
+    return true;
+  }
+}
+
+export async function enforceCaseCreationRateLimit(
+  request: Request,
+  limiters: CaseCreationRateLimiters,
+  headers?: HeadersInit,
+): Promise<Response | null> {
+  const address = request.headers.get('CF-Connecting-IP')?.trim();
+  if (address !== undefined && address.length > 0 && limiters.perClient !== undefined) {
+    const userAgent = request.headers.get('User-Agent')?.trim() ?? '';
+    const clientKey = await sha256Hex(`${address}\u0000${userAgent}`);
+    if (!(await rateLimitAllows(limiters.perClient, clientKey))) {
+      return jsonResponse(
+        {
+          error: 'case_creation_rate_limited',
+          message: 'This client created too many temporary cases. Wait one minute and retry.',
+        },
+        429,
+        { ...Object.fromEntries(new Headers(headers)), 'Retry-After': '60' },
+      );
+    }
+  }
+  if (await rateLimitAllows(limiters.global, 'all-case-creation')) {
+    return null;
+  }
+  return jsonResponse(
+    {
+      error: 'case_creation_rate_limited',
+      message: 'The public pilot is receiving too many new cases. Wait one minute and retry.',
+    },
+    429,
+    { ...Object.fromEntries(new Headers(headers)), 'Retry-After': '60' },
+  );
 }
 
 function snapshot(caseId: string, stored: StoredEvidenceCase): RemoteEvidenceCaseSnapshot {
@@ -299,13 +371,18 @@ async function createDirectUpload(
   if (env.STREAM === undefined) {
     throw new Error('Cloudflare Stream is not configured for this environment.');
   }
+  const allowedOrigins = streamAllowedOriginDomains(env.ALLOWED_ORIGINS);
+  if (allowedOrigins.length === 0) {
+    throw new Error('Cloudflare Stream needs at least one valid playback origin.');
+  }
   const upload = await env.STREAM.createDirectUpload({
     maxDurationSeconds,
     expiry: expiresAt,
     creator: caseId,
     meta: { evidenceCaseId: caseId },
-    allowedOrigins: [...originList(env)],
+    allowedOrigins: [...allowedOrigins],
     requireSignedURLs: false,
+    scheduledDeletion: new Date(Date.now() + streamRetentionMilliseconds).toISOString(),
   });
   return { uploadId: upload.id, uploadUrl: upload.uploadURL };
 }
@@ -516,6 +593,7 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
       protocolVersion: remoteEvidenceProtocolVersion,
       ...parsed.data,
       uploads: [],
+      uploadReservationsCreated: 0,
       processedCommands: [],
     };
     this.stored = stored;
@@ -660,6 +738,16 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
     if (stored.state.activeCase?.mission?.status !== 'open') {
       return jsonResponse({ error: 'no_open_filming_mission' }, 409);
     }
+    if (stored.uploadReservationsCreated >= maximumUploadsPerEvidenceCase) {
+      return jsonResponse(
+        {
+          error: 'upload_limit_reached',
+          message:
+            'This temporary case already used both video attempts. Create a fresh case to retry.',
+        },
+        429,
+      );
+    }
     const maxDurationSeconds = Math.max(
       parsed.data.maxDurationSeconds,
       stored.state.activeCase.mission.minimumSeconds,
@@ -701,7 +789,8 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
       uploads: [
         ...stored.uploads.filter(({ expiresAt: expiry }) => expiry > Date.now()),
         reservation,
-      ].slice(-16),
+      ].slice(-maximumUploadsPerEvidenceCase),
+      uploadReservationsCreated: stored.uploadReservationsCreated + 1,
     };
     await this.ctx.storage.put(storedCaseKey, this.stored);
     return jsonResponse(
@@ -1091,6 +1180,17 @@ async function createEvidenceCase(
   const parsed = createRemoteEvidenceCaseRequestSchema.safeParse(parseJson(await request.text()));
   if (!parsed.success) {
     return jsonResponse({ error: 'invalid_evidence_case', issues: parsed.error.issues }, 400, cors);
+  }
+  const rateLimited = await enforceCaseCreationRateLimit(
+    request,
+    {
+      perClient: env.CASE_CREATION_PER_CLIENT_RATE_LIMITER,
+      global: env.CASE_CREATION_GLOBAL_RATE_LIMITER,
+    },
+    cors,
+  );
+  if (rateLimited !== null) {
+    return rateLimited;
   }
   const createdAt = Date.now();
   const expiresAt = createdAt + evidenceCaseTtlMilliseconds(env);

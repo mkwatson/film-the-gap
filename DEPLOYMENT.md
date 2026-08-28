@@ -1,45 +1,63 @@
-# Public release and rollback runbook
+# Generic evidence-network release runbook
 
-Updated 2026-08-27 PT. The public MIT repository and permanent production topology are live. The `challenge-live-2026-08-27` tag identifies the reviewed source release; every runtime exposes its exact commit receipt for independent verification.
+Updated 2026-08-27 PT. Nothing described here is publicly deployed yet. The existing live-market release remains an independent known-good fallback; this candidate uses a new Vercel project and the separate Cloudflare Worker name `webmcp-product-evidence`, so releasing it cannot overwrite that fallback.
 
-## Release topology
+## Candidate topology
 
-| Surface        | Runtime                                            | Stable origin                                                                            | Responsibility                                                                                           |
-| -------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Buyer and host | Vercel / Next.js                                   | `https://webmcp-evidence-market-vidably.vercel.app`                                      | Human experience, native buyer Site Tools, platform UCP profile, optional AI Gateway vision proposal     |
-| Evidence room  | Cloudflare Worker + SQLite Durable Object          | `https://webmcp-evidence-rooms.webmcp-challenge-evidence-merchant-worker.workers.dev`    | Separate buyer/host authority, revisions, idempotency, private merchant credential, recovery             |
-| Merchant       | Cloudflare Worker + separate SQLite Durable Object | `https://webmcp-evidence-merchant.webmcp-challenge-evidence-merchant-worker.workers.dev` | Released UCP discovery and Cart lifecycle, exact totals, buyer-only continuation and merchant Site Tools |
+| Surface                     | Runtime                                            | Responsibility                                                                                   |
+| --------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Shopper and contributor app | Next.js 16 on Vercel                               | Native WebMCP tools, human UI, QR handoff, social discovery, video review, playback              |
+| Evidence service            | Cloudflare Worker + SQLite Durable Object          | Revisioned cases, scoped capabilities, WebSocket updates, upload reservations, reviewed evidence |
+| Video                       | Cloudflare Stream binding                          | One-time direct phone uploads, encoding, authorized MP4 generation, playback                     |
+| Multimodal proposal         | Vercel AI Gateway + AI SDK 7, called by the Worker | Bounded timestamped proposal from the authorized MP4; never publication authority                |
+| Optional discovery          | ScrapeCreators, called only by the Vercel app      | Link-only TikTok, Instagram, and YouTube leads; never implied reuse rights                       |
 
-The two Workers intentionally use separate origins and separate Durable Object authorities. This is useful sponsor leverage, but more importantly it makes the product claim real: the evidence page cannot manufacture the merchant's authoritative Cart.
+The deployable Worker is [evidence-index.ts](room-worker/src/evidence-index.ts), configured by [wrangler.evidence.jsonc](room-worker/wrangler.evidence.jsonc). It intentionally exposes no live-market rooms, UCP cart, merchant, checkout, or legacy image-model endpoint.
 
-Every public surface exposes a non-secret build receipt. Vercel reports the Git-triggered `VERCEL_GIT_COMMIT_SHA`; an intentionally prebuilt artifact may instead receive the exact reviewed commit as `WEBMCP_RELEASE_COMMIT_SHA`. The platform value wins if both exist. Each Worker reports Cloudflare's version ID, version tag, and timestamp through the current [version metadata binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/version-metadata/). `pnpm release:verify` refuses to certify a release unless all three surfaces match one reviewed 40-character commit.
+## Cost and abuse envelope
 
-## Current platform facts that affect this release
+These are defense-in-depth controls, not claims of perfect abuse prevention.
 
-- Cloudflare separates Worker versions from deployments and supports commit-sized tags on both `wrangler deploy` and `wrangler versions upload`. Storage state is not versioned with Worker code. See [Versions & Deployments](https://developers.cloudflare.com/workers/versions-and-deployments/) and the [current Wrangler command reference](https://developers.cloudflare.com/workers/wrangler/commands/workers/).
-- Cloudflare's current [Preview URLs documentation](https://developers.cloudflare.com/workers/versions-and-deployments/preview-urls/) explicitly says preview URLs are not generated for Workers that implement Durable Objects. These Workers therefore do not claim a preview-promotion path.
-- A Vercel production build can be staged without assigning the production domain by using `vercel --prod --skip-domain`, then promoted. Vercel also documents that promoting a Preview-environment deployment creates a new Production deployment, so a Preview build is not treated as the identical production artifact. See [Deploying from CLI](https://vercel.com/docs/cli/deploying-from-cli) and [`vercel promote`](https://vercel.com/docs/cli/promote).
-- Vercel generated URLs are public by default but may be protected by project settings. The final judge origin must not require Vercel Authentication, a share parameter, password, trusted IP, or automation-bypass header. See [Generated URLs](https://vercel.com/docs/deployments/generated-urls) and [Deployment Protection](https://vercel.com/docs/deployment-protection/methods-to-protect-deployments).
-- Vercel only supplies `VERCEL_GIT_COMMIT_SHA` for a Git-associated deployment when system environment variables are exposed. It is not automatically available to `--prebuilt` deployments. Confirm the project setting before release and use the explicit fallback only for an artifact built from a separately verified clean commit. See [System environment variables](https://vercel.com/docs/environment-variables/system-environment-variables) and [prebuilt deployments](https://vercel.com/docs/deployments/configure-a-build#prebuilt-deployments).
+| Cost surface           | Enforced control                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- |
+| Evidence-case creation | 12 requests per client fingerprint per 60 seconds and 120 total per 60 seconds, per Cloudflare location |
+| Client fingerprint     | SHA-256 of Cloudflare IP plus user agent; raw IP is not retained by application code                    |
+| Upload reservations    | At most two over a temporary case's lifetime                                                            |
+| Upload bytes           | At most 95 MiB; basic direct POST only                                                                  |
+| Reserved duration      | Actual browser-measured duration plus five seconds, bounded by the mission and 90-second maximum        |
+| Upload capability      | One-time Stream URL with a 15-minute expiry and allowed app hostname                                    |
+| Stored video           | Scheduled deletion after 31 days; enough for judging, not indefinite storage                            |
+| Model calls            | One cached successful proposal per upload and no more than two crash-recovery attempts                  |
+| AI spend               | Dedicated AI Gateway key with a hard non-renewing budget and 30-day expiry                              |
+| Social search          | Same-origin JSON only, Vercel WAF fixed-window limit, and a dedicated/fixed-credit vendor key           |
 
-Verified local release clients on 2026-08-27: Wrangler `4.127.0` in both Worker packages and Vercel CLI `59.7.0` via `pnpm dlx vercel@59.7.0`. The package registry reports those as the current releases; recheck the first-party docs and exact command help again on release day.
+Cloudflare's current Worker rate-limit binding is deliberately permissive, eventually consistent, and local to a Cloudflare location. It is useful overload protection, not exact global accounting. The hard upload-count cap, model-attempt cap, expiring capabilities, AI Gateway budget, and vendor credit limit remain necessary. See [Workers Rate Limiting](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/), [Stream Direct Creator Uploads](https://developers.cloudflare.com/stream/uploading-videos/direct-creator-uploads/), [Vercel WAF Rate Limiting](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting), and [AI Gateway key budgets](https://vercel.com/changelog/budgets-for-api-keys-on-ai-gateway).
 
-The August 27 permanent release graduated the earlier protected-preview rehearsal. The stable Vercel alias is unauthenticated, both Workers use production variables and version metadata, `release:verify` passes all six public boundary checks, and the complete native browser commerce lifecycle passes against the permanent origins. Final model-driven ChatGPT and physical-phone capture remain submission gates, not infrastructure gates.
+Turnstile is not on the canonical judge path yet. Its server validation would add useful bot resistance, but an unverified interaction inside ChatGPT's in-app Browser is a larger submission risk than the bounded residual cost. Reconsider only after an exact-runtime test proves invisible or interaction-only Turnstile does not interrupt native Site Tools or phone capture.
 
-## One-time account setup — Mark present
+## User-approved one-time setup
 
-These steps mutate external systems and must not be performed unattended.
+These steps mutate accounts or authorize spend. Mark must approve them and be present.
 
-1. Confirm the approved MIT `LICENSE` remains detectable at the repository root.
-2. **Complete:** the public GitHub repository contains the challenge-period `main` history, and its URL is recorded in `SUBMISSION.md`.
-3. **Complete:** the repository is linked to the Vercel project and the stable production origin is unprotected.
-4. **Complete:** Wrangler is authorized and the two distinct permanent `workers.dev` origins are recorded above.
-5. **Complete:** Vercel Production compiles the permanent room origin, and OIDC remains available for AI Gateway without a long-lived model key.
-6. Before graduating claim-scoped phone-video analysis, add `AI_GATEWAY_API_KEY` as an encrypted secret on the room Worker. This cross-runtime key is required because Vercel OIDC is available to the Vercel app, not to a Cloudflare Worker. Do not pass it with `--var`, commit it, or expose it through a `NEXT_PUBLIC_` name.
+1. Choose the public project name and a new Vercel project. Do not reuse the live-market Vercel project.
+2. Enable Cloudflare Stream on the intended account and approve its minimum storage/delivery commitment.
+3. Create a dedicated Vercel AI Gateway key with a hard budget. A sensible rehearsal/judging ceiling is `$25`, non-renewing, with alerts and a 30-day expiry:
 
-The final origins must be distinct, credential-free HTTPS origins. Do not use a protected Vercel Preview URL or a temporary Tailscale URL in the submission.
+   ```bash
+   pnpm dlx vercel@59.7.0 ai-gateway api-keys create \
+     --name webmcp-product-evidence-judging \
+     --budget 25 \
+     --refresh-period none \
+     --alert-thresholds 50,75,100 \
+     --expiration 30d
+   ```
 
-## Release candidate gate
+   Do not use `--bypass-all-settings` or `--zdr-exempt`. Copy the returned secret only into Cloudflare's encrypted secret prompt.
+
+4. If live social discovery is enabled, create a dedicated ScrapeCreators key with only the credits Mark approves. The app remains truthful and functional without it, but reports discovery as unavailable.
+5. Link this worktree to the new Vercel project only after the public project name is chosen. `.vercel/project.json` must remain uncommitted.
+
+## Candidate gate before any deployment
 
 Start from the exact clean commit intended for judging:
 
@@ -48,120 +66,161 @@ git status --short
 git rev-parse HEAD
 pnpm install --frozen-lockfile
 pnpm check
-pnpm test:ucp-schema
 ```
 
-`git status --short` must print nothing. Save the full `git rev-parse HEAD` value as `RELEASE_SHA`. Confirm the Vercel project is building that Git commit, not an uncommitted CLI working tree.
+`git status --short` must print nothing. Save the 40-character commit as `RELEASE_SHA`. Run the deterministic native evidence journey locally before changing any public system:
 
-Before changing public traffic, complete the native acceptance journey against the locally built app and HTTPS service origins. The output must contain no invite or cart credential.
+```bash
+pnpm --dir room-worker dev:evidence-services
+pnpm --dir room-worker dev:evidence-acceptance
+NEXT_PUBLIC_EVIDENCE_ROOM_URL=http://localhost:8792 pnpm dev
+pnpm acceptance:evidence-network
+```
 
-## Initial production release
+Those four commands use separate shells. The acceptance test exercises real Chrome, native dynamic Site Tools, two tabs, the actual app and Durable Object, upload/model-shaped service boundaries, human correction, publication, WebSocket update, and the before/after answer. It replaces only the paid Stream and model calls with strict local services.
 
-There is no existing judge traffic during the initial release, so deploy dependencies first and the public app last.
+## First generic deployment
 
-1. Deploy the merchant from `merchant-worker/` with Wrangler `4.127.0`, `--tag RELEASE_SHA`, and a descriptive `--message`. Record the returned Worker version ID.
-2. Deploy the room from `room-worker/` with the same tag. Supply all five production variables in the deployment command or a reviewed production config:
+The app origin and Worker origin depend on one another. Establish the new Vercel project and its stable production hostname first, but do not send judges there until all gates pass.
 
-   - `ALLOWED_ORIGINS=APP_ORIGIN`
-   - `ROOM_TTL_SECONDS=7200`
-   - `UCP_BUSINESS_URL=MERCHANT_ORIGIN`
-   - `UCP_VARIANT_ID=urn:webmcp-evidence-market:product-variant:live-inspected-board-156`
-   - `UCP_PLATFORM_PROFILE_URL=APP_ORIGIN/.well-known/ucp`
+Set and inspect explicit shell variables; never paste placeholders into a deployment:
 
-   Record the room Worker version ID. Never deploy the checked-in localhost-only room variables as production configuration.
+```bash
+APP_ORIGIN=https://YOUR-NEW-VERCEL-PROJECT.vercel.app
+ROOM_ORIGIN=https://webmcp-product-evidence.YOUR-CLOUDFLARE-SUBDOMAIN.workers.dev
+RELEASE_SHA=$(git rev-parse HEAD)
+```
 
-   If the release includes AI-assisted continuous-video review, provision its encrypted secret while Mark is present before deploying:
+Then:
+
+1. Bootstrap the new Worker under its separate name. This initial version is not judge-facing:
 
    ```bash
-   pnpm --dir room-worker exec wrangler secret put AI_GATEWAY_API_KEY
+   pnpm --dir room-worker exec wrangler deploy \
+     --config wrangler.evidence.jsonc \
+     --strict \
+     --tag "$RELEASE_SHA" \
+     --message "bootstrap generic evidence candidate $RELEASE_SHA" \
+     --var "ALLOWED_ORIGINS:$APP_ORIGIN" \
+     --var "EVIDENCE_CASE_TTL_SECONDS:86400"
    ```
 
-   The no-secret path remains functional and explicitly falls back to manual contributor review.
+2. Add the dedicated budgeted Gateway key through the encrypted prompt:
 
-3. Create a Production-environment Vercel deployment from `RELEASE_SHA` with `--skip-domain`, or from that exact Git reference in the dashboard. Prefer the Git-associated path. If a reviewed prebuilt artifact is deliberately used, make the public room origin available during `vercel build` because `NEXT_PUBLIC_` values are compiled into the client, and pass the exact SHA to the deployed runtime. Inspect the unique deployment and `/api/health`; its `commit` must equal `RELEASE_SHA` and `evidenceRoomOrigin` must equal `ROOM_ORIGIN`.
-4. Promote the staged Production build to `APP_ORIGIN`. Do not promote a Preview-environment build under the assumption that it is the identical artifact; current Vercel behavior creates a new Production deployment in that case.
+   ```bash
+   pnpm --dir room-worker exec wrangler secret put AI_GATEWAY_API_KEY \
+     --config wrangler.evidence.jsonc
+   ```
 
-An equivalent initial Worker command shape is shown below. Fill the variables in the shell first and inspect them; do not paste placeholders into a deployment:
+3. Redeploy the exact commit and record the final Worker version ID, tag, and timestamp:
 
-```bash
-pnpm --dir merchant-worker exec wrangler deploy --tag "$RELEASE_SHA" --message "challenge release $RELEASE_SHA"
+   ```bash
+   pnpm --dir room-worker exec wrangler deploy \
+     --config wrangler.evidence.jsonc \
+     --strict \
+     --tag "$RELEASE_SHA" \
+     --message "generic evidence release $RELEASE_SHA" \
+     --var "ALLOWED_ORIGINS:$APP_ORIGIN" \
+     --var "EVIDENCE_CASE_TTL_SECONDS:86400"
+   ```
 
-pnpm --dir room-worker exec wrangler deploy \
-  --tag "$RELEASE_SHA" \
-  --message "challenge release $RELEASE_SHA" \
-  --var "ALLOWED_ORIGINS:$APP_ORIGIN" \
-  --var "ROOM_TTL_SECONDS:7200" \
-  --var "UCP_BUSINESS_URL:$MERCHANT_ORIGIN" \
-  --var "UCP_VARIANT_ID:urn:webmcp-evidence-market:product-variant:live-inspected-board-156" \
-  --var "UCP_PLATFORM_PROFILE_URL:$APP_ORIGIN/.well-known/ucp"
-```
+4. Configure the new Vercel project's Production environment:
 
-If and only if the reviewed release uses a prebuilt Vercel artifact, the corresponding command shape is:
+   - `NEXT_PUBLIC_EVIDENCE_ROOM_URL=$ROOM_ORIGIN` — required and compiled at build time.
+   - `SCRAPECREATORS_API_KEY` — optional, server-only, dedicated to this demo.
+   - Do not add `AI_GATEWAY_API_KEY`; the legacy Vercel model endpoint was removed and the budgeted key belongs only on the Worker.
 
-```bash
-pnpm dlx vercel@59.7.0 env run -e production -- pnpm dlx vercel@59.7.0 build --prod
-pnpm dlx vercel@59.7.0 deploy --prebuilt --prod --skip-domain \
-  -e "WEBMCP_RELEASE_COMMIT_SHA=$RELEASE_SHA"
-```
+5. Deploy the exact Git commit to Vercel. Prefer a Git-associated Production build so `VERCEL_GIT_COMMIT_SHA` is authoritative. A reviewed prebuilt artifact may use `WEBMCP_RELEASE_COMMIT_SHA=$RELEASE_SHA`, but the room origin must be present during `vercel build`; changing it after the build cannot update the client bundle.
+6. Confirm Vercel Deployment Protection is disabled on the final judge hostname. The page must work logged out with no share parameter, password, trusted IP, or bypass header.
 
-Before building, confirm that the Production value of `NEXT_PUBLIC_EVIDENCE_ROOM_URL` is non-empty and exactly equals `ROOM_ORIGIN`. A local production-start experiment proved that changing this variable after `next build` changes neither the client bundle nor `/api/health`; both retain the build-time origin. The explicit release SHA remains runtime-readable. Rebuild—never add a deploy-time room override—if the health origin is wrong.
+## Vercel social-search firewall
+
+Vercel WAF rate limiting is available on all plans, but the first rule may show a pricing acknowledgement. Stage and inspect it; Mark publishes each stage.
+
+1. Add a fixed-window rule for only `POST /api/evidence/search`, initially logging overflow after 20 requests per IP per minute:
+
+   ```bash
+   pnpm dlx vercel@59.7.0 firewall rules add "Product evidence search ceiling" \
+     --condition '{"type":"path","op":"eq","value":"/api/evidence/search"}' \
+     --condition '{"type":"method","op":"eq","value":"POST"}' \
+     --action rate_limit \
+     --rate-limit-window 60 \
+     --rate-limit-requests 20 \
+     --rate-limit-keys ip \
+     --rate-limit-action log \
+     --yes
+   pnpm dlx vercel@59.7.0 firewall diff
+   ```
+
+2. Mark runs `pnpm dlx vercel@59.7.0 firewall publish --yes`, exercises buyer and ChatGPT searches, and reviews matched traffic in the Vercel Firewall dashboard.
+3. After legitimate traffic is confirmed, retain the rule and change overflow to HTTP 429:
+
+   ```bash
+   pnpm dlx vercel@59.7.0 firewall rules edit "Product evidence search ceiling" \
+     --action rate_limit \
+     --rate-limit-window 60 \
+     --rate-limit-requests 20 \
+     --rate-limit-keys ip \
+     --rate-limit-action rate_limit \
+     --yes
+   pnpm dlx vercel@59.7.0 firewall diff
+   ```
+
+4. Mark publishes again. Keep the filtered Firewall traffic view open during the rehearsal. Counters are regional and IPs can be shared, so this remains a generous overload ceiling rather than a user quota.
 
 ## Mandatory public verification
 
-Run the release verifier immediately after promotion:
+Immediately after both final deployments:
 
 ```bash
 EVIDENCE_ACCEPTANCE_APP_URL="$APP_ORIGIN" \
 EVIDENCE_ACCEPTANCE_ROOM_ORIGIN="$ROOM_ORIGIN" \
-EVIDENCE_ACCEPTANCE_MERCHANT_ORIGIN="$MERCHANT_ORIGIN" \
 EVIDENCE_RELEASE_COMMIT_SHA="$RELEASE_SHA" \
 pnpm release:verify
 ```
 
-It verifies, with manual redirects and bounded bodies:
+The verifier uses manual redirects and bounded bodies. It proves:
 
-1. the Vercel app's commit and configured room origin;
-2. both Worker health contracts and exact commit tags;
-3. both UCP profiles and the merchant's exact MCP endpoint;
-4. the buyer, host, and merchant pages plus merchant CSP, permission, and referrer boundaries;
-5. the browser CORS preflight; and
-6. one real disposable Durable Object room creation.
+1. the app exposes the exact reviewed commit and compiled Worker origin;
+2. the standalone Worker exposes the same commit, both rate-limit bindings, the two-upload cap, Stream, and live video analysis;
+3. buyer and contributor pages have the intended camera, upload, playback, CORS, CSP, referrer, and content-type boundaries;
+4. an untrusted browser origin is rejected; and
+5. one disposable evidence case is created and survives a Durable Object read-back.
 
-The report contains only step timings and public Worker version metadata. It parses and immediately discards the disposable room's buyer and host credentials.
+The report contains only public Worker metadata and step timings. It parses but never returns or logs the disposable owner/contributor capabilities.
 
-Then run the deeper browser gate against the same public origins:
+Then perform one user-approved paid rehearsal on the final origins:
 
-```bash
-EVIDENCE_ACCEPTANCE_APP_URL="$APP_ORIGIN" \
-EVIDENCE_ACCEPTANCE_ROOM_ORIGIN="$ROOM_ORIGIN" \
-EVIDENCE_ACCEPTANCE_MERCHANT_ORIGIN="$MERCHANT_ORIGIN" \
-pnpm acceptance:native
-```
+1. Clean unauthenticated desktop browser: arbitrary product/question, mission, QR/link.
+2. Physical phone: owned unbranded object, continuous recording, real direct Stream upload, real Gateway proposal, explicit correction/review, publish.
+   Confirm specifically that the Gateway provider can fetch the generated public MP4 while Stream playback-origin restrictions are active; current Cloudflare documentation describes those restrictions for HLS/DASH playback but does not explicitly guarantee this downstream-download combination.
+3. Desktop reload: same durable case and timestamped evidence still visible.
+4. Current WebMCP-enabled Chrome: complete native Site Tool journey.
+5. Current ChatGPT in-app Browser: complete the same journey and capture the tool transcript.
+6. Ordinary-browser fallback: complete the journey without Site Tools.
+7. Cold tester: understands and completes the canonical flow without coaching.
 
-Finally, test from a clean unauthenticated browser, ChatGPT's current in-app Browser, and a physical phone. The final manual matrix is in `SUBMISSION.md`; automated success cannot replace those three judged-runtime gates.
+Record actual result, duration, browser/build versions, Worker version, model ID, Stream UID, and failures. Do not put contributor capabilities, Gateway keys, vendor keys, or raw private URLs in the receipt.
 
-## Release manifest and freeze
+## Freeze manifest
 
-Record this before the Devpost freeze:
+| Field         | Required value                                                                      |
+| ------------- | ----------------------------------------------------------------------------------- |
+| Git           | Full `RELEASE_SHA`, signed/frozen tag, clean public repository                      |
+| Vercel        | Immutable deployment URL, stable alias, commit receipt, WAF rule ID/state           |
+| Cloudflare    | Worker origin, version ID, version tag, timestamp, rate-limit bindings              |
+| Paid edges    | Budgeted Gateway key expiry/cap, Stream retention, discovery credit ceiling         |
+| Runtime tests | Release verifier, Chrome, ChatGPT, physical phone, fallback, cold tester timestamps |
+| Submission    | Final live URL, repository URL, YouTube URL, Devpost export                         |
 
-| Field             | Required value                                                                     |
-| ----------------- | ---------------------------------------------------------------------------------- |
-| Git commit        | Full `RELEASE_SHA`                                                                 |
-| Vercel deployment | Immutable deployment URL and production alias                                      |
-| Room Worker       | Origin, version ID, tag, timestamp                                                 |
-| Merchant Worker   | Origin, version ID, tag, timestamp                                                 |
-| Verification      | `release:verify`, native Chrome, ChatGPT, physical phone, clean browser timestamps |
-| Submission assets | Repository URL, YouTube URL, exact Devpost draft/export                            |
-
-After September 3, 2026 at 1:00 p.m. PT, keep the submitted repository, deployment, and Devpost entry frozen through judging. Continue experiments only in a clearly separate branch or fork that judges cannot confuse with the submitted revision.
+After the September 3, 2026 1:00 p.m. PT deadline, keep the submitted repository, deployment, and entry frozen through judging. Continue experiments only in a clearly separate branch or project.
 
 ## Rollback
 
-Keep the previous known-good Vercel deployment URL and both Worker version IDs in the release manifest.
+Preserve the previous candidate Vercel deployment URL and Worker version ID before every change.
 
-- Vercel: `pnpm dlx vercel@59.7.0 rollback PREVIOUS_DEPLOYMENT_URL`, then `pnpm dlx vercel@59.7.0 rollback status`.
-- Cloudflare: from each Worker package, run `wrangler rollback PREVIOUS_VERSION_ID --message "rollback to known-good release"`.
+- Vercel: `pnpm dlx vercel@59.7.0 rollback PREVIOUS_DEPLOYMENT_URL`, then inspect `rollback status`.
+- Cloudflare: `pnpm --dir room-worker exec wrangler rollback PREVIOUS_VERSION_ID --config wrangler.evidence.jsonc --message "rollback to known-good generic evidence release"`.
+- WAF: stage the rule back to logging or disable it, inspect `firewall diff`, then Mark publishes the draft.
 
-Cloudflare [rollbacks](https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/) do not roll back Durable Object storage. That is acceptable for this challenge only because rooms and carts are bounded, reversible, and short-lived; still, do not roll back across an incompatible Durable Object class or storage change. Vercel documents Hobby-plan rollback as limited to the immediately previous production deployment; preserve that deployment until judging ends.
-
-After any rollback, run `pnpm release:verify` with the previous commit and repeat the clean-browser smoke path. If verification does not pass, remove the URL from judge-facing materials rather than leaving a partially aligned release live.
+Cloudflare code rollback does not roll back Durable Object storage. Never roll back across an incompatible stored-case schema. If any required public gate fails, keep the old independent live-market release untouched and remove the generic URL from judge-facing material until the candidate is repaired.

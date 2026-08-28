@@ -14,7 +14,7 @@ It is a standalone OpenAI WebMCP Challenge entry. It does not use Vidably brandi
 6. Once Stream produces an authorized MP4, Vercel AI Gateway sends it to a video-capable model for a bounded, timestamped proposal. The contributor must review or correct the result, confidence, continuity, observation, and cited interval before publishing.
 7. The shopper or agent re-runs the question. The new evidence visibly changes what the system can responsibly say.
 
-This is not a text-review demo and it does not claim that video is impossible to fake. Its useful boundary is narrower: answers cite the actual bytes a contributor authorized, distinguish public leads from reusable media, require human review, expose limitations, and abstain when a recording does not prove the claim.
+This is not a text-review demo and it does not claim that video is impossible to fake. Its useful boundary is narrower: answers cite the contributor-authorized recording, distinguish public leads from reusable media, require human review, expose limitations, and abstain when a recording does not prove the claim.
 
 ## Why WebMCP is load-bearing
 
@@ -41,7 +41,7 @@ Question → evidence gap → WebMCP mission → real phone video
 
 The continuous-video path currently targets `google/gemini-3.7-flash` through AI Gateway, with `google/gemini-3.6-flash` as fallback. Exact versions and source receipts are recorded in [EXPERIMENTS.md](EXPERIMENTS.md) and [SPONSOR-PRODUCTS.md](SPONSOR-PRODUCTS.md). No live model or Stream request runs in the default test suite.
 
-UCP, the prior live-shopping market, and the Lean capability proof remain in the repository as independently working research rungs. They are not part of the current hero because adding checkout or a formal proof does not improve the core product-evidence story yet.
+UCP, the prior live-shopping market, and the Lean capability proof remain in the challenge-period history as independently working research rungs. Their public routes are intentionally absent from this candidate because adding checkout or a formal proof does not improve the core product-evidence story yet.
 
 ## Run locally
 
@@ -63,7 +63,8 @@ Open `http://localhost:3000`. Create a product-evidence case, ask a question, op
 Local Wrangler cannot complete a real Cloudflare Stream upload unless the binding is connected to deployed infrastructure. The no-secret analysis path remains functional and truthfully starts the contributor at manual, inconclusive review. A production candidate needs the Stream binding plus this encrypted Worker secret:
 
 ```bash
-pnpm --dir room-worker exec wrangler secret put AI_GATEWAY_API_KEY
+pnpm --dir room-worker exec wrangler secret put AI_GATEWAY_API_KEY \
+  --config wrangler.evidence.jsonc
 ```
 
 That command changes Cloudflare state and must only be run deliberately by the account owner. Never expose the key through a `NEXT_PUBLIC_` variable or commit it.
@@ -94,7 +95,6 @@ pnpm test:room
 pnpm typecheck
 pnpm room:build
 pnpm acceptance:evidence-network
-pnpm acceptance:native
 ```
 
 The generic acceptance journey uses four local processes so its paid edges cannot run accidentally:
@@ -113,7 +113,7 @@ NEXT_PUBLIC_EVIDENCE_ROOM_URL=http://localhost:8792 pnpm dev
 pnpm acceptance:evidence-network
 ```
 
-The runner generates a rights-clean 12-second MP4, drives the complete buyer/contributor journey, corrects the model-shaped proposal, verifies the answer difference through WebMCP, and reloads both credential boundaries. The real Durable Object and public schemas run unchanged; local services replace only Cloudflare Stream and Gemini, and the browser network allowlist excludes their public hosts. `acceptance:native` separately preserves the earlier live-market/UCP rung.
+The runner generates a rights-clean 12-second MP4, drives the complete buyer/contributor journey, corrects the model-shaped proposal, verifies the answer difference through WebMCP, and reloads both credential boundaries. The real Durable Object and public schemas run unchanged; local services replace only Cloudflare Stream and Gemini, and the browser network allowlist excludes their public hosts.
 
 ## Current status and honest boundaries
 
@@ -121,6 +121,7 @@ The runner generates a rights-clean 12-second MP4, drives the complete buyer/con
 - Claim-level evidence, provenance, rights, confidence, revisions, dynamic Site Tools, social lead discovery, private contributor URLs, direct Stream uploads, timestamped video proposals, and explicit human review are implemented.
 - Conclusive evidence for a continuous-take mission is rejected when the cited interval is invalid or continuity is edited/unknown.
 - The app has deterministic automated coverage for success, denial, stale revisions, manual fallback, dependency failures, simultaneous analysis coalescing, fragment scrubbing, contributor reload, and buyer reconnect. It does not call paid services during tests.
+- The standalone deployable Worker exposes only the evidence API. It rate-limits case creation, permits two upload reservations per temporary case, caps clips at 95 MiB/90 seconds, expires upload URLs, schedules Stream deletion, and bounds model retries. The release runbook adds a budgeted Gateway key and Vercel WAF ceiling.
 - Native Chrome completes the five-phase generic acceptance journey in roughly five seconds against a real local Durable Object and deterministic paid-service fixtures.
 - The prior public release remains the known-good fallback. This generic branch is not yet deployed and has not yet passed a real Stream → Gateway → physical-phone journey.
 - It does not claim universal access to product owners, guaranteed fulfillment, product authenticity, or perfect deepfake detection.
