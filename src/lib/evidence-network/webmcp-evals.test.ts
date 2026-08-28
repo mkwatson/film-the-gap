@@ -3,12 +3,18 @@ import { describe, expect, it } from 'vitest';
 import browserJourneyEvals from '../../../evals/browser-journey-evals.json';
 import evidenceInitialEvals from '../../../evals/evidence-initial-evals.json';
 import evidenceInitialTools from '../../../evals/evidence-initial-tools.json';
+import evidenceMissionEvals from '../../../evals/evidence-mission-evals.json';
+import evidenceMissionTools from '../../../evals/evidence-mission-tools.json';
 import productPageInitialTools from '../../../evals/product-page-initial-tools.json';
 import productPageJourneyEvals from '../../../evals/product-page-journey-evals.json';
 import productPageReviewedEvals from '../../../evals/product-page-reviewed-evals.json';
 import productPageReviewedTools from '../../../evals/product-page-reviewed-tools.json';
 import { createDemoProductEvidenceTools } from '../../components/demo-product-evidence-bridge';
-import { createDemoEvidenceQuestionState } from './model';
+import {
+  applyEvidenceNetworkCommand,
+  createDemoEvidenceNetworkState,
+  createDemoEvidenceQuestionState,
+} from './model';
 import { createEvidenceSiteTools, type EvidenceSiteToolRuntime } from './site-tools';
 
 const allEvidenceToolNames = new Set([
@@ -16,6 +22,7 @@ const allEvidenceToolNames = new Set([
   'ask_product_question',
   'search_product_evidence',
   'create_filming_mission',
+  'refine_filming_mission',
   'create_phone_capture_link',
   'inspect_answer_change',
   'publish_filming_mission',
@@ -29,6 +36,7 @@ const allEvidenceToolNames = new Set([
 
 const allEvals = [
   ...evidenceInitialEvals,
+  ...evidenceMissionEvals,
   ...browserJourneyEvals,
   ...productPageJourneyEvals,
   ...productPageReviewedEvals,
@@ -69,6 +77,33 @@ describe('generic product-evidence WebMCP eval corpus', () => {
     }));
 
     expect(evidenceInitialTools.tools).toEqual(actual);
+  });
+
+  it('keeps the open-mission refinement schema identical to the live tool frontier', () => {
+    const state = applyEvidenceNetworkCommand(createDemoEvidenceNetworkState(), {
+      kind: 'create-filming-mission',
+      actor: 'agent',
+      input: {
+        instruction: 'Invert the filled bottle over dry paper for ten seconds.',
+        successCriterion: 'Keep the closed lid and dry paper visible throughout.',
+        minimumSeconds: 10,
+        continuousTakeRequired: true,
+      },
+    }).state;
+    const runtime: EvidenceSiteToolRuntime = {
+      readState: () => state,
+      dispatch: async () => {
+        throw new Error('Schema comparison must not execute a tool.');
+      },
+    };
+    const actual = createEvidenceSiteTools(runtime).map(({ name, description, inputSchema }) => ({
+      name,
+      description,
+      inputSchema,
+    }));
+
+    expect(state.revision).toBe(2);
+    expect(evidenceMissionTools.tools).toEqual(actual);
   });
 
   it('keeps both product-page schema snapshots identical to the dynamic tools', () => {
@@ -153,5 +188,16 @@ describe('generic product-evidence WebMCP eval corpus', () => {
     expect(
       expectedCalls(privateHandoff?.expectedCall).map(({ functionName }) => functionName),
     ).toEqual(['search_product_evidence', 'create_filming_mission', 'create_phone_capture_link']);
+  });
+
+  it('requires inspection before a stale-protected mission refinement', () => {
+    const refinement = evidenceMissionEvals.find(({ name }) => name.startsWith('Inspect before'));
+    const calls = expectedCalls(refinement?.expectedCall);
+
+    expect(calls.map(({ functionName }) => functionName)).toEqual([
+      'inspect_product_evidence',
+      'refine_filming_mission',
+    ]);
+    expect(calls.at(-1)?.arguments).toMatchObject({ expectedRevision: 2 });
   });
 });

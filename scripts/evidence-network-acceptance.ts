@@ -31,6 +31,7 @@ const searchTools = [
 const missionTools = [
   'inspect_product_evidence',
   'ask_product_question',
+  'refine_filming_mission',
   'create_phone_capture_link',
 ] as const;
 const publicMissionPublishTools = [
@@ -51,6 +52,10 @@ const finalTools = [
 ] as const;
 const correctedObservation =
   'A thin wet line becomes visible on the paper at 00:08 while the closed bottle remains inverted.';
+const refinedMissionInstruction =
+  'Show the closed lid, then invert the filled bottle above dry paper for eleven seconds.';
+const refinedMissionCriterion =
+  'Keep the lid seam, full bottle, and dry paper visible for the complete continuous inversion.';
 
 const toolNamesScript = `
 (async () => {
@@ -125,6 +130,93 @@ function invokeToolScript(
   ${assertionBody}
 })()
 `;
+}
+
+function refineMissionToolScript(input: Readonly<Record<string, unknown>>): string {
+  return `
+(async () => {
+  const context = document.modelContext;
+  if (!context?.getTools || !context.executeTool) return false;
+  const tools = await context.getTools();
+  const inspectTool = tools.find((candidate) => candidate.name === 'inspect_product_evidence');
+  const refineTool = tools.find((candidate) => candidate.name === 'refine_filming_mission');
+  if (!inspectTool || !refineTool) return false;
+  const inspectOutput = await context.executeTool(inspectTool, '{}');
+  const inspectPending = [inspectOutput];
+  const inspectVisited = new Set();
+  let revision = null;
+  while (inspectPending.length > 0) {
+    const value = inspectPending.pop();
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+        try { inspectPending.push(JSON.parse(trimmed)); } catch { /* Text content can be non-JSON. */ }
+      }
+      continue;
+    }
+    if (value === null || typeof value !== 'object' || inspectVisited.has(value)) continue;
+    inspectVisited.add(value);
+    if (Number.isInteger(value.revision)) revision = value.revision;
+    if (Array.isArray(value)) inspectPending.push(...value);
+    else inspectPending.push(...Object.values(value));
+  }
+  if (!Number.isInteger(revision)) return false;
+  const output = await context.executeTool(
+    refineTool,
+    JSON.stringify({ ...${JSON.stringify(input)}, expectedRevision: revision }),
+  );
+  const pending = [output];
+  const visited = new Set();
+  const parsedValues = [];
+  while (pending.length > 0) {
+    const value = pending.pop();
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+        try { pending.push(JSON.parse(trimmed)); } catch { /* Text content can be non-JSON. */ }
+      }
+      continue;
+    }
+    if (value === null || typeof value !== 'object' || visited.has(value)) continue;
+    visited.add(value);
+    parsedValues.push(value);
+    if (Array.isArray(value)) pending.push(...value);
+    else pending.push(...Object.values(value));
+  }
+  return parsedValues.some((value) => value.ok === true) &&
+    parsedValues.some((value) => value.missionStatus === 'open');
+})()
+`;
+}
+
+function fillHumanMissionRefinementScript(
+  instruction: string,
+  successCriterion: string,
+  minimumSeconds: number,
+): string {
+  return `(() => {
+    const details = document.querySelector('.mission-refinement');
+    const textareas = details?.querySelectorAll('textarea');
+    const seconds = details?.querySelector('input[type="number"]');
+    if (!(details instanceof HTMLDetailsElement) || textareas?.length !== 2 ||
+        !(seconds instanceof HTMLInputElement)) return false;
+    details.open = true;
+    const setValue = (element, value) => {
+      const prototype = element instanceof HTMLTextAreaElement
+        ? HTMLTextAreaElement.prototype
+        : HTMLInputElement.prototype;
+      const setter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+      if (!setter) return false;
+      setter.call(element, value);
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+      element.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    };
+    if (!setValue(textareas[0], ${JSON.stringify(instruction)}) ||
+        !setValue(textareas[1], ${JSON.stringify(successCriterion)}) ||
+        !setValue(seconds, ${JSON.stringify(String(minimumSeconds))})) return false;
+    return true;
+  })()`;
 }
 
 function localOrigin(value: string, key: string): string {
@@ -406,8 +498,8 @@ async function run(): Promise<void> {
     await recordAcceptanceStep(
       steps,
       humanControls
-        ? 'create and publish a bounded mission through human controls'
-        : 'create bounded mission through WebMCP',
+        ? 'create, refine, and publish a bounded mission through human controls'
+        : 'create and refine bounded mission through WebMCP',
       async () => {
         if (humanControls) {
           if (
@@ -418,10 +510,58 @@ async function run(): Promise<void> {
           await waitForBrowserValue(
             driver,
             'ordinary-browser phone handoff frontier',
-            pageIncludesScript('Put this exact mission on any phone.', 'Create phone capture link'),
+            pageIncludesScript(
+              'Refine this mission before sharing',
+              'Put this exact mission on any phone.',
+              'Create phone capture link',
+            ),
             (value) => value === true,
             config.commandTimeoutMs,
           );
+          if (
+            driver.eval(
+              fillHumanMissionRefinementScript(
+                refinedMissionInstruction,
+                refinedMissionCriterion,
+                11,
+              ),
+            ) !== true
+          ) {
+            throw new Error('The ordinary-browser mission editor could not accept the refinement.');
+          }
+          if (driver.eval(clickExactButtonScript('Save refined mission')) !== true) {
+            throw new Error('The ordinary-browser mission refinement could not be submitted.');
+          }
+          try {
+            await waitForBrowserValue(
+              driver,
+              'ordinary-browser refined mission',
+              pageIncludesScript(
+                refinedMissionInstruction,
+                refinedMissionCriterion,
+                '11s continuous take',
+              ),
+              (value) => value === true,
+              config.commandTimeoutMs,
+            );
+          } catch (error: unknown) {
+            const visibleState = driver.eval(`(() => ({
+              needleMatches: ${JSON.stringify([
+                refinedMissionInstruction,
+                refinedMissionCriterion,
+                '11s continuous take',
+              ])}.map((needle) => [needle, (document.body?.innerText ?? '').includes(needle)]),
+              instructionValue: document.querySelector('.mission-refinement textarea')?.value ?? null,
+              criterionValue: document.querySelectorAll('.mission-refinement textarea')[1]?.value ?? null,
+              secondsValue: document.querySelector('.mission-refinement input[type="number"]')?.value ?? null,
+              missionText: document.querySelector('.mission-card dl')?.textContent?.trim() ?? null,
+              activityText: document.querySelector('.evidence-activity')?.textContent?.trim() ?? null,
+              alert: document.querySelector('.mission-refinement [role="alert"]')?.textContent?.trim() ?? null,
+            }))()`);
+            const detail = error instanceof Error ? error.message : 'Unknown refinement failure.';
+            throw new Error(`${detail} Visible state: ${JSON.stringify(visibleState)}.`);
+          }
+          if (artifacts !== null) driver.screenshot(join(artifacts, '02b-refined.png'));
           if (driver.eval(clickExactButtonScript('Create phone capture link')) !== true) {
             throw new Error('The ordinary-browser phone case could not be created.');
           }
@@ -492,11 +632,40 @@ async function run(): Promise<void> {
         if (created !== true) throw new Error('WebMCP did not create the bounded mission.');
         await waitForBrowserValue(
           driver,
-          'phone capture tool',
+          'mission refinement and phone capture tools',
           toolNamesScript,
           (value) => isStringArray(value) && sameStringSet(value, missionTools),
           config.commandTimeoutMs,
         );
+        const refined = driver.eval(
+          refineMissionToolScript({
+            instruction: refinedMissionInstruction,
+            successCriterion: refinedMissionCriterion,
+            minimumSeconds: 11,
+            continuousTakeRequired: true,
+          }),
+          'invoke refine_filming_mission',
+        );
+        if (refined !== true) throw new Error('WebMCP did not refine the inspected mission.');
+        await waitForBrowserValue(
+          driver,
+          'refined mission frontier',
+          toolNamesScript,
+          (value) => isStringArray(value) && sameStringSet(value, missionTools),
+          config.commandTimeoutMs,
+        );
+        await waitForBrowserValue(
+          driver,
+          'refined mission visible state',
+          pageIncludesScript(
+            refinedMissionInstruction,
+            refinedMissionCriterion,
+            '11s continuous take',
+          ),
+          (value) => value === true,
+          config.commandTimeoutMs,
+        );
+        if (artifacts !== null) driver.screenshot(join(artifacts, '02b-refined.png'));
         const linked = driver.eval(
           invokeToolScript(
             'create_phone_capture_link',

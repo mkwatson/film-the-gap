@@ -191,6 +191,7 @@ describe('ProductEvidenceNetwork', () => {
 
     await waitFor(() => {
       expect(modelContext.activeToolNames()).not.toContain('create_filming_mission');
+      expect(modelContext.activeToolNames()).toContain('refine_filming_mission');
       expect(screen.getByText('Put this exact mission on any phone.')).toBeTruthy();
     });
     expect(inspectRegistration?.signal?.aborted).toBe(false);
@@ -379,12 +380,53 @@ describe('ProductEvidenceNetwork', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create claim-specific filming mission' }));
 
     expect(
-      await screen.findByText(/Record one continuous take that visibly answers:.*handle stay cool/),
-    ).toBeTruthy();
+      await screen.findAllByText(
+        /Record one continuous take that visibly answers:.*handle stay cool/,
+      ),
+    ).toHaveLength(2);
     expect(
       screen.queryByText('Fill the bottle, close the lid, and hold it upside down over dry paper.'),
     ).toBeNull();
     expect(screen.queryByText('Replay a completed rights-clean mission')).toBeNull();
+  });
+
+  it('lets an ordinary-browser shopper refine the mission before creating its phone link', async () => {
+    setModelContext(undefined);
+    render(<ProductEvidenceNetwork />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Search existing evidence' }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Create claim-specific filming mission' }),
+    );
+    const originalPhrase = screen.getByText(/^[A-Z]+ [A-Z]+ [1-9][0-9]$/).textContent;
+    if (originalPhrase === null) {
+      throw new Error('Expected the open mission to expose a fresh-capture phrase.');
+    }
+    fireEvent.click(screen.getByText('Refine this mission before sharing'));
+    fireEvent.change(screen.getByLabelText('Recording instruction'), {
+      target: { value: 'Show the closed lid, then invert the bottle for twelve seconds.' },
+    });
+    fireEvent.change(screen.getByLabelText('Acceptance boundary'), {
+      target: { value: 'Keep the lid seam and dry paper visible for the full inversion.' },
+    });
+    fireEvent.change(screen.getByLabelText('Minimum seconds'), {
+      target: { value: '12' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save refined mission' }));
+
+    expect(
+      await screen.findByText(
+        'Filming mission refined. Its bounded fresh-capture phrase was preserved.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getAllByText('Show the closed lid, then invert the bottle for twelve seconds.'),
+    ).toHaveLength(2);
+    expect((screen.getByLabelText('Recording instruction') as HTMLTextAreaElement).value).toBe(
+      'Show the closed lid, then invert the bottle for twelve seconds.',
+    );
+    expect(screen.getByText('refine filming mission')).toBeTruthy();
+    expect(screen.getByText(originalPhrase)).toBeTruthy();
   });
 
   it('reuses reviewed network evidence without asking another person to film', async () => {

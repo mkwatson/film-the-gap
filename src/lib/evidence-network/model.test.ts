@@ -355,6 +355,62 @@ describe('product evidence network model', () => {
     expect(getEvidenceNetworkToolNames(state)).not.toContain('create_filming_mission');
   });
 
+  it('refines an open mission at the inspected revision without replacing its capture challenge', () => {
+    const state = createOpenMission();
+    const originalMission = state.activeCase?.mission;
+    const result = applyEvidenceNetworkCommand(
+      state,
+      {
+        kind: 'refine-filming-mission',
+        actor: 'agent',
+        input: {
+          instruction:
+            'Invert the filled bottle above dry paper for twelve seconds after showing the closed lid.',
+          successCriterion:
+            'Keep the lid seam, bottle body, and paper visible without interruption.',
+          minimumSeconds: 12,
+          continuousTakeRequired: true,
+          expectedRevision: state.revision,
+        },
+      },
+      evidenceTime,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.state.revision).toBe(state.revision + 1);
+    expect(result.state.activeCase?.mission).toMatchObject({
+      id: originalMission?.id,
+      instruction:
+        'Invert the filled bottle above dry paper for twelve seconds after showing the closed lid.',
+      successCriterion: 'Keep the lid seam, bottle body, and paper visible without interruption.',
+      minimumSeconds: 12,
+      captureChallenge: originalMission?.captureChallenge,
+    });
+    expect(result.state.activity.at(-1)).toMatchObject({
+      actor: 'agent',
+      action: 'refine_filming_mission',
+    });
+  });
+
+  it('rejects a stale mission refinement without changing the mission', () => {
+    const state = createOpenMission();
+    const result = applyEvidenceNetworkCommand(state, {
+      kind: 'refine-filming-mission',
+      actor: 'human',
+      input: {
+        instruction: 'Record a different complete bottle inversion.',
+        successCriterion: 'Keep the bottle and paper visible throughout.',
+        minimumSeconds: 12,
+        continuousTakeRequired: true,
+        expectedRevision: state.revision - 1,
+      },
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.state).toBe(state);
+    expect(result.message).toContain(`revision ${state.revision}`);
+  });
+
   it('changes the answer after a reviewed, rights-cleared mission replay', () => {
     const before = createOpenMission();
     const result = applyEvidenceNetworkCommand(

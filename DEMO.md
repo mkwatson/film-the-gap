@@ -32,7 +32,7 @@ Product-page prompt:
 
 Case prompt:
 
-> Use this page's Site Tools. Inspect the active product question and search existing evidence. Treat ordinary public results as leads, never proof. If the reviewed sources still do not prove the answer, create the smallest continuous filming mission, create its bounded phone case, and publish only that mission to the open request board. Do not infer the result from marketing copy. Stop before anyone records.
+> Use this page's Site Tools. Inspect the active product question and search existing evidence. Treat ordinary public results as leads, never proof. If the reviewed sources still do not prove the answer, create the smallest continuous filming mission, inspect it, and refine it if its acceptance boundary is ambiguous. Then create its bounded phone case and publish only that mission to the open request board. Do not infer the result from marketing copy. Stop before anyone records.
 
 Public-board prompt:
 
@@ -67,7 +67,7 @@ The narration is intentionally short enough to leave room for the product to exp
 | `0:00–0:15` | Owned bottle beside `/demo-product`. Highlight **Claim only · not verified evidence**, the exact gap, **0 reviewed videos**, and the page's two Site Tools.                                                    | “This bottle says leak resistant. That does not prove the ten-second test I care about—and this product page knows exactly what evidence it is missing.”                                        |
 | `0:15–0:28` | Send the product-page prompt. ChatGPT calls the page's claim inspector, then its handoff tool navigates to the exact prefilled case showing **Not enough proof**.                                              | “Its Site Tools do not repeat the claim. They expose the proof boundary and open the exact question without carrying my identity, history, preferences, conversation, or budget.”               |
 | `0:28–0:45` | Send the case prompt. ChatGPT searches reviewed D1 evidence, the product page, public video, and the open web. Show the Browser Run receipt while the answer stays insufficient.                               | “The network searches what already exists, but ordinary pages and public links stay leads—not proof.”                                                                                           |
-| `0:45–1:00` | ChatGPT creates the ten-second mission and explicitly publishes only its public fields. Show the dynamic tool frontier change.                                                                                 | “When the gap remains, ChatGPT creates the smallest useful filming job and publishes only what someone needs to record.”                                                                        |
+| `0:45–1:00` | ChatGPT creates and inspects the mission, tightens its acceptance boundary, then explicitly publishes only its public fields. Show refinement disappearing after phone handoff.                                | “When the gap remains, ChatGPT creates—and can tighten—the smallest useful filming job. Once handed off, the target locks, and only recording fields become public.”                            |
 | `1:00–1:12` | Open `/missions`. ChatGPT inspects the board, opens this exact request, and reveals its bounded recorder.                                                                                                      | “No store integration or customer list is required. A person with access to the product can discover the request and help.”                                                                     |
 | `1:12–1:32` | On an ordinary phone browser, show the exact mission and random phrase; say or show it while the product remains visible, then record the complete continuous test.                                            | “No account and no app. The mission phrase checks that this take followed the request; it is not an authenticity claim.”                                                                        |
 | `1:32–1:48` | Select the video, explicitly confirm analysis rights, show direct Stream upload, then the bounded proposal, cut-aware scrub-to map, cited interval, and separate phrase-detection receipt. Waiting may be cut. | “Nothing reaches the model until the contributor confirms media rights. Then Stream and Vercel AI Gateway map the video and propose the exact proof interval. The AI still cannot publish.”     |
@@ -106,7 +106,7 @@ The ready-to-capture `1920×1080` asset is [public/demo-architecture.svg](public
 2. **Product-page bookends:** `/demo-product` before publication with zero reviewed videos and its claim/handoff tools; the exact same page after publication with the reviewed result, timestamp, and replacement inspection tool. Also capture its response Content Signal and the resulting Browser Run receipt on the case page.
 3. **Uninterrupted product test:** the original phone file and a clean close-up showing the full continuous duration. Keep it as the truth source even if the edited demo shows only part of the wait.
 4. **Phone close-up:** mission → capture → upload → proposal → review → publication, with no credentials or personal data visible.
-5. **Buyer close-up:** initial insufficient answer → dynamic Site Tool changes → WebSocket update → before/after answer → timestamped ChatGPT response.
+5. **Buyer close-up:** initial insufficient answer → revision-safe mission refinement → refinement disappears at phone handoff → WebSocket update → before/after answer → timestamped ChatGPT response.
 6. **Manual-fallback take:** the same real upload with the model proposal unavailable. Prove a contributor can still review conservatively and that inconclusive remains a valid outcome.
 7. **Completed-mission fallback and product-page reuse:** after the real mission is published with reuse consent, reload the exact original product page and capture the same Stream citation resolving its gap with no mission creation. As a backup, open the same URL/question in a fresh case and show the same result. This is honest reuse of the earlier recording, not a new person, model call, or physical test.
 8. **Unknown-product insert:** open a new case for the USB-C lavalier microphone question and show that the same tool contract adapts without a code change. Do not attempt a second full mission in the primary cut.
@@ -124,7 +124,7 @@ pnpm acceptance:evidence-network:fallback
 The first command drives the real Next.js page and Durable Object through native Chrome WebMCP. The second launches Chrome with WebMCP explicitly disabled and completes the same product loop with visible human controls. Each generates an owned 12-second MP4; deterministic local services replace only Stream and the model, and the browser is blocked from the public paid-service hosts. Together they must prove:
 
 1. the initial answer is insufficient;
-2. WebMCP creates a bounded mission and phone link;
+2. WebMCP creates a bounded mission, inspects and refines its exact revision, then creates the phone link;
 3. the contributor capability survives reload after its URL fragment is scrubbed;
 4. upload and model analysis remain blocked until explicit media-rights confirmation, then a complete cut-aware segment map and proposal reach human review while the synthetic no-phrase recording remains only contributor-attested;
 5. the reviewer can correct **Supports** to **Contradicts**;
@@ -143,7 +143,7 @@ This receipt proves the product flow and failure boundaries, not a live Stream/m
 
 - By `0:15`, a cold viewer can state the problem: a product claim does not prove the shopper's exact question.
 - By `0:28`, native product-page Site Tools—not generic browsing or DOM automation—have inspected the gap and opened the exact case.
-- By `1:00`, ChatGPT has created a concrete filming mission and the case's available tools have changed.
+- By `1:00`, ChatGPT has created and tightened a concrete filming mission, handed it off, and the now-invalid refinement tool has disappeared.
 - The viewer sees an ordinary phone record an owned physical product for the full required continuous duration.
 - The model is visibly a proposal, and the human's review is visibly authoritative.
 - By `2:18`, the same buyer page shows **before → after** and a newly available answer-change tool.

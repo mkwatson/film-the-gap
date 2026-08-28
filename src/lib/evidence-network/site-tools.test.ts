@@ -169,11 +169,62 @@ describe('product evidence Site Tools', () => {
     expect(createEvidenceSiteTools(runtimeValue).map(({ name }) => name)).toEqual([
       'inspect_product_evidence',
       'ask_product_question',
+      'refine_filming_mission',
     ]);
   });
 
-  it('adds one bounded phone handoff only while an open mission lacks a shared case', async () => {
-    const { runtime: runtimeValue } = runtime();
+  it('refines only the inspected open mission revision and returns the preserved challenge', async () => {
+    const { runtime: runtimeValue, readState } = runtime();
+    await tool(runtimeValue, 'create_filming_mission').execute(
+      {
+        instruction: 'Invert the filled bottle over dry paper for ten seconds.',
+        successCriterion: 'Keep the closed lid and dry paper visible throughout.',
+        minimumSeconds: 10,
+        continuousTakeRequired: true,
+      },
+      { signal: new AbortController().signal },
+    );
+    const before = readState();
+    const challenge = before.activeCase?.mission?.captureChallenge;
+    const refineTool = tool(runtimeValue, 'refine_filming_mission');
+
+    await expect(
+      refineTool.execute(
+        {
+          instruction: 'Show the closed lid, then invert the bottle for twelve seconds.',
+          successCriterion: 'Keep the lid seam and dry paper visible for the full inversion.',
+          minimumSeconds: 12,
+          continuousTakeRequired: true,
+          expectedRevision: before.revision - 1,
+        },
+        { signal: new AbortController().signal },
+      ),
+    ).resolves.toMatchObject({ ok: false, revision: before.revision });
+
+    await expect(
+      refineTool.execute(
+        {
+          instruction: 'Show the closed lid, then invert the bottle for twelve seconds.',
+          successCriterion: 'Keep the lid seam and dry paper visible for the full inversion.',
+          minimumSeconds: 12,
+          continuousTakeRequired: true,
+          expectedRevision: before.revision,
+        },
+        { signal: new AbortController().signal },
+      ),
+    ).resolves.toMatchObject({ ok: true, revision: before.revision + 1 });
+    expect(readState().activeCase?.mission).toMatchObject({
+      minimumSeconds: 12,
+      captureChallenge: challenge,
+    });
+    expect(evidenceCaseSnapshot(readState())).toMatchObject({
+      revision: before.revision + 1,
+      next: 'Refine if needed; then create the phone link.',
+    });
+  });
+
+  it('adds one bounded phone handoff and rejects a captured refinement tool after handoff', async () => {
+    const { runtime: runtimeValue, readState } = runtime();
     await tool(runtimeValue, 'create_filming_mission').execute(
       {
         instruction: 'Invert the filled bottle over dry paper for ten seconds.',
@@ -207,8 +258,11 @@ describe('product evidence Site Tools', () => {
     expect(createEvidenceSiteTools(runtimeWithPhone).map(({ name }) => name)).toEqual([
       'inspect_product_evidence',
       'ask_product_question',
+      'refine_filming_mission',
       'create_phone_capture_link',
     ]);
+    const staleRefinementTool = tool(runtimeWithPhone, 'refine_filming_mission');
+    const revisionBeforeHandoff = readState().revision;
     const result = await tool(runtimeWithPhone, 'create_phone_capture_link').execute(
       {},
       { signal: new AbortController().signal },
@@ -218,6 +272,23 @@ describe('product evidence Site Tools', () => {
       'inspect_product_evidence',
       'ask_product_question',
     ]);
+    await expect(
+      staleRefinementTool.execute(
+        {
+          instruction: 'Change the already shared recording target.',
+          successCriterion: 'Use a different acceptance boundary after handoff.',
+          minimumSeconds: 12,
+          continuousTakeRequired: true,
+          expectedRevision: revisionBeforeHandoff,
+        },
+        { signal: new AbortController().signal },
+      ),
+    ).resolves.toMatchObject({
+      ok: false,
+      error: 'mission_handoff_locked',
+      revision: revisionBeforeHandoff,
+    });
+    expect(readState().revision).toBe(revisionBeforeHandoff);
   });
 
   it('requires explicit confirmation to publish and revoke a privacy-bounded public mission', async () => {

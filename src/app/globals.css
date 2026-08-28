@@ -1679,6 +1679,93 @@ select:focus-visible {
   line-height: 1.45;
 }
 
+.mission-refinement {
+  margin-top: 12px;
+  border: 1px solid color-mix(in srgb, var(--cyan) 26%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--cyan) 4%, transparent);
+}
+
+.mission-refinement summary {
+  padding: 12px 13px;
+  color: var(--cyan);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.mission-refinement form {
+  display: grid;
+  gap: 10px;
+  padding: 0 13px 13px;
+  border-top: 1px solid var(--line);
+}
+
+.mission-refinement form > label,
+.mission-refinement-row > label {
+  display: grid;
+  gap: 5px;
+  padding-top: 10px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.mission-refinement textarea,
+.mission-refinement input[type='number'] {
+  width: 100%;
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.025);
+  font: inherit;
+}
+
+.mission-refinement textarea {
+  min-height: 64px;
+  padding: 9px;
+  resize: vertical;
+}
+
+.mission-refinement input[type='number'] {
+  padding: 8px;
+}
+
+.mission-refinement textarea:focus,
+.mission-refinement input[type='number']:focus {
+  border-color: var(--cyan);
+}
+
+.mission-refinement-row {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.4fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.mission-refinement-row > .mission-refinement-check {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  padding-bottom: 8px;
+}
+
+.mission-refinement-check input {
+  accent-color: var(--cyan);
+}
+
+.mission-refinement form > small,
+.mission-refinement form > p[role='alert'] {
+  margin: 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.mission-refinement form > p[role='alert'] {
+  color: var(--coral);
+}
+
 .mission-open-paths {
   display: grid;
   gap: 12px;

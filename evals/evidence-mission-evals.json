@@ -1,0 +1,36 @@
+[
+  {
+    "name": "Inspect before refining an ambiguous open mission",
+    "messages": [
+      {
+        "role": "user",
+        "type": "message",
+        "content": "Inspect the current filming mission, then tighten it before any phone link is created. Require the closed lid to be shown first, eleven continuous seconds of inversion, and the lid seam, full bottle, and dry paper to remain visible. Preserve the existing product question and fresh-capture phrase."
+      }
+    ],
+    "expectedCall": [
+      { "functionName": "inspect_product_evidence", "arguments": {} },
+      {
+        "functionName": "refine_filming_mission",
+        "arguments": {
+          "instruction": "Show the closed lid, then invert the filled bottle above dry paper for eleven seconds.",
+          "successCriterion": "Keep the lid seam, full bottle, and dry paper visible for the complete continuous inversion.",
+          "minimumSeconds": 11,
+          "continuousTakeRequired": true,
+          "expectedRevision": 2
+        }
+      }
+    ]
+  },
+  {
+    "name": "Read-only mission inspection does not refine",
+    "messages": [
+      {
+        "role": "user",
+        "type": "message",
+        "content": "Tell me exactly what the open filming mission asks someone to record and what must remain visible. Do not change it."
+      }
+    ],
+    "expectedCall": [{ "functionName": "inspect_product_evidence", "arguments": {} }]
+  }
+]

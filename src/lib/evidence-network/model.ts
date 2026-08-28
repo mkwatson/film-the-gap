@@ -209,6 +209,12 @@ export const filmingMissionInputSchema = z.strictObject({
 
 export type FilmingMissionInput = z.infer<typeof filmingMissionInputSchema>;
 
+export const filmingMissionRefinementInputSchema = filmingMissionInputSchema.extend({
+  expectedRevision: z.number().int().nonnegative(),
+});
+
+export type FilmingMissionRefinementInput = z.infer<typeof filmingMissionRefinementInputSchema>;
+
 export const captureChallengeSchema: z.ZodType<CaptureChallenge> = z.strictObject({
   kind: z.literal('spoken_or_shown_phrase'),
   phrase: z.string().regex(/^[A-Z]+ [A-Z]+ [1-9][0-9]$/),
@@ -395,6 +401,11 @@ export type EvidenceNetworkCommand =
       readonly kind: 'create-filming-mission';
       readonly actor: Extract<EvidenceActor, 'human' | 'agent'>;
       readonly input: FilmingMissionInput;
+    }
+  | {
+      readonly kind: 'refine-filming-mission';
+      readonly actor: Extract<EvidenceActor, 'human' | 'agent'>;
+      readonly input: FilmingMissionRefinementInput;
     }
   | {
       readonly kind: 'publish-reviewed-evidence';
@@ -1036,6 +1047,73 @@ function createFilmingMission(
   };
 }
 
+function refineFilmingMission(
+  state: EvidenceNetworkState,
+  input: FilmingMissionRefinementInput,
+  actor: Extract<EvidenceActor, 'human' | 'agent'>,
+  now: string,
+): EvidenceNetworkTransition {
+  const evidenceCase = state.activeCase;
+  if (evidenceCase?.mission?.status !== 'open') {
+    return { ok: false, state, message: 'There is no open filming mission to refine.' };
+  }
+  const parsed = filmingMissionRefinementInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      state,
+      message: parsed.error.issues[0]?.message ?? 'Invalid mission refinement.',
+    };
+  }
+  if (parsed.data.expectedRevision !== state.revision) {
+    return {
+      ok: false,
+      state,
+      message: `The filming mission changed at revision ${state.revision}; inspect it again before refining.`,
+    };
+  }
+  const missionInput: FilmingMissionInput = {
+    instruction: parsed.data.instruction,
+    successCriterion: parsed.data.successCriterion,
+    minimumSeconds: parsed.data.minimumSeconds,
+    continuousTakeRequired: parsed.data.continuousTakeRequired,
+  };
+  const currentMission = evidenceCase.mission;
+  if (
+    currentMission.instruction === missionInput.instruction &&
+    currentMission.successCriterion === missionInput.successCriterion &&
+    currentMission.minimumSeconds === missionInput.minimumSeconds &&
+    currentMission.continuousTakeRequired === missionInput.continuousTakeRequired
+  ) {
+    return { ok: true, state, message: 'The filming mission already matches that specification.' };
+  }
+  const revision = state.revision + 1;
+  return {
+    ok: true,
+    state: {
+      revision,
+      activeCase: {
+        ...evidenceCase,
+        mission: {
+          ...currentMission,
+          ...missionInput,
+        },
+      },
+      activity: [
+        ...state.activity,
+        activity(
+          revision,
+          actor,
+          'refine_filming_mission',
+          'Refined the open mission before its contributor link was created.',
+          now,
+        ),
+      ],
+    },
+    message: 'Filming mission refined. Its bounded fresh-capture phrase was preserved.',
+  };
+}
+
 function publishReviewedEvidence(
   state: EvidenceNetworkState,
   input: ReviewedEvidenceInput,
@@ -1141,6 +1219,9 @@ export function applyEvidenceNetworkCommand(
   }
   if (command.kind === 'create-filming-mission') {
     return createFilmingMission(state, command.input, command.actor, now);
+  }
+  if (command.kind === 'refine-filming-mission') {
+    return refineFilmingMission(state, command.input, command.actor, now);
   }
   return publishReviewedEvidence(state, command.input, now);
 }

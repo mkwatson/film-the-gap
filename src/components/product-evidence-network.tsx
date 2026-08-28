@@ -19,6 +19,7 @@ import {
   type EvidenceDiscoveryInput,
   type EvidenceDiscoveryPlatform,
   type EvidenceDiscoveryProvider,
+  type FilmingMissionInput,
   type ProductQuestionInput,
   type ProductEvidenceCase,
 } from '@/lib/evidence-network/model';
@@ -59,7 +60,7 @@ import { useDynamicSiteTools } from '@/lib/webmcp/use-dynamic-site-tools';
 const defaultMission = demoProduct.mission;
 
 const agentStarter =
-  'Use this page’s Site Tools. Inspect the active product question and search existing evidence. Treat ordinary web results as leads, never proof; only rights-cleared, human-reviewed network recordings may change the answer. If the sources still do not prove it, create the smallest continuous filming mission and a phone capture link, then publish only that mission’s public product, question, and filming fields to the open request board. This is my explicit confirmation to publish those fields—never my identity, preferences, history, budget, or conversation. Do not infer the result. Stop before anyone records; after reviewed evidence arrives, inspect exactly how the answer changed.';
+  'Use this page’s Site Tools. Inspect the active product question and search existing evidence. Treat ordinary web results as leads, never proof; only rights-cleared, human-reviewed network recordings may change the answer. If the sources still do not prove it, create the smallest continuous filming mission, inspect it, and refine it if its acceptance boundary is ambiguous. Then create a phone capture link and publish only that mission’s public product, question, and filming fields to the open request board. This is my explicit confirmation to publish those fields—never my identity, preferences, history, budget, or conversation. Do not infer the result. Stop before anyone records; after reviewed evidence arrives, inspect exactly how the answer changed.';
 
 const answerLabels: Readonly<Record<EvidenceAnswerStatus, string>> = {
   insufficient: 'Not enough proof',
@@ -166,6 +167,102 @@ function attachCurrentDemoProductPage(
   return demoProductUrl.protocol === 'https:' && isPublicHttpUrl(demoProductUrl.toString())
     ? attachDemoProductPageUrl(state, demoProductUrl.toString())
     : state;
+}
+
+interface MissionRefinementEditorProps {
+  readonly mission: FilmingMissionInput;
+  readonly refine: (input: FilmingMissionInput) => Promise<EvidenceNetworkTransition>;
+}
+
+function MissionRefinementEditor({
+  mission,
+  refine,
+}: MissionRefinementEditorProps): React.JSX.Element {
+  const [draft, setDraft] = useState<FilmingMissionInput>(() => ({
+    instruction: mission.instruction,
+    successCriterion: mission.successCriterion,
+    minimumSeconds: mission.minimumSeconds,
+    continuousTakeRequired: mission.continuousTakeRequired,
+  }));
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    const result = await refine(draft);
+    if (!result.ok) {
+      setError(result.message);
+    }
+  }
+
+  return (
+    <details className="mission-refinement">
+      <summary>Refine this mission before sharing</summary>
+      <form onSubmit={(event) => void submit(event)}>
+        <label>
+          Recording instruction
+          <textarea
+            required
+            minLength={8}
+            maxLength={280}
+            value={draft.instruction}
+            onChange={(event) => {
+              const instruction = event.currentTarget.value;
+              setDraft((current) => ({ ...current, instruction }));
+            }}
+          />
+        </label>
+        <label>
+          Acceptance boundary
+          <textarea
+            required
+            minLength={8}
+            maxLength={280}
+            value={draft.successCriterion}
+            onChange={(event) => {
+              const successCriterion = event.currentTarget.value;
+              setDraft((current) => ({ ...current, successCriterion }));
+            }}
+          />
+        </label>
+        <div className="mission-refinement-row">
+          <label>
+            Minimum seconds
+            <input
+              type="number"
+              min={2}
+              max={60}
+              value={draft.minimumSeconds}
+              onChange={(event) => {
+                const value = Number.parseInt(event.currentTarget.value, 10);
+                if (!Number.isNaN(value)) {
+                  setDraft((current) => ({ ...current, minimumSeconds: value }));
+                }
+              }}
+            />
+          </label>
+          <label className="mission-refinement-check">
+            <input
+              type="checkbox"
+              checked={draft.continuousTakeRequired}
+              onChange={(event) => {
+                const continuousTakeRequired = event.currentTarget.checked;
+                setDraft((current) => ({ ...current, continuousTakeRequired }));
+              }}
+            />
+            Require one continuous take
+          </label>
+        </div>
+        <button className="evidence-secondary-button" type="submit">
+          Save refined mission
+        </button>
+        {error === null ? null : <p role="alert">{error}</p>}
+        <small>
+          This remains local until a phone link is created. The random fresh-capture phrase stays
+          unchanged.
+        </small>
+      </form>
+    </details>
+  );
 }
 
 function remoteDiscoveryForState(state: EvidenceNetworkState): EvidenceDiscoveryInput | undefined {
@@ -393,6 +490,27 @@ export function ProductEvidenceNetwork({
       return result;
     },
     [clearPhoneConnection, initialHandoff, revokeOpenPublicMission],
+  );
+  const refineMission = useCallback(
+    async (input: FilmingMissionInput): Promise<EvidenceNetworkTransition> => {
+      if (phoneConnectionRef.current !== null) {
+        return {
+          ok: false,
+          state: stateRef.current,
+          message:
+            'A contributor link already exists. The filming target is locked for this handoff.',
+        };
+      }
+      return dispatch({
+        kind: 'refine-filming-mission',
+        actor: 'human',
+        input: {
+          ...input,
+          expectedRevision: stateRef.current.revision,
+        },
+      });
+    },
+    [dispatch],
   );
   const createPhoneCapture = useCallback(async (): Promise<EvidencePhoneCaptureReceipt> => {
     const existing = phoneConnectionRef.current;
@@ -625,6 +743,9 @@ export function ProductEvidenceNetwork({
     [siteToolRuntime],
   );
   const availableToolNames = [...getEvidenceNetworkToolNames(state)];
+  if (phoneConnection === null && state.activeCase?.mission?.status === 'open') {
+    availableToolNames.push('refine_filming_mission');
+  }
   if (
     serviceUrl !== null &&
     phoneConnection === null &&
@@ -1175,6 +1296,14 @@ export function ProductEvidenceNetwork({
                   <dd>{mission.captureChallenge.phrase}</dd>
                 </div>
               </dl>
+
+              {mission.status === 'open' && phoneConnection === null ? (
+                <MissionRefinementEditor
+                  key={`${mission.id}:${state.revision}`}
+                  mission={mission}
+                  refine={refineMission}
+                />
+              ) : null}
 
               {mission.status === 'open' ? (
                 <div className="mission-open-paths">

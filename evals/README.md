@@ -4,12 +4,13 @@ These fixtures use Chrome Labs' current `webmcp-evals` format and exercise the p
 
 - `evidence-initial-tools.json` is an exact checked-in projection of the three Site Tools available on first load.
 - `evidence-initial-evals.json` tests read-only inspection, arbitrary-product intake, privacy minimization, and mission creation against that static frontier.
+- `evidence-mission-tools.json` is the exact open-mission frontier before a contributor link exists; `evidence-mission-evals.json` requires inspection before a revision-bound refinement and preserves a read-only path.
 - `browser-journey-evals.json` tests the live dynamic shopper page. Its hero trajectory opens an arbitrary product case, searches existing evidence, creates a filming mission, creates a bounded phone handoff, and explicitly publishes only the public mission fields. Separate cases require search before a private-only handoff and read-only inspection.
 - `product-page-initial-tools.json` and `product-page-reviewed-tools.json` are exact projections of the product page before and after reviewed evidence. They make the disappearing handoff and replacement evidence inspector independently auditable.
 - `product-page-journey-evals.json` is a live cross-document trajectory: inspect the authored-claim boundary, execute the page-owned case navigation, then inspect the newly loaded evidence case through its own tools.
 - `product-page-reviewed-evals.json` checks that the resolved page returns timestamped reviewed evidence without requesting another recording and still distinguishes the authored claim from proof.
 
-`src/lib/evidence-network/webmcp-evals.test.ts` rejects schema drift in all three static frontiers, unknown tool names, private test material in expected arguments, public recruitment without a distinct confirmation call, private handoff without search first, and a reviewed page that still expects the stale handoff.
+`src/lib/evidence-network/webmcp-evals.test.ts` rejects schema drift in all four static frontiers, unknown tool names, private test material in expected arguments, mission refinement without a prior inspection and exact revision, public recruitment without a distinct confirmation call, private handoff without search first, and a reviewed page that still expects the stale handoff.
 
 ## Current source and published package
 
@@ -48,6 +49,10 @@ Only run this when an already-authorized provider and budget are available:
 npx --yes webmcp-evals@0.0.3 local \
   --tools evals/evidence-initial-tools.json \
   --evals evals/evidence-initial-evals.json
+
+npx --yes webmcp-evals@0.0.3 local \
+  --tools evals/evidence-mission-tools.json \
+  --evals evals/evidence-mission-evals.json
 
 npx --yes webmcp-evals@0.0.3 local \
   --tools evals/product-page-initial-tools.json \

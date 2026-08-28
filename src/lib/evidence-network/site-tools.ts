@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   currentEvidenceAnswer,
   filmingMissionInputSchema,
+  filmingMissionRefinementInputSchema,
   getEvidenceNetworkToolNames,
   initialEvidenceAnswer,
   productQuestionInputSchema,
@@ -73,6 +74,21 @@ const filmingMissionJsonSchema = {
     },
   },
   required: ['instruction', 'successCriterion', 'minimumSeconds', 'continuousTakeRequired'],
+  additionalProperties: false,
+} as const;
+
+const filmingMissionRefinementJsonSchema = {
+  type: 'object',
+  properties: {
+    ...filmingMissionJsonSchema.properties,
+    expectedRevision: {
+      type: 'integer',
+      minimum: 0,
+      description:
+        'Exact revision returned by inspect_product_evidence; prevents replacing a mission that changed after inspection.',
+    },
+  },
+  required: [...filmingMissionJsonSchema.required, 'expectedRevision'],
   additionalProperties: false,
 } as const;
 
@@ -221,6 +237,9 @@ function sourceSnapshot(state: EvidenceNetworkState): {
 function availableToolNames(runtime: EvidenceSiteToolRuntime): readonly string[] {
   const names = [...getEvidenceNetworkToolNames(runtime.readState())];
   const mission = runtime.readState().activeCase?.mission;
+  if ((runtime.phoneCapture?.current() ?? null) === null && mission?.status === 'open') {
+    names.push('refine_filming_mission');
+  }
   if (
     runtime.phoneCapture?.available === true &&
     runtime.phoneCapture.current() === null &&
@@ -261,6 +280,7 @@ export function evidenceCaseSnapshot(
   if (evidenceCase === null) {
     return {
       state: 'empty',
+      revision: state.revision,
       next: 'Ask one concrete question about any product.',
       availableTools: availableToolNames(runtime),
       privacyReceipt: {
@@ -273,8 +293,8 @@ export function evidenceCaseSnapshot(
   const currentPhoneCapture = phoneCapture?.current() ?? null;
   const currentPublicMission = missionBoard?.current() ?? null;
   return {
+    revision: state.revision,
     case: {
-      id: evidenceCase.id,
       product: {
         name: evidenceCase.product.name,
         ...(evidenceCase.product.suppliedUrl === null
@@ -310,7 +330,9 @@ export function evidenceCaseSnapshot(
         : answer?.status === 'insufficient' && evidenceCase.mission === null
           ? 'Create a claim-specific filming mission.'
           : evidenceCase.mission?.status === 'open'
-            ? 'Wait for reviewed evidence from a contributor.'
+            ? currentPhoneCapture === null
+              ? 'Refine if needed; then create the phone link.'
+              : 'Wait for reviewed evidence from a contributor.'
             : 'Inspect how the evidence changed the answer.',
     availableTools: availableToolNames(runtime),
     phoneCapture:
@@ -479,6 +501,40 @@ function allEvidenceSiteTools(
         return transitionSnapshot(
           await runtime.dispatch({
             kind: 'create-filming-mission',
+            actor: 'agent',
+            input: parsed.data,
+          }),
+        );
+      },
+    },
+    {
+      name: 'refine_filming_mission',
+      title: 'Refine the filming mission',
+      description:
+        'Replace the open mission’s recording instruction and acceptance boundary before any contributor link exists. Preserve the question and fresh-capture challenge; use the exact inspected revision so stale agent state cannot overwrite a newer mission.',
+      inputSchema: filmingMissionRefinementJsonSchema,
+      annotations: {
+        readOnlyHint: false,
+        untrustedContentHint: true,
+      },
+      execute: async (input, options?: WebMCP.ToolExecuteCallbackOptions): Promise<object> => {
+        checkAbort(options);
+        const parsed = filmingMissionRefinementInputSchema.safeParse(input);
+        if (!parsed.success) {
+          return validationFailure(parsed.error);
+        }
+        if ((runtime.phoneCapture?.current() ?? null) !== null) {
+          return {
+            ok: false,
+            error: 'mission_handoff_locked',
+            message:
+              'A contributor link already exists. The filming target is locked for this handoff.',
+            revision: runtime.readState().revision,
+          };
+        }
+        return transitionSnapshot(
+          await runtime.dispatch({
+            kind: 'refine-filming-mission',
             actor: 'agent',
             input: parsed.data,
           }),
