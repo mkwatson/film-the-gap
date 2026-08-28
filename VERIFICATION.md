@@ -9,15 +9,15 @@ Updated August 28, 2026 PT. This document records what the current product-evide
 | `pnpm peers check`            | Pass, zero peer issues                             | The exact pinned dependency graph is internally compatible.                                                                                                      |
 | Production dependency audit   | Pass, no known vulnerabilities                     | Every installed production dependency declares a recognized open-source license.                                                                                 |
 | `pnpm check`                  | Pass                                               | Prettier, zero-warning ESLint, strict TypeScript, all tests, Worker bundle, and production Next.js build.                                                        |
-| App tests                     | 25 files, 155 tests pass                           | Product state, dynamic tools, privacy, review, search, page-reading boundaries, reconnect, failures, and release checks.                                         |
+| App tests                     | 26 files, 159 tests pass                           | Product state, owned demo page, dynamic tools, privacy, review, search, page-reading boundaries, reconnect, failures, and release checks.                        |
 | Worker tests                  | 6 files, 34 tests pass in Workerd                  | Durable Object, D1, Browser Run contract, role capabilities, uploads, model proposal, reuse, expiry, quota, and denial paths.                                    |
-| Worker dry run                | Wrangler 4.127.0; 1,135.37 KiB / 191.11 KiB gzip   | The standalone evidence Worker bundles with every declared production binding, including Browser Run.                                                            |
-| Next.js build                 | Next.js 16.3.3; six route entries                  | The shopper, board, recorder, search, and health surfaces build for production.                                                                                  |
+| Worker dry run                | Wrangler 4.127.0; 1,135.50 KiB / 191.15 KiB gzip   | The standalone evidence Worker bundles with every declared production binding, including Browser Run.                                                            |
+| Next.js build                 | Next.js 16.3.3; seven route entries                | The shopper, owned demo product, board, recorder, search, and health surfaces build for production.                                                              |
 | Cold clone                    | Frozen install and full gate pass; clean afterward | The repository does not depend on ignored files, generated files, or local package state.                                                                        |
 | Native Chrome journey         | Eight steps pass                                   | The real app, native WebMCP registration, Durable Object, D1, WebSocket, and browser state complete the causal journey against deterministic paid-edge fixtures. |
 | Ordinary-browser journey      | Eight steps pass with WebMCP disabled              | The same shopper, board, recorder, review, update, and reuse loop works through visible controls; the product is not an agent-only façade.                       |
 | Chrome Labs independent smoke | 9/9 calls across four cases                        | The exact current source-built WebMCP evaluator independently discovers and executes the generic tool frontier.                                                  |
-| Desktop/mobile visual check   | Pass at desktop and 390×844                        | Shopper, board, and contributor pages remain legible with no horizontal overflow or framework error overlay.                                                     |
+| Desktop/mobile visual check   | Pass at desktop and 390×844                        | Shopper, owned demo-product, board, and contributor pages remain legible with no horizontal overflow or framework error overlay.                                 |
 | Repository content scan       | Pass                                               | The tracked tree contains text and one authored SVG, no binary media; a reachable-history secret-pattern scan found only environment-variable lookups.           |
 
 The exact browser-release candidate `3d1fa4491b9ef640a7e4f943a0c602e5640bf2a5` passed a fresh clone, frozen install, peer check, full quality gate, production builds, and clean post-build worktree on August 28.
@@ -26,26 +26,28 @@ The later standalone-cleanup candidate `7611ec6f853cf93ae1967209239be1f08213ef62
 
 The search-first candidate `d332a7858bbecd20fc56e5fa4befb0794f4dd6b2` removed the manufactured pass/fail replay and made existing-evidence search the first native capability. On August 28, an exact fresh clone passed `pnpm install --frozen-lockfile`, the peer check, all 174 tests, the Worker dry-run, the six-route production build, and a clean post-build worktree. It remains the previous clean fallback.
 
-The Browser Run candidate `f4d5671f088581ef99aa73ce7617291dc7cea903` added authenticated, same-origin, rights-aware supplied-page reading while preserving page copy as inconclusive; exact reviewed D1 evidence now short-circuits redundant public-provider calls. On August 28, an exact fresh clone passed the frozen install, peer check, all 189 tests, the Browser Run-bound Worker dry run, the six-route production build, and a clean post-build worktree. This is the current locally frozen code candidate.
+The Browser Run candidate `f4d5671f088581ef99aa73ce7617291dc7cea903` added authenticated, same-origin, rights-aware supplied-page reading while preserving page copy as inconclusive; exact reviewed D1 evidence now short-circuits redundant public-provider calls. On August 28, an exact fresh clone passed the frozen install, peer check, all 189 tests, the Browser Run-bound Worker dry run, the six-route production build, and a clean post-build worktree.
+
+The rights-clean source-page candidate `a008341d96b61dbd38e77bb80d584d08ad278fec` added an owned, same-origin `/demo-product` page, automatically binds it to the default case on public HTTPS and after reset, preserves the live Browser Run receipt beside the authored claim, and makes the exact page security policy and Content Signal part of release verification. On August 28, an exact fresh clone passed the frozen install, peer check, all 193 app/Worker tests, the Browser Run-bound Worker dry run, the seven-route production build, and a clean post-build worktree. This is the current locally frozen code candidate; `f4d5671f088581ef99aa73ce7617291dc7cea903` remains the previous clean fallback.
 
 ## Native end-to-end receipt
 
 Chrome 151 completed the following sequence against the real local Next.js app, Cloudflare Worker runtime, Durable Object, D1 database, migrations, WebSocket updates, and WebMCP registrations:
 
-1. Open the default unresolved case with Search—not mission creation—as the initial native capability: 1,262 ms.
-2. Open an arbitrary product, read bounded page context, and search existing evidence through WebMCP: 510 ms.
-3. Create a bounded missing-proof mission and private phone handoff: 634 ms.
-4. Explicitly publish the minimized request, then inspect and claim it from a fresh board context: 426 ms.
-5. Scrub the contributor capability from the URL and recover it after reload: 314 ms.
-6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, choose reuse rights, and publish: 1,198 ms.
-7. Observe the first shopper's live answer change and exact timestamp citation: 575 ms.
-8. Open a fresh matching case, reuse the same reviewed source without another mission, and skip redundant public-provider calls: 510 ms.
+1. Open the default unresolved case with Search—not mission creation—as the initial native capability: 2,533 ms.
+2. Open an arbitrary product, read bounded page context, and search existing evidence through WebMCP: 922 ms.
+3. Create a bounded missing-proof mission and private phone handoff: 912 ms.
+4. Explicitly publish the minimized request, then inspect and claim it from a fresh board context: 623 ms.
+5. Scrub the contributor capability from the URL and recover it after reload: 413 ms.
+6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, choose reuse rights, and publish: 1,643 ms.
+7. Observe the first shopper's live answer change and exact timestamp citation: 863 ms.
+8. Open a fresh matching case, reuse the same reviewed source without another mission, and skip redundant public-provider calls: 767 ms.
 
 The fixtures replace only Cloudflare Stream, Cloudflare Browser Run, and the video-model response. The page fixture rejects requests unless the Worker supplies the exact same-origin pattern, blocked resource types, headers, timeouts, and cache boundary expected in production. Browser egress to the public paid-service hosts is blocked during this test. The generated clip deliberately omits the random mission phrase, so the system preserves the honest `contributor_attested` label instead of inventing mission-challenge verification.
 
 ## Ordinary-browser end-to-end receipt
 
-The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,329, 158, 557, 287, 321, 1,185, 418, and 599 ms respectively. The run proved that a person can open and search an arbitrary case, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, review and correct the video proposal, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission or public-provider call.
+The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,609, 209, 783, 425, 388, 1,608, 636, and 901 ms respectively. The run proved that a person can open and search an arbitrary case, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, review and correct the video proposal, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission or public-provider call.
 
 This is an independent product-surface receipt, not a substitute for the native WebMCP receipt: together they establish that Site Tools are load-bearing for agent collaboration while every human role still has a complete ordinary web path.
 
@@ -109,6 +111,7 @@ Do not convert these into public claims until each is recorded against the froze
 - The current candidate has not yet completed a real Cloudflare Browser Run read on the final Worker origin.
 - A physical phone has not yet completed this candidate's real Stream upload and real Gateway video-analysis path.
 - The current candidate has not yet completed the full flow in ChatGPT's current in-app Browser.
+- A read-only attempt to control that browser from this Codex session stopped before browser selection with `Browser use requires a trusted Node REPL browser service`; the session exposes no trusted browser bridge. This is an environment gate, not an app pass or failure, and no ordinary-browser substitute is counted as the required receipt.
 - The public D1 index has not yet been seeded by a real rights-clean bottle mission. Until that real capture exists, the app deliberately offers no completed-mission replay or synthetic pass/fail button; deterministic paid-edge fixtures remain test-only.
 - An unfamiliar person still needs to complete the no-login flow without coaching.
 - The final rights-clean video, public YouTube URL, stable live URL, and frozen repository revision do not yet exist.
