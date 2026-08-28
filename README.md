@@ -158,4 +158,4 @@ The two runners generate a rights-clean 12-second MP4 and drive the same complet
 
 Before submission, a fresh judge must be able to complete the whole public no-login loop in current ChatGPT's in-app browser, WebMCP-enabled Chrome, an ordinary-browser fallback, and a physical phone. The three-minute video must show the answer before the mission, the phone recording and human review, and the materially improved answer after publication.
 
-See [SUBMISSION.md](SUBMISSION.md) for the submission packet, [DEMO.md](DEMO.md) for the capture plan, [DEPLOYMENT.md](DEPLOYMENT.md) for release and rollback, [VERIFICATION.md](VERIFICATION.md) for exact receipts and open gates, and [evals/README.md](evals/README.md) for browser-agent evaluation.
+See [SUBMISSION.md](SUBMISSION.md) for the submission packet, [DEMO.md](DEMO.md) for the capture plan, [LAUNCH.md](LAUNCH.md) for the short operator handoff, [DEPLOYMENT.md](DEPLOYMENT.md) for exact release and rollback, [VERIFICATION.md](VERIFICATION.md) for receipts and open gates, and [evals/README.md](evals/README.md) for browser-agent evaluation.

@@ -4,18 +4,18 @@ Updated 2026-08-28 PT. Nothing described here is publicly deployed yet. This run
 
 ## Candidate topology
 
-| Surface                     | Runtime                                            | Responsibility                                                                                                   |
-| --------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Shopper, board, contributor | Next.js 16 on Vercel                               | Native WebMCP tools, open requests, human UI, QR handoff, discovery, video review, playback                      |
-| Evidence service            | Cloudflare Worker + SQLite Durable Object          | Revisioned cases, random capture phrases, scoped capabilities, WebSocket updates, uploads, reviewed evidence     |
-| Mission/reuse index         | Cloudflare D1                                      | 24-hour public filming requests plus exact opted-in product/question evidence lookup                             |
-| Video                       | Cloudflare Stream binding                          | One-time direct phone uploads, encoding, authorized MP4 generation, playback                                     |
-| Evidence expiry             | Cloudflare Cron Trigger                            | Daily physical deletion of expired 24-hour requests and 30-day reusable metadata                                 |
-| Multimodal proposal         | Vercel AI Gateway + AI SDK 7, called by the Worker | Bounded timestamped proposal and exact mission-phrase check from the authorized MP4; never publication authority |
-| Social-video discovery      | ScrapeCreators, called only by the Vercel app      | Link-only TikTok, Instagram, and YouTube leads; never implied reuse rights                                       |
-| Broad-web discovery         | Exa tool through Vercel AI Gateway + AI SDK 7      | At most four claim-aware web/PDP leads from one exact-query-verified call                                        |
-| Known product-page reader   | Cloudflare Browser Run `/markdown` Worker binding  | Bounded dynamic-page excerpt, final-origin receipt, Content Signals, and no promotion of page copy to proof      |
-| Discovery reuse             | Vercel Runtime Cache                               | Reuses successful public-query receipts for 15 minutes per region                                                |
+| Surface                           | Runtime                                            | Responsibility                                                                                                   |
+| --------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Product, shopper, board, recorder | Next.js 16 on Vercel                               | Native WebMCP tools, exact case handoff, open requests, QR handoff, discovery, video review, playback            |
+| Evidence service                  | Cloudflare Worker + SQLite Durable Object          | Revisioned cases, random capture phrases, scoped capabilities, WebSocket updates, uploads, reviewed evidence     |
+| Mission/reuse index               | Cloudflare D1                                      | 24-hour public filming requests plus exact opted-in product/question evidence lookup                             |
+| Video                             | Cloudflare Stream binding                          | One-time direct phone uploads, encoding, authorized MP4 generation, playback                                     |
+| Evidence expiry                   | Cloudflare Cron Trigger                            | Daily physical deletion of expired 24-hour requests and 30-day reusable metadata                                 |
+| Multimodal proposal               | Vercel AI Gateway + AI SDK 7, called by the Worker | Bounded timestamped proposal and exact mission-phrase check from the authorized MP4; never publication authority |
+| Social-video discovery            | ScrapeCreators, called only by the Vercel app      | Link-only TikTok, Instagram, and YouTube leads; never implied reuse rights                                       |
+| Broad-web discovery               | Exa tool through Vercel AI Gateway + AI SDK 7      | At most four claim-aware web/PDP leads from one exact-query-verified call                                        |
+| Known product-page reader         | Cloudflare Browser Run `/markdown` Worker binding  | Bounded dynamic-page excerpt, final-origin receipt, Content Signals, and no promotion of page copy to proof      |
+| Discovery reuse                   | Vercel Runtime Cache                               | Reuses successful public-query receipts for 15 minutes per region                                                |
 
 The deployable Worker is [evidence-index.ts](room-worker/src/evidence-index.ts), configured by [wrangler.evidence.jsonc](room-worker/wrangler.evidence.jsonc). It exposes only the evidence API required by this product.
 
