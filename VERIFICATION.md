@@ -24,7 +24,9 @@ The exact browser-release candidate `3d1fa4491b9ef640a7e4f943a0c602e5640bf2a5` p
 
 The later standalone-cleanup candidate `7611ec6f853cf93ae1967209239be1f08213ef62` removed the retired merchant, protected-preview, and synthetic-crowd harness paths. Both complete browser journeys and the same fresh-clone gate passed afterward; the product runtime did not change.
 
-The search-first candidate `d332a7858bbecd20fc56e5fa4befb0794f4dd6b2` removed the manufactured pass/fail replay and made existing-evidence search the first native capability. On August 28, an exact fresh clone passed `pnpm install --frozen-lockfile`, the peer check, all 174 tests, the Worker dry-run, the six-route production build, and a clean post-build worktree. This is the current locally frozen release candidate.
+The search-first candidate `d332a7858bbecd20fc56e5fa4befb0794f4dd6b2` removed the manufactured pass/fail replay and made existing-evidence search the first native capability. On August 28, an exact fresh clone passed `pnpm install --frozen-lockfile`, the peer check, all 174 tests, the Worker dry-run, the six-route production build, and a clean post-build worktree. It remains the previous clean fallback.
+
+The Browser Run candidate `f4d5671f088581ef99aa73ce7617291dc7cea903` added authenticated, same-origin, rights-aware supplied-page reading while preserving page copy as inconclusive; exact reviewed D1 evidence now short-circuits redundant public-provider calls. On August 28, an exact fresh clone passed the frozen install, peer check, all 189 tests, the Browser Run-bound Worker dry run, the six-route production build, and a clean post-build worktree. This is the current locally frozen code candidate.
 
 ## Native end-to-end receipt
 
