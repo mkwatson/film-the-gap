@@ -28,6 +28,7 @@ local frozen candidate
   → Mark approves account mutations and bounded cost
   → Stream dashboard enablement
   → new Vercel project + D1 + Worker + secrets
+  → target guard proves the new link, clean commit, public origins, Worker, and D1 IDs
   → final Vercel deployment + WAF
   → automated public verifier
   → real bottle / phone / Stream / Gateway rehearsal
@@ -40,4 +41,4 @@ local frozen candidate
 
 Stop before proceeding if the public hostname carries unrelated branding, either origin requires login, Stream or Browser Run asks for unapproved overage, the Gateway budget can renew, a secret appears in output or a URL, the model cannot fetch the authorized MP4, the product page does not replace its stale Site Tool after publication, ChatGPT cannot discover the native tools, or a cold tester needs coaching to understand the loop.
 
-The current local code candidate has passed 207 tests, a zero-issue peer check, the Worker dry run, the eight-route production build, two full browser journeys, the native product-page bridge check, the independent 13/13 WebMCP smoke, compiled handoff-route security inspection, and an exact clean-clone gate. Public services, a real phone recording, current ChatGPT, and cold-user comprehension remain deliberately unclaimed until this card is executed.
+The current local candidate has passed 212 tests, a zero-issue peer check, the Worker dry run, the eight-route production build, two full browser journeys, the native product-page bridge check, the independent 13/13 WebMCP smoke, compiled handoff-route security inspection, and an exact clean-clone gate for its underlying product implementation. Public services, a real phone recording, current ChatGPT, and cold-user comprehension remain deliberately unclaimed until this card is executed.

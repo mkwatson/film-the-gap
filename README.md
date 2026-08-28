@@ -62,6 +62,8 @@ This repository was created entirely during the OpenAI WebMCP Challenge submissi
 
 Requirements: Node.js 24 or newer and pnpm 11.24.0.
 
+Before any approved public mutation, `pnpm release:target-check` requires an exact clean commit, the new standalone Vercel link, credential-free public origins, the dedicated Worker name, and matching non-placeholder D1 IDs. See [DEPLOYMENT.md](DEPLOYMENT.md) for the required `WEBMCP_*` variables. The current ignored `.vercel` link intentionally does not pass this guard.
+
 ```bash
 pnpm install --frozen-lockfile
 pnpm --dir room-worker d1:migrate:evidence-local

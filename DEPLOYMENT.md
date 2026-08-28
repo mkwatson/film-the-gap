@@ -99,7 +99,23 @@ The current minimum new purchase is one `$5` [Cloudflare Stream storage block](h
 
    Keep the binding name exactly `EVIDENCE_LIBRARY`. Do not deploy while either placeholder UUID remains.
 
-4. Set the exact new project name once, inspect it, put a `$5` non-renewing AI Gateway budget on that project, then create one dedicated Gateway key for the external Cloudflare video worker with a separate `$5` hard ceiling, no refresh, alerts, and a 30-day expiry. Vercel-hosted web discovery uses automatically refreshed OIDC under the project budget and stores no second key. Vercel currently includes `$5` of monthly Gateway credit; do not purchase or enable auto top-up unless the account's existing usage has exhausted it and Mark separately approves the charge.
+4. Commit the dedicated D1 IDs, link the newly created Vercel project, and run the local target guard before creating a budget, secret, firewall rule, or deployment. The guard fails when the worktree is dirty, the commit differs, the ignored Vercel link still names the retired project, either D1 ID is a placeholder, the D1 IDs differ, an origin carries credentials or a path, or either origin carries unrelated Vidably branding. It never prints opaque Vercel account/project IDs or the D1 UUID.
+
+   ```bash
+   WEBMCP_VERCEL_SCOPE=YOUR-STANDALONE-TEAM-SLUG
+   WEBMCP_VERCEL_PROJECT=film-the-gap
+   WEBMCP_APP_ORIGIN="https://$WEBMCP_VERCEL_PROJECT.vercel.app"
+   WEBMCP_ROOM_ORIGIN=https://webmcp-product-evidence.YOUR-CLOUDFLARE-SUBDOMAIN.workers.dev
+   WEBMCP_RELEASE_COMMIT_SHA=$(git rev-parse HEAD)
+
+   pnpm release:target-check
+   pnpm dlx vercel@59.9.1 project inspect "$WEBMCP_VERCEL_PROJECT" \
+     --scope "$WEBMCP_VERCEL_SCOPE"
+   ```
+
+   `WEBMCP_APP_ORIGIN` must be the actual clean production hostname reported by Vercel, not an inferred or suffixed hostname. The local guard confirms the linked project name; the explicit read-only `project inspect` confirms the live project and scope. Both must agree.
+
+5. Set the exact new project name once, inspect it, put a `$5` non-renewing AI Gateway budget on that project, then create one dedicated Gateway key for the external Cloudflare video worker with a separate `$5` hard ceiling, no refresh, alerts, and a 30-day expiry. Vercel-hosted web discovery uses automatically refreshed OIDC under the project budget and stores no second key. Vercel currently includes `$5` of monthly Gateway credit; do not purchase or enable auto top-up unless the account's existing usage has exhausted it and Mark separately approves the charge.
 
    ```bash
    WEBMCP_VERCEL_SCOPE=YOUR-STANDALONE-TEAM-SLUG
@@ -125,8 +141,8 @@ The current minimum new purchase is one `$5` [Cloudflare Stream storage block](h
 
    Do not use `--bypass-all-settings` or `--zdr-exempt`. Copy the secret only into Cloudflare's encrypted secret prompt. Keep Vercel auto top-up disabled and retain the route/WAF limits below. The project budget is the hard discovery ceiling; an explicit `AI_GATEWAY_DISCOVERY_API_KEY` is unnecessary and would override OIDC.
 
-5. If live social discovery is enabled, create a dedicated ScrapeCreators key with only the credits Mark approves. The app remains truthful and functional without it, but reports discovery as unavailable.
-6. Before every budget, environment, firewall, or deploy command, inspect `.vercel/project.json` and run `vercel project inspect` with the explicit scope; both must identify the new standalone project, never a pre-existing project. `.vercel/project.json` must remain uncommitted.
+6. If live social discovery is enabled, create a dedicated ScrapeCreators key with only the credits Mark approves. The app remains truthful and functional without it, but reports discovery as unavailable.
+7. Before every budget, environment, firewall, or deploy command, rerun `pnpm release:target-check` and `vercel project inspect` with the explicit project and scope. Both must identify the new standalone project, never a pre-existing project. `.vercel/project.json` must remain uncommitted.
 
 ## Candidate gate before any deployment
 
@@ -139,7 +155,7 @@ pnpm install --frozen-lockfile
 pnpm check
 ```
 
-`git status --short` must print nothing. Save the 40-character commit as `RELEASE_SHA`. Run the deterministic native evidence journey locally before changing any public system:
+`git status --short` must print nothing. Save the 40-character commit as `WEBMCP_RELEASE_COMMIT_SHA`, rerun `pnpm release:target-check`, then run the deterministic native evidence journey locally before changing any public system:
 
 ```bash
 pnpm --dir room-worker d1:migrate:evidence-acceptance
@@ -161,12 +177,14 @@ Set and inspect explicit shell variables; never paste placeholders into a deploy
 ```bash
 WEBMCP_VERCEL_SCOPE=YOUR-STANDALONE-TEAM-SLUG
 WEBMCP_VERCEL_PROJECT=film-the-gap
-APP_ORIGIN="https://$WEBMCP_VERCEL_PROJECT.vercel.app"
-ROOM_ORIGIN=https://webmcp-product-evidence.YOUR-CLOUDFLARE-SUBDOMAIN.workers.dev
-RELEASE_SHA=$(git rev-parse HEAD)
+WEBMCP_APP_ORIGIN="https://$WEBMCP_VERCEL_PROJECT.vercel.app"
+WEBMCP_ROOM_ORIGIN=https://webmcp-product-evidence.YOUR-CLOUDFLARE-SUBDOMAIN.workers.dev
+WEBMCP_RELEASE_COMMIT_SHA=$(git rev-parse HEAD)
+
+pnpm release:target-check
 ```
 
-Confirm `APP_ORIGIN` is the actual production hostname reported by Vercel; do not infer or accept a suffixed fallback hostname. If a clean generated hostname is unavailable, choose another standalone project name or explicitly configure a clean custom domain before continuing.
+Confirm `WEBMCP_APP_ORIGIN` is the actual production hostname reported by Vercel; do not infer or accept a suffixed fallback hostname. If a clean generated hostname is unavailable, choose another standalone project name or explicitly configure a clean custom domain before continuing.
 
 Then:
 
@@ -185,9 +203,9 @@ Then:
    pnpm --dir room-worker exec wrangler deploy \
      --config wrangler.evidence.jsonc \
      --strict \
-     --tag "$RELEASE_SHA" \
-     --message "bootstrap generic evidence candidate $RELEASE_SHA" \
-     --var "ALLOWED_ORIGINS:$APP_ORIGIN" \
+     --tag "$WEBMCP_RELEASE_COMMIT_SHA" \
+     --message "bootstrap generic evidence candidate $WEBMCP_RELEASE_COMMIT_SHA" \
+     --var "ALLOWED_ORIGINS:$WEBMCP_APP_ORIGIN" \
      --var "EVIDENCE_CASE_TTL_SECONDS:86400"
    ```
 
@@ -207,15 +225,15 @@ Then:
    pnpm --dir room-worker exec wrangler deploy \
      --config wrangler.evidence.jsonc \
      --strict \
-     --tag "$RELEASE_SHA" \
-     --message "generic evidence release $RELEASE_SHA" \
-     --var "ALLOWED_ORIGINS:$APP_ORIGIN" \
+     --tag "$WEBMCP_RELEASE_COMMIT_SHA" \
+     --message "generic evidence release $WEBMCP_RELEASE_COMMIT_SHA" \
+     --var "ALLOWED_ORIGINS:$WEBMCP_APP_ORIGIN" \
      --var "EVIDENCE_CASE_TTL_SECONDS:86400"
    ```
 
 5. Configure the new Vercel project's Production environment:
 
-   - `NEXT_PUBLIC_EVIDENCE_ROOM_URL=$ROOM_ORIGIN` — required and compiled at build time.
+   - `NEXT_PUBLIC_EVIDENCE_ROOM_URL=$WEBMCP_ROOM_ORIGIN` — required and compiled at build time.
    - `EVIDENCE_PAGE_READER_TOKEN` — required, server-only, identical to the Worker's `PAGE_READER_SHARED_SECRET`, and never prefixed `NEXT_PUBLIC_`.
    - `AI_GATEWAY_DISCOVERY_API_KEY` — omit on the final Vercel release; automatically refreshed OIDC stays inside the project-scoped `$5` budget.
    - `SCRAPECREATORS_API_KEY` — optional, server-only, dedicated to this demo.
@@ -223,7 +241,7 @@ Then:
 
    The build fails closed on Vercel when `NEXT_PUBLIC_EVIDENCE_ROOM_URL` is absent, non-HTTPS, credentialed, or not an exact origin. This prevents a healthy-looking deployment whose phone action silently falls back to “service not configured.”
 
-6. Deploy the exact Git commit to Vercel. Prefer a Git-associated Production build so `VERCEL_GIT_COMMIT_SHA` is authoritative. A reviewed prebuilt artifact may use `WEBMCP_RELEASE_COMMIT_SHA=$RELEASE_SHA`, but the room origin must be present during `vercel build`; changing it after the build cannot update the client bundle.
+6. Deploy the exact Git commit to Vercel. Prefer a Git-associated Production build so `VERCEL_GIT_COMMIT_SHA` is authoritative. A reviewed prebuilt artifact uses the already frozen `WEBMCP_RELEASE_COMMIT_SHA`, but the room origin must be present during `vercel build`; changing it after the build cannot update the client bundle.
 7. Confirm Vercel Deployment Protection is disabled on the final judge hostname. The page must work logged out with no share parameter, password, trusted IP, or bypass header.
 
 ## Vercel public-discovery firewall
@@ -282,9 +300,9 @@ Vercel WAF rate limiting is available on all plans, but the first rule may show 
 Immediately after both final deployments:
 
 ```bash
-EVIDENCE_ACCEPTANCE_APP_URL="$APP_ORIGIN" \
-EVIDENCE_ACCEPTANCE_ROOM_ORIGIN="$ROOM_ORIGIN" \
-EVIDENCE_RELEASE_COMMIT_SHA="$RELEASE_SHA" \
+EVIDENCE_ACCEPTANCE_APP_URL="$WEBMCP_APP_ORIGIN" \
+EVIDENCE_ACCEPTANCE_ROOM_ORIGIN="$WEBMCP_ROOM_ORIGIN" \
+EVIDENCE_RELEASE_COMMIT_SHA="$WEBMCP_RELEASE_COMMIT_SHA" \
 pnpm release:verify
 ```
 
@@ -320,7 +338,7 @@ After every mandatory receipt passes, and only within Mark's approved Browser Ru
 
 | Field         | Required value                                                                       |
 | ------------- | ------------------------------------------------------------------------------------ |
-| Git           | Full `RELEASE_SHA`, signed/frozen tag, clean public repository                       |
+| Git           | Full `WEBMCP_RELEASE_COMMIT_SHA`, signed/frozen tag, clean public repository         |
 | Vercel        | Immutable deployment URL, stable alias, commit receipt, WAF rule ID/state            |
 | Cloudflare    | Worker origin/version, D1 migrations, Cron Trigger, Stream, Browser Run, rate limits |
 | Paid edges    | Budgeted Gateway key expiry/cap, Stream retention, discovery credit ceiling          |

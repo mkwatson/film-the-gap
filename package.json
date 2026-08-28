@@ -16,6 +16,7 @@
     "test:watch": "vitest",
     "acceptance:evidence-network": "tsx scripts/evidence-network-acceptance.ts",
     "acceptance:evidence-network:fallback": "EVIDENCE_ACCEPTANCE_HUMAN_CONTROLS=1 tsx scripts/evidence-network-acceptance.ts",
+    "release:target-check": "tsx scripts/release-target-check-cli.ts",
     "release:verify": "tsx scripts/release-preflight-cli.ts",
     "room:dev": "pnpm --dir room-worker dev",
     "room:build": "pnpm --dir room-worker build",
