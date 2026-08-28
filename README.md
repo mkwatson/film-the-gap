@@ -107,6 +107,7 @@ pnpm test:room
 pnpm typecheck
 pnpm room:build
 pnpm acceptance:evidence-network
+pnpm acceptance:evidence-network:fallback
 ```
 
 Prepare the local acceptance D1 database once, then run the four local processes. Its paid edges cannot run accidentally:
@@ -126,9 +127,12 @@ NEXT_PUBLIC_EVIDENCE_ROOM_URL=http://localhost:8792 pnpm dev
 
 # Shell 4: native Chrome 150+ with WebMCP
 pnpm acceptance:evidence-network
+
+# Then prove the same product works with WebMCP explicitly disabled
+pnpm acceptance:evidence-network:fallback
 ```
 
-The runner generates a rights-clean 12-second MP4 and drives the complete stranger-supply loop: arbitrary product search → WebMCP mission with a random capture phrase → explicit public-board publication → a fresh board context inspects and claims it → bounded phone recorder → model-shaped proposal → human correction and reuse consent → first answer difference → fresh matching shopper reuses the same Stream citation without another mission. The synthetic clip deliberately omits the phrase, and the system preserves the honest `contributor_attested` fallback instead of inventing verification. The real Durable Object, D1 database, migrations, revocable capability boundary, and public schemas run unchanged; local services replace only Cloudflare Stream and Gemini, and the browser network allowlist excludes their public hosts.
+The two runners generate a rights-clean 12-second MP4 and drive the same complete stranger-supply loop: arbitrary product search → claim-specific mission with a random capture phrase → explicit public-board publication → a fresh board context finds and claims it → bounded phone recorder → model-shaped proposal → human correction and reuse consent → first answer difference → fresh matching shopper reuses the same Stream citation without another mission. One run uses only native WebMCP Site Tools; the other launches Chrome with WebMCP explicitly disabled and uses only visible human controls. The synthetic clip deliberately omits the phrase, and the system preserves the honest `contributor_attested` fallback instead of inventing verification. The real Durable Object, D1 database, migrations, revocable capability boundary, and public schemas run unchanged; local services replace only Cloudflare Stream and Gemini, and the browser network allowlist excludes their public hosts.
 
 ## Current status and honest boundaries
 
@@ -138,6 +142,7 @@ The runner generates a rights-clean 12-second MP4 and drives the complete strang
 - The app has deterministic automated coverage for success, denial, stale revisions, manual fallback, dependency failures, simultaneous analysis coalescing, fragment scrubbing, contributor reload, and buyer reconnect. It does not call paid services during tests.
 - The standalone deployable Worker exposes only the evidence API. It rate-limits case creation, permits two upload reservations per temporary case, caps clips at 95 MiB/90 seconds, expires upload URLs, schedules Stream deletion, bounds model retries, and physically purges expired board/reuse D1 records daily. Public board listings last at most 24 hours, carry only public product/filming fields, and use a capability that can be revoked independently of the private link. The release runbook adds one budgeted cross-cloud Gateway key, automatic Vercel OIDC for search, and a Vercel WAF ceiling.
 - Native Chrome completes arbitrary-product search → mission → public board → stranger claim → phone evidence → first answer change → fresh-case evidence reuse in roughly five seconds against real local Durable Object/D1 state and deterministic paid-service fixtures.
+- Chrome with WebMCP explicitly disabled completes the same visible-control journey in roughly five seconds, proving the ordinary website is not an agent-only façade.
 - This candidate is not yet deployed and has not yet passed a real Stream → Gateway → physical-phone journey. Those remain mandatory release gates, not inferred claims.
 - It does not claim universal access to product owners, guaranteed fulfillment, independent contributor verification, product authenticity, or perfect deepfake detection. The board demonstrates permissionless discoverability, not a mature incentive marketplace.
 - It does not place an order, charge a user, contact strangers, scrape private data, or reuse third-party media without rights.

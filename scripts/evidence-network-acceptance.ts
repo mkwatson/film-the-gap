@@ -77,6 +77,17 @@ function clickExactButtonScript(label: string): string {
   })()`;
 }
 
+function fillHumanQuestion(
+  driver: NativeBrowserDriver,
+  productName: string,
+  productUrl: string,
+  productQuestion: string,
+): void {
+  driver.fill('.evidence-try-panel input:not([type="url"])', productName, 'fill product name');
+  driver.fill('.evidence-try-panel input[type="url"]', productUrl, 'fill product URL');
+  driver.fill('.evidence-try-panel textarea', productQuestion, 'fill product question');
+}
+
 function invokeToolScript(
   name: string,
   input: Readonly<Record<string, unknown>>,
@@ -231,6 +242,7 @@ function artifactDirectory(
 
 async function run(): Promise<void> {
   const config = acceptanceConfig(process.env);
+  const humanControls = process.env.EVIDENCE_ACCEPTANCE_HUMAN_CONTROLS === '1';
   const artifacts = artifactDirectory(process.env);
   const fixture = createFixtureVideo();
   const runId = randomUUID().replaceAll('-', '').slice(0, 12);
@@ -238,7 +250,7 @@ async function run(): Promise<void> {
   const productUrl = `https://example.com/products/acceptance-travel-bottle-${runId}`;
   const productQuestion =
     'Does the closed bottle stay leak-free while upside down for ten seconds?';
-  const driver = new NativeBrowserDriver(config);
+  const driver = new NativeBrowserDriver(config, { webMcpEnabled: !humanControls });
   const steps: AcceptanceStep[] = [];
   let buyerTab: AcceptanceTab | null = null;
   try {
@@ -246,6 +258,36 @@ async function run(): Promise<void> {
       driver.open();
       buyerTab = driver.listTabs().at(0) ?? null;
       if (buyerTab === null) throw new Error('The buyer tab did not open.');
+      if (humanControls) {
+        await waitForBrowserValue(
+          driver,
+          'ordinary-browser controls',
+          `(() => document.modelContext === undefined && ${pageIncludesScript(
+            'Human controls ready',
+            'Ordinary browser mode. Every human control remains usable.',
+          )})()`,
+          (value) => value === true,
+          config.commandTimeoutMs,
+        );
+        fillHumanQuestion(driver, productName, productUrl, productQuestion);
+        if (driver.eval(clickExactButtonScript('Open new evidence case')) !== true) {
+          throw new Error('The ordinary-browser case form could not submit.');
+        }
+        await waitForBrowserValue(
+          driver,
+          'ordinary-browser generic case',
+          pageIncludesScript(
+            productName,
+            productQuestion,
+            'Not enough proof',
+            'Search existing evidence',
+          ),
+          (value) => value === true,
+          config.commandTimeoutMs,
+        );
+        if (artifacts !== null) driver.screenshot(join(artifacts, '01-before.png'));
+        return;
+      }
       await waitForBrowserValue(
         driver,
         'initial generic Site Tools',
@@ -269,8 +311,29 @@ async function run(): Promise<void> {
 
     await recordAcceptanceStep(
       steps,
-      'open and search an arbitrary product through WebMCP',
+      humanControls
+        ? 'open and search an arbitrary product through human controls'
+        : 'open and search an arbitrary product through WebMCP',
       async () => {
+        if (humanControls) {
+          if (driver.eval(clickExactButtonScript('Search existing evidence')) !== true) {
+            throw new Error('The ordinary-browser public search could not start.');
+          }
+          await waitForBrowserValue(
+            driver,
+            'truthful ordinary-browser discovery receipt',
+            pageIncludesScript(
+              'Only the supplied product page is available',
+              '1 candidate source retained',
+              'public leads never count as proof',
+              'Create claim-specific filming mission',
+            ),
+            (value) => value === true,
+            config.commandTimeoutMs,
+          );
+          if (artifacts !== null) driver.screenshot(join(artifacts, '02-search.png'));
+          return;
+        }
         const asked = driver.eval(
           invokeToolScript(
             'ask_product_question',
@@ -340,106 +403,181 @@ async function run(): Promise<void> {
       },
     );
 
-    await recordAcceptanceStep(steps, 'create bounded mission through WebMCP', async () => {
-      const created = driver.eval(
-        invokeToolScript(
-          'create_filming_mission',
-          {
-            instruction: 'Fill the bottle, close the lid, and hold it upside down over dry paper.',
-            successCriterion: 'Keep the closed lid and dry paper visible for the entire test.',
-            minimumSeconds: 10,
-            continuousTakeRequired: true,
-          },
-          `return parsedValues.some((value) => value.ok === true) &&
+    await recordAcceptanceStep(
+      steps,
+      humanControls
+        ? 'create and publish a bounded mission through human controls'
+        : 'create bounded mission through WebMCP',
+      async () => {
+        if (humanControls) {
+          if (
+            driver.eval(clickExactButtonScript('Create claim-specific filming mission')) !== true
+          ) {
+            throw new Error('The ordinary-browser mission could not be created.');
+          }
+          await waitForBrowserValue(
+            driver,
+            'ordinary-browser phone handoff frontier',
+            pageIncludesScript('Put this exact mission on any phone.', 'Create phone capture link'),
+            (value) => value === true,
+            config.commandTimeoutMs,
+          );
+          if (driver.eval(clickExactButtonScript('Create phone capture link')) !== true) {
+            throw new Error('The ordinary-browser phone case could not be created.');
+          }
+          try {
+            await waitForBrowserValue(
+              driver,
+              'ordinary-browser private handoff',
+              pageIncludesScript(
+                'Scan with a phone that has the product.',
+                'Open private contributor link',
+                'Publish open filming request',
+              ),
+              (value) => value === true,
+              config.commandTimeoutMs,
+            );
+          } catch (error: unknown) {
+            const visibleState = driver.eval(`(() => ({
+              hasScanPrompt: (document.body?.innerText ?? '').includes('Scan with a phone that has the product.'),
+              hasPrivateLink: (document.body?.innerText ?? '').includes('Open private contributor link'),
+              hasPublishButton: [...document.querySelectorAll('button')].some(
+                (button) => button.textContent?.trim() === 'Publish open filming request',
+              ),
+              alert: document.querySelector('[role="alert"]')?.textContent?.trim() ?? null,
+            }))()`);
+            const detail = error instanceof Error ? error.message : 'Unknown handoff failure.';
+            throw new Error(`${detail} Visible state: ${JSON.stringify(visibleState)}.`);
+          }
+          const consented = driver.eval(`(() => {
+            const checkbox = document.querySelector('.mission-board-opt-in input[type="checkbox"]');
+            if (!(checkbox instanceof HTMLInputElement)) return false;
+            checkbox.click();
+            return checkbox.checked;
+          })()`);
+          if (consented !== true) {
+            throw new Error('The public-request disclosure could not be accepted.');
+          }
+          if (driver.eval(clickExactButtonScript('Publish open filming request')) !== true) {
+            throw new Error('The ordinary-browser public request could not publish.');
+          }
+          await waitForBrowserValue(
+            driver,
+            'ordinary-browser public mission receipt',
+            pageIncludesScript(
+              'Anyone who owns this product can now record the answer.',
+              'No shopper identity, preferences, history, or budget are included.',
+            ),
+            (value) => value === true,
+            config.commandTimeoutMs,
+          );
+          if (artifacts !== null) driver.screenshot(join(artifacts, '03-mission.png'));
+          return;
+        }
+        const created = driver.eval(
+          invokeToolScript(
+            'create_filming_mission',
+            {
+              instruction:
+                'Fill the bottle, close the lid, and hold it upside down over dry paper.',
+              successCriterion: 'Keep the closed lid and dry paper visible for the entire test.',
+              minimumSeconds: 10,
+              continuousTakeRequired: true,
+            },
+            `return parsedValues.some((value) => value.ok === true) &&
             serialized.includes('"missionStatus":"open"');`,
-        ),
-        'invoke create_filming_mission',
-      );
-      if (created !== true) throw new Error('WebMCP did not create the bounded mission.');
-      await waitForBrowserValue(
-        driver,
-        'phone capture tool',
-        toolNamesScript,
-        (value) => isStringArray(value) && sameStringSet(value, missionTools),
-        config.commandTimeoutMs,
-      );
-      const linked = driver.eval(
-        invokeToolScript(
-          'create_phone_capture_link',
-          {},
-          `return parsedValues.some((value) => value.ok === true) &&
+          ),
+          'invoke create_filming_mission',
+        );
+        if (created !== true) throw new Error('WebMCP did not create the bounded mission.');
+        await waitForBrowserValue(
+          driver,
+          'phone capture tool',
+          toolNamesScript,
+          (value) => isStringArray(value) && sameStringSet(value, missionTools),
+          config.commandTimeoutMs,
+        );
+        const linked = driver.eval(
+          invokeToolScript(
+            'create_phone_capture_link',
+            {},
+            `return parsedValues.some((value) => value.ok === true) &&
             serialized.includes('bounded contributor link');`,
-        ),
-        'invoke create_phone_capture_link',
-      );
-      if (linked !== true) throw new Error('WebMCP did not create the phone handoff.');
-      await waitForBrowserValue(
-        driver,
-        'private contributor handoff',
-        pageIncludesScript(
-          'Scan with a phone that has the product.',
-          'Open private contributor link',
-        ),
-        (value) => value === true,
-        config.commandTimeoutMs,
-      );
-      await waitForBrowserValue(
-        driver,
-        'public mission publication frontier',
-        toolNamesScript,
-        (value) => isStringArray(value) && sameStringSet(value, publicMissionPublishTools),
-        config.commandTimeoutMs,
-      );
-      const published = driver.eval(
-        invokeToolScript(
-          'publish_filming_mission',
-          { confirmPublicListing: true },
-          `return parsedValues.some((value) => value.ok === true) &&
+          ),
+          'invoke create_phone_capture_link',
+        );
+        if (linked !== true) throw new Error('WebMCP did not create the phone handoff.');
+        await waitForBrowserValue(
+          driver,
+          'private contributor handoff',
+          pageIncludesScript(
+            'Scan with a phone that has the product.',
+            'Open private contributor link',
+          ),
+          (value) => value === true,
+          config.commandTimeoutMs,
+        );
+        await waitForBrowserValue(
+          driver,
+          'public mission publication frontier',
+          toolNamesScript,
+          (value) => isStringArray(value) && sameStringSet(value, publicMissionPublishTools),
+          config.commandTimeoutMs,
+        );
+        const published = driver.eval(
+          invokeToolScript(
+            'publish_filming_mission',
+            { confirmPublicListing: true },
+            `return parsedValues.some((value) => value.ok === true) &&
             serialized.includes(${JSON.stringify(productName)}) &&
             serialized.includes(${JSON.stringify(productQuestion)}) &&
             serialized.includes('"privateShopperContext":"not collected"');`,
-        ),
-        'publish filming mission to public board',
-      );
-      if (published !== true) {
-        throw new Error('WebMCP did not publish the privacy-bounded public mission.');
-      }
-      await waitForBrowserValue(
-        driver,
-        'public mission removal frontier',
-        toolNamesScript,
-        (value) => isStringArray(value) && sameStringSet(value, publicMissionRemoveTools),
-        config.commandTimeoutMs,
-      );
-      await waitForBrowserValue(
-        driver,
-        'public mission receipt',
-        pageIncludesScript(
-          'Anyone who owns this product can now record the answer.',
-          'No shopper identity, preferences, history, or budget are included.',
-        ),
-        (value) => value === true,
-        config.commandTimeoutMs,
-      );
-      if (artifacts !== null) driver.screenshot(join(artifacts, '03-mission.png'));
-    });
+          ),
+          'publish filming mission to public board',
+        );
+        if (published !== true) {
+          throw new Error('WebMCP did not publish the privacy-bounded public mission.');
+        }
+        await waitForBrowserValue(
+          driver,
+          'public mission removal frontier',
+          toolNamesScript,
+          (value) => isStringArray(value) && sameStringSet(value, publicMissionRemoveTools),
+          config.commandTimeoutMs,
+        );
+        await waitForBrowserValue(
+          driver,
+          'public mission receipt',
+          pageIncludesScript(
+            'Anyone who owns this product can now record the answer.',
+            'No shopper identity, preferences, history, or budget are included.',
+          ),
+          (value) => value === true,
+          config.commandTimeoutMs,
+        );
+        if (artifacts !== null) driver.screenshot(join(artifacts, '03-mission.png'));
+      },
+    );
 
     const buyerAndExistingTabs = driver.listTabs();
     driver.openLinkInNewTab('a[href="/missions"]');
     const boardTab = await waitForNewTab(driver, buyerAndExistingTabs, config.commandTimeoutMs);
     driver.switchTab(boardTab);
+    let publicMissionId: string | null = null;
 
     await recordAcceptanceStep(
       steps,
       'discover and claim the mission without a customer list',
       async () => {
-        await waitForBrowserValue(
-          driver,
-          'public mission board tools',
-          toolNamesScript,
-          (value) => isStringArray(value) && sameStringSet(value, boardTools),
-          config.commandTimeoutMs,
-        );
+        if (!humanControls) {
+          await waitForBrowserValue(
+            driver,
+            'public mission board tools',
+            toolNamesScript,
+            (value) => isStringArray(value) && sameStringSet(value, boardTools),
+            config.commandTimeoutMs,
+          );
+        }
         await waitForBrowserValue(
           driver,
           'public mission board listing',
@@ -447,41 +585,63 @@ async function run(): Promise<void> {
           (value) => value === true,
           config.commandTimeoutMs,
         );
-        const inspected = driver.eval(
-          invokeToolScript(
-            'inspect_open_filming_missions',
-            {},
-            `return serialized.includes(${JSON.stringify(productName)}) &&
-              serialized.includes(${JSON.stringify(productQuestion)}) &&
-              serialized.includes('"contributorToken"') === false &&
-              serialized.includes('"ownerToken"') === false;`,
-          ),
-          'inspect public filming missions',
-        );
-        if (inspected !== true) {
-          throw new Error(
-            'The public mission listing exposed private data or omitted the request.',
+        if (!humanControls) {
+          const inspected = driver.eval(
+            invokeToolScript(
+              'inspect_open_filming_missions',
+              {},
+              `return serialized.includes(${JSON.stringify(productName)}) &&
+                serialized.includes(${JSON.stringify(productQuestion)}) &&
+                serialized.includes('"contributorToken"') === false &&
+                serialized.includes('"ownerToken"') === false;`,
+            ),
+            'inspect public filming missions',
           );
+          if (inspected !== true) {
+            throw new Error(
+              'The public mission listing exposed private data or omitted the request.',
+            );
+          }
         }
         const missionId = driver.eval(`(() => {
-          const article = document.querySelector('article[id^="mission-"]');
+          const article = [...document.querySelectorAll('article[id^="mission-"]')].find((candidate) => {
+            const text = candidate.textContent ?? '';
+            return text.includes(${JSON.stringify(productName)}) &&
+              text.includes(${JSON.stringify(productQuestion)});
+          });
           return article?.id.slice('mission-'.length) ?? null;
         })()`);
-        if (typeof missionId !== 'string') {
+        if (typeof missionId !== 'string' || !/^[a-f0-9-]{36}$/u.test(missionId)) {
           throw new Error('The public mission identifier was not rendered.');
         }
-        const opened = driver.eval(
-          invokeToolScript(
-            'open_filming_mission',
-            { missionId },
-            `return parsedValues.some((value) => value.ok === true) &&
-              serialized.includes('/contribute/') &&
-              serialized.includes('#token=');`,
-          ),
-          'open public filming mission',
-        );
-        if (opened !== true) {
-          throw new Error('WebMCP did not open the bounded public contributor path.');
+        publicMissionId = missionId;
+        if (humanControls) {
+          const claimed = driver.eval(`(() => {
+            const article = document.getElementById(${JSON.stringify(`mission-${missionId}`)});
+            const button = [...(article?.querySelectorAll('button') ?? [])].find(
+              (candidate) => candidate.textContent?.trim() === 'I have this product',
+            );
+            if (!(button instanceof HTMLButtonElement) || button.disabled) return false;
+            button.click();
+            return true;
+          })()`);
+          if (claimed !== true) {
+            throw new Error('The ordinary-browser public mission could not be claimed.');
+          }
+        } else {
+          const opened = driver.eval(
+            invokeToolScript(
+              'open_filming_mission',
+              { missionId },
+              `return parsedValues.some((value) => value.ok === true) &&
+                serialized.includes('/contribute/') &&
+                serialized.includes('#token=');`,
+            ),
+            'open public filming mission',
+          );
+          if (opened !== true) {
+            throw new Error('WebMCP did not open the bounded public contributor path.');
+          }
         }
         await waitForBrowserValue(
           driver,
@@ -494,8 +654,14 @@ async function run(): Promise<void> {
       },
     );
 
+    if (publicMissionId === null) {
+      throw new Error('The public mission was not selected.');
+    }
     const existingTabs = driver.listTabs();
-    driver.openLinkInNewTab('a[href*="/contribute/"]');
+    driver.openLinkInNewTab(
+      `article[id="mission-${publicMissionId}"] a[href*="/contribute/"]`,
+      'open selected public contributor path',
+    );
     const contributorTab = await waitForNewTab(driver, existingTabs, config.commandTimeoutMs);
     driver.switchTab(contributorTab);
 
@@ -660,27 +826,29 @@ async function run(): Promise<void> {
       if (playbackBound !== true) {
         throw new Error('The reviewed citation was not bound to its Stream playback source.');
       }
-      await waitForBrowserValue(
-        driver,
-        'answer-change Site Tool',
-        toolNamesScript,
-        (value) => isStringArray(value) && sameStringSet(value, finalTools),
-        config.commandTimeoutMs,
-      );
-      const diff = driver.eval(
-        invokeToolScript(
-          'inspect_answer_change',
-          {},
-          `return serialized.includes('"changed":true') &&
-            serialized.includes('"status":"insufficient"') &&
-            serialized.includes('"status":"contradicted"') &&
-            serialized.includes('"timestamp":"00:01–00:11"') &&
-            serialized.includes('"captureTiming":"contributor_attested"') &&
-            serialized.includes(${JSON.stringify(correctedObservation)});`,
-        ),
-        'invoke inspect_answer_change',
-      );
-      if (diff !== true) throw new Error('WebMCP did not expose the causal answer difference.');
+      if (!humanControls) {
+        await waitForBrowserValue(
+          driver,
+          'answer-change Site Tool',
+          toolNamesScript,
+          (value) => isStringArray(value) && sameStringSet(value, finalTools),
+          config.commandTimeoutMs,
+        );
+        const diff = driver.eval(
+          invokeToolScript(
+            'inspect_answer_change',
+            {},
+            `return serialized.includes('"changed":true') &&
+              serialized.includes('"status":"insufficient"') &&
+              serialized.includes('"status":"contradicted"') &&
+              serialized.includes('"timestamp":"00:01–00:11"') &&
+              serialized.includes('"captureTiming":"contributor_attested"') &&
+              serialized.includes(${JSON.stringify(correctedObservation)});`,
+          ),
+          'invoke inspect_answer_change',
+        );
+        if (diff !== true) throw new Error('WebMCP did not expose the causal answer difference.');
+      }
       driver.reload();
       await waitForBrowserValue(
         driver,
@@ -694,8 +862,50 @@ async function run(): Promise<void> {
 
     await recordAcceptanceStep(
       steps,
-      'reuse the reviewed recording in a fresh WebMCP case',
+      humanControls
+        ? 'reuse the reviewed recording in a fresh ordinary-browser case'
+        : 'reuse the reviewed recording in a fresh WebMCP case',
       async () => {
+        if (humanControls) {
+          fillHumanQuestion(driver, productName, productUrl, productQuestion);
+          if (driver.eval(clickExactButtonScript('Open new evidence case')) !== true) {
+            throw new Error('The second ordinary-browser case could not open.');
+          }
+          await waitForBrowserValue(
+            driver,
+            'second ordinary-browser case search frontier',
+            pageIncludesScript(productName, productQuestion, 'Search existing evidence'),
+            (value) => value === true,
+            config.commandTimeoutMs,
+          );
+          if (driver.eval(clickExactButtonScript('Search existing evidence')) !== true) {
+            throw new Error('The second ordinary-browser search could not start.');
+          }
+          await waitForBrowserValue(
+            driver,
+            'ordinary-browser reusable evidence receipt',
+            pageIncludesScript(
+              '1 reusable reviewed recording found',
+              'Cloudflare D1 reusable evidence',
+              'The evidence network already has a reviewed answer.',
+              'reusable network evidence',
+              'Video 00:01–00:11',
+            ),
+            (value) => value === true,
+            config.commandTimeoutMs,
+          );
+          const noRedundantMission = driver.eval(`(() => {
+            const buttons = [...document.querySelectorAll('button')];
+            return !buttons.some(
+              (button) => button.textContent?.trim() === 'Create claim-specific filming mission',
+            );
+          })()`);
+          if (noRedundantMission !== true) {
+            throw new Error('The reused evidence still exposed a redundant filming mission.');
+          }
+          if (artifacts !== null) driver.screenshot(join(artifacts, '07-reused.png'));
+          return;
+        }
         const asked = driver.eval(
           invokeToolScript(
             'ask_product_question',

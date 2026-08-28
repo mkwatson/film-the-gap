@@ -109,9 +109,10 @@ Before recording, run the offline native acceptance journey:
 
 ```bash
 pnpm acceptance:evidence-network
+pnpm acceptance:evidence-network:fallback
 ```
 
-It generates an owned 12-second MP4 and drives the real Next.js page and Durable Object through native Chrome WebMCP. Deterministic local services replace only Stream and the model; the browser is blocked from the public paid-service hosts. The runner must prove:
+The first command drives the real Next.js page and Durable Object through native Chrome WebMCP. The second launches Chrome with WebMCP explicitly disabled and completes the same product loop with visible human controls. Each generates an owned 12-second MP4; deterministic local services replace only Stream and the model, and the browser is blocked from the public paid-service hosts. Together they must prove:
 
 1. the initial answer is insufficient;
 2. WebMCP creates a bounded mission and phone link;
@@ -122,6 +123,8 @@ It generates an owned 12-second MP4 and drives the real Next.js page and Durable
 7. `inspect_answer_change` returns insufficient → contradicted with the exact `00:01–00:11` citation; and
 8. a buyer reload reconnects to the same Durable Object state; and
 9. a fresh matching case reuses that exact citation and exposes no filming-mission tool.
+
+The fallback receipt additionally proves every necessary shopper, board, recorder, review, and reuse action remains available without Site Tools.
 
 This receipt proves the product flow and failure boundaries, not a live Stream/model call or physical truth. The public physical-phone rehearsal remains a separate mandatory gate.
 

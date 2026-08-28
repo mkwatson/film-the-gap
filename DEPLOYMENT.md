@@ -46,11 +46,44 @@ Cloudflare's current Worker rate-limit binding is deliberately permissive, event
 
 Turnstile is not on the canonical judge path yet. Its server validation would add useful bot resistance, but an unverified interaction inside ChatGPT's in-app Browser is a larger submission risk than the bounded residual cost. Reconsider only after an exact-runtime test proves invisible or interaction-only Turnstile does not interrupt native Site Tools or phone capture.
 
+## Read-only account preflight
+
+Run these before the approval session. They do not create resources or spend credits:
+
+```bash
+pnpm dlx vercel@59.9.1 whoami
+pnpm dlx vercel@59.9.1 teams ls
+pnpm dlx vercel@59.9.1 project ls --scope YOUR-STANDALONE-TEAM-SLUG
+pnpm dlx vercel@59.9.1 ai-gateway budgets list --scope YOUR-STANDALONE-TEAM-SLUG
+pnpm dlx vercel@59.9.1 ai-gateway api-keys list --scope YOUR-STANDALONE-TEAM-SLUG
+pnpm --dir room-worker exec wrangler whoami
+pnpm --dir room-worker exec wrangler d1 list --json
+gh auth status
+```
+
+Use a Vercel team whose generated production URLs do not carry an unrelated company slug. The selected team needs permission to create a project, set its AI Gateway budget, create one scoped Gateway key, and stage a project-level firewall rule. Cloudflare needs Workers, Durable Objects, D1, Stream, Cron Triggers, and rate-limit bindings. A successful `wrangler whoami` does not prove Stream is enabled; confirm Stream's terms/billing once in the dashboard before deployment.
+
 ## User-approved one-time setup
 
 These steps mutate accounts or authorize spend. Mark must approve them and be present.
 
-1. Choose a globally distinct public project name and create a new Vercel project. Its generated `*.vercel.app` hostname is based on that name, so choose a name that does not acquire a company/team suffix and remains visibly standalone. Do not reuse or rename an existing project. A custom domain is optional polish after the generated hostname passes every gate.
+1. Choose a globally distinct public project name and a standalone Vercel team. Create and explicitly link a new project. Its generated `*.vercel.app` hostname is based on that name and scope, so stop if it acquires an unrelated company suffix. Do not reuse or rename an existing project. A custom neutral domain is optional polish after the generated hostname passes every gate.
+
+   ```bash
+   WEBMCP_VERCEL_SCOPE=YOUR-STANDALONE-TEAM-SLUG
+   WEBMCP_VERCEL_PROJECT=YOUR-NEW-STANDALONE-PROJECT
+   test -n "$WEBMCP_VERCEL_SCOPE"
+   test -n "$WEBMCP_VERCEL_PROJECT"
+
+   pnpm dlx vercel@59.9.1 project add "$WEBMCP_VERCEL_PROJECT" \
+     --scope "$WEBMCP_VERCEL_SCOPE"
+   pnpm dlx vercel@59.9.1 link --yes \
+     --team "$WEBMCP_VERCEL_SCOPE" \
+     --project "$WEBMCP_VERCEL_PROJECT"
+   pnpm dlx vercel@59.9.1 project inspect "$WEBMCP_VERCEL_PROJECT" \
+     --scope "$WEBMCP_VERCEL_SCOPE"
+   ```
+
 2. Enable Cloudflare Stream on the intended account and approve its minimum storage/delivery commitment.
 3. Create a dedicated D1 database in Western North America and replace both all-zero placeholder IDs in `room-worker/wrangler.evidence.jsonc` with the returned UUID. This mutates the Cloudflare account and must not be run until Mark approves:
 
@@ -65,27 +98,31 @@ These steps mutate accounts or authorize spend. Mark must approve them and be pr
 4. Set the exact new project name once, inspect it, put a `$5` non-renewing AI Gateway budget on that project, then create one dedicated Gateway key for the external Cloudflare video worker with a separate `$20` hard ceiling, no refresh, alerts, and a 30-day expiry. Vercel-hosted web discovery uses automatically refreshed OIDC under the project budget and stores no second key:
 
    ```bash
+   WEBMCP_VERCEL_SCOPE=YOUR-STANDALONE-TEAM-SLUG
    WEBMCP_VERCEL_PROJECT=YOUR-NEW-STANDALONE-PROJECT
+   test -n "$WEBMCP_VERCEL_SCOPE"
    test -n "$WEBMCP_VERCEL_PROJECT"
 
    pnpm dlx vercel@59.9.1 ai-gateway budgets set \
      project "$WEBMCP_VERCEL_PROJECT" \
      --limit 5 \
-     --refresh-period none
+     --refresh-period none \
+     --scope "$WEBMCP_VERCEL_SCOPE"
 
    pnpm dlx vercel@59.9.1 ai-gateway api-keys create \
      --name webmcp-product-evidence-video \
      --budget 20 \
      --refresh-period none \
      --alert-thresholds 50,75,100 \
-     --expiration 30d
+     --expiration 30d \
+     --scope "$WEBMCP_VERCEL_SCOPE"
 
    ```
 
    Do not use `--bypass-all-settings` or `--zdr-exempt`. Copy the secret only into Cloudflare's encrypted secret prompt. Keep Vercel auto top-up disabled and retain the route/WAF limits below. The project budget is the hard discovery ceiling; an explicit `AI_GATEWAY_DISCOVERY_API_KEY` is unnecessary and would override OIDC.
 
 5. If live social discovery is enabled, create a dedicated ScrapeCreators key with only the credits Mark approves. The app remains truthful and functional without it, but reports discovery as unavailable.
-6. Link this worktree to the new Vercel project only after the public project name is chosen. Before any budget, environment, firewall, or deploy command, inspect `.vercel/project.json` and `vercel project inspect`; both must identify the new standalone project, never `webmcp-evidence-market`. `.vercel/project.json` must remain uncommitted.
+6. Before every budget, environment, firewall, or deploy command, inspect `.vercel/project.json` and run `vercel project inspect` with the explicit scope; both must identify the new standalone project, never a pre-existing project. `.vercel/project.json` must remain uncommitted.
 
 ## Candidate gate before any deployment
 
@@ -106,9 +143,10 @@ pnpm --dir room-worker dev:evidence-services
 pnpm --dir room-worker dev:evidence-acceptance
 NEXT_PUBLIC_EVIDENCE_ROOM_URL=http://localhost:8792 pnpm dev
 pnpm acceptance:evidence-network
+pnpm acceptance:evidence-network:fallback
 ```
 
-The migration command is one-time local preparation; the next four commands use separate shells. The acceptance test exercises real Chrome, native dynamic Site Tools on both shopper and board pages, three browser contexts, explicit public disclosure, privacy-minimized listing, revocable public capability, the actual app, Durable Object, and D1 index, upload/model-shaped service boundaries, human correction, explicit reuse consent, publication, WebSocket update, a fresh matching case, and cross-case reuse. It replaces only the paid Stream and model calls with strict local services.
+The migration command is one-time local preparation; the next four commands use separate shells. Run both acceptance commands in the fourth shell. The native run exercises dynamic Site Tools on both shopper and board pages. The fallback run starts Chrome with WebMCP explicitly disabled and completes the same journey through visible controls. Both cover three browser contexts, explicit public disclosure, privacy-minimized listing, revocable public capability, the actual app, Durable Object, D1 index, upload/model-shaped service boundaries, human correction, explicit reuse consent, publication, WebSocket update, a fresh matching case, and cross-case reuse. They replace only the paid Stream and model calls with strict local services.
 
 ## First generic deployment
 
@@ -117,6 +155,7 @@ The app origin and Worker origin depend on one another. Establish the new Vercel
 Set and inspect explicit shell variables; never paste placeholders into a deployment:
 
 ```bash
+WEBMCP_VERCEL_SCOPE=YOUR-STANDALONE-TEAM-SLUG
 WEBMCP_VERCEL_PROJECT=YOUR-NEW-STANDALONE-PROJECT
 APP_ORIGIN="https://$WEBMCP_VERCEL_PROJECT.vercel.app"
 ROOM_ORIGIN=https://webmcp-product-evidence.YOUR-CLOUDFLARE-SUBDOMAIN.workers.dev
@@ -187,6 +226,7 @@ Vercel WAF rate limiting is available on all plans, but the first rule may show 
 
    ```bash
    pnpm dlx vercel@59.9.1 firewall rules add "Product evidence search ceiling" \
+     --project "$WEBMCP_VERCEL_PROJECT" \
      --condition '{"type":"path","op":"eq","value":"/api/evidence/search"}' \
      --condition '{"type":"method","op":"eq","value":"POST"}' \
      --action rate_limit \
@@ -194,22 +234,37 @@ Vercel WAF rate limiting is available on all plans, but the first rule may show 
      --rate-limit-requests 20 \
      --rate-limit-keys ip \
      --rate-limit-action log \
-     --yes
-   pnpm dlx vercel@59.9.1 firewall diff
+     --yes \
+     --scope "$WEBMCP_VERCEL_SCOPE"
+   pnpm dlx vercel@59.9.1 firewall diff \
+     --project "$WEBMCP_VERCEL_PROJECT" \
+     --scope "$WEBMCP_VERCEL_SCOPE"
    ```
 
-2. Mark runs `pnpm dlx vercel@59.9.1 firewall publish --yes`, exercises shopper and ChatGPT searches, and reviews matched traffic in the Vercel Firewall dashboard.
+2. Mark publishes the explicit project's draft, exercises shopper and ChatGPT searches, and reviews matched traffic in the Vercel Firewall dashboard:
+
+   ```bash
+   pnpm dlx vercel@59.9.1 firewall publish \
+     --project "$WEBMCP_VERCEL_PROJECT" \
+     --yes \
+     --scope "$WEBMCP_VERCEL_SCOPE"
+   ```
+
 3. After legitimate traffic is confirmed, retain the rule and change overflow to HTTP 429:
 
    ```bash
    pnpm dlx vercel@59.9.1 firewall rules edit "Product evidence search ceiling" \
+     --project "$WEBMCP_VERCEL_PROJECT" \
      --action rate_limit \
      --rate-limit-window 60 \
      --rate-limit-requests 20 \
      --rate-limit-keys ip \
      --rate-limit-action rate_limit \
-     --yes
-   pnpm dlx vercel@59.9.1 firewall diff
+     --yes \
+     --scope "$WEBMCP_VERCEL_SCOPE"
+   pnpm dlx vercel@59.9.1 firewall diff \
+     --project "$WEBMCP_VERCEL_PROJECT" \
+     --scope "$WEBMCP_VERCEL_SCOPE"
    ```
 
 4. Mark publishes again. Keep the filtered Firewall traffic view open during the rehearsal. Counters are regional and IPs can be shared, so this remains a generous overload ceiling rather than a user quota.
@@ -268,7 +323,7 @@ After the September 3, 2026 1:00 p.m. PT deadline, keep the submitted repository
 
 Preserve the previous candidate Vercel deployment URL and Worker version ID before every change.
 
-- Vercel: `pnpm dlx vercel@59.9.1 rollback PREVIOUS_DEPLOYMENT_URL`, then inspect `rollback status`.
+- Vercel: `pnpm dlx vercel@59.9.1 rollback PREVIOUS_DEPLOYMENT_URL --scope "$WEBMCP_VERCEL_SCOPE"`, then inspect `rollback status` for the explicit project and scope.
 - Cloudflare: `pnpm --dir room-worker exec wrangler rollback PREVIOUS_VERSION_ID --config wrangler.evidence.jsonc --message "rollback to known-good generic evidence release"`.
 - WAF: stage the rule back to logging or disable it, inspect `firewall diff`, then Mark publishes the draft.
 

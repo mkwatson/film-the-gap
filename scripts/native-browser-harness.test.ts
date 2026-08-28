@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  browserAllowedDomains,
   containsPrivateMaterial,
   findSingleNewTab,
   isStringArray,
@@ -12,6 +13,7 @@ import {
   readAcceptanceArtifactConfig,
   sameStringSet,
   sanitizeAcceptanceFailure,
+  webMcpFeatureArgument,
 } from './native-browser-harness.ts';
 
 describe('native browser acceptance harness', () => {
@@ -124,6 +126,28 @@ describe('native browser acceptance harness', () => {
     expect(isStringArray(['inspect', 7])).toBe(false);
     expect(sameStringSet(['act', 'inspect'], ['inspect', 'act'])).toBe(true);
     expect(sameStringSet(['inspect'], ['inspect', 'act'])).toBe(false);
+  });
+
+  it('launches Chrome with an explicit WebMCP feature state', () => {
+    expect(webMcpFeatureArgument(true)).toBe('--enable-features=WebMCP');
+    expect(webMcpFeatureArgument(false)).toBe('--disable-features=WebMCP');
+  });
+
+  it('allows both loopback aliases when local services use either one', () => {
+    expect(
+      browserAllowedDomains({
+        appUrl: 'http://localhost:3000',
+        roomOrigin: 'http://localhost:8792',
+        merchantOrigin: 'http://127.0.0.1:8793',
+      }),
+    ).toEqual(['localhost', '127.0.0.1']);
+    expect(
+      browserAllowedDomains({
+        appUrl: 'https://app.example',
+        roomOrigin: 'https://room.example',
+        merchantOrigin: 'https://merchant.example',
+      }),
+    ).toEqual(['app.example', 'room.example', 'merchant.example']);
   });
 
   it('parses dynamic browser tab identifiers without depending on a fixed tab count', () => {

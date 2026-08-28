@@ -24,6 +24,10 @@ export interface AcceptanceArtifactConfig {
   readonly recordVideo: boolean;
 }
 
+export interface NativeBrowserDriverOptions {
+  readonly webMcpEnabled?: boolean;
+}
+
 export type AcceptanceTab = `t${number}`;
 
 const defaultBrowserExecutable = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
@@ -184,24 +188,43 @@ export function sanitizeAcceptanceFailure(error: unknown): string {
   return message.replaceAll(/https?:\/\/[^\s"'<>]+/gi, '[origin suppressed]');
 }
 
+export function webMcpFeatureArgument(
+  enabled: boolean,
+): '--enable-features=WebMCP' | '--disable-features=WebMCP' {
+  return enabled ? '--enable-features=WebMCP' : '--disable-features=WebMCP';
+}
+
+export function browserAllowedDomains(
+  config: Pick<AcceptanceConfig, 'appUrl' | 'roomOrigin' | 'merchantOrigin'>,
+): readonly string[] {
+  const domains = new Set([
+    new URL(config.appUrl).hostname,
+    new URL(config.roomOrigin).hostname,
+    new URL(config.merchantOrigin).hostname,
+  ]);
+  if (domains.has('localhost') || domains.has('127.0.0.1')) {
+    domains.add('localhost');
+    domains.add('127.0.0.1');
+  }
+  return [...domains];
+}
+
 export class NativeBrowserDriver {
   private readonly config: AcceptanceConfig;
   private readonly session: string;
+  private readonly webMcpEnabled: boolean;
 
-  constructor(config: AcceptanceConfig) {
+  constructor(config: AcceptanceConfig, options: NativeBrowserDriverOptions = {}) {
     this.config = config;
     this.session = `webmcp-accept-${process.pid}-${Date.now().toString(36)}`;
+    this.webMcpEnabled = options.webMcpEnabled !== false;
   }
 
   open(): void {
     if (!existsSync(this.config.browserExecutable)) {
       throw new Error('The configured Chrome executable does not exist.');
     }
-    const allowedDomains = [
-      new URL(this.config.appUrl).hostname,
-      new URL(this.config.roomOrigin).hostname,
-      new URL(this.config.merchantOrigin).hostname,
-    ];
+    const allowedDomains = browserAllowedDomains(this.config);
     const initialUrl =
       this.config.appCookieFile === null ? this.config.appUrl : this.config.merchantOrigin;
     this.execute(
@@ -210,9 +233,9 @@ export class NativeBrowserDriver {
         '--executable-path',
         this.config.browserExecutable,
         '--args',
-        '--enable-features=WebMCP',
+        webMcpFeatureArgument(this.webMcpEnabled),
         '--allowed-domains',
-        [...new Set(allowedDomains)].join(','),
+        allowedDomains.join(','),
         ...(this.config.headed ? ['--headed'] : []),
         'open',
         initialUrl,
