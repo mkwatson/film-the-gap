@@ -67,6 +67,8 @@ Use a Vercel team whose generated production URLs do not carry an unrelated comp
 
 These steps mutate accounts or authorize spend. Mark must approve them and be present.
 
+The current minimum new purchase is one `$5` [Cloudflare Stream storage block](https://developers.cloudflare.com/stream/pricing/). [Vercel currently includes](https://vercel.com/docs/ai-gateway/pricing) `$5` of monthly AI Gateway credit; if that account credit is already exhausted, stop before buying more and report the exact balance and projected rehearsal cost.
+
 1. Choose a globally distinct public project name and a standalone Vercel team. Create and explicitly link a new project. Its generated `*.vercel.app` hostname is based on that name and scope, so stop if it acquires an unrelated company suffix. Do not reuse or rename an existing project. A custom neutral domain is optional polish after the generated hostname passes every gate.
 
    ```bash
@@ -84,7 +86,7 @@ These steps mutate accounts or authorize spend. Mark must approve them and be pr
      --scope "$WEBMCP_VERCEL_SCOPE"
    ```
 
-2. Enable Cloudflare Stream on the intended account and approve its minimum storage/delivery commitment.
+2. Enable Cloudflare Stream on the intended account and purchase its minimum prepaid storage block: currently `$5` for 1,000 stored minutes. Keep the demo's existing duration, upload-count, and deletion bounds; do not purchase additional storage.
 3. Create a dedicated D1 database in Western North America and replace both all-zero placeholder IDs in `room-worker/wrangler.evidence.jsonc` with the returned UUID. This mutates the Cloudflare account and must not be run until Mark approves:
 
    ```bash
@@ -95,7 +97,7 @@ These steps mutate accounts or authorize spend. Mark must approve them and be pr
 
    Keep the binding name exactly `EVIDENCE_LIBRARY`. Do not deploy while either placeholder UUID remains.
 
-4. Set the exact new project name once, inspect it, put a `$5` non-renewing AI Gateway budget on that project, then create one dedicated Gateway key for the external Cloudflare video worker with a separate `$20` hard ceiling, no refresh, alerts, and a 30-day expiry. Vercel-hosted web discovery uses automatically refreshed OIDC under the project budget and stores no second key:
+4. Set the exact new project name once, inspect it, put a `$5` non-renewing AI Gateway budget on that project, then create one dedicated Gateway key for the external Cloudflare video worker with a separate `$5` hard ceiling, no refresh, alerts, and a 30-day expiry. Vercel-hosted web discovery uses automatically refreshed OIDC under the project budget and stores no second key. Vercel currently includes `$5` of monthly Gateway credit; do not purchase or enable auto top-up unless the account's existing usage has exhausted it and Mark separately approves the charge.
 
    ```bash
    WEBMCP_VERCEL_SCOPE=YOUR-STANDALONE-TEAM-SLUG
@@ -111,7 +113,7 @@ These steps mutate accounts or authorize spend. Mark must approve them and be pr
 
    pnpm dlx vercel@59.9.1 ai-gateway api-keys create \
      --name webmcp-product-evidence-video \
-     --budget 20 \
+     --budget 5 \
      --refresh-period none \
      --alert-thresholds 50,75,100 \
      --expiration 30d \
