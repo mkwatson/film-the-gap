@@ -185,6 +185,18 @@ The post-removal full gate passed 145 app tests, 26 Workerd tests, zero-warning 
 
 Decision: keep the deletion. Git history remains the evidence of meaningful challenge-period extension and prior experiments; the submitted repository landing page now explains only the product a judge can run. UCP and Lean can return only as future load-bearing product capabilities, not as unused sponsor or technical ornament.
 
+## E28 — Bounded agent context at every ordinary state
+
+**Frozen claim:** Following Chrome's current WebMCP character-budget guidance across the complete stateful journey will improve tool selection and agent reliability more than returning the page's full internal object graph.
+
+**Result:** **graduated locally.** `inspect_product_evidence` now returns the exact active product/question, compact answer and discovery receipt, one highest-value source, total/hidden-source counts, the open mission and fresh-capture phrase, capability status, privacy receipt, and the valid next tools. Reviewed decisive video outranks link-only leads; every additional source remains visible in the human page. The read-only inspection no longer repeatedly exports the bearer contributor URL after the purpose-built creation call has returned it. The default unresolved, open-mission, phone-plus-public-board, and resolved states serialize to 1,147–1,491 characters in regression tests, while the answer-difference result remains 716 characters.
+
+The open mission board now accepts an optional product/question query, returns at most three compact mission summaries plus total/truncation metadata, and requires `open_filming_mission` to retrieve one full filming recipe and bounded recorder. This preserves access to a larger human-visible board without dumping up to 24 untrusted records into one model turn. Focused component and contract tests pass strict TypeScript and enforce the 1.5K-character ceiling for ordinary inspection, board-search, and mission-open results.
+
+**Current-doc receipt — checked 2026-08-27 PT:** Chrome's [secure tools guidance](https://developer.chrome.com/docs/ai/webmcp/secure-tools) still recommends at most 30 characters per tool/parameter name, 500 per tool description, 150 per parameter description, and 1.5K per individual tool result. Its [eval guidance](https://developer.chrome.com/docs/ai/webmcp/evals) still prioritizes state-correct tool exposure, ordered journeys, concise outputs, and deterministic tests around non-model behavior. The current WebMCP explainer still treats dynamic page state and shared human-visible context as the reason to prefer page tools over a detached backend integration.
+
+Decision: keep the compact contract. This raises the first tie-break criterion directly: WebMCP is not merely present; its schemas, lifecycle, untrusted-content boundary, result budget, and page/agent division are intentionally engineered for current consumers.
+
 ## What changed in the evidence
 
 1. The [official challenge page](https://openai.com/webmcp-challenge/) asks for an app that becomes meaningfully better when people and agents use it together. The [Devpost gallery](https://webmcp.devpost.com/project-gallery) was still unpublished on August 26, while the last same-day refresh showed 1,717 participants. We cannot novelty-check private entries, so the interaction itself must be structurally memorable.

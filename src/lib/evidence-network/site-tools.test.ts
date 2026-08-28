@@ -277,15 +277,106 @@ describe('product evidence Site Tools', () => {
     expect(removals).toBe(1);
   });
 
-  it('returns compact claim, rights, provenance, and citation state', () => {
-    const state = createDemoEvidenceNetworkState();
-    const snapshot = evidenceCaseSnapshot(state);
-    const serialized = JSON.stringify(snapshot);
+  it('keeps common inspect results within the current Chrome character budget', () => {
+    let state = createDemoEvidenceNetworkState();
+    const initialSnapshot = evidenceCaseSnapshot(state);
+    const initialSerialized = JSON.stringify(initialSnapshot);
 
-    expect(serialized).toContain('rights');
-    expect(serialized).toContain('provenance');
-    expect(serialized).toContain('Product-page copy');
-    expect(serialized.length).toBeLessThanOrEqual(1_500);
+    expect(initialSerialized).toContain('rights');
+    expect(initialSerialized).toContain('provenance');
+    expect(initialSerialized).toContain('Product-page copy');
+    expect(initialSerialized.length).toBeLessThanOrEqual(1_500);
+
+    state = applyEvidenceNetworkCommand(
+      state,
+      {
+        kind: 'create-filming-mission',
+        actor: 'agent',
+        input: {
+          instruction: 'Invert the filled bottle over dry paper for ten seconds.',
+          successCriterion: 'Keep the closed lid and dry paper visible throughout.',
+          minimumSeconds: 10,
+          continuousTakeRequired: true,
+        },
+      },
+      '2026-08-27T16:01:00.000Z',
+    ).state;
+    const receipt = {
+      caseId: 'BCDF2345',
+      contributorUrl: 'https://app.example/contribute/BCDF2345#token=private-bounded-token',
+      expiresAt: 1_800_000_000_000,
+    };
+    const publicMission = {
+      id: '123e4567-e89b-42d3-a456-426614174000',
+      caseId: receipt.caseId,
+      productName: 'Everyday insulated travel bottle',
+      productUrl: null,
+      question: 'Does the filled bottle stay leak-free when held upside down for 10 seconds?',
+      instruction: 'Invert the filled bottle over dry paper for ten seconds.',
+      successCriterion: 'Keep the closed lid and dry paper visible throughout.',
+      minimumSeconds: 10,
+      continuousTakeRequired: true,
+      status: 'open',
+      createdAt: '2026-08-27T16:01:00.000Z',
+      expiresAt: '2026-08-28T16:01:00.000Z',
+      fulfilledAt: null,
+    } as const;
+    const missionSnapshot = evidenceCaseSnapshot(
+      state,
+      {
+        available: true,
+        current: () => receipt,
+        create: async () => receipt,
+      },
+      {
+        available: true,
+        current: () => publicMission,
+        publish: async () => publicMission,
+        remove: async () => ({ ...publicMission, status: 'removed' as const }),
+      },
+    );
+    const missionSerialized = JSON.stringify(missionSnapshot);
+
+    expect(missionSerialized).toContain('freshCapturePhrase');
+    expect(missionSerialized).not.toContain('private-bounded-token');
+    expect(missionSerialized.length).toBeLessThanOrEqual(1_500);
+
+    state = applyEvidenceNetworkCommand(
+      state,
+      {
+        kind: 'publish-reviewed-evidence',
+        actor: 'contributor',
+        input: {
+          result: 'supports',
+          observation: 'No water reached the paper during the continuous inversion.',
+          contributorLabel: 'Replay contributor',
+          durationSeconds: 10,
+          citationStartSeconds: 0,
+          citationEndSeconds: 10,
+          confidence: 'high',
+          continuity: 'continuous',
+          captureTiming: 'preexisting',
+          rights: 'owned',
+          reuseScope: 'case_only',
+          provenance: 'demo_replay',
+          capturedAt: '2026-08-27T16:02:00.000Z',
+        },
+      },
+      '2026-08-27T16:02:00.000Z',
+    ).state;
+    const resolvedSnapshot = evidenceCaseSnapshot(state);
+    const resolvedSerialized = JSON.stringify(resolvedSnapshot);
+
+    expect(resolvedSnapshot).toMatchObject({
+      case: {
+        evidence: {
+          total: 2,
+          moreVisibleOnPage: true,
+          shown: [{ provenance: 'demo_replay', finding: { result: 'supports' } }],
+        },
+      },
+    });
+    expect(resolvedSerialized.length).toBeLessThanOrEqual(1_500);
   });
 
   it('shows exactly which reviewed evidence changed the answer', () => {

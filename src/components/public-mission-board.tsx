@@ -22,14 +22,23 @@ interface ClaimedMission {
   readonly contributorUrl: string;
 }
 
-const emptyObjectSchema = z.strictObject({});
+const missionSearchSchema = z.strictObject({
+  query: z.string().trim().min(2).max(120).optional(),
+});
 const missionSelectionSchema = z.strictObject({
   missionId: z.string().regex(publicEvidenceMissionIdPattern),
 });
 
-const emptyInputSchema = {
+const missionSearchJsonSchema = {
   type: 'object',
-  properties: {},
+  properties: {
+    query: {
+      type: 'string',
+      minLength: 2,
+      maxLength: 120,
+      description: 'Optional product or question words used to filter open requests.',
+    },
+  },
   additionalProperties: false,
 } as const;
 
@@ -53,6 +62,13 @@ function formatExpiry(expiresAt: string): string {
     month: 'short',
     day: 'numeric',
   }).format(new Date(expiresAt));
+}
+
+function compactMissionText(value: string, maximumCharacters: number): string {
+  if (value.length <= maximumCharacters) {
+    return value;
+  }
+  return `${value.slice(0, maximumCharacters - 1).trimEnd()}…`;
 }
 
 export function PublicMissionBoard(): React.JSX.Element {
@@ -143,22 +159,38 @@ export function PublicMissionBoard(): React.JSX.Element {
         name: 'inspect_open_filming_missions',
         title: 'Inspect open product filming requests',
         description:
-          'List current public requests for short, question-specific product videos. Returns public product and filming fields only; no shopper identity, preferences, history, or budget.',
-        inputSchema: emptyInputSchema,
+          'List or filter current public requests for short, question-specific product videos. Returns compact public mission summaries only; use open_filming_mission for one full filming recipe. No shopper context is stored.',
+        inputSchema: missionSearchJsonSchema,
         annotations: { readOnlyHint: true, untrustedContentHint: true },
         execute: async (input, options): Promise<object> => {
           options?.signal?.throwIfAborted();
-          const parsed = emptyObjectSchema.safeParse(input);
+          const parsed = missionSearchSchema.safeParse(input);
           if (!parsed.success) {
             return { ok: false, error: 'invalid_input', issues: parsed.error.issues };
           }
           const current = await loadMissions();
+          const query = parsed.data.query?.toLowerCase();
+          const matching =
+            query === undefined
+              ? current
+              : current.filter(({ productName, question }) =>
+                  `${productName}\n${question}`.toLowerCase().includes(query),
+                );
+          const shown = matching.slice(0, 3).map(({ id, productName, question, expiresAt }) => ({
+            missionId: id,
+            product: compactMissionText(productName, 60),
+            question: compactMissionText(question, 120),
+            expiresAt,
+          }));
           return {
             ok: true,
-            missions: current,
+            totalOpen: current.length,
+            totalMatching: matching.length,
+            missions: shown,
+            moreMatching: matching.length > shown.length,
             privacyReceipt: {
-              included: ['public product', 'product question', 'filming recipe', 'expiry'],
-              excluded: ['shopper identity', 'preferences', 'history', 'budget'],
+              included: 'public product, question, mission ID, and expiry',
+              excluded: 'shopper identity, preferences, history, budget, and conversation',
             },
           };
         },

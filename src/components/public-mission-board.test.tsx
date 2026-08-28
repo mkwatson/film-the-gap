@@ -117,16 +117,78 @@ describe('PublicMissionBoard', () => {
     expect(serialized).toContain(mission.question);
     expect(serialized).not.toMatch(/ownerToken|contributorToken/i);
     expect(inspected).toMatchObject({
-      privacyReceipt: { excluded: expect.arrayContaining(['budget']) },
+      missions: [{ missionId: mission.id, product: mission.productName }],
+      privacyReceipt: { excluded: expect.stringContaining('budget') },
     });
+    expect(serialized.length).toBeLessThanOrEqual(1_500);
 
-    await expect(
-      modelContext
-        .latestTool('open_filming_mission')
-        .execute({ missionId: mission.id }, { signal: new AbortController().signal }),
-    ).resolves.toMatchObject({
+    const opened = await modelContext
+      .latestTool('open_filming_mission')
+      .execute({ missionId: mission.id }, { signal: new AbortController().signal });
+    expect(opened).toMatchObject({
       ok: true,
       contributorUrl: `${window.location.origin}/contribute/${mission.caseId}#token=${publicContributorToken}`,
     });
+    expect(JSON.stringify(opened).length).toBeLessThanOrEqual(1_500);
+  });
+
+  it('filters a larger board and returns only compact mission summaries', async () => {
+    const modelContext = new RecordingModelContext();
+    setModelContext(modelContext);
+    const otherMissions = [
+      {
+        ...mission,
+        id: '123e4567-e89b-42d3-a456-426614174001',
+        productName: 'Rechargeable desk lamp',
+        question: 'Does it restore the previous brightness after power is removed?',
+      },
+      {
+        ...mission,
+        id: '123e4567-e89b-42d3-a456-426614174002',
+        productName: 'Countertop coffee grinder',
+        question: 'How much grounds retention remains after one measured dose?',
+      },
+      {
+        ...mission,
+        id: '123e4567-e89b-42d3-a456-426614174003',
+        productName: 'Portable charging bank',
+        question: 'Can it charge two phones continuously at the advertised output?',
+      },
+    ] as const;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (): Promise<Response> =>
+        Response.json({ missions: [mission, ...otherMissions] }),
+      ),
+    );
+
+    render(<PublicMissionBoard />);
+    await screen.findByText(mission.productName);
+    await waitFor(() => {
+      expect(modelContext.latestTool('inspect_open_filming_missions')).toBeTruthy();
+    });
+    const inspectTool = modelContext.latestTool('inspect_open_filming_missions');
+    const unfiltered = await inspectTool.execute({}, { signal: new AbortController().signal });
+    const filtered = await inspectTool.execute(
+      { query: 'lavalier' },
+      { signal: new AbortController().signal },
+    );
+
+    expect(unfiltered).toMatchObject({
+      totalOpen: 4,
+      totalMatching: 4,
+      moreMatching: true,
+      missions: [{ missionId: mission.id }, {}, {}],
+    });
+    expect(JSON.stringify(unfiltered).length).toBeLessThanOrEqual(1_500);
+    expect(filtered).toMatchObject({
+      totalOpen: 4,
+      totalMatching: 1,
+      moreMatching: false,
+      missions: [{ missionId: mission.id }],
+    });
+    await expect(
+      inspectTool.execute({ query: 'x' }, { signal: new AbortController().signal }),
+    ).resolves.toMatchObject({ ok: false, error: 'invalid_input' });
   });
 });

@@ -755,7 +755,8 @@ async function run(): Promise<void> {
             `return serialized.includes('"status":"contradicted"') &&
               serialized.includes('"reuseScope":"public_network"') &&
               serialized.includes('"captureTiming":"contributor_attested"') &&
-              serialized.includes('"streamUid":"acceptancevideo0000000000000001"') &&
+              serialized.includes('"medium":"video"') &&
+              serialized.includes('acceptancevideo0000000000000001') &&
               serialized.includes(${JSON.stringify(correctedObservation)}) &&
               serialized.includes('"mission":null') &&
               serialized.includes('"privateShopperContext"') === false;`,

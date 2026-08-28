@@ -156,32 +156,66 @@ function checkAbort(options?: WebMCP.ToolExecuteCallbackOptions): void {
   options?.signal?.throwIfAborted();
 }
 
-function sourceSnapshot(state: EvidenceNetworkState): readonly object[] {
+function compactText(value: string, maximumCharacters: number): string {
+  if (value.length <= maximumCharacters) {
+    return value;
+  }
+  return `${value.slice(0, maximumCharacters - 1).trimEnd()}…`;
+}
+
+function sourceSnapshot(state: EvidenceNetworkState): {
+  readonly total: number;
+  readonly shown: readonly object[];
+  readonly moreVisibleOnPage: boolean;
+} {
   const evidenceCase = state.activeCase;
   if (evidenceCase === null) {
-    return [];
+    return { total: 0, shown: [], moreVisibleOnPage: false };
   }
-  return evidenceCase.sources.map((source) => ({
+  const decisiveObservationIds = new Set(
+    currentEvidenceAnswer(state)?.decisiveObservationIds ?? [],
+  );
+  const ranked = evidenceCase.sources
+    .map((source, index) => {
+      const observations = evidenceCase.observations.filter(
+        ({ citation }) => citation.sourceId === source.id,
+      );
+      const decisive = observations.find(({ id }) => decisiveObservationIds.has(id));
+      const finding = decisive ?? observations[0] ?? null;
+      const score =
+        (decisive === undefined ? 0 : 100) +
+        (['owned', 'authorized'].includes(source.rights) ? 20 : 0) +
+        (source.mediaType === 'video' ? 10 : 0) +
+        (finding !== null && finding.result !== 'inconclusive' ? 5 : 0);
+      return { source, finding, score, index };
+    })
+    .sort((left, right) => right.score - left.score || left.index - right.index);
+  const shown = ranked.slice(0, 1).map(({ source, finding }) => ({
     id: source.id,
-    title: source.title,
-    mediaType: source.mediaType,
+    title: compactText(source.title, 100),
+    medium: source.mediaType,
     rights: source.rights,
     provenance: source.provenance,
     continuity: source.continuity,
     captureTiming: source.captureTiming,
     reuseScope: source.reuseScope,
-    ...(source.url === null ? {} : { url: source.url }),
-    ...(source.streamUid === null ? {} : { streamUid: source.streamUid }),
-    ...(source.sha256 === null ? {} : { sha256: source.sha256 }),
-    observations: evidenceCase.observations
-      .filter(({ citation }) => citation.sourceId === source.id)
-      .map(({ result, confidence, text, citation }) => ({
-        result,
-        confidence,
-        text,
-        citation: citation.label,
-      })),
+    ...(source.url === null ? {} : { url: compactText(source.url, 220) }),
+    ...(finding === null
+      ? {}
+      : {
+          finding: {
+            result: finding.result,
+            confidence: finding.confidence,
+            observation: compactText(finding.text, 180),
+            citation: finding.citation.label,
+          },
+        }),
   }));
+  return {
+    total: evidenceCase.sources.length,
+    shown,
+    moreVisibleOnPage: evidenceCase.sources.length > shown.length,
+  };
 }
 
 function availableToolNames(runtime: EvidenceSiteToolRuntime): readonly string[] {
@@ -226,25 +260,49 @@ export function evidenceCaseSnapshot(
   const evidenceCase = state.activeCase;
   if (evidenceCase === null) {
     return {
-      case: null,
+      state: 'empty',
       next: 'Ask one concrete question about any product.',
       availableTools: availableToolNames(runtime),
       privacyReceipt: {
-        accepted: ['product name', 'optional public product URL', 'product question'],
-        notCollected: ['identity', 'budget', 'purchase history', 'private preferences'],
+        accepted: 'public product, URL, question only',
+        excluded: 'identity, budget, history, preferences, conversation',
       },
     };
   }
   const answer = currentEvidenceAnswer(state);
+  const currentPhoneCapture = phoneCapture?.current() ?? null;
+  const currentPublicMission = missionBoard?.current() ?? null;
   return {
     case: {
       id: evidenceCase.id,
-      product: evidenceCase.product,
+      product: {
+        name: evidenceCase.product.name,
+        ...(evidenceCase.product.suppliedUrl === null
+          ? {}
+          : { url: evidenceCase.product.suppliedUrl }),
+      },
       question: evidenceCase.question.text,
-      answer,
-      discovery: evidenceCase.discovery,
-      sources: sourceSnapshot(state),
-      mission: evidenceCase.mission,
+      answer: answer === null ? null : { status: answer.status, summary: answer.summary },
+      discovery:
+        evidenceCase.discovery === null
+          ? null
+          : {
+              provider: evidenceCase.discovery.provider,
+              status: evidenceCase.discovery.status,
+              warnings: evidenceCase.discovery.warnings.slice(0, 2),
+            },
+      evidence: sourceSnapshot(state),
+      mission:
+        evidenceCase.mission === null
+          ? null
+          : {
+              status: evidenceCase.mission.status,
+              instruction: evidenceCase.mission.instruction,
+              successCriterion: evidenceCase.mission.successCriterion,
+              minimumSeconds: evidenceCase.mission.minimumSeconds,
+              continuousTakeRequired: evidenceCase.mission.continuousTakeRequired,
+              freshCapturePhrase: evidenceCase.mission.captureChallenge.phrase,
+            },
     },
     next:
       evidenceCase.discovery === null
@@ -260,13 +318,19 @@ export function evidenceCaseSnapshot(
         ? { available: false, connected: false }
         : {
             available: phoneCapture.available,
-            connected: phoneCapture.current() !== null,
-            ...(phoneCapture.current() === null ? {} : phoneCapture.current()),
+            connected: currentPhoneCapture !== null,
+            ...(currentPhoneCapture === null ? {} : { expiresAt: currentPhoneCapture.expiresAt }),
           },
-    publicMission: runtime.missionBoard?.current() ?? null,
+    publicMission:
+      currentPublicMission === null
+        ? null
+        : {
+            status: currentPublicMission.status,
+            expiresAt: currentPublicMission.expiresAt,
+          },
     privacyReceipt: {
-      accepted: ['product name', 'optional public product URL', 'product question'],
-      notCollected: ['identity', 'budget', 'purchase history', 'private preferences'],
+      accepted: 'public product, URL, question only',
+      excluded: 'identity, budget, history, preferences, conversation',
     },
   };
 }
