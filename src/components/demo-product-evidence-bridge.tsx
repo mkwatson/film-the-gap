@@ -208,7 +208,7 @@ export function createDemoProductEvidenceTools(
           answer: answerStatus(inspection.records),
           reviewedEvidenceCount: inspection.records.length,
           evidence: compactEvidence(inspection.records),
-          moreEvidenceVisibleOnPage: inspection.records.length > 1,
+          additionalEvidenceCount: Math.max(0, inspection.records.length - 1),
           warnings: inspection.warnings,
           ...(inspection.error === undefined ? {} : { error: inspection.error }),
         };

@@ -29,6 +29,17 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/case',
+        headers: [
+          ...buildAppSecurityHeaders({
+            ...commonOptions,
+            allowCamera: false,
+            allowMicrophone: false,
+            allowStreamPlayback: true,
+          }),
+        ],
+      },
+      {
         source: '/contribute/:path*',
         headers: [
           ...buildAppSecurityHeaders({

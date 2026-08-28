@@ -2,6 +2,12 @@
 
 import { describe, expect, it } from 'vitest';
 
+import {
+  buildEvidenceCaseHandoffPath,
+  evidenceCaseHandoffSource,
+  evidenceCaseHandoffVersion,
+} from '../src/lib/evidence-network/case-handoff.ts';
+import { demoProduct } from '../src/lib/evidence-network/demo-product.ts';
 import { createDemoEvidenceNetworkState } from '../src/lib/evidence-network/model.ts';
 import {
   maximumUploadsPerEvidenceCase,
@@ -29,6 +35,15 @@ const config: ReleaseConfig = {
   expectedCommit: commit,
   timeoutMs: 5_000,
 };
+const demoProductCasePath = buildEvidenceCaseHandoffPath({
+  version: evidenceCaseHandoffVersion,
+  source: evidenceCaseHandoffSource,
+  question: {
+    productName: demoProduct.name,
+    productUrl: `${config.appOrigin}${demoProduct.path}`,
+    question: demoProduct.question,
+  },
+});
 
 function json(value: unknown, status = 200, headers: HeadersInit = {}): Response {
   return Response.json(value, { status, headers: { 'Cache-Control': 'no-store', ...headers } });
@@ -68,6 +83,7 @@ interface ReleaseFetchOptions {
   readonly missionBoundCapture?: boolean;
   readonly reusableIndexAvailable?: boolean;
   readonly demoProductContentSignal?: string;
+  readonly productCaseStreamPlaybackAllowed?: boolean;
 }
 
 function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
@@ -143,6 +159,14 @@ function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
         options.demoProductContentSignal ?? 'search=yes, ai-input=yes, ai-train=no',
       );
       return response;
+    }
+    if (url.href === `${config.appOrigin}${demoProductCasePath}`) {
+      return appPage(demoProduct.question, {
+        allowCamera: false,
+        allowMicrophone: false,
+        allowCreatorUpload: false,
+        allowStreamPlayback: options.productCaseStreamPlaybackAllowed ?? true,
+      });
     }
     if (url.href === `${config.appOrigin}/missions`) {
       return appPage('Turn unanswered product questions into tiny public filming jobs.', {
@@ -249,7 +273,7 @@ describe('public release preflight', () => {
       'evidence service health, commit, and cost controls',
       'reusable evidence index',
       'public filming mission board',
-      'buyer, demo product, mission board, and contributor pages',
+      'buyer, product handoff, mission board, and contributor pages',
       'evidence service browser boundary and durable case',
     ]);
     expect(serialized).not.toContain(ownerToken);
@@ -293,6 +317,12 @@ describe('public release preflight', () => {
         releaseFetch({ demoProductContentSignal: 'search=no, ai-input=no, ai-train=no' }),
       ),
     ).rejects.toThrow(/demo product page.*Content-Signal mismatch/i);
+  });
+
+  it('fails closed when the strict handoff page cannot render reviewed evidence', async () => {
+    await expect(
+      verifyPublicRelease(config, releaseFetch({ productCaseStreamPlaybackAllowed: false })),
+    ).rejects.toThrow(/product evidence handoff page.*Content-Security-Policy mismatch/i);
   });
 
   it('fails closed when the contributor page cannot record a spoken mission phrase', async () => {

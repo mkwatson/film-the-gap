@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+import {
+  buildEvidenceCaseHandoffPath,
+  evidenceCaseHandoffSource,
+  evidenceCaseHandoffVersion,
+} from '../src/lib/evidence-network/case-handoff.ts';
+import { demoProduct } from '../src/lib/evidence-network/demo-product.ts';
 import { reusableEvidenceSearchResponseSchema } from '../src/lib/evidence-network/model.ts';
 import {
   maximumUploadsPerEvidenceCase,
@@ -389,7 +395,7 @@ export async function verifyPublicRelease(
     parseWithSchema(publicEvidenceMissionListSchema, await jsonBody(response, label), label);
   });
 
-  await step('buyer, demo product, mission board, and contributor pages', async () => {
+  await step('buyer, product handoff, mission board, and contributor pages', async () => {
     const buyerLabel = 'buyer page';
     const buyerResponse = await probe(fetcher, config, buyerLabel, `${config.appOrigin}/`);
     requireStatus(buyerResponse, 200, buyerLabel);
@@ -430,6 +436,26 @@ export async function verifyPublicRelease(
       'search=yes, ai-input=yes, ai-train=no',
       demoProductLabel,
     );
+
+    const caseLabel = 'product evidence handoff page';
+    const casePath = buildEvidenceCaseHandoffPath({
+      version: evidenceCaseHandoffVersion,
+      source: evidenceCaseHandoffSource,
+      question: {
+        productName: demoProduct.name,
+        productUrl: `${config.appOrigin}${demoProduct.path}`,
+        question: demoProduct.question,
+      },
+    });
+    const caseResponse = await probe(fetcher, config, caseLabel, `${config.appOrigin}${casePath}`);
+    requireStatus(caseResponse, 200, caseLabel);
+    requireMarker(await htmlBody(caseResponse, caseLabel), demoProduct.question, caseLabel);
+    requireAppSecurityPolicy(caseResponse, caseLabel, config.roomOrigin, {
+      allowCamera: false,
+      allowMicrophone: false,
+      allowCreatorUpload: false,
+      allowStreamPlayback: true,
+    });
 
     const boardLabel = 'mission board page';
     const boardResponse = await probe(fetcher, config, boardLabel, `${config.appOrigin}/missions`);

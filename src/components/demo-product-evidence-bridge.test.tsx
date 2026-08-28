@@ -252,7 +252,7 @@ describe('DemoProductEvidenceBridge', () => {
     expect(output).toMatchObject({
       reviewedEvidenceCount: 4,
       evidence: [expect.any(Object)],
-      moreEvidenceVisibleOnPage: true,
+      additionalEvidenceCount: 3,
     });
     expect(JSON.stringify(output).length).toBeLessThanOrEqual(1_500);
   });
