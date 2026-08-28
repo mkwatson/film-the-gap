@@ -22,24 +22,25 @@ The deployable Worker is [evidence-index.ts](room-worker/src/evidence-index.ts),
 
 These are defense-in-depth controls, not claims of perfect abuse prevention.
 
-| Cost surface           | Enforced control                                                                                                                        |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Evidence-case creation | 12 requests per client fingerprint per 60 seconds and 120 total per 60 seconds, per Cloudflare location                                 |
-| Client fingerprint     | SHA-256 of Cloudflare IP plus user agent; raw IP is not retained by application code                                                    |
-| Upload reservations    | At most two over a temporary case's lifetime                                                                                            |
-| Upload bytes           | At most 95 MiB; basic direct POST only                                                                                                  |
-| Reserved duration      | Actual browser-measured duration plus five seconds, bounded by the mission and 90-second maximum                                        |
-| Upload capability      | One-time Stream URL with a 15-minute expiry and allowed app hostname                                                                    |
-| Stored video           | Scheduled deletion after 31 days; enough for judging, not indefinite storage                                                            |
-| Reusable evidence      | Explicit contributor opt-in; exact product/question matching; 30-day expiry and daily D1 purge                                          |
-| Capture timing         | Random per-mission phrase; server-stored model receipt; honest contributor-attested/preexisting fallback; never labeled authenticity    |
-| Public mission board   | Explicit shopper confirmation; public fields only; 24-hour expiry; daily purge; fulfilled jobs hidden                                   |
-| Public recorder path   | Separate case-scoped capability; removal revokes it without invalidating the private contributor link                                   |
-| Model calls            | One cached successful proposal per upload and no more than two crash-recovery attempts                                                  |
-| Video AI spend         | Dedicated AI Gateway key with a hard non-renewing budget and 30-day expiry                                                              |
-| Broad web search       | Vercel OIDC under a non-renewing project budget, one Exa `instant` call, four results, exact-query receipt check, and 20-second timeout |
-| Discovery reuse        | SHA-256 cache key; successful configured searches reused for 15 minutes through Vercel Runtime Cache                                    |
-| Public discovery       | Same-origin JSON only, Vercel WAF fixed-window limit, bounded Gateway credit exposure, and a fixed-credit social key                    |
+| Cost surface           | Enforced control                                                                                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Evidence-case creation | 12 requests per client fingerprint per 60 seconds and 120 total per 60 seconds, per Cloudflare location                                  |
+| Client fingerprint     | SHA-256 of Cloudflare IP plus user agent; raw IP is not retained by application code                                                     |
+| Upload reservations    | At most two over a temporary case's lifetime                                                                                             |
+| Upload bytes           | At most 95 MiB; basic direct POST only                                                                                                   |
+| Reserved duration      | Actual browser-measured duration plus five seconds, bounded by the mission and 90-second maximum                                         |
+| Upload capability      | One-time Stream URL with a 15-minute expiry and allowed app hostname                                                                     |
+| Stored video           | Scheduled deletion after 31 days; enough for judging, not indefinite storage                                                             |
+| Reusable evidence      | Explicit contributor opt-in; exact product/question matching; 30-day expiry and daily D1 purge                                           |
+| Capture timing         | Random per-mission phrase; server-stored model receipt; honest contributor-attested/preexisting fallback; never labeled authenticity     |
+| Device permissions     | Shopper and board deny camera/microphone; only the contributor route permits same-origin camera and microphone for a user-initiated take |
+| Public mission board   | Explicit shopper confirmation; public fields only; 24-hour expiry; daily purge; fulfilled jobs hidden                                    |
+| Public recorder path   | Separate case-scoped capability; removal revokes it without invalidating the private contributor link                                    |
+| Model calls            | One cached successful proposal per upload and no more than two crash-recovery attempts                                                   |
+| Video AI spend         | Dedicated AI Gateway key with a hard non-renewing budget and 30-day expiry                                                               |
+| Broad web search       | Vercel OIDC under a non-renewing project budget, one Exa `instant` call, four results, exact-query receipt check, and 20-second timeout  |
+| Discovery reuse        | SHA-256 cache key; successful configured searches reused for 15 minutes through Vercel Runtime Cache                                     |
+| Public discovery       | Same-origin JSON only, Vercel WAF fixed-window limit, bounded Gateway credit exposure, and a fixed-credit social key                     |
 
 Cloudflare's current Worker rate-limit binding is deliberately permissive, eventually consistent, and local to a Cloudflare location. It is useful overload protection, not exact global accounting. The hard upload-count cap, model-attempt cap, expiring capabilities, AI Gateway budget, and vendor credit limit remain necessary. See [Workers Rate Limiting](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/), [Stream Direct Creator Uploads](https://developers.cloudflare.com/stream/uploading-videos/direct-creator-uploads/), [Vercel WAF Rate Limiting](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting), and [AI Gateway key budgets](https://vercel.com/changelog/budgets-for-api-keys-on-ai-gateway).
 
@@ -229,7 +230,7 @@ The verifier uses manual redirects and bounded bodies. It proves:
 1. the app exposes the exact reviewed commit and compiled Worker origin;
 2. the standalone Worker exposes the same commit, both rate-limit bindings, the two-upload cap, Stream, live video analysis, D1, the 30-day reuse boundary, and daily expiry purge;
 3. real read-only D1 queries succeed through both the reusable-evidence and open-mission contracts, proving the binding and both migrations rather than trusting health metadata;
-4. shopper, mission-board, and contributor pages have the intended camera, upload, playback, CORS, CSP, referrer, and content-type boundaries;
+4. shopper, mission-board, and contributor pages have the intended route-scoped camera, microphone, upload, playback, CORS, CSP, referrer, and content-type boundaries;
 5. an untrusted browser origin is rejected; and
 6. one disposable evidence case is created and survives a Durable Object read-back.
 

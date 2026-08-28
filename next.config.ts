@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
           ...buildAppSecurityHeaders({
             ...commonOptions,
             allowCamera: false,
+            allowMicrophone: false,
             allowStreamPlayback: true,
           }),
         ],
@@ -33,6 +34,7 @@ const nextConfig: NextConfig = {
           ...buildAppSecurityHeaders({
             ...commonOptions,
             allowCamera: true,
+            allowMicrophone: true,
             allowCreatorUpload: true,
             allowStreamPlayback: true,
           }),
@@ -44,6 +46,7 @@ const nextConfig: NextConfig = {
           ...buildAppSecurityHeaders({
             ...commonOptions,
             allowCamera: false,
+            allowMicrophone: false,
           }),
         ],
       },

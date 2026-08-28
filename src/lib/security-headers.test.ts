@@ -38,19 +38,27 @@ describe('app security headers', () => {
   });
 
   it('grants camera access only to an explicitly camera-capable page', () => {
-    const buyerHeaders = buildAppSecurityHeaders({ allowCamera: false, development: false });
-    const hostHeaders = buildAppSecurityHeaders({ allowCamera: true, development: false });
+    const buyerHeaders = buildAppSecurityHeaders({
+      allowCamera: false,
+      allowMicrophone: false,
+      development: false,
+    });
+    const contributorHeaders = buildAppSecurityHeaders({
+      allowCamera: true,
+      allowMicrophone: true,
+      development: false,
+    });
 
     expect(buyerHeaders).toContainEqual({
       key: 'Permissions-Policy',
       value: 'camera=(), microphone=(), geolocation=(), payment=(), browsing-topics=()',
     });
-    expect(hostHeaders).toContainEqual({
+    expect(contributorHeaders).toContainEqual({
       key: 'Permissions-Policy',
-      value: 'camera=(self), microphone=(), geolocation=(), payment=(), browsing-topics=()',
+      value: 'camera=(self), microphone=(self), geolocation=(), payment=(), browsing-topics=()',
     });
-    expect(hostHeaders).toContainEqual({ key: 'Referrer-Policy', value: 'no-referrer' });
-    expect(hostHeaders).toContainEqual({ key: 'X-Content-Type-Options', value: 'nosniff' });
+    expect(contributorHeaders).toContainEqual({ key: 'Referrer-Policy', value: 'no-referrer' });
+    expect(contributorHeaders).toContainEqual({ key: 'X-Content-Type-Options', value: 'nosniff' });
   });
 
   it('allows creator uploads and Stream playback only on explicitly enabled surfaces', () => {

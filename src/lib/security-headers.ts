@@ -12,6 +12,7 @@ interface ContentSecurityPolicyOptions {
 
 interface AppSecurityHeaderOptions extends ContentSecurityPolicyOptions {
   readonly allowCamera: boolean;
+  readonly allowMicrophone: boolean;
 }
 
 function evidenceRoomConnectSources(value: string | undefined): readonly string[] {
@@ -69,6 +70,7 @@ export function buildContentSecurityPolicy({
 
 export function buildAppSecurityHeaders({
   allowCamera,
+  allowMicrophone,
   allowCreatorUpload,
   allowStreamPlayback,
   evidenceRoomUrl,
@@ -86,7 +88,7 @@ export function buildAppSecurityHeaders({
     },
     {
       key: 'Permissions-Policy',
-      value: `camera=${allowCamera ? '(self)' : '()'}, microphone=(), geolocation=(), payment=(), browsing-topics=()`,
+      value: `camera=${allowCamera ? '(self)' : '()'}, microphone=${allowMicrophone ? '(self)' : '()'}, geolocation=(), payment=(), browsing-topics=()`,
     },
     { key: 'Referrer-Policy', value: 'no-referrer' },
     { key: 'X-Content-Type-Options', value: 'nosniff' },

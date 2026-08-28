@@ -42,6 +42,7 @@ function page(marker: string, headers: HeadersInit): Response {
 
 interface AppPageOptions {
   readonly allowCamera: boolean;
+  readonly allowMicrophone: boolean;
   readonly allowCreatorUpload: boolean;
   readonly allowStreamPlayback: boolean;
 }
@@ -62,6 +63,7 @@ function appPage(marker: string, options: AppPageOptions): Response {
 interface ReleaseFetchOptions {
   readonly workerTag?: string;
   readonly contributorCameraAllowed?: boolean;
+  readonly contributorMicrophoneAllowed?: boolean;
   readonly globalRateLimitConfigured?: boolean;
   readonly missionBoundCapture?: boolean;
   readonly reusableIndexAvailable?: boolean;
@@ -122,6 +124,7 @@ function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
     if (url.href === `${config.appOrigin}/`) {
       return appPage('If the web cannot prove it, ask someone with the product to film it.', {
         allowCamera: false,
+        allowMicrophone: false,
         allowCreatorUpload: false,
         allowStreamPlayback: true,
       });
@@ -129,6 +132,7 @@ function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
     if (url.href === `${config.appOrigin}/missions`) {
       return appPage('Turn unanswered product questions into tiny public filming jobs.', {
         allowCamera: false,
+        allowMicrophone: false,
         allowCreatorUpload: false,
         allowStreamPlayback: false,
       });
@@ -136,6 +140,7 @@ function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
     if (url.href === `${config.appOrigin}/contribute/${caseId}`) {
       return appPage('Product evidence network', {
         allowCamera: options.contributorCameraAllowed ?? true,
+        allowMicrophone: options.contributorMicrophoneAllowed ?? true,
         allowCreatorUpload: true,
         allowStreamPlayback: true,
       });
@@ -263,6 +268,12 @@ describe('public release preflight', () => {
   it('fails closed when the contributor page cannot request its camera', async () => {
     await expect(
       verifyPublicRelease(config, releaseFetch({ contributorCameraAllowed: false })),
+    ).rejects.toThrow(/contributor page.*Permissions-Policy mismatch/i);
+  });
+
+  it('fails closed when the contributor page cannot record a spoken mission phrase', async () => {
+    await expect(
+      verifyPublicRelease(config, releaseFetch({ contributorMicrophoneAllowed: false })),
     ).rejects.toThrow(/contributor page.*Permissions-Policy mismatch/i);
   });
 

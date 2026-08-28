@@ -244,6 +244,7 @@ function requireMarker(body: string, marker: string, label: string): void {
 
 interface AppSecurityExpectation {
   readonly allowCamera: boolean;
+  readonly allowMicrophone: boolean;
   readonly allowCreatorUpload: boolean;
   readonly allowStreamPlayback: boolean;
 }
@@ -283,7 +284,12 @@ function requireAppSecurityPolicy(
     expectation.allowCamera ? 'camera=(self)' : 'camera=()',
     label,
   );
-  requireHeaderIncludes(response, 'Permissions-Policy', 'microphone=()', label);
+  requireHeaderIncludes(
+    response,
+    'Permissions-Policy',
+    expectation.allowMicrophone ? 'microphone=(self)' : 'microphone=()',
+    label,
+  );
   requireHeaderIncludes(response, 'Permissions-Policy', 'payment=()', label);
   requireHeader(response, 'Referrer-Policy', 'no-referrer', label);
   requireHeader(response, 'X-Content-Type-Options', 'nosniff', label);
@@ -393,6 +399,7 @@ export async function verifyPublicRelease(
     );
     requireAppSecurityPolicy(buyerResponse, buyerLabel, config.roomOrigin, {
       allowCamera: false,
+      allowMicrophone: false,
       allowCreatorUpload: false,
       allowStreamPlayback: true,
     });
@@ -407,6 +414,7 @@ export async function verifyPublicRelease(
     );
     requireAppSecurityPolicy(boardResponse, boardLabel, config.roomOrigin, {
       allowCamera: false,
+      allowMicrophone: false,
       allowCreatorUpload: false,
       allowStreamPlayback: false,
     });
@@ -426,6 +434,7 @@ export async function verifyPublicRelease(
     );
     requireAppSecurityPolicy(contributorResponse, contributorLabel, config.roomOrigin, {
       allowCamera: true,
+      allowMicrophone: true,
       allowCreatorUpload: true,
       allowStreamPlayback: true,
     });
