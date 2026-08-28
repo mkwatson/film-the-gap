@@ -14,8 +14,8 @@ Updated 2026-08-28 PT. This is the candidate Devpost copy, judge runbook, claims
 | ------------------------ | -------------------------------------------------------------------- |
 | Project name             | **Film the Gap**                                                     |
 | One-line hook            | If the web cannot prove it, ask someone with the product to film it. |
-| Live URL                 | **[PENDING USER-APPROVED GENERIC DEPLOYMENT]**                       |
-| Public repository        | **[PENDING USER-APPROVED GENERIC BRANCH PUBLICATION]**               |
+| Live URL                 | **https://film-the-gap.vercel.app**                                  |
+| Public repository        | **https://github.com/mkwatson/film-the-gap**                         |
 | Demo video               | **[PUBLIC YOUTUBE URL, WITH AUDIO, UNDER 3:00]**                     |
 | Submitted revision       | **[FROZEN TAG, COMMIT SHA, AND DEPLOYMENT RECEIPTS]**                |
 | Primary judged clients   | ChatGPT in-app Browser; Chrome 149+ with WebMCP enabled              |
@@ -167,7 +167,7 @@ The criteria are equally weighted. WebMCP Leverage is the first tie-breaker, so 
 - Every evidence status has a bounded shopping implication for the exact requirement: blocked before proof; eligible, excluded, or caveated after review. The UI and `inspect_answer_change` expose that transition without claiming the product is globally best.
 - The deployable generic Worker has a separate name and exposes only the evidence API. Public case creation has per-client and aggregate Cloudflare rate-limit bindings; each temporary case has a hard two-upload ceiling, and clips are bounded by bytes, duration, expiry, and retention.
 - Social search requires same-origin JSON before it can reach the optional vendor, and the release runbook requires a staged Vercel WAF ceiling plus dedicated vendor credits.
-- Broad-web discovery is implemented with the current AI SDK/Gateway-native Exa tool, exact-query receipt verification, four-result/20-second bounds, automatically refreshed Vercel OIDC under a non-renewing project budget, and Vercel Runtime Cache. Its malformed, rewritten-query, provider-error, duplicate, OIDC-without-stored-key, and outage paths pass offline tests; a real Gateway search on the final Vercel origin remains an external-account acceptance gate.
+- Broad-web discovery is implemented with the current AI SDK/Gateway-native Exa tool, exact-query receipt verification, four-result/20-second bounds, automatically refreshed Vercel OIDC under a non-renewing project budget, and Vercel Runtime Cache. Its malformed, rewritten-query, provider-error, duplicate, OIDC-without-stored-key, and outage paths pass offline tests. A real final-origin search returned five bounded link-only leads under the project's active non-renewing `$5` budget; none was promoted to proof.
 - Supplied-page reading is implemented with the current Cloudflare Browser Run Worker binding. Authentication, private/non-HTTPS/default-port denial, same-origin navigation, cross-origin redirect rejection, Content Signal refusal, bounded excerpt sanitation, D1 quota exhaustion, and dependency failure pass Workerd tests; a real Browser Run read on the final origin remains an external-service acceptance gate.
 - The deterministic native-Chrome acceptance first searches and selects a UCP product through the live dynamic Site Tool frontier, verifies the minimal request, rejects a stale variant, and proves catalog copy cannot affect the case. It then completes arbitrary product → evidence search → exact-revision mission refinement → explicit public-board publication → fresh board inspection/claim → phone handoff → upload → model-shaped proposal → human correction → explicit reuse consent → timestamped answer/recommendation change → fresh-case citation reuse. The real app, Durable Object, D1 database, migrations, and revocable capability boundary run unchanged; only paid edges use strict local fixtures.
 - A separate native browser receipt begins on `/demo-product` with `inspect_product_claim` + `open_product_evidence_case`, executes the navigation tool into the strict prefilled route, then injects a schema-valid reviewed-index response and proves the live page and tool frontier change to `inspect_reviewed_product_evidence`. Its returned citation/provenance payload is 872 characters; a four-record worst-case test remains below 1,500 characters by returning the newest reviewed record and disclosing the additional-record count.
@@ -177,7 +177,7 @@ The criteria are equally weighted. WebMCP Leverage is the first tie-breaker, so 
 
 ### Must pass before equivalent public claims
 
-- User-approved generic Vercel and Cloudflare deployment with credential-free judge access.
+- Final exact-origin Cloudflare Worker deployment after private Workers Paid, Stream, and secret setup.
 - One physical-phone recording through real Cloudflare Stream and real Vercel AI Gateway on the final origins.
 - One real Browser Run read of a public product page on the final origins, with the page receipt visible and its copy still non-decisive.
 - The complete model-driven flow in the current ChatGPT in-app Browser.
@@ -195,7 +195,7 @@ The criteria are equally weighted. WebMCP Leverage is the first tie-breaker, so 
 - Reuse is permanent, semantic, cross-product, or available beyond the exact 30-day product/question contract.
 - The model is authoritative, or a contributor's statement proves a hidden historical fact.
 - A previously recorded mission is a new live person, a new model call, or fresh physical evidence.
-- The generic branch is publicly deployed before it actually is.
+- The paid Stream, Browser Run, video-model, or signed-playback paths have passed before they actually do.
 - Checkout, payment, private systems, private research, and customer data are not part of the judged product.
 
 ## Repository, rights, and release checklist
@@ -223,8 +223,7 @@ These actions require Mark's identity, legal assent, account session, external p
 
 1. Choose the submitted project name.
 2. Confirm whether the entrant is Mark individually, a team, or an organization, and appoint the representative if needed.
-3. Approve the generic Cloudflare/Vercel deployment and real Stream/Gateway rehearsal.
-4. Approve pushing the generic branch to the public repository and updating its public description/live URL.
-5. Supply or approve the owned, unbranded physical object and final recorded result.
-6. Approve the final rights-clean YouTube upload.
-7. Review and submit the Devpost entry before **September 3, 2026 at 1:00 p.m. PT**.
+3. Complete the private Workers Paid, Stream, Gateway-key, and shared-reader-secret setup without exposing either secret.
+4. Supply or approve the owned, unbranded physical object and final recorded result.
+5. Review the final rights-clean YouTube upload.
+6. Review and submit the Devpost entry before **September 3, 2026 at 1:00 p.m. PT**. Devpost submission is explicitly outside Codex's authority.

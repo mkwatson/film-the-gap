@@ -1,6 +1,6 @@
 # Film the Gap release runbook
 
-Updated 2026-08-28 PT. Nothing described here is publicly deployed yet. This runbook uses a new Vercel project and the separate Cloudflare Worker name `webmcp-product-evidence`, so it cannot overwrite an existing deployment.
+Updated 2026-08-28 PT. The standalone Vercel app, dedicated D1 database, and a free-tier Cloudflare Worker bootstrap are now public. UCP discovery, Vercel AI Gateway/Exa search, Durable Object cases, open missions, and phone handoff have passed live checks. The Worker is not the final judge release until Workers Paid, Stream, the two private secrets, exact-origin redeployment, and the mandatory public verifier pass. This runbook uses a new Vercel project and the separate Cloudflare Worker name `webmcp-product-evidence`, so it cannot overwrite an existing deployment.
 
 ## Candidate topology
 

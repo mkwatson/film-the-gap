@@ -2,6 +2,10 @@
 
 Updated 2026-08-28 PT. This is the shortest safe path from the locally frozen candidate to a judge-ready public release. [DEPLOYMENT.md](DEPLOYMENT.md) remains the source of truth for exact commands, security checks, rollback, and cost controls.
 
+## Current authority — durable hard boundary
+
+On August 28, 2026, Mark authorized the standalone Film the Gap deployment under this card's cost and safety envelope, authorized pushing the public repository, and authorized uploading a rights-clean demo video after it exists. **Codex must not submit Devpost under any circumstances.** Submission remains a later, manual Mark-only decision even if every technical gate passes.
+
 ## What Mark must do
 
 1. Approve the external release and its honest cost envelope. The recommended setup is Workers Paid (`$5` monthly minimum if not already active), one `$5` Stream storage block, postpaid Stream delivery under a 60-token/day operational ceiling, and one non-renewing `$5` Vercel AI Gateway project budget containing the 30-day video key. Disable Vercel auto top-up and omit live ScrapeCreators from the first release. Cloudflare does not document a hard dollar cap for Paid Browser Run or Stream delivery, so those residual risks cannot be described as “no overages.”
