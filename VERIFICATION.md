@@ -11,7 +11,7 @@ Updated August 28, 2026 PT. This document records what the current product-evide
 | `pnpm check`                  | Pass                                                 | Prettier, zero-warning ESLint, strict TypeScript, all tests, Worker bundle, and production Next.js build.                                                                                    |
 | App tests                     | 38 files, 239 tests pass                             | UCP negotiation and discovery, product state, recommendation impact, mission refinement, strict handoff, dynamic tools, privacy, review, search, reconnect, failures, and release checks.    |
 | Worker tests                  | 6 files, 39 tests pass in Workerd                    | Durable Object, D1, Browser Run, signed Stream playback, role capabilities, uploads, model proposal, reuse, expiry, quota, compensation, and denial paths.                                   |
-| Worker dry run                | Wrangler 4.127.0; 1,155.67 KiB / 195.85 KiB gzip     | The standalone evidence Worker bundles with every declared production binding, including Browser Run and Stream.                                                                             |
+| Worker dry run                | Wrangler 4.127.1; 1,155.67 KiB / 195.85 KiB gzip     | The standalone evidence Worker bundles with every declared production binding, including Browser Run and Stream.                                                                             |
 | Next.js build                 | Next.js 16.3.3; ten route entries                    | UCP profile/search, product page, strict handoff, shopper, board, recorder, evidence search, and health surfaces build for production.                                                       |
 | Cold clone                    | Frozen install and full gate pass; clean afterward   | The repository does not depend on ignored files, generated files, or local package state.                                                                                                    |
 | Native Chrome journey         | Nine stages pass                                     | Native WebMCP discovers a real UCP product, rejects stale selection, then completes the Durable Object, phone, review, recommendation-change, and reuse loop against paid-edge fixtures.     |
@@ -127,7 +127,7 @@ Separate static frontiers freeze the catalog before and after search. They requi
 
 ## Exact dependency decision
 
-Challenge-critical direct dependencies are pinned rather than ranged. As of August 27, all product-critical packages are current: pnpm 11.24.0, Next.js 16.3.3, React 19.2.8, AI SDK 7.0.83, Wrangler 4.127.0, Vitest 4.1.11, Zod 4.4.3, and `webmcp-types` 0.1.5.
+Challenge-critical direct dependencies are pinned rather than ranged. As of August 28, all product-critical packages are current: pnpm 11.24.0, Next.js 16.3.3, React 19.2.8, AI SDK 7.0.83, Wrangler 4.127.1, Cloudflare Vitest Plugin 1.1.2, Vitest 4.1.11, Zod 4.4.3, and `webmcp-types` 0.1.5. The same-day Cloudflare patch advances Workerd to `1.20260828.1` and fixes repeated Durable Object reconstruction slowdowns/crashes in the test plugin.
 
 TypeScript 7.0.2 and ESLint 10.9.1 were tested as an upgrade candidate. Next.js itself accepts them, but the current `@typescript-eslint` stack requires TypeScript below 6.1 and the current React/import/accessibility lint plugins require ESLint 9 or earlier. The release therefore pins TypeScript 5.9.3 and ESLint 9.39.5: the newest peer-valid cohesive matrix, with `pnpm peers check` clean.
 
