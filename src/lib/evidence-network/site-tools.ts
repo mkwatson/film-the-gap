@@ -264,7 +264,7 @@ export function evidenceCaseSnapshot(
       next: 'Ask one concrete question about any product.',
       availableTools: availableToolNames(runtime),
       privacyReceipt: {
-        accepted: 'public product, URL, question only',
+        accepted: 'product name, optional public URL, observable question only',
         excluded: 'identity, budget, history, preferences, conversation',
       },
     };
@@ -329,7 +329,10 @@ export function evidenceCaseSnapshot(
             expiresAt: currentPublicMission.expiresAt,
           },
     privacyReceipt: {
-      accepted: 'public product, URL, question only',
+      accepted:
+        evidenceCase.product.suppliedUrl === null
+          ? 'product name and observable question only'
+          : 'product name, public URL, observable question only',
       excluded: 'identity, budget, history, preferences, conversation',
     },
   };

@@ -171,17 +171,25 @@ export function createDemoProductEvidenceTools(
         name: 'open_product_evidence_case',
         title: 'Open the missing product-evidence case',
         description:
-          'Navigate to a case prefilled with only this public product page, product name, and observable question. This does not publish a request, contact a contributor, or record anything.',
+          "Navigate to a case prefilled with this product name and observable question, plus the page's public URL when available. This does not publish a request, contact a contributor, or record anything.",
         inputSchema: emptyInputSchema,
         annotations: { readOnlyHint: false, untrustedContentHint: true },
         execute: async (_input, options): Promise<object> => {
           options?.signal?.throwIfAborted();
           const href = runtime.evidenceCaseUrl();
           runtime.openEvidenceCase(href);
+          const includesPublicProductUrl = new URL(
+            href,
+            'https://film-the-gap.invalid',
+          ).searchParams.has('url');
           return {
             ok: true,
             evidenceCaseUrl: href,
-            carriedFromPage: ['public product URL', 'product name', 'observable question'],
+            carriedFromPage: [
+              ...(includesPublicProductUrl ? ['public product URL'] : []),
+              'product name',
+              'observable question',
+            ],
             notPerformed: ['mission publication', 'contributor contact', 'recording'],
           };
         },

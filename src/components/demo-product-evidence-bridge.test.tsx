@@ -155,9 +155,35 @@ describe('DemoProductEvidenceBridge', () => {
     const opened = await modelContext
       .latestTool('open_product_evidence_case')
       .execute({}, { signal: new AbortController().signal });
-    expect(opened).toMatchObject({ ok: true, evidenceCaseUrl: expect.stringMatching(/^\/case\?/) });
+    expect(opened).toMatchObject({
+      ok: true,
+      evidenceCaseUrl: expect.stringMatching(/^\/case\?/),
+      carriedFromPage: ['product name', 'observable question'],
+    });
     expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/^\/case\?/));
     expect(JSON.stringify(opened).length).toBeLessThanOrEqual(1_500);
+  });
+
+  it('reports a public product URL only when the handoff actually carries one', async () => {
+    const tools = createDemoProductEvidenceTools(
+      {
+        inspect: async () => ({ status: 'missing', records: [], warnings: [] }),
+        evidenceCaseUrl: () =>
+          '/case?v=1&source=demo_product&product=Bottle&question=Does+it+leak%3F&url=https%3A%2F%2Fcatalog.example%2Fbottle',
+        openEvidenceCase: vi.fn(),
+      },
+      false,
+    );
+    const tool = tools.find(({ name }) => name === 'open_product_evidence_case');
+    if (tool === undefined) {
+      throw new Error('Expected the evidence-case handoff Site Tool.');
+    }
+
+    const output = await tool.execute({}, { signal: new AbortController().signal });
+
+    expect(output).toMatchObject({
+      carriedFromPage: ['public product URL', 'product name', 'observable question'],
+    });
   });
 
   it('replaces the missing-proof tool with reviewed evidence when a recording arrives', async () => {

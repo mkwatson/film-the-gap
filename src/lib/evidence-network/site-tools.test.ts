@@ -71,8 +71,34 @@ describe('product evidence Site Tools', () => {
       { signal: new AbortController().signal },
     );
 
-    expect(result).toMatchObject({ ok: true, privateShopperContext: 'not collected' });
+    expect(result).toMatchObject({
+      ok: true,
+      privateShopperContext: 'not collected',
+    });
+    expect(evidenceCaseSnapshot(readState())).toMatchObject({
+      privacyReceipt: { accepted: 'product name and observable question only' },
+    });
     expect(readState().activeCase?.product.name).toBe('Desk lamp');
+  });
+
+  it('reports a public URL only when the active case actually received one', async () => {
+    const { runtime: runtimeValue, readState } = runtime();
+
+    const result = await tool(runtimeValue, 'ask_product_question').execute(
+      {
+        productName: 'Desk lamp',
+        productUrl: 'https://catalog.example/desk-lamp',
+        question: 'Does the lamp retain its last brightness after losing power?',
+      },
+      { signal: new AbortController().signal },
+    );
+
+    expect(result).toMatchObject({ ok: true });
+    expect(evidenceCaseSnapshot(readState())).toMatchObject({
+      privacyReceipt: {
+        accepted: 'product name, public URL, observable question only',
+      },
+    });
   });
 
   it('searches the active question and exposes only link-only leads before a mission', async () => {
