@@ -7,6 +7,7 @@ Updated August 28, 2026 PT. This document records what the current product-evide
 | Gate                          | Result                                             | What it proves                                                                                                                                                   |
 | ----------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pnpm peers check`            | Pass, zero peer issues                             | The exact pinned dependency graph is internally compatible.                                                                                                      |
+| Production dependency audit   | Pass, no known vulnerabilities                     | Every installed production dependency declares a recognized open-source license.                                                                                 |
 | `pnpm check`                  | Pass                                               | Prettier, zero-warning ESLint, strict TypeScript, all tests, Worker bundle, and production Next.js build.                                                        |
 | App tests                     | 24 files, 146 tests pass                           | Product state, dynamic tools, privacy, review, search, reconnect, failures, and release checks.                                                                  |
 | Worker tests                  | 5 files, 26 tests pass in Workerd                  | Durable Object, D1, role capabilities, uploads, model proposal, reuse, expiry, and denial paths.                                                                 |
@@ -17,6 +18,7 @@ Updated August 28, 2026 PT. This document records what the current product-evide
 | Ordinary-browser journey      | Eight steps pass with WebMCP disabled              | The same shopper, board, recorder, review, update, and reuse loop works through visible controls; the product is not an agent-only façade.                       |
 | Chrome Labs independent smoke | 9/9 calls across four cases                        | The exact current source-built WebMCP evaluator independently discovers and executes the generic tool frontier.                                                  |
 | Desktop/mobile visual check   | Pass at desktop and 390×844                        | Shopper, board, and contributor pages remain legible with no horizontal overflow or framework error overlay.                                                     |
+| Repository content scan       | Pass                                               | The tracked tree contains text and one authored SVG, no binary media; a reachable-history secret-pattern scan found only environment-variable lookups.           |
 
 The exact browser-release candidate `3d1fa4491b9ef640a7e4f943a0c602e5640bf2a5` passed a fresh clone, frozen install, peer check, full quality gate, production builds, and clean post-build worktree on August 28.
 
