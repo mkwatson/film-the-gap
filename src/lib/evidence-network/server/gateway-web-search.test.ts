@@ -11,7 +11,7 @@ const question: ProductQuestionInput = {
 };
 
 describe('Vercel AI Gateway web evidence discovery', () => {
-  it('makes no model or search call without the dedicated budgeted key', async () => {
+  it('makes no model or search call without an API key or Vercel OIDC', async () => {
     const runSearch = vi.fn<GatewaySearchRunner>();
 
     await expect(
@@ -23,6 +23,27 @@ describe('Vercel AI Gateway web evidence discovery', () => {
       leads: [],
     });
     expect(runSearch).not.toHaveBeenCalled();
+  });
+
+  it('uses the bounded search path with Vercel OIDC and no stored key', async () => {
+    const query = buildEvidenceSearchQuery(question);
+    const runSearch = vi.fn<GatewaySearchRunner>(async () => ({
+      input: { query },
+      output: { requestId: 'exa-oidc-request', results: [] },
+    }));
+
+    await expect(
+      searchGatewayWebEvidence(question, {
+        apiKey: undefined,
+        oidcAvailable: true,
+        runSearch,
+      }),
+    ).resolves.toMatchObject({
+      provider: 'vercel_ai_gateway',
+      status: 'complete',
+      searchedPlatforms: ['web'],
+    });
+    expect(runSearch).toHaveBeenCalledWith(query, expect.any(AbortSignal));
   });
 
   it('maps bounded Exa receipts into deduplicated link-only web leads', async () => {

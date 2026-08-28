@@ -22,23 +22,23 @@ The deployable Worker is [evidence-index.ts](room-worker/src/evidence-index.ts),
 
 These are defense-in-depth controls, not claims of perfect abuse prevention.
 
-| Cost surface           | Enforced control                                                                                        |
-| ---------------------- | ------------------------------------------------------------------------------------------------------- |
-| Evidence-case creation | 12 requests per client fingerprint per 60 seconds and 120 total per 60 seconds, per Cloudflare location |
-| Client fingerprint     | SHA-256 of Cloudflare IP plus user agent; raw IP is not retained by application code                    |
-| Upload reservations    | At most two over a temporary case's lifetime                                                            |
-| Upload bytes           | At most 95 MiB; basic direct POST only                                                                  |
-| Reserved duration      | Actual browser-measured duration plus five seconds, bounded by the mission and 90-second maximum        |
-| Upload capability      | One-time Stream URL with a 15-minute expiry and allowed app hostname                                    |
-| Stored video           | Scheduled deletion after 31 days; enough for judging, not indefinite storage                            |
-| Reusable evidence      | Explicit contributor opt-in; exact product/question matching; 30-day expiry and daily D1 purge          |
-| Public mission board   | Explicit shopper confirmation; public fields only; 24-hour expiry; daily purge; fulfilled jobs hidden   |
-| Public recorder path   | Separate case-scoped capability; removal revokes it without invalidating the private contributor link   |
-| Model calls            | One cached successful proposal per upload and no more than two crash-recovery attempts                  |
-| Video AI spend         | Dedicated AI Gateway key with a hard non-renewing budget and 30-day expiry                              |
-| Broad web search       | One Exa `instant` call, four results, exact-query receipt check, 20-second timeout, and separate budget |
-| Discovery reuse        | SHA-256 cache key; successful configured searches reused for 15 minutes through Vercel Runtime Cache    |
-| Public discovery       | Same-origin JSON only, Vercel WAF fixed-window limit, and dedicated budgeted/fixed-credit vendor keys   |
+| Cost surface           | Enforced control                                                                                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Evidence-case creation | 12 requests per client fingerprint per 60 seconds and 120 total per 60 seconds, per Cloudflare location                                 |
+| Client fingerprint     | SHA-256 of Cloudflare IP plus user agent; raw IP is not retained by application code                                                    |
+| Upload reservations    | At most two over a temporary case's lifetime                                                                                            |
+| Upload bytes           | At most 95 MiB; basic direct POST only                                                                                                  |
+| Reserved duration      | Actual browser-measured duration plus five seconds, bounded by the mission and 90-second maximum                                        |
+| Upload capability      | One-time Stream URL with a 15-minute expiry and allowed app hostname                                                                    |
+| Stored video           | Scheduled deletion after 31 days; enough for judging, not indefinite storage                                                            |
+| Reusable evidence      | Explicit contributor opt-in; exact product/question matching; 30-day expiry and daily D1 purge                                          |
+| Public mission board   | Explicit shopper confirmation; public fields only; 24-hour expiry; daily purge; fulfilled jobs hidden                                   |
+| Public recorder path   | Separate case-scoped capability; removal revokes it without invalidating the private contributor link                                   |
+| Model calls            | One cached successful proposal per upload and no more than two crash-recovery attempts                                                  |
+| Video AI spend         | Dedicated AI Gateway key with a hard non-renewing budget and 30-day expiry                                                              |
+| Broad web search       | Vercel OIDC under a non-renewing project budget, one Exa `instant` call, four results, exact-query receipt check, and 20-second timeout |
+| Discovery reuse        | SHA-256 cache key; successful configured searches reused for 15 minutes through Vercel Runtime Cache                                    |
+| Public discovery       | Same-origin JSON only, Vercel WAF fixed-window limit, bounded Gateway credit exposure, and a fixed-credit social key                    |
 
 Cloudflare's current Worker rate-limit binding is deliberately permissive, eventually consistent, and local to a Cloudflare location. It is useful overload protection, not exact global accounting. The hard upload-count cap, model-attempt cap, expiring capabilities, AI Gateway budget, and vendor credit limit remain necessary. See [Workers Rate Limiting](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/), [Stream Direct Creator Uploads](https://developers.cloudflare.com/stream/uploading-videos/direct-creator-uploads/), [Vercel WAF Rate Limiting](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting), and [AI Gateway key budgets](https://vercel.com/changelog/budgets-for-api-keys-on-ai-gateway).
 
@@ -48,7 +48,7 @@ Turnstile is not on the canonical judge path yet. Its server validation would ad
 
 These steps mutate accounts or authorize spend. Mark must approve them and be present.
 
-1. Choose the public project name and a new Vercel project. Do not reuse the live-market Vercel project.
+1. Choose a globally distinct public project name and create a new Vercel project. Its generated `*.vercel.app` hostname is based on that name, so choose a name that does not acquire a company/team suffix and remains visibly standalone. Do not reuse or rename the live-market fallback project. A custom domain is optional polish after the generated hostname passes every gate.
 2. Enable Cloudflare Stream on the intended account and approve its minimum storage/delivery commitment.
 3. Create a dedicated D1 database in Western North America and replace both all-zero placeholder IDs in `room-worker/wrangler.evidence.jsonc` with the returned UUID. This mutates the Cloudflare account and must not be run until Mark approves:
 
@@ -60,28 +60,30 @@ These steps mutate accounts or authorize spend. Mark must approve them and be pr
 
    Keep the binding name exactly `EVIDENCE_LIBRARY`. Do not deploy while either placeholder UUID remains.
 
-4. Create two dedicated Vercel AI Gateway keys with a combined hard ceiling of `$25`, non-renewing, with alerts and a 30-day expiry. Separating video analysis from public web discovery limits blast radius and makes each cost visible:
+4. Set the exact new project name once, inspect it, put a `$5` non-renewing AI Gateway budget on that project, then create one dedicated Gateway key for the external Cloudflare video worker with a separate `$20` hard ceiling, no refresh, alerts, and a 30-day expiry. Vercel-hosted web discovery uses automatically refreshed OIDC under the project budget and stores no second key:
 
    ```bash
-   pnpm dlx vercel@59.7.0 ai-gateway api-keys create \
+   WEBMCP_VERCEL_PROJECT=YOUR-NEW-STANDALONE-PROJECT
+   test -n "$WEBMCP_VERCEL_PROJECT"
+
+   pnpm dlx vercel@59.9.1 ai-gateway budgets set \
+     project "$WEBMCP_VERCEL_PROJECT" \
+     --limit 5 \
+     --refresh-period none
+
+   pnpm dlx vercel@59.9.1 ai-gateway api-keys create \
      --name webmcp-product-evidence-video \
      --budget 20 \
      --refresh-period none \
      --alert-thresholds 50,75,100 \
      --expiration 30d
 
-   pnpm dlx vercel@59.7.0 ai-gateway api-keys create \
-     --name webmcp-product-evidence-discovery \
-     --budget 5 \
-     --refresh-period none \
-     --alert-thresholds 50,75,100 \
-     --expiration 30d
    ```
 
-   Do not use `--bypass-all-settings` or `--zdr-exempt`. Copy the video secret only into Cloudflare's encrypted secret prompt. Keep the discovery secret for the new Vercel project's encrypted Production environment.
+   Do not use `--bypass-all-settings` or `--zdr-exempt`. Copy the secret only into Cloudflare's encrypted secret prompt. Keep Vercel auto top-up disabled and retain the route/WAF limits below. The project budget is the hard discovery ceiling; an explicit `AI_GATEWAY_DISCOVERY_API_KEY` is unnecessary and would override OIDC.
 
 5. If live social discovery is enabled, create a dedicated ScrapeCreators key with only the credits Mark approves. The app remains truthful and functional without it, but reports discovery as unavailable.
-6. Link this worktree to the new Vercel project only after the public project name is chosen. `.vercel/project.json` must remain uncommitted.
+6. Link this worktree to the new Vercel project only after the public project name is chosen. Before any budget, environment, firewall, or deploy command, inspect `.vercel/project.json` and `vercel project inspect`; both must identify the new standalone project, never `webmcp-evidence-market`. `.vercel/project.json` must remain uncommitted.
 
 ## Candidate gate before any deployment
 
@@ -113,10 +115,13 @@ The app origin and Worker origin depend on one another. Establish the new Vercel
 Set and inspect explicit shell variables; never paste placeholders into a deployment:
 
 ```bash
-APP_ORIGIN=https://YOUR-NEW-VERCEL-PROJECT.vercel.app
+WEBMCP_VERCEL_PROJECT=YOUR-NEW-STANDALONE-PROJECT
+APP_ORIGIN="https://$WEBMCP_VERCEL_PROJECT.vercel.app"
 ROOM_ORIGIN=https://webmcp-product-evidence.YOUR-CLOUDFLARE-SUBDOMAIN.workers.dev
 RELEASE_SHA=$(git rev-parse HEAD)
 ```
+
+Confirm `APP_ORIGIN` is the actual production hostname reported by Vercel; do not infer or accept a suffixed fallback hostname. If a clean generated hostname is unavailable, choose another standalone project name or explicitly configure a clean custom domain before continuing.
 
 Then:
 
@@ -163,7 +168,7 @@ Then:
 5. Configure the new Vercel project's Production environment:
 
    - `NEXT_PUBLIC_EVIDENCE_ROOM_URL=$ROOM_ORIGIN` — required and compiled at build time.
-   - `AI_GATEWAY_DISCOVERY_API_KEY` — optional but expected for the final candidate; the separate `$5` key for bounded Exa search through Vercel AI Gateway.
+   - `AI_GATEWAY_DISCOVERY_API_KEY` — omit on the final Vercel release; automatically refreshed OIDC stays inside the project-scoped `$5` budget.
    - `SCRAPECREATORS_API_KEY` — optional, server-only, dedicated to this demo.
    - Do not add `AI_GATEWAY_API_KEY`; the video-analysis key belongs only on the Worker.
 
@@ -177,7 +182,7 @@ Vercel WAF rate limiting is available on all plans, but the first rule may show 
 1. Add a fixed-window rule for only `POST /api/evidence/search`, initially logging overflow after 20 requests per IP per minute:
 
    ```bash
-   pnpm dlx vercel@59.7.0 firewall rules add "Product evidence search ceiling" \
+   pnpm dlx vercel@59.9.1 firewall rules add "Product evidence search ceiling" \
      --condition '{"type":"path","op":"eq","value":"/api/evidence/search"}' \
      --condition '{"type":"method","op":"eq","value":"POST"}' \
      --action rate_limit \
@@ -186,21 +191,21 @@ Vercel WAF rate limiting is available on all plans, but the first rule may show 
      --rate-limit-keys ip \
      --rate-limit-action log \
      --yes
-   pnpm dlx vercel@59.7.0 firewall diff
+   pnpm dlx vercel@59.9.1 firewall diff
    ```
 
-2. Mark runs `pnpm dlx vercel@59.7.0 firewall publish --yes`, exercises buyer and ChatGPT searches, and reviews matched traffic in the Vercel Firewall dashboard.
+2. Mark runs `pnpm dlx vercel@59.9.1 firewall publish --yes`, exercises buyer and ChatGPT searches, and reviews matched traffic in the Vercel Firewall dashboard.
 3. After legitimate traffic is confirmed, retain the rule and change overflow to HTTP 429:
 
    ```bash
-   pnpm dlx vercel@59.7.0 firewall rules edit "Product evidence search ceiling" \
+   pnpm dlx vercel@59.9.1 firewall rules edit "Product evidence search ceiling" \
      --action rate_limit \
      --rate-limit-window 60 \
      --rate-limit-requests 20 \
      --rate-limit-keys ip \
      --rate-limit-action rate_limit \
      --yes
-   pnpm dlx vercel@59.7.0 firewall diff
+   pnpm dlx vercel@59.9.1 firewall diff
    ```
 
 4. Mark publishes again. Keep the filtered Firewall traffic view open during the rehearsal. Counters are regional and IPs can be shared, so this remains a generous overload ceiling rather than a user quota.
@@ -259,7 +264,7 @@ After the September 3, 2026 1:00 p.m. PT deadline, keep the submitted repository
 
 Preserve the previous candidate Vercel deployment URL and Worker version ID before every change.
 
-- Vercel: `pnpm dlx vercel@59.7.0 rollback PREVIOUS_DEPLOYMENT_URL`, then inspect `rollback status`.
+- Vercel: `pnpm dlx vercel@59.9.1 rollback PREVIOUS_DEPLOYMENT_URL`, then inspect `rollback status`.
 - Cloudflare: `pnpm --dir room-worker exec wrangler rollback PREVIOUS_VERSION_ID --config wrangler.evidence.jsonc --message "rollback to known-good generic evidence release"`.
 - WAF: stage the rule back to logging or disable it, inspect `firewall diff`, then Mark publishes the draft.
 

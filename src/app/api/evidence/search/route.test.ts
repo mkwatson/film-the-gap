@@ -4,6 +4,7 @@ import { POST } from './route';
 
 const originalKey = process.env.SCRAPECREATORS_API_KEY;
 const originalGatewayKey = process.env.AI_GATEWAY_DISCOVERY_API_KEY;
+const originalVercel = process.env.VERCEL;
 
 afterEach(() => {
   if (originalKey === undefined) {
@@ -15,6 +16,11 @@ afterEach(() => {
     delete process.env.AI_GATEWAY_DISCOVERY_API_KEY;
   } else {
     process.env.AI_GATEWAY_DISCOVERY_API_KEY = originalGatewayKey;
+  }
+  if (originalVercel === undefined) {
+    delete process.env.VERCEL;
+  } else {
+    process.env.VERCEL = originalVercel;
   }
 });
 
@@ -59,6 +65,7 @@ describe('product evidence search route', () => {
   it('returns a typed unavailable result when live discovery is not configured', async () => {
     delete process.env.SCRAPECREATORS_API_KEY;
     delete process.env.AI_GATEWAY_DISCOVERY_API_KEY;
+    delete process.env.VERCEL;
     const response = await POST(
       new Request('http://localhost/api/evidence/search', {
         method: 'POST',

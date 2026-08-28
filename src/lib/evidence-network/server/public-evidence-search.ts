@@ -38,6 +38,7 @@ type ReusableEvidenceSearch = (
 interface PublicEvidenceSearchDependencies {
   readonly scrapeCreatorsApiKey: string | undefined;
   readonly gatewayApiKey: string | undefined;
+  readonly gatewayOidcAvailable?: boolean;
   readonly evidenceServiceUrl?: string;
   readonly cache?: EvidenceDiscoveryCache;
   readonly searchSocial?: EvidenceSearch;
@@ -218,7 +219,9 @@ export async function searchPublicProductEvidence(
       dependencies.searchSocial !== undefined ||
       (dependencies.scrapeCreatorsApiKey?.trim().length ?? 0) > 0,
     web:
-      dependencies.searchWeb !== undefined || (dependencies.gatewayApiKey?.trim().length ?? 0) > 0,
+      dependencies.searchWeb !== undefined ||
+      (dependencies.gatewayApiKey?.trim().length ?? 0) > 0 ||
+      dependencies.gatewayOidcAvailable === true,
   } as const;
   const key = cacheKey(input, providers);
   const cached = await readCachedDiscovery(dependencies.cache, key);
@@ -236,7 +239,14 @@ export async function searchPublicProductEvidence(
   const webSearch =
     dependencies.searchWeb ??
     ((searchInput: ProductQuestionInput, searchSignal?: AbortSignal) =>
-      searchGatewayWebEvidence(searchInput, { apiKey: dependencies.gatewayApiKey }, searchSignal));
+      searchGatewayWebEvidence(
+        searchInput,
+        {
+          apiKey: dependencies.gatewayApiKey,
+          oidcAvailable: dependencies.gatewayOidcAvailable === true,
+        },
+        searchSignal,
+      ));
   const providerResults = await Promise.all([
     socialSearch(input, signal),
     webSearch(input, signal),

@@ -44,6 +44,7 @@ export type GatewaySearchRunner = (
 
 interface GatewayWebSearchDependencies {
   readonly apiKey: string | undefined;
+  readonly oidcAvailable?: boolean;
   readonly runSearch?: GatewaySearchRunner;
 }
 
@@ -54,10 +55,10 @@ function boundedSignal(signal: AbortSignal | undefined): AbortSignal {
 
 async function runGatewayExaSearch(
   query: string,
-  apiKey: string,
+  apiKey: string | undefined,
   signal: AbortSignal,
 ): Promise<GatewaySearchExecution | null> {
-  const provider = createGateway({ apiKey });
+  const provider = apiKey === undefined ? createGateway() : createGateway({ apiKey });
   const tools = {
     exa_search: provider.tools.exaSearch({
       type: 'instant',
@@ -131,7 +132,8 @@ export async function searchGatewayWebEvidence(
 ): Promise<EvidenceDiscoveryInput> {
   const query = buildEvidenceSearchQuery(input);
   const apiKey = dependencies.apiKey?.trim();
-  if (apiKey === undefined || apiKey.length === 0) {
+  const oidcAvailable = dependencies.oidcAvailable === true;
+  if ((apiKey === undefined || apiKey.length === 0) && !oidcAvailable) {
     return {
       provider: 'vercel_ai_gateway',
       status: 'unavailable',
@@ -146,7 +148,12 @@ export async function searchGatewayWebEvidence(
   try {
     execution = await (
       dependencies.runSearch ??
-      ((exactQuery, runSignal) => runGatewayExaSearch(exactQuery, apiKey, runSignal))
+      ((exactQuery, runSignal) =>
+        runGatewayExaSearch(
+          exactQuery,
+          apiKey === undefined || apiKey.length === 0 ? undefined : apiKey,
+          runSignal,
+        ))
     )(query, boundedSignal(signal));
   } catch {
     return {

@@ -75,11 +75,13 @@ pnpm --dir room-worker exec wrangler secret put AI_GATEWAY_API_KEY \
 
 That command changes Cloudflare state and must only be run deliberately by the account owner. Never expose the key through a `NEXT_PUBLIC_` variable or commit it.
 
-Optional public discovery uses two server-only keys. The Gateway key should be a dedicated, hard-budgeted discovery key rather than the Worker video-analysis key:
+Optional social discovery uses one server-only ScrapeCreators key. On Vercel, broad-web discovery authenticates to AI Gateway through the platform's automatically refreshed OIDC token, so it needs no stored Gateway key:
 
 ```bash
-AI_GATEWAY_DISCOVERY_API_KEY=... SCRAPECREATORS_API_KEY=... pnpm dev
+SCRAPECREATORS_API_KEY=... pnpm dev
 ```
+
+For local or non-Vercel development, either run through `vercel dev`/a current `vercel env pull`, or set a separate hard-budgeted `AI_GATEWAY_DISCOVERY_API_KEY`. An explicit key overrides OIDC and must never be reused from the Cloudflare video-analysis Worker. The release runbook puts a non-renewing project budget around OIDC-backed discovery.
 
 The broad-web path uses `openai/gpt-5.4-nano` only to invoke the Gateway-native Exa `instant` search tool, verifies that the tool preserved the exact bounded query, keeps at most four results, and fails closed on a malformed receipt. Discovery results remain external leads until reviewed; the app does not download or republish public media merely because it can find it.
 
@@ -130,7 +132,7 @@ The runner generates a rights-clean 12-second MP4 and drives the complete strang
 - Claim-level evidence, provenance, rights, confidence, revisions, dynamic Site Tools, social lead discovery, private contributor URLs, a public missing-proof board, revocable public recorder paths, direct Stream uploads, timestamped video proposals, explicit human review, and rights-explicit cross-case reuse are implemented.
 - Conclusive evidence for a continuous-take mission is rejected when the cited interval is invalid or continuity is edited/unknown.
 - The app has deterministic automated coverage for success, denial, stale revisions, manual fallback, dependency failures, simultaneous analysis coalescing, fragment scrubbing, contributor reload, and buyer reconnect. It does not call paid services during tests.
-- The standalone deployable Worker exposes only the evidence API. It rate-limits case creation, permits two upload reservations per temporary case, caps clips at 95 MiB/90 seconds, expires upload URLs, schedules Stream deletion, bounds model retries, and physically purges expired board/reuse D1 records daily. Public board listings last at most 24 hours, carry only public product/filming fields, and use a capability that can be revoked independently of the private link. The release runbook adds a budgeted Gateway key and Vercel WAF ceiling.
+- The standalone deployable Worker exposes only the evidence API. It rate-limits case creation, permits two upload reservations per temporary case, caps clips at 95 MiB/90 seconds, expires upload URLs, schedules Stream deletion, bounds model retries, and physically purges expired board/reuse D1 records daily. Public board listings last at most 24 hours, carry only public product/filming fields, and use a capability that can be revoked independently of the private link. The release runbook adds one budgeted cross-cloud Gateway key, automatic Vercel OIDC for search, and a Vercel WAF ceiling.
 - Native Chrome completes arbitrary-product search → mission → public board → stranger claim → phone evidence → first answer change → fresh-case evidence reuse in roughly five seconds against real local Durable Object/D1 state and deterministic paid-service fixtures.
 - The prior public release remains the known-good fallback. This generic branch is not yet deployed and has not yet passed a real Stream → Gateway → physical-phone journey.
 - It does not claim universal access to product owners, guaranteed fulfillment, independent contributor verification, product authenticity, or perfect deepfake detection. The board demonstrates permissionless discoverability, not a mature incentive marketplace.
