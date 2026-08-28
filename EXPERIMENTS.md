@@ -149,6 +149,8 @@ Implementation follows current first-party guidance: [D1 local migrations and ex
 
 Unit tests prove deterministic phrase construction, schema boundaries, exact prompt inclusion, the verified server path, imported-video handling, and D1 round-trip. The full native eight-step stranger-supply/two-shopper journey passes in Chrome against real local Durable Object and D1 state. Its synthetic sine-wave video deliberately omits the random phrase; the strict model fixture returns `not_detected`, the phone UI shows that negative result, and both the first and reused evidence remain `contributor_attested`. This prevents the acceptance artifact from manufacturing freshness. The final paid physical run must audibly or visibly include the issued phrase and confirm that the real Gateway model detects it before the submission claims mission-challenge verification.
 
+The release policy now grants `camera=(self), microphone=(self)` only on `/contribute/*`; the shopper and public-board routes deny both. This preserves a spoken-phrase path without giving unrelated pages device authority, while the written-in-frame option remains a robust fallback. The current [Media Capture and Streams specification](https://www.w3.org/TR/mediacapture-streams/#permissions-policy-integration) defines camera and microphone as separate policy-controlled features with a default same-origin allowlist, while [HTML Media Capture](https://www.w3.org/TR/html-media-capture/) leaves the user agent in control of a user-initiated file-input capture. The release verifier fails if either contributor permission is missing or either permission leaks onto the other routes. A physical-phone test must still confirm that the chosen browser records audible audio; headers alone do not prove that.
+
 ## E25 — Cold-path cleanup and human-verifiable review
 
 **Frozen claim:** The canonical judge prompt reaches the public stranger-supply loop, and a contributor can independently inspect the exact selected recording while reviewing the model proposal. A shopper cannot accidentally abandon an owned public request by resetting or opening another case.
@@ -156,6 +158,22 @@ Unit tests prove deterministic phrase construction, schema boundaries, exact pro
 **Pass criteria:** The copyable ChatGPT prompt explicitly authorizes only the public mission fields and stops before recording; the review phase preserves a controllable local video beside the AI draft; reset revokes an open listing before clearing the private capability; a failed revocation preserves the active case and can be retried; invalid new-case input causes no external cleanup; and the complete native journey still passes.
 
 **Result:** **graduated locally.** The prompt now drives inspection → search → minimum mission → phone handoff → privacy-minimized board publication in one model turn. The phone review keeps the selected blob URL in a labeled video player, and native acceptance fails if that player disappears. Public-listing revocation is shared by explicit removal, reset, and successful new-question transitions; the destructive side effect runs only after the new command validates and fails closed without clearing session storage. Component tests cover outage preservation and successful retry. The full eight-step Chrome journey passed in 7.2 seconds with the stronger review assertion.
+
+## E26 — Generic WebMCP contract and spoken capture authority
+
+**Frozen claim:** The submitted product—not the retired live-auction prototype—has an independently executable WebMCP trajectory from any product question to a privacy-minimized public filming request, while only the contributor surface receives the device authority needed to record its fresh-capture phrase.
+
+**Status:** **current Chrome Labs source and native Chrome pass locally; physical-phone and exact current ChatGPT gates pending.**
+
+- Rechecked Chrome Labs `main` and npm on August 27, 2026. [`d39eae4`](https://github.com/GoogleChromeLabs/webmcp-tools/commit/d39eae4bd51e8c12736b8cae840bd98f190f3179) remains the current source revision and adds the credential-free `smoke` command; npm remains `webmcp-evals@0.0.3` from July 17 and exposes only `local` and `browser`.
+- Replaced the snowboard/live-show fixtures with a schema-locked generic corpus. It covers read-only inspection, arbitrary-product intake, private-context omission, bounded mission creation, a private phone handoff, and a distinct `confirmPublicListing: true` call before public recruitment.
+- The exact source-built Chrome Labs smoke opened a fresh page for every case and passed 9/9 calls across four cases. Its five-call hero independently discovered and executed `ask_product_question → search_product_evidence → create_filming_mission → create_phone_capture_link → publish_filming_mission` as the page changed its registered frontier.
+- The broader native Chrome acceptance immediately passed all eight product-network phases: arbitrary search, public mission, stranger claim, scrubbed capability recovery, uploaded-video review and correction, causal answer change, and reuse by a later shopper.
+- Re-read [Media Capture and Streams](https://www.w3.org/TR/mediacapture-streams/) and [HTML Media Capture](https://www.w3.org/TR/html-media-capture/). Camera and microphone are separate policy-controlled features; a file-input capture hint remains user-agent and user-gesture controlled. The contributor route now permits both from `self`, while the buyer and public mission board deny both. The release verifier fails if that route split changes.
+
+Limits: the passing synthetic clip deliberately does not contain the random mission phrase and remains labeled `contributor_attested`; it does not earn `mission_challenge_verified`. Only a real post-request take in which the model separately detects the shown or spoken random phrase may receive that timing label. This establishes bounded timing, not contributor identity, product ownership, clip authenticity, deepfake absence, or claim truth.
+
+Decision: keep the generic corpus and contributor-only microphone permission. They raise WebMCP Leverage, execution confidence, and public-repository coherence without adding a demo feature. Do not claim exact ChatGPT or physical-phone compatibility until those runtimes complete the same current release.
 
 ## What changed in the evidence
 

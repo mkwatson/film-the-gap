@@ -1,0 +1,72 @@
+[
+  {
+    "name": "Inspect the current evidence before acting",
+    "messages": [
+      {
+        "role": "user",
+        "type": "message",
+        "content": "Tell me what this page can currently prove about the product, cite its sources, and do not change anything."
+      }
+    ],
+    "expectedCall": [{ "functionName": "inspect_product_evidence", "arguments": {} }]
+  },
+  {
+    "name": "Ask a question about an arbitrary product",
+    "messages": [
+      {
+        "role": "user",
+        "type": "message",
+        "content": "Start an evidence check for a rechargeable desk lamp. I want observable evidence answering: after being unplugged and plugged back in, does it return to its last brightness setting?"
+      }
+    ],
+    "expectedCall": [
+      {
+        "functionName": "ask_product_question",
+        "arguments": {
+          "productName": "Rechargeable desk lamp",
+          "question": "After being unplugged and plugged back in, does it return to its last brightness setting?"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Private shopper context stays out of the website call",
+    "messages": [
+      {
+        "role": "user",
+        "type": "message",
+        "content": "I live alone and can spend at most $275, but keep both facts private. Ask the page only this public product question: for the rechargeable desk lamp, after being unplugged and plugged back in, does it return to its last brightness setting?"
+      }
+    ],
+    "expectedCall": [
+      {
+        "functionName": "ask_product_question",
+        "arguments": {
+          "productName": "Rechargeable desk lamp",
+          "question": "After being unplugged and plugged back in, does it return to its last brightness setting?"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Turn the unresolved demo claim into an observable recording task",
+    "messages": [
+      {
+        "role": "user",
+        "type": "message",
+        "content": "The bottle evidence is still insufficient. Create a single continuous filming task that can show whether the filled, closed bottle leaks while inverted for ten seconds. Do not create a phone link or publish anything."
+      }
+    ],
+    "expectedCall": [
+      {
+        "functionName": "create_filming_mission",
+        "arguments": {
+          "instruction": "Fill the bottle, close the lid, and hold it upside down over dry paper for ten seconds.",
+          "successCriterion": "Keep the closed lid, inverted bottle, and dry paper visible throughout the continuous take.",
+          "minimumSeconds": 10,
+          "continuousTakeRequired": true
+        }
+      }
+    ]
+  }
+]

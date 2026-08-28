@@ -1,29 +1,51 @@
 # WebMCP evaluation corpus
 
-These fixtures follow Chrome's current `webmcp-evals` format and deliberately separate two questions:
+These fixtures use Chrome Labs' current `webmcp-evals` format and exercise the product that is actually submitted:
 
-- `buyer-initial-tools.json` plus `buyer-initial-evals.json` test tool selection from the complete initial state, including direct, ambiguous, and over-disclosure prompts.
-- `browser-journey-evals.json` tests the live page, where tools appear and disappear as the agent advances. Its golden path ends at the human host boundary and explicitly stops before a hold.
+- `evidence-initial-tools.json` is an exact checked-in projection of the three Site Tools available on first load.
+- `evidence-initial-evals.json` tests read-only inspection, arbitrary-product intake, privacy minimization, and mission creation against that static frontier.
+- `browser-journey-evals.json` tests the live dynamic page. Its hero trajectory opens an arbitrary product case, searches existing evidence, creates a filming mission, creates a bounded phone handoff, and explicitly publishes only the public mission fields. Separate cases require a private-only handoff and read-only inspection.
 
-## Published package
+`src/lib/evidence-network/webmcp-evals.test.ts` rejects schema drift, unknown tool names, private test material in expected arguments, and public recruitment without a distinct confirmation call.
 
-With model-provider credentials configured, run the published Chrome Labs CLI locally:
+## Current source and published package
+
+Checked August 27, 2026:
+
+- Chrome Labs `main` is [`d39eae4`](https://github.com/GoogleChromeLabs/webmcp-tools/commit/d39eae4bd51e8c12736b8cae840bd98f190f3179). It provides `local`, `browser`, and credential-free `smoke` commands under `webmcp-evals/`.
+- npm still publishes `webmcp-evals@0.0.3` from July 17. It provides `local` and `browser`, but not the newer `smoke` command.
+
+Do not vendor Chrome Labs' dependency tree into this repository. Build the reviewed source revision in an isolated checkout when running the deterministic smoke:
+
+```bash
+git clone https://github.com/GoogleChromeLabs/webmcp-tools.git /tmp/webmcp-tools
+git -C /tmp/webmcp-tools checkout d39eae4bd51e8c12736b8cae840bd98f190f3179
+npm --prefix /tmp/webmcp-tools/webmcp-evals ci
+npm --prefix /tmp/webmcp-tools/webmcp-evals run build
+node /tmp/webmcp-tools/webmcp-evals/dist/bin/webmcp-evals.js smoke \
+  --chrome-channel chrome \
+  --url http://localhost:3000 \
+  --evals evals/browser-journey-evals.json \
+  --verbose
+```
+
+The app and evidence Worker must already be running with `NEXT_PUBLIC_EVIDENCE_ROOM_URL` pointing at the Worker. Each case receives a fresh browser page. The current source polls the dynamic registry between authored calls and treats an unavailable tool or a tool-reported error as a failing step.
+
+## Optional model-driven evaluation
+
+Only run this when an already-authorized provider and budget are available:
 
 ```bash
 npx --yes webmcp-evals@0.0.3 local \
-  --tools evals/buyer-initial-tools.json \
-  --evals evals/buyer-initial-evals.json
-```
+  --tools evals/evidence-initial-tools.json \
+  --evals evals/evidence-initial-evals.json
 
-Run the model-driven live-browser corpus against a started app with:
-
-```bash
 npx --yes webmcp-evals@0.0.3 browser \
-  --url http://127.0.0.1:3000 \
+  --url http://localhost:3000 \
   --evals evals/browser-journey-evals.json
 ```
 
-The latest published package was still `webmcp-evals@0.0.3` on August 27, 2026. Its `local` and `browser` commands can write a JSON report while exiting successfully even when every result has `outcome: "error"`. Never treat the process exit alone as an evaluation pass. Require all three counters to be clean, for example:
+The published `local` and `browser` commands can write a JSON report while exiting successfully even when every result is an error. Process exit alone is not evidence of a pass. Require all counters to be clean:
 
 ```bash
 jq -e '
@@ -33,16 +55,4 @@ jq -e '
 ' .evals/report-*.json
 ```
 
-An unavailable model, rate limit, or provider-authentication failure is evaluation infrastructure evidence—not a model-selection failure.
-
-## Latest source smoke
-
-Chrome Labs main at [`d39eae4`](https://github.com/GoogleChromeLabs/webmcp-tools/commit/d39eae4bd51e8c12736b8cae840bd98f190f3179) contains an unpublished `smoke` command, multi-step trajectories, browser console-error capture, and report analysis. The exact source revision built in an isolated temporary checkout and passed this live corpus in Chrome 151:
-
-```text
-5/5 expected Site Tool steps across 3 cases
-```
-
-That run independently discovered and executed `inspect_live_show`, `set_evidence_requirements`, and the dynamically appearing `request_host_evidence` through the page. It also passed the explicit-private-ceiling case because the invoked schema carried only the four product-evidence fields. Do not copy the temporary upstream dependency tree into this repository: its isolated `npm audit` reported one high and one moderate transitive vulnerability.
-
-The repository's credential-free `pnpm acceptance:native` runner remains the authoritative deterministic end-to-end test because it also coordinates the separately authenticated host, authoritative room, hold, merchant origin, UCP Cart, cancellation, reload, stale-handle rejection, and private-material assertions. The Chrome Labs smoke is valuable independent corroboration, not a replacement.
+An unavailable model, rate limit, or provider-authentication failure is infrastructure evidence, not a model-selection score. The repository's credential-free `pnpm acceptance:evidence-network` remains the broader deterministic authority because it also covers the public mission board, a separate contributor context, video review/correction, answer change, and later-shopper evidence reuse. Chrome Labs smoke is independent WebMCP corroboration, not a replacement.

@@ -1,0 +1,74 @@
+{
+  "tools": [
+    {
+      "name": "inspect_product_evidence",
+      "description": "Read the active product question, claim-specific sources, citations, rights, answer, open filming mission, privacy receipt, and valid next action. Use on arrival and after evidence changes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_product_question",
+      "description": "Open or replace the active case with one public product name, optional product-page URL, and observable question. The schema cannot receive identity, budget, history, or private preferences.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "productName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120,
+            "description": "Public product name or model label; do not include buyer context."
+          },
+          "productUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Optional public HTTP or HTTPS product-page URL."
+          },
+          "question": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 280,
+            "description": "One concrete product question that observable evidence could answer."
+          }
+        },
+        "required": ["productName", "question"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "create_filming_mission",
+      "description": "Turn the unresolved product question into one bounded recording instruction and acceptance criterion for a person who has the product. This creates no review, recommendation, purchase, or message to an unknown person.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "instruction": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 280,
+            "description": "Exactly what a person with the product should record."
+          },
+          "successCriterion": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 280,
+            "description": "What must stay visible or audible for the result to be useful."
+          },
+          "minimumSeconds": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 60,
+            "description": "Minimum continuous observation length in seconds."
+          },
+          "continuousTakeRequired": {
+            "type": "boolean",
+            "description": "Whether cuts would weaken what this evidence can establish."
+          }
+        },
+        "required": ["instruction", "successCriterion", "minimumSeconds", "continuousTakeRequired"],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

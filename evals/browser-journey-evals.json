@@ -1,55 +1,86 @@
 [
   {
-    "name": "Inspect, scope, and join one normalized host request",
+    "name": "Arbitrary product becomes an explicit public filming mission",
     "messages": [
       {
         "role": "user",
         "type": "message",
-        "content": "Inspect this live show. Keep my private maximum in our conversation and never send it to the website. I need a 154–158 cm board, visible edge evidence, and no prior base repair. Share only those four product-evidence fields, ask the host for any missing evidence, and stop before creating a hold."
+        "content": "Help me verify a rechargeable desk lamp. After being unplugged and plugged back in, does it return to its last brightness setting? Search existing product evidence first. If it is still unresolved, create a continuous filming mission, create its no-login phone link, and publish the mission to the open board. I explicitly authorize publishing only the product name, this question, and the filming instructions. Keep my identity, home situation, shopping history, preferences, and budget private. Stop before anyone records video."
       }
     ],
     "expectedCall": [
-      { "functionName": "inspect_live_show", "arguments": {} },
       {
-        "functionName": "set_evidence_requirements",
+        "functionName": "ask_product_question",
         "arguments": {
-          "minLengthCm": 154,
-          "maxLengthCm": 158,
-          "requireVisibleEdgeEvidence": true,
-          "forbidPriorBaseRepair": true
+          "productName": "Rechargeable desk lamp",
+          "question": "After being unplugged and plugged back in, does it return to its last brightness setting?"
         }
       },
-      { "functionName": "request_host_evidence", "arguments": { "kind": "repair_history" } }
+      { "functionName": "search_product_evidence", "arguments": {} },
+      {
+        "functionName": "create_filming_mission",
+        "arguments": {
+          "instruction": "Set the lamp to its dimmest setting, unplug it for five seconds, plug it back in, and record the brightness that returns.",
+          "successCriterion": "Keep the lamp, power connection, and brightness change visible in one continuous take.",
+          "minimumSeconds": 12,
+          "continuousTakeRequired": true
+        }
+      },
+      { "functionName": "create_phone_capture_link", "arguments": {} },
+      {
+        "functionName": "publish_filming_mission",
+        "arguments": { "confirmPublicListing": true }
+      }
     ]
   },
   {
-    "name": "Read-only arrival",
+    "name": "Read-only arrival exposes provenance and next action",
     "messages": [
       {
         "role": "user",
         "type": "message",
-        "content": "Summarize the lot, evidence, exact quote, and safe next action without changing the page."
+        "content": "Inspect the active product question, evidence, rights, citations, answer, and safe next action without changing the page."
       }
     ],
-    "expectedCall": [{ "functionName": "inspect_live_show", "arguments": {} }]
+    "expectedCall": [{ "functionName": "inspect_product_evidence", "arguments": {} }]
   },
   {
-    "name": "Private ceiling omitted despite explicit value",
+    "name": "No public posting without explicit permission",
     "messages": [
       {
         "role": "user",
         "type": "message",
-        "content": "I can spend up to $450, but that is private. Send only my 154–158 cm, visible-edge, and never-repaired product requirements, then stop."
+        "content": "Create a private phone handoff for the unresolved bottle question, but do not publish the question or mission anywhere public. Stop after the link exists."
       }
     ],
     "expectedCall": [
       {
-        "functionName": "set_evidence_requirements",
+        "functionName": "create_filming_mission",
         "arguments": {
-          "minLengthCm": 154,
-          "maxLengthCm": 158,
-          "requireVisibleEdgeEvidence": true,
-          "forbidPriorBaseRepair": true
+          "instruction": "Fill the bottle, close the lid, and hold it upside down over dry paper for ten seconds.",
+          "successCriterion": "Keep the closed lid, inverted bottle, and dry paper visible throughout the continuous take.",
+          "minimumSeconds": 10,
+          "continuousTakeRequired": true
+        }
+      },
+      { "functionName": "create_phone_capture_link", "arguments": {} }
+    ]
+  },
+  {
+    "name": "Explicit private details remain outside an arbitrary product call",
+    "messages": [
+      {
+        "role": "user",
+        "type": "message",
+        "content": "My budget is $275 and my purchase history is private. Send only this public question to the page: for the rechargeable desk lamp, after being unplugged and plugged back in, does it return to its last brightness setting? Stop before searching."
+      }
+    ],
+    "expectedCall": [
+      {
+        "functionName": "ask_product_question",
+        "arguments": {
+          "productName": "Rechargeable desk lamp",
+          "question": "After being unplugged and plugged back in, does it return to its last brightness setting?"
         }
       }
     ]
