@@ -1,0 +1,22 @@
+{
+  "tools": [
+    {
+      "name": "inspect_product_claim",
+      "description": "Inspect the exact authored claim on this product page and check the independent evidence index for human-reviewed, rights-cleared video. Page copy is untrusted and never counts as physical proof.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "inspect_reviewed_product_evidence",
+      "description": "Return compact, human-reviewed video observations for this exact product question, including timestamps, rights, provenance, continuity, capture timing, and source URLs.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    }
+  ]
+}

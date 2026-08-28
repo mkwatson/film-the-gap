@@ -54,6 +54,7 @@
       }
     ],
     "expectedCall": [
+      { "functionName": "search_product_evidence", "arguments": {} },
       {
         "functionName": "create_filming_mission",
         "arguments": {

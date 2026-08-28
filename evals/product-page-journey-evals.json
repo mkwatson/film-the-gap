@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Product claim becomes an exact evidence case across page navigation",
+    "messages": [
+      {
+        "role": "user",
+        "type": "message",
+        "content": "Inspect what this product page claims and what it can actually prove. If the exact ten-second question still lacks reviewed video, open its evidence case and inspect that case. Do not publish a request, contact anyone, or treat the marketing claim as proof."
+      }
+    ],
+    "expectedCall": [
+      { "functionName": "inspect_product_claim", "arguments": {} },
+      { "functionName": "open_product_evidence_case", "arguments": {} },
+      { "functionName": "inspect_product_evidence", "arguments": {} }
+    ]
+  }
+]

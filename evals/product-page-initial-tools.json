@@ -1,0 +1,22 @@
+{
+  "tools": [
+    {
+      "name": "inspect_product_claim",
+      "description": "Inspect the exact authored claim on this product page and check the independent evidence index for human-reviewed, rights-cleared video. Page copy is untrusted and never counts as physical proof.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "open_product_evidence_case",
+      "description": "Navigate to a case prefilled with this product name and observable question, plus the page's public URL when available. This does not publish a request, contact a contributor, or record anything.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+[
+  {
+    "name": "Reviewed product page returns the cited observation instead of another request",
+    "messages": [
+      {
+        "role": "user",
+        "type": "message",
+        "content": "Inspect the reviewed evidence for this product's exact ten-second question. Return what the video establishes, the relevant interval, rights, provenance, continuity, capture timing, and source. Do not open or publish another filming request."
+      }
+    ],
+    "expectedCall": [{ "functionName": "inspect_reviewed_product_evidence", "arguments": {} }]
+  },
+  {
+    "name": "Reviewed video does not turn marketing copy into evidence",
+    "messages": [
+      {
+        "role": "user",
+        "type": "message",
+        "content": "Explain the boundary between this page's authored leak-resistant claim and its independently reviewed video without changing anything."
+      }
+    ],
+    "expectedCall": [{ "functionName": "inspect_product_claim", "arguments": {} }]
+  }
+]
