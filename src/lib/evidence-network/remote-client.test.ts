@@ -72,7 +72,7 @@ describe('remote evidence client', () => {
       'https://rooms.example/path',
       'BCDF2345',
       '0123456789abcdef0123456789abcdef',
-      { token: 'c'.repeat(43) },
+      { token: 'c'.repeat(43), confirmRightsForAnalysis: true },
       evidenceFetch,
     );
 
@@ -81,7 +81,7 @@ describe('remote evidence client', () => {
       'https://rooms.example/evidence-cases/BCDF2345/videos/0123456789abcdef0123456789abcdef/analysis',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ token: 'c'.repeat(43) }),
+        body: JSON.stringify({ token: 'c'.repeat(43), confirmRightsForAnalysis: true }),
       }),
     );
   });

@@ -281,6 +281,7 @@ export type ReserveEvidenceUploadRequest = z.infer<typeof reserveEvidenceUploadR
 
 export const analyzeEvidenceVideoRequestSchema = z.strictObject({
   token: tokenSchema,
+  confirmRightsForAnalysis: z.literal(true),
 });
 export type AnalyzeEvidenceVideoRequest = z.infer<typeof analyzeEvidenceVideoRequestSchema>;
 

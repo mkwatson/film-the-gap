@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
 import {
   currentEvidenceAnswer,
@@ -27,6 +27,8 @@ import {
   formatEvidenceTimestamp,
   type VideoEvidenceAnalysisResponse,
   type VideoEvidenceContinuity,
+  type VideoEvidenceSegmentRole,
+  type VideoEvidenceSegmentTransition,
 } from '@/lib/evidence-network/video-analysis';
 
 type ContributorPhase =
@@ -49,6 +51,20 @@ const resultCopy: Readonly<Record<EvidenceResult, string>> = {
   supports: 'The requested behavior was visible for the full continuous test.',
   contradicts: 'The requested behavior failed during the continuous test.',
   inconclusive: 'The recording did not keep every required detail visible.',
+};
+
+const segmentRoleCopy: Readonly<Record<VideoEvidenceSegmentRole, string>> = {
+  setup: 'setup',
+  claim_evidence: 'claim evidence',
+  context: 'context',
+  unrelated: 'unrelated',
+};
+
+const segmentTransitionCopy: Readonly<Record<VideoEvidenceSegmentTransition, string>> = {
+  video_start: 'video starts',
+  continuous: 'same take',
+  visible_cut: 'visible cut',
+  unclear: 'transition unclear',
 };
 
 function wait(milliseconds: number): Promise<void> {
@@ -89,6 +105,7 @@ function contributorToken(caseId: string): string | null {
 
 export function EvidenceContributor({ caseId }: EvidenceContributorProps): React.JSX.Element {
   const serviceUrl = configuredEvidenceServiceUrl();
+  const reviewVideoRef = useRef<HTMLVideoElement>(null);
   const [phase, setPhase] = useState<ContributorPhase>('loading');
   const [snapshot, setSnapshot] = useState<RemoteEvidenceCaseSnapshot | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -109,6 +126,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
   const [provenance, setProvenance] = useState<'live_capture' | 'authorized_import' | null>(null);
   const [rights, setRights] = useState<'owned' | 'authorized' | null>(null);
   const [reuseScope, setReuseScope] = useState<'case_only' | 'public_network'>('case_only');
+  const [analysisRightsConfirmed, setAnalysisRightsConfirmed] = useState(false);
   const [reviewConfirmed, setReviewConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -220,6 +238,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
     setProvenance(null);
     setRights(null);
     setReuseScope('case_only');
+    setAnalysisRightsConfirmed(false);
     setReviewConfirmed(false);
     setError(null);
     setPhase('hashing');
@@ -233,7 +252,14 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
   }
 
   async function uploadSelectedVideo(): Promise<void> {
-    if (serviceUrl === null || token === null || snapshot === null || file === null || !fileReady) {
+    if (
+      serviceUrl === null ||
+      token === null ||
+      snapshot === null ||
+      file === null ||
+      !fileReady ||
+      !analysisRightsConfirmed
+    ) {
       return;
     }
     setError(null);
@@ -261,6 +287,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
         for (let attempt = 0; attempt < 60; attempt += 1) {
           const response = await analyzeRemoteEvidenceVideo(serviceUrl, caseId, reserved.uploadId, {
             token,
+            confirmRightsForAnalysis: true,
           });
           setAnalysis(response);
           if (response.kind !== 'processing') {
@@ -333,6 +360,15 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
     if (nextContinuity !== 'continuous') {
       setReuseScope('case_only');
     }
+  }
+
+  function seekReviewVideo(seconds: number): void {
+    const video = reviewVideoRef.current;
+    if (video === null) {
+      return;
+    }
+    video.currentTime = seconds;
+    video.focus();
   }
 
   async function publishReview(): Promise<void> {
@@ -506,11 +542,22 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                       seconds.
                     </p>
                   ) : null}
+                  <label className="contributor-analysis-permission">
+                    <input
+                      type="checkbox"
+                      checked={analysisRightsConfirmed}
+                      onChange={(event) => setAnalysisRightsConfirmed(event.currentTarget.checked)}
+                    />
+                    I own this recording or have permission to upload it for this claim-scoped AI
+                    review.
+                  </label>
                   <button
                     className="evidence-primary-button"
                     type="button"
                     disabled={
-                      !fileReady || ['reserving', 'uploading', 'processing'].includes(phase)
+                      !fileReady ||
+                      !analysisRightsConfirmed ||
+                      ['reserving', 'uploading', 'processing'].includes(phase)
                     }
                     onClick={() => void uploadSelectedVideo()}
                   >
@@ -550,6 +597,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
               {localVideoUrl === null ? null : (
                 <figure className="contributor-review-video">
                   <video
+                    ref={reviewVideoRef}
                     aria-label="Review uploaded evidence video"
                     controls
                     playsInline
@@ -570,6 +618,39 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                     Proposed citation {formatEvidenceTimestamp(analysis.finding.startSeconds)}–
                     {formatEvidenceTimestamp(analysis.finding.endSeconds)}
                   </p>
+                  {analysis.finding.segments === undefined ? null : (
+                    <div className="contributor-video-map">
+                      <div>
+                        <strong>AI video map</strong>
+                        <small>
+                          Navigation only—not published evidence. A cut inside the cited interval
+                          prevents it from being treated as one continuous take.
+                        </small>
+                      </div>
+                      <ol>
+                        {analysis.finding.segments.map((segment) => (
+                          <li
+                            key={`${segment.startSeconds}-${segment.endSeconds}-${segment.role}`}
+                            data-transition={segment.transitionIn}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => seekReviewVideo(segment.startSeconds)}
+                              aria-label={`Seek video to ${formatEvidenceTimestamp(segment.startSeconds)} for ${segmentRoleCopy[segment.role]}`}
+                            >
+                              <span>
+                                {formatEvidenceTimestamp(segment.startSeconds)}–
+                                {formatEvidenceTimestamp(segment.endSeconds)}
+                              </span>
+                              <em>{segmentRoleCopy[segment.role]}</em>
+                              <small>{segmentTransitionCopy[segment.transitionIn]}</small>
+                            </button>
+                            <p>{segment.summary}</p>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
                   <ul>
                     {analysis.finding.visibleDetails.map((detail) => (
                       <li key={detail}>{detail}</li>

@@ -43,6 +43,29 @@ const finding = {
   },
   visibleDetails: ['The charging icon remained visible.', 'The recording timer advanced.'],
   limitations: ['The clip does not establish long-term charging performance.'],
+  segments: [
+    {
+      startSeconds: 0,
+      endSeconds: 2,
+      role: 'setup',
+      transitionIn: 'video_start',
+      summary: 'The receiver and charging indicator are brought into view.',
+    },
+    {
+      startSeconds: 2,
+      endSeconds: 11,
+      role: 'claim_evidence',
+      transitionIn: 'continuous',
+      summary: 'The charging indicator stays visible while the recording timer advances.',
+    },
+    {
+      startSeconds: 11,
+      endSeconds: 12,
+      role: 'context',
+      transitionIn: 'continuous',
+      summary: 'The same phone and receiver remain visible after the test.',
+    },
+  ],
 } as const;
 
 describe('Vercel AI Gateway video evidence adapter', () => {
@@ -68,7 +91,7 @@ describe('Vercel AI Gateway video evidence adapter', () => {
           gateway: {
             models: ['google/gemini-3.6-flash'],
             disallowPromptTraining: true,
-            tags: ['webmcp-challenge', 'product-evidence', 'video-review-v1'],
+            tags: ['webmcp-challenge', 'product-evidence', 'video-review-v2'],
           },
         },
         include: {
@@ -88,7 +111,10 @@ describe('Vercel AI Gateway video evidence adapter', () => {
               expect.objectContaining({
                 type: 'text',
                 text: expect.stringMatching(
-                  new RegExp(`${input.question}.*${input.captureChallengePhrase}`, 's'),
+                  new RegExp(
+                    `${input.question}.*${input.captureChallengePhrase}.*complete navigation map`,
+                    's',
+                  ),
                 ),
               }),
             ],
@@ -102,6 +128,20 @@ describe('Vercel AI Gateway video evidence adapter', () => {
   it('rejects a model citation that escapes the verified recording', async () => {
     generateTextMock.mockResolvedValueOnce({
       output: { ...finding, endSeconds: 20 },
+      finalStep: { response: { modelId: 'google/gemini-3.7-flash' } },
+    });
+
+    await expect(generateAuthorizedVideoProposal(input, { apiKey: 'test-key' })).rejects.toThrow(
+      'did not fit the recording boundary',
+    );
+  });
+
+  it('rejects a new model response that omits the complete segment map', async () => {
+    const unsegmentedFinding = Object.fromEntries(
+      Object.entries(finding).filter(([key]) => key !== 'segments'),
+    );
+    generateTextMock.mockResolvedValueOnce({
+      output: unsegmentedFinding,
       finalStep: { response: { modelId: 'google/gemini-3.7-flash' } },
     });
 

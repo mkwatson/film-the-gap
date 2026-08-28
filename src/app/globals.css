@@ -401,6 +401,92 @@ select:focus-visible {
   line-height: 1.45;
 }
 
+.contributor-video-map {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.contributor-video-map > div {
+  display: grid;
+  gap: 3px;
+}
+
+.contributor-video-map > div > strong {
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.contributor-video-map ol {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contributor-video-map li {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.72fr) 1fr;
+  gap: 9px;
+  align-items: stretch;
+}
+
+.contributor-video-map button {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 8px;
+  min-height: 44px;
+  padding: 7px 9px;
+  color: var(--ink);
+  border: 1px solid var(--line-bright);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.contributor-video-map button:hover,
+.contributor-video-map button:focus-visible {
+  border-color: color-mix(in srgb, var(--cyan) 52%, transparent);
+  outline: none;
+}
+
+.contributor-video-map button > span {
+  grid-column: 1 / -1;
+  color: var(--cyan);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.contributor-video-map button > em {
+  color: var(--ink);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.contributor-video-map button > small {
+  justify-self: end;
+}
+
+.contributor-video-map li[data-transition='visible_cut'] button,
+.contributor-video-map li[data-transition='unclear'] button {
+  border-color: color-mix(in srgb, var(--amber) 42%, transparent);
+}
+
+.contributor-video-map li > p {
+  align-self: center;
+  margin: 0;
+}
+
 .contributor-ai-proposal .contributor-challenge-result {
   padding: 9px 10px;
   border: 1px solid var(--line);
@@ -505,6 +591,25 @@ select:focus-visible {
   border-radius: 9px;
   background: color-mix(in srgb, var(--amber) 6%, transparent);
   font-size: 11px;
+}
+
+.contributor-analysis-permission {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin: 12px 0 4px;
+  padding: 11px 12px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.018);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.contributor-analysis-permission input {
+  flex: 0 0 auto;
+  margin-top: 2px;
 }
 
 .contributor-preview button {
@@ -734,6 +839,10 @@ select:focus-visible {
   .contributor-result-buttons,
   .contributor-review fieldset,
   .contributor-time-range {
+    grid-template-columns: 1fr;
+  }
+
+  .contributor-video-map li {
     grid-template-columns: 1fr;
   }
 

@@ -81,6 +81,22 @@ beforeEach(() => {
       },
       visibleDetails: ['The bottle and dry paper remained visible.'],
       limitations: ['This shows only the recorded ten-second test.'],
+      segments: [
+        {
+          startSeconds: 0,
+          endSeconds: 1,
+          role: 'setup',
+          transitionIn: 'video_start',
+          summary: 'The closed bottle and dry paper enter view.',
+        },
+        {
+          startSeconds: 1,
+          endSeconds: 10,
+          role: 'claim_evidence',
+          transitionIn: 'continuous',
+          summary: 'The inverted bottle remains over the same dry paper.',
+        },
+      ],
     },
   });
   const publishedState = applyEvidenceNetworkCommand(
@@ -196,7 +212,9 @@ describe('EvidenceContributor', () => {
     fireEvent.loadedMetadata(video);
 
     const uploadButton = await screen.findByRole('button', { name: 'Upload + draft evidence' });
-    await waitFor(() => expect(uploadButton.hasAttribute('disabled')).toBe(false));
+    await waitFor(() => expect(uploadButton.hasAttribute('disabled')).toBe(true));
+    fireEvent.click(screen.getByLabelText(/I own this recording or have permission to upload it/i));
+    expect(uploadButton.hasAttribute('disabled')).toBe(false);
     fireEvent.click(uploadButton);
 
     expect(
@@ -220,6 +238,11 @@ describe('EvidenceContributor', () => {
     expect(remoteMocks.analyze).toHaveBeenCalledOnce();
     expect(screen.getByText('google/gemini-3.7-flash')).toBeTruthy();
     expect(screen.getByText('Proposed citation 00:01–00:10')).toBeTruthy();
+    expect(screen.getByText('AI video map')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Seek video to 00:01 for claim evidence' }),
+    ).toBeTruthy();
+    expect(screen.getByText(/Navigation only—not published evidence/)).toBeTruthy();
     expect(
       screen.getByText(/Fresh-capture check: The exact mission phrase is audible/),
     ).toBeTruthy();
@@ -295,7 +318,9 @@ describe('EvidenceContributor', () => {
     Object.defineProperty(video, 'duration', { configurable: true, value: 10 });
     fireEvent.loadedMetadata(video);
     const uploadButton = await screen.findByRole('button', { name: 'Upload + draft evidence' });
-    await waitFor(() => expect(uploadButton.hasAttribute('disabled')).toBe(false));
+    await waitFor(() => expect(uploadButton.hasAttribute('disabled')).toBe(true));
+    fireEvent.click(screen.getByLabelText(/I own this recording or have permission to upload it/i));
+    expect(uploadButton.hasAttribute('disabled')).toBe(false);
     fireEvent.click(uploadButton);
 
     expect(await screen.findByText('Manual review')).toBeTruthy();

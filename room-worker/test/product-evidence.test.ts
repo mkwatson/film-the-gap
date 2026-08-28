@@ -363,7 +363,10 @@ describe('generic product evidence cases', () => {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Origin: origin },
-        body: JSON.stringify({ token: credentials.contributorToken }),
+        body: JSON.stringify({
+          token: credentials.contributorToken,
+          confirmRightsForAnalysis: true,
+        }),
       },
     );
     expect(analysisResponse.status).toBe(200);
@@ -653,7 +656,10 @@ describe('generic product evidence cases', () => {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Origin: origin },
-          body: JSON.stringify({ token: credentials.contributorToken }),
+          body: JSON.stringify({
+            token: credentials.contributorToken,
+            confirmRightsForAnalysis: true,
+          }),
         },
       );
 
@@ -742,11 +748,41 @@ describe('generic product evidence cases', () => {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Origin: origin },
-        body: JSON.stringify({ token: credentials.ownerToken }),
+        body: JSON.stringify({ token: credentials.ownerToken, confirmRightsForAnalysis: true }),
       },
     );
 
     expect(response.status).toBe(403);
     expect(await response.json()).toMatchObject({ error: 'invalid_contributor_token' });
+  });
+
+  it('refuses analysis before the contributor confirms media rights', async () => {
+    const { credentials } = await createCase();
+    const uploadResponse = await SELF.fetch(
+      `https://rooms.example/evidence-cases/${credentials.caseId}/uploads`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({
+          token: credentials.contributorToken,
+          fileSizeBytes: 2_000_000,
+          maxDurationSeconds: 30,
+          mimeType: 'video/mp4',
+        }),
+      },
+    );
+    const upload = reservedEvidenceUploadSchema.parse(await uploadResponse.json());
+
+    const response = await SELF.fetch(
+      `https://rooms.example/evidence-cases/${credentials.caseId}/videos/${upload.uploadId}/analysis`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({ token: credentials.contributorToken }),
+      },
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: 'invalid_video_analysis_request' });
   });
 });

@@ -708,6 +708,24 @@ async function run(): Promise<void> {
       driver.upload('input[type="file"]', fixture.filePath);
       await waitForBrowserValue(
         driver,
+        'pre-analysis rights gate',
+        `document.querySelector('.contributor-analysis-permission input[type="checkbox"]') instanceof HTMLInputElement`,
+        (value) => value === true,
+        config.commandTimeoutMs,
+      );
+      const analysisRightsConfirmed = driver.eval(`(() => {
+        const checkbox = document.querySelector(
+          '.contributor-analysis-permission input[type="checkbox"]',
+        );
+        if (!(checkbox instanceof HTMLInputElement)) return false;
+        checkbox.click();
+        return checkbox.checked;
+      })()`);
+      if (analysisRightsConfirmed !== true) {
+        throw new Error('The contributor could not confirm rights before AI analysis.');
+      }
+      await waitForBrowserValue(
+        driver,
         'video fingerprint and metadata',
         `(() => {
           const button = [...document.querySelectorAll('button')].find(
@@ -735,6 +753,7 @@ async function run(): Promise<void> {
           model: text.includes('google/gemini-3.7-flash'),
           citation: text.includes('Proposed citation 00:01–00:11'),
           reviewBoundary: normalized.includes('ai draft · untrusted until you review it'),
+          segmentMap: text.includes('AI video map') && normalized.includes('navigation only—not published evidence'),
           reviewVideo: document.querySelector('video[aria-label="Review uploaded evidence video"]')?.getAttribute('src')?.startsWith('blob:') === true,
           honestChallengeFallback: text.includes(
             'Fresh-capture check: The synthetic fixture does not contain the mission phrase',

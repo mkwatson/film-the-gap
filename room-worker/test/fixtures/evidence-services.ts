@@ -111,6 +111,29 @@ export default {
             'No liquid is visible on the paper at the end of the cited interval.',
           ],
           limitations: ['The clip establishes only this recorded test.'],
+          segments: [
+            {
+              startSeconds: 0,
+              endSeconds: 1,
+              role: 'setup',
+              transitionIn: 'video_start',
+              summary: 'The bottle, closed lid, and dry paper enter view.',
+            },
+            {
+              startSeconds: 1,
+              endSeconds: 11,
+              role: 'claim_evidence',
+              transitionIn: 'continuous',
+              summary: 'The bottle remains inverted over the same paper without a visible cut.',
+            },
+            {
+              startSeconds: 11,
+              endSeconds: 12,
+              role: 'context',
+              transitionIn: 'continuous',
+              summary: 'The same bottle and paper remain visible after the test.',
+            },
+          ],
         },
       });
     }

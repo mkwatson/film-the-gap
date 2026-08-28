@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createDemoEvidenceNetworkState } from './model';
 import {
+  analyzeEvidenceVideoRequestSchema,
   createRemoteEvidenceCaseRequestSchema,
   evidenceNetworkStateSchema,
   publicEvidenceMissionClaimSchema,
@@ -146,6 +147,23 @@ describe('remote product evidence protocol', () => {
       captureTiming: 'preexisting',
       streamUid: base.uploadId,
     });
+  });
+
+  it('requires a literal rights confirmation before model analysis', () => {
+    const token = 'c'.repeat(43);
+    expect(analyzeEvidenceVideoRequestSchema.safeParse({ token }).success).toBe(false);
+    expect(
+      analyzeEvidenceVideoRequestSchema.safeParse({
+        token,
+        confirmRightsForAnalysis: false,
+      }).success,
+    ).toBe(false);
+    expect(
+      analyzeEvidenceVideoRequestSchema.safeParse({
+        token,
+        confirmRightsForAnalysis: true,
+      }).success,
+    ).toBe(true);
   });
 
   it('keeps public board listings capability-free while claims stay case-scoped', () => {

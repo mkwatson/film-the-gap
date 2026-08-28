@@ -2,8 +2,8 @@ import { createGateway, generateText, Output } from 'ai';
 
 import {
   findingFitsVideo,
+  generatedVideoEvidenceFindingSchema,
   videoEvidenceFallbackModels,
-  videoEvidenceFindingSchema,
   videoEvidencePrimaryModel,
   type AuthorizedVideoAnalysisInput,
   type VideoEvidenceProposal,
@@ -24,6 +24,10 @@ function analysisInstructions(): string {
     'Separately check whether the exact mission phrase is visibly shown or audibly spoken; do not infer it from similar words.',
     'The phrase only bounds the recording to after the mission was issued. It does not prove identity, ownership, product authenticity, or the truth of the product claim.',
     'Cite the smallest interval that contains the setup and observable outcome, using integer seconds.',
+    'Map the entire recording into no more than 12 chronological integer-second segments with no gaps or overlaps.',
+    'Start the first segment at 0, end the final segment at the supplied duration, and mark each boundary as continuous, a visible cut, or unclear.',
+    'Use claim_evidence only where the shopper question is visibly or audibly tested; setup and context do not become proof merely because they appear nearby.',
+    'Default video sampling is coarse, so mark a transition unclear whenever a cut cannot be located confidently.',
     'A human contributor will review and may correct this proposal before anything is published.',
   ].join(' ');
 }
@@ -39,7 +43,7 @@ function analysisPrompt(input: AuthorizedVideoAnalysisInput): string {
     input.continuousTakeRequired
       ? 'This claim requires one continuous take; a conclusive result is invalid if continuity is edited or unclear.'
       : 'Disclose any visible edit or continuity uncertainty.',
-    'Return a bounded proposal with the exact evidence interval, visible details, and limitations.',
+    'Return a bounded proposal with the exact evidence interval, a complete navigation map, visible details, and limitations.',
   ].join('\n');
 }
 
@@ -54,7 +58,7 @@ export async function generateAuthorizedVideoProposal(
       name: 'ClaimScopedProductVideoEvidence',
       description:
         'A timestamped observation grounded only in one rights-cleared product recording.',
-      schema: videoEvidenceFindingSchema,
+      schema: generatedVideoEvidenceFindingSchema,
     }),
     instructions: analysisInstructions(),
     messages: [
@@ -72,12 +76,12 @@ export async function generateAuthorizedVideoProposal(
       },
     ],
     reasoning: 'low',
-    maxOutputTokens: 900,
+    maxOutputTokens: 1_600,
     providerOptions: {
       gateway: {
         models: [...videoEvidenceFallbackModels],
         disallowPromptTraining: true,
-        tags: ['webmcp-challenge', 'product-evidence', 'video-review-v1'],
+        tags: ['webmcp-challenge', 'product-evidence', 'video-review-v2'],
       },
     },
     include: {
@@ -89,12 +93,16 @@ export async function generateAuthorizedVideoProposal(
     ...(options.abortSignal === undefined ? {} : { abortSignal: options.abortSignal }),
   });
 
-  if (!findingFitsVideo(result.output, input.durationSeconds, input.continuousTakeRequired)) {
+  const finding = generatedVideoEvidenceFindingSchema.safeParse(result.output);
+  if (
+    !finding.success ||
+    !findingFitsVideo(finding.data, input.durationSeconds, input.continuousTakeRequired)
+  ) {
     throw new Error('The model proposal did not fit the recording boundary.');
   }
 
   return {
     modelId: result.finalStep.response.modelId,
-    finding: result.output,
+    finding: finding.data,
   };
 }

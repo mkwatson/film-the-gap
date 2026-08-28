@@ -69,6 +69,22 @@ async function mockVideoAnalysis(request: Request): Promise<Response> {
       },
       visibleDetails: ['The closed bottle stayed inverted above dry paper.'],
       limitations: ['The recording establishes only the tested ten-second interval.'],
+      segments: [
+        {
+          startSeconds: 0,
+          endSeconds: 1,
+          role: 'setup',
+          transitionIn: 'video_start',
+          summary: 'The closed bottle and dry paper enter view.',
+        },
+        {
+          startSeconds: 1,
+          endSeconds: 10,
+          role: 'claim_evidence',
+          transitionIn: 'continuous',
+          summary: 'The bottle stays inverted above the same paper without a visible cut.',
+        },
+      ],
     },
   });
 }

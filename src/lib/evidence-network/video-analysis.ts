@@ -12,7 +12,46 @@ export type VideoEvidenceContinuity = (typeof videoEvidenceContinuities)[number]
 export const captureChallengeStatuses = ['verified', 'not_detected', 'unclear'] as const;
 export type CaptureChallengeStatus = (typeof captureChallengeStatuses)[number];
 
-export const videoEvidenceFindingSchema = z.strictObject({
+export const videoEvidenceSegmentRoles = [
+  'setup',
+  'claim_evidence',
+  'context',
+  'unrelated',
+] as const;
+export type VideoEvidenceSegmentRole = (typeof videoEvidenceSegmentRoles)[number];
+
+export const videoEvidenceSegmentTransitions = [
+  'video_start',
+  'continuous',
+  'visible_cut',
+  'unclear',
+] as const;
+export type VideoEvidenceSegmentTransition = (typeof videoEvidenceSegmentTransitions)[number];
+
+export const videoEvidenceSegmentSchema = z.strictObject({
+  startSeconds: z.number().int().nonnegative(),
+  endSeconds: z.number().int().positive(),
+  role: z.enum(videoEvidenceSegmentRoles),
+  transitionIn: z.enum(videoEvidenceSegmentTransitions),
+  summary: z
+    .string()
+    .trim()
+    .min(4)
+    .max(180)
+    .describe('A neutral description of only what is visible or audible in this interval.'),
+});
+
+export type VideoEvidenceSegment = z.infer<typeof videoEvidenceSegmentSchema>;
+
+const videoEvidenceSegmentsSchema = z
+  .array(videoEvidenceSegmentSchema)
+  .min(1)
+  .max(12)
+  .describe(
+    'A chronological map of the entire recording. Each transition states whether the footage visibly continues or cuts.',
+  );
+
+const videoEvidenceFindingShape = {
   result: z
     .enum(evidenceResults)
     .describe('Whether the visible recording supports, contradicts, or cannot answer the claim.'),
@@ -45,6 +84,18 @@ export const videoEvidenceFindingSchema = z.strictObject({
     .array(z.string().trim().min(1).max(180))
     .max(4)
     .describe('What the recording does not establish or what remains unclear.'),
+} as const;
+
+export const generatedVideoEvidenceFindingSchema = z.strictObject({
+  ...videoEvidenceFindingShape,
+  segments: videoEvidenceSegmentsSchema,
+});
+
+export const videoEvidenceFindingSchema = z.strictObject({
+  ...videoEvidenceFindingShape,
+  // Optional only so in-flight, short-lived Durable Object records from the previous release
+  // remain readable. Every newly generated proposal uses the required schema above.
+  segments: videoEvidenceSegmentsSchema.optional(),
 });
 
 export type VideoEvidenceFinding = z.infer<typeof videoEvidenceFindingSchema>;
@@ -106,9 +157,11 @@ export function findingFitsVideo(
   durationSeconds: number,
   continuousTakeRequired: boolean,
 ): boolean {
+  const roundedDuration = Math.ceil(durationSeconds);
   if (
     finding.startSeconds >= finding.endSeconds ||
-    finding.endSeconds > Math.ceil(durationSeconds)
+    finding.endSeconds > roundedDuration ||
+    !segmentsFitVideo(finding, roundedDuration)
   ) {
     return false;
   }
@@ -116,6 +169,51 @@ export function findingFitsVideo(
     continuousTakeRequired &&
     finding.result !== 'inconclusive' &&
     finding.continuity !== 'continuous'
+  );
+}
+
+function segmentsFitVideo(finding: VideoEvidenceFinding, durationSeconds: number): boolean {
+  const segments = finding.segments;
+  if (segments === undefined) {
+    return true;
+  }
+  if (
+    segments.length === 0 ||
+    segments[0]?.startSeconds !== 0 ||
+    segments[0]?.transitionIn !== 'video_start' ||
+    segments.at(-1)?.endSeconds !== durationSeconds
+  ) {
+    return false;
+  }
+
+  for (const [index, segment] of segments.entries()) {
+    if (
+      segment.startSeconds >= segment.endSeconds ||
+      segment.endSeconds > durationSeconds ||
+      (index > 0 &&
+        (segment.startSeconds !== segments[index - 1]?.endSeconds ||
+          segment.transitionIn === 'video_start'))
+    ) {
+      return false;
+    }
+  }
+
+  const citedSegments = segments.filter(
+    ({ startSeconds, endSeconds }) =>
+      startSeconds < finding.endSeconds && endSeconds > finding.startSeconds,
+  );
+  if (
+    finding.result !== 'inconclusive' &&
+    !citedSegments.some(({ role }) => role === 'claim_evidence')
+  ) {
+    return false;
+  }
+  if (finding.continuity !== 'continuous') {
+    return true;
+  }
+  return citedSegments.every(
+    ({ startSeconds, transitionIn }) =>
+      startSeconds <= finding.startSeconds || transitionIn === 'continuous',
   );
 }
 
