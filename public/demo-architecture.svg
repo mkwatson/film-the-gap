@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title description">
   <title id="title">ChatGPT publishes missing product proof for anyone with access to film once, then reuses it</title>
-  <desc id="description">A five-step flow from ChatGPT identifying an evidence gap, through native WebMCP mission creation and privacy-minimized public recruitment, to a product-owner phone recording, human-reviewed AI analysis, and a timestamped result reused for later matching questions.</desc>
+  <desc id="description">A five-step flow from ChatGPT identifying an evidence gap, through native WebMCP mission creation and privacy-minimized public recruitment, to a contributor phone recording, human-reviewed AI analysis, and a timestamped result reused for later matching questions.</desc>
   <defs>
     <radialGradient id="background" cx="50%" cy="8%" r="95%">
       <stop offset="0" stop-color="#14352b" />
@@ -73,7 +73,7 @@
     <circle cx="44" cy="48" r="21" fill="#ffd36d" fill-opacity="0.13" stroke="#ffd36d" stroke-opacity="0.72" />
     <text x="44" y="54" class="mono step" fill="#ffd36d" text-anchor="middle">03</text>
     <text x="28" y="104" class="mono step" fill="#ffd36d">OPEN CONTRIBUTOR</text>
-    <text x="28" y="148" class="sans node-title" fill="#f8f5ed">Owner phone</text>
+    <text x="28" y="148" class="sans node-title" fill="#f8f5ed">Contributor phone</text>
     <text x="28" y="198" class="sans body" fill="#bbb8ac">Finds the request and records</text>
     <text x="28" y="228" class="sans body" fill="#bbb8ac">one bounded physical test.</text>
     <rect x="28" y="294" width="264" height="44" rx="12" fill="#ffd36d" fill-opacity="0.08" stroke="#ffd36d" stroke-opacity="0.3" />
