@@ -109,6 +109,6 @@
   <text x="960" y="843" class="mono receipt" fill="#8cebc6" text-anchor="middle">INSPECT → MISSION → OPEN BOARD → PHONE → HUMAN REVIEW → ANSWER DIFF → REUSE</text>
 
   <line x1="80" y1="934" x2="1840" y2="934" stroke="#a9ffe2" stroke-opacity="0.16" />
-  <text x="960" y="982" class="sans subtitle" fill="#aebeb7" text-anchor="middle">Vercel: Next.js + AI Gateway · Cloudflare: Durable Object + Stream + D1 + Cron</text>
+  <text x="960" y="982" class="sans subtitle" fill="#aebeb7" text-anchor="middle">Vercel: Next.js + AI Gateway · Cloudflare: Durable Object + Stream + D1 + Browser Run</text>
   <text x="960" y="1023" class="mono eyebrow" fill="#8cebc6" text-anchor="middle">THE MODEL PROPOSES · THE HUMAN PUBLISHES · THE NETWORK REUSES EXACT EVIDENCE</text>
 </svg>

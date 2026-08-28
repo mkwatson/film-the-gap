@@ -103,6 +103,7 @@ function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
           expiredEvidencePurge: 'daily',
           publicMissionBoard: true,
           publicMissionRetentionHours: 24,
+          productPageReader: true,
         },
         workerVersion: { id: 'room-version', tag: workerTag, timestamp: '2026-08-27T12:00:00Z' },
       });

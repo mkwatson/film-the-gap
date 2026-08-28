@@ -410,6 +410,7 @@ describe('ProductEvidenceNetwork', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Search existing evidence' }));
 
     expect(await screen.findByText('1 reusable reviewed recording found')).toBeTruthy();
+    expect(screen.getByText(/Cloudflare D1 reusable evidence/)).toBeTruthy();
     expect(screen.getByText('The evidence network already has a reviewed answer.')).toBeTruthy();
     expect(screen.getAllByText('Supported')).not.toHaveLength(0);
     expect(
@@ -467,5 +468,56 @@ describe('ProductEvidenceNetwork', () => {
     expect(screen.getByRole('link', { name: 'Open source page ↗' }).getAttribute('href')).toBe(
       'https://reviews.example/desk-lamp',
     );
+  });
+
+  it('shows a Browser Run page receipt while keeping product copy non-decisive', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (): Promise<Response> =>
+        Response.json({
+          provider: 'evidence_network',
+          status: 'partial',
+          query: 'Trail Flask leak-free upside down ten seconds',
+          searchedPlatforms: ['web'],
+          warnings: [
+            'Live social search is not configured on this deployment.',
+            'Broad web search through Vercel AI Gateway is not configured.',
+          ],
+          leads: [
+            {
+              platform: 'web',
+              title: 'Trail Flask 24 oz · supplied product page',
+              url: 'https://shop.example/products/trail-flask',
+              summary:
+                'Untrusted product-page excerpt read by Cloudflare Browser Run: “The product page claims a leak-resistant lid.” Page copy remains a lead, never proof.',
+              creatorLabel: 'Product page · Cloudflare Browser Run',
+            },
+          ],
+        }),
+      ),
+    );
+    setModelContext(undefined);
+    render(<ProductEvidenceNetwork />);
+
+    fireEvent.change(screen.getByLabelText('Product'), {
+      target: { value: 'Trail Flask 24 oz' },
+    });
+    fireEvent.change(screen.getByLabelText(/Public product URL/), {
+      target: { value: 'https://shop.example/products/trail-flask' },
+    });
+    fireEvent.change(screen.getByLabelText('What do you need to know?'), {
+      target: { value: 'Does it stay leak-free while upside down for ten seconds?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Open new evidence case' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Search existing evidence' }));
+
+    expect(await screen.findByText(/Cloudflare Browser Run read the supplied page/)).toBeTruthy();
+    expect(screen.getByText(/Cloudflare Browser Run · 1 candidate source retained/)).toBeTruthy();
+    expect(screen.getByText(/product page claims a leak-resistant lid/)).toBeTruthy();
+    expect(screen.getByText(/low confidence · Product page · Cloudflare Browser Run/)).toBeTruthy();
+    expect(screen.getAllByText('Not enough proof')).not.toHaveLength(0);
+    expect(
+      screen.getByRole('button', { name: 'Create claim-specific filming mission' }),
+    ).toBeTruthy();
   });
 });

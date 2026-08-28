@@ -6,6 +6,7 @@ import type {
   ProductQuestionInput,
   ReusableEvidenceRecord,
 } from '../model';
+import type { KnownPageReadResponse } from '../known-page-reader';
 import { searchPublicProductEvidence, type EvidenceDiscoveryCache } from './public-evidence-search';
 
 const question: ProductQuestionInput = {
@@ -59,6 +60,19 @@ function discovery(
   };
 }
 
+function pageRead(url: string): KnownPageReadResponse {
+  return {
+    reader: 'cloudflare_browser_run',
+    status: 'complete',
+    requestedUrl: url,
+    finalUrl: url,
+    title: 'Trail Flask 24 oz',
+    excerpt: 'The product page claims a leak-resistant lid.',
+    contentSignal: 'ai-train=no, search=yes, ai-input=yes',
+    browserMilliseconds: 824,
+  };
+}
+
 function recordingCache(): {
   readonly cache: EvidenceDiscoveryCache;
   readonly get: ReturnType<typeof vi.fn<EvidenceDiscoveryCache['get']>>;
@@ -77,6 +91,7 @@ describe('public product evidence orchestration', () => {
     const result = await searchPublicProductEvidence(question, {
       scrapeCreatorsApiKey: 'social-key',
       gatewayApiKey: 'gateway-key',
+      readKnownPage: async (url) => pageRead(url),
       searchSocial: async () =>
         discovery('scrapecreators', {
           searchedPlatforms: ['tiktok', 'instagram', 'youtube'],
@@ -115,7 +130,7 @@ describe('public product evidence orchestration', () => {
     expect(result).toMatchObject({
       provider: 'evidence_network',
       status: 'complete',
-      searchedPlatforms: ['tiktok', 'instagram', 'youtube', 'web'],
+      searchedPlatforms: ['web', 'tiktok', 'instagram', 'youtube'],
     });
     expect(result.leads.map(({ url }) => url)).toEqual([
       'https://shop.example/products/trail-flask?utm_source=shopper#details',
@@ -124,7 +139,8 @@ describe('public product evidence orchestration', () => {
     ]);
     expect(result.leads[0]).toMatchObject({
       platform: 'web',
-      creatorLabel: 'Supplied page · shop.example',
+      creatorLabel: 'Product page · Cloudflare Browser Run',
+      summary: expect.stringContaining('never proof'),
     });
   });
 
@@ -136,12 +152,14 @@ describe('public product evidence orchestration', () => {
     const searchWeb = vi.fn(async () =>
       discovery('vercel_ai_gateway', { searchedPlatforms: ['web'] }),
     );
+    const readKnownPage = vi.fn(async (url: string) => pageRead(url));
     const dependencies = {
       scrapeCreatorsApiKey: 'social-key',
       gatewayApiKey: 'gateway-key',
       cache,
       searchSocial,
       searchWeb,
+      readKnownPage,
     } as const;
 
     const first = await searchPublicProductEvidence(question, dependencies);
@@ -157,6 +175,7 @@ describe('public product evidence orchestration', () => {
     );
     expect(searchSocial).toHaveBeenCalledTimes(1);
     expect(searchWeb).toHaveBeenCalledTimes(1);
+    expect(readKnownPage).toHaveBeenCalledTimes(1);
   });
 
   it('checks reusable evidence fresh even when public discovery comes from cache', async () => {
@@ -167,6 +186,7 @@ describe('public product evidence orchestration', () => {
     const searchWeb = vi.fn(async () =>
       discovery('vercel_ai_gateway', { searchedPlatforms: ['web'] }),
     );
+    const readKnownPage = vi.fn(async (url: string) => pageRead(url));
     const searchNetwork = vi
       .fn()
       .mockResolvedValueOnce({ status: 'complete', records: [], warnings: [] })
@@ -177,6 +197,7 @@ describe('public product evidence orchestration', () => {
       cache,
       searchSocial,
       searchWeb,
+      readKnownPage,
       searchNetwork,
     } as const;
 
@@ -185,9 +206,11 @@ describe('public product evidence orchestration', () => {
 
     expect(before.reviewedEvidence).toEqual([]);
     expect(after.reviewedEvidence).toEqual([reusableRecord]);
+    expect(after.leads).toEqual([]);
     expect(searchNetwork).toHaveBeenCalledTimes(2);
     expect(searchSocial).toHaveBeenCalledTimes(1);
     expect(searchWeb).toHaveBeenCalledTimes(1);
+    expect(readKnownPage).toHaveBeenCalledTimes(1);
   });
 
   it('does not cache transient partial provider failures', async () => {
@@ -196,6 +219,7 @@ describe('public product evidence orchestration', () => {
       scrapeCreatorsApiKey: 'social-key',
       gatewayApiKey: 'gateway-key',
       cache,
+      readKnownPage: async (url) => pageRead(url),
       searchSocial: async () => discovery('scrapecreators', { searchedPlatforms: ['youtube'] }),
       searchWeb: async () =>
         discovery('vercel_ai_gateway', {
@@ -225,7 +249,11 @@ describe('public product evidence orchestration', () => {
         }),
       ],
     });
-    expect(result.warnings).toHaveLength(2);
+    expect(result.warnings).toEqual([
+      'Live product-page reading is not configured on this deployment.',
+      'Live social search is not configured on this deployment.',
+      'Broad web search through Vercel AI Gateway is not configured.',
+    ]);
   });
 
   it('is honestly unavailable when no source or provider is available', async () => {

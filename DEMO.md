@@ -80,7 +80,8 @@ Show this for at most five seconds, without logos:
 ChatGPT
    ↕ native, state-aware WebMCP Site Tools
 Next.js product-evidence page on Vercel
-   ↕ revisioned case and live updates
+   ↕ claim-aware search + revisioned case and live updates
+Cloudflare Browser Run → untrusted product-page context
 Cloudflare Durable Object ↔ contributor phone → Cloudflare Stream
    ↑ reviewed evidence                         ↓ authorized MP4
    └──────────────── human review ← Vercel AI Gateway proposal

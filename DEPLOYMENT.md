@@ -14,6 +14,7 @@ Updated 2026-08-28 PT. Nothing described here is publicly deployed yet. This run
 | Multimodal proposal         | Vercel AI Gateway + AI SDK 7, called by the Worker | Bounded timestamped proposal and exact mission-phrase check from the authorized MP4; never publication authority |
 | Social-video discovery      | ScrapeCreators, called only by the Vercel app      | Link-only TikTok, Instagram, and YouTube leads; never implied reuse rights                                       |
 | Broad-web discovery         | Exa tool through Vercel AI Gateway + AI SDK 7      | At most four claim-aware web/PDP leads from one exact-query-verified call                                        |
+| Known product-page reader   | Cloudflare Browser Run `/markdown` Worker binding  | Bounded dynamic-page excerpt, final-origin receipt, Content Signals, and no promotion of page copy to proof      |
 | Discovery reuse             | Vercel Runtime Cache                               | Reuses successful public-query receipts for 15 minutes per region                                                |
 
 The deployable Worker is [evidence-index.ts](room-worker/src/evidence-index.ts), configured by [wrangler.evidence.jsonc](room-worker/wrangler.evidence.jsonc). It exposes only the evidence API required by this product.
@@ -39,10 +40,11 @@ These are defense-in-depth controls, not claims of perfect abuse prevention.
 | Model calls            | One cached successful proposal per upload and no more than two crash-recovery attempts                                                   |
 | Video AI spend         | Dedicated AI Gateway key with a hard non-renewing budget and 30-day expiry                                                               |
 | Broad web search       | Vercel OIDC under a non-renewing project budget, one Exa `instant` call, four results, exact-query receipt check, and 20-second timeout  |
+| Product-page reading   | Server capability; public HTTPS/default port only; same-origin navigation; 24-hour Browser Run cache; atomic D1 maximum of 60 reads/day  |
 | Discovery reuse        | SHA-256 cache key; successful configured searches reused for 15 minutes through Vercel Runtime Cache                                     |
 | Public discovery       | Same-origin JSON only, Vercel WAF fixed-window limit, bounded Gateway credit exposure, and a fixed-credit social key                     |
 
-Cloudflare's current Worker rate-limit binding is deliberately permissive, eventually consistent, and local to a Cloudflare location. It is useful overload protection, not exact global accounting. The hard upload-count cap, model-attempt cap, expiring capabilities, AI Gateway budget, and vendor credit limit remain necessary. See [Workers Rate Limiting](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/), [Stream Direct Creator Uploads](https://developers.cloudflare.com/stream/uploading-videos/direct-creator-uploads/), [Vercel WAF Rate Limiting](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting), and [AI Gateway key budgets](https://vercel.com/changelog/budgets-for-api-keys-on-ai-gateway).
+Cloudflare's current Worker rate-limit binding is deliberately permissive, eventually consistent, and local to a Cloudflare location. It is useful overload protection, not exact global accounting. Browser Run therefore uses an atomic D1 daily ceiling instead: even if all 60 actions consume both eight-second timeout phases on every day of a 31-day month, this candidate stays below 8.3 browser hours. Cloudflare currently includes 10 Browser Run hours per month on Workers Paid, but unrelated account usage could consume that headroom and must be checked before release. The hard upload-count cap, model-attempt cap, expiring capabilities, AI Gateway budget, and vendor credit limit remain necessary. See [Browser Run pricing](https://developers.cloudflare.com/browser-run/pricing/), [Browser Run Markdown](https://developers.cloudflare.com/browser-run/quick-actions/markdown-endpoint/), [Workers Rate Limiting](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/), [Stream Direct Creator Uploads](https://developers.cloudflare.com/stream/uploading-videos/direct-creator-uploads/), [Vercel WAF Rate Limiting](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting), and [AI Gateway key budgets](https://vercel.com/changelog/budgets-for-api-keys-on-ai-gateway).
 
 Turnstile is not on the canonical judge path yet. Its server validation would add useful bot resistance, but an unverified interaction inside ChatGPT's in-app Browser is a larger submission risk than the bounded residual cost. Reconsider only after an exact-runtime test proves invisible or interaction-only Turnstile does not interrupt native Site Tools or phone capture.
 
@@ -61,7 +63,7 @@ pnpm --dir room-worker exec wrangler d1 list --json
 gh auth status
 ```
 
-Use a Vercel team whose generated production URLs do not carry an unrelated company slug. The selected team needs permission to create a project, set its AI Gateway budget, create one scoped Gateway key, and stage a project-level firewall rule. Cloudflare needs Workers, Durable Objects, D1, Stream, Cron Triggers, and rate-limit bindings. A successful `wrangler whoami` does not prove Stream is enabled; confirm Stream's terms/billing once in the dashboard before deployment.
+Use a Vercel team whose generated production URLs do not carry an unrelated company slug. The selected team needs permission to create a project, set its AI Gateway budget, create one scoped Gateway key, and stage a project-level firewall rule. Cloudflare needs Workers, Durable Objects, D1, Stream, Browser Run, Cron Triggers, and rate-limit bindings. A successful `wrangler whoami` does not prove Stream or Browser Run account readiness; confirm Stream's terms/billing and inspect current Browser Run monthly usage once in the dashboard before deployment.
 
 ## User-approved one-time setup
 
@@ -87,7 +89,7 @@ The current minimum new purchase is one `$5` [Cloudflare Stream storage block](h
    ```
 
 2. Enable Cloudflare Stream on the intended account and purchase its minimum prepaid storage block: currently `$5` for 1,000 stored minutes. Keep the demo's existing duration, upload-count, and deletion bounds; do not purchase additional storage.
-3. Create a dedicated D1 database in Western North America and replace both all-zero placeholder IDs in `room-worker/wrangler.evidence.jsonc` with the returned UUID. This mutates the Cloudflare account and must not be run until Mark approves:
+3. Confirm the account's remaining included Browser Run time leaves the candidate's worst-case 8.3-hour monthly envelope below the account allowance. Do not enable usage-based overage for this project. Then create a dedicated D1 database in Western North America and replace both all-zero placeholder IDs in `room-worker/wrangler.evidence.jsonc` with the returned UUID. This mutates the Cloudflare account and must not be run until Mark approves:
 
    ```bash
    pnpm --dir room-worker exec wrangler d1 create webmcp-product-evidence-library \
@@ -189,10 +191,13 @@ Then:
      --var "EVIDENCE_CASE_TTL_SECONDS:86400"
    ```
 
-3. Add the dedicated budgeted video-analysis Gateway key through the encrypted prompt:
+3. Add the dedicated budgeted video-analysis Gateway key through the encrypted prompt. Generate a separate random reader capability of at least 24 characters in a password manager, enter it for `PAGE_READER_SHARED_SECRET`, and retain it only long enough to enter the identical value in Vercel Production as `EVIDENCE_PAGE_READER_TOKEN`:
 
    ```bash
    pnpm --dir room-worker exec wrangler secret put AI_GATEWAY_API_KEY \
+     --config wrangler.evidence.jsonc
+
+   pnpm --dir room-worker exec wrangler secret put PAGE_READER_SHARED_SECRET \
      --config wrangler.evidence.jsonc
    ```
 
@@ -211,6 +216,7 @@ Then:
 5. Configure the new Vercel project's Production environment:
 
    - `NEXT_PUBLIC_EVIDENCE_ROOM_URL=$ROOM_ORIGIN` — required and compiled at build time.
+   - `EVIDENCE_PAGE_READER_TOKEN` — required, server-only, identical to the Worker's `PAGE_READER_SHARED_SECRET`, and never prefixed `NEXT_PUBLIC_`.
    - `AI_GATEWAY_DISCOVERY_API_KEY` — omit on the final Vercel release; automatically refreshed OIDC stays inside the project-scoped `$5` budget.
    - `SCRAPECREATORS_API_KEY` — optional, server-only, dedicated to this demo.
    - Do not add `AI_GATEWAY_API_KEY`; the video-analysis key belongs only on the Worker.
@@ -285,8 +291,8 @@ pnpm release:verify
 The verifier uses manual redirects and bounded bodies. It proves:
 
 1. the app exposes the exact reviewed commit and compiled Worker origin;
-2. the standalone Worker exposes the same commit, both rate-limit bindings, the two-upload cap, Stream, live video analysis, D1, the 30-day reuse boundary, and daily expiry purge;
-3. real read-only D1 queries succeed through both the reusable-evidence and open-mission contracts, proving the binding and both migrations rather than trusting health metadata;
+2. the standalone Worker exposes the same commit, both rate-limit bindings, the two-upload cap, Stream, Browser Run, live video analysis, D1, the 30-day reuse boundary, and daily expiry purge;
+3. real read-only D1 queries succeed through both the reusable-evidence and open-mission contracts, proving the binding and migrations rather than trusting health metadata;
 4. shopper, mission-board, and contributor pages have the intended route-scoped camera, microphone, upload, playback, CORS, CSP, referrer, and content-type boundaries;
 5. an untrusted browser origin is rejected; and
 6. one disposable evidence case is created and survives a Durable Object read-back.
@@ -295,7 +301,7 @@ The report contains only public Worker metadata and step timings. It parses but 
 
 Then perform one user-approved paid rehearsal on the final origins:
 
-1. Clean unauthenticated desktop browser: arbitrary product/question, mission, QR/link.
+1. Clean unauthenticated desktop browser: arbitrary product URL/question, a real Browser Run page receipt whose text remains non-decisive, mission, QR/link.
 2. Physical phone: owned unbranded object, say or show the issued phrase with the product visible, continuous recording, real direct Stream upload, real Gateway proposal and phrase check, explicit correction/review, publish.
    Confirm specifically that the Gateway provider can fetch the generated public MP4 while Stream playback-origin restrictions are active; current Cloudflare documentation describes those restrictions for HLS/DASH playback but does not explicitly guarantee this downstream-download combination.
 3. Contributor explicitly opts into 30-day network reuse; confirm weak/inconclusive evidence cannot be selected for reuse.
@@ -310,14 +316,14 @@ Record actual result, duration, browser/build versions, Worker version, model ID
 
 ## Freeze manifest
 
-| Field         | Required value                                                                      |
-| ------------- | ----------------------------------------------------------------------------------- |
-| Git           | Full `RELEASE_SHA`, signed/frozen tag, clean public repository                      |
-| Vercel        | Immutable deployment URL, stable alias, commit receipt, WAF rule ID/state           |
-| Cloudflare    | Worker origin/version, D1 database ID/migration, Cron Trigger, Stream, rate limits  |
-| Paid edges    | Budgeted Gateway key expiry/cap, Stream retention, discovery credit ceiling         |
-| Runtime tests | Release verifier, Chrome, ChatGPT, physical phone, fallback, cold tester timestamps |
-| Submission    | Final live URL, repository URL, YouTube URL, Devpost export                         |
+| Field         | Required value                                                                       |
+| ------------- | ------------------------------------------------------------------------------------ |
+| Git           | Full `RELEASE_SHA`, signed/frozen tag, clean public repository                       |
+| Vercel        | Immutable deployment URL, stable alias, commit receipt, WAF rule ID/state            |
+| Cloudflare    | Worker origin/version, D1 migrations, Cron Trigger, Stream, Browser Run, rate limits |
+| Paid edges    | Budgeted Gateway key expiry/cap, Stream retention, discovery credit ceiling          |
+| Runtime tests | Release verifier, Chrome, ChatGPT, physical phone, fallback, cold tester timestamps  |
+| Submission    | Final live URL, repository URL, YouTube URL, Devpost export                          |
 
 After the September 3, 2026 1:00 p.m. PT deadline, keep the submitted repository, deployment, and entry frozen through judging. Continue experiments only in a clearly separate branch or project.
 

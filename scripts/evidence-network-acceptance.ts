@@ -320,7 +320,8 @@ async function run(): Promise<void> {
             driver,
             'truthful ordinary-browser discovery receipt',
             pageIncludesScript(
-              'Only the supplied product page is available',
+              '1 source channel searched; others unavailable',
+              'Cloudflare Browser Run read the supplied page as untrusted context',
               '1 candidate source retained',
               'public leads never count as proof',
               'Create claim-specific filming mission',
@@ -375,7 +376,8 @@ async function run(): Promise<void> {
           driver,
           'truthful supplied-page receipt',
           pageIncludesScript(
-            'Only the supplied product page is available',
+            '1 source channel searched; others unavailable',
+            'Cloudflare Browser Run read the supplied page as untrusted context',
             '1 candidate source retained',
             'public leads never count as proof',
           ),
@@ -389,6 +391,7 @@ async function run(): Promise<void> {
             `return serialized.includes('"provider":"evidence_network"') &&
             serialized.includes('"status":"partial"') &&
             serialized.includes('"rights":"link_only"') &&
+            serialized.includes('Cloudflare Browser Run') &&
             serialized.includes('"privateShopperContext"') === false;`,
           ),
           'inspect bounded public discovery',

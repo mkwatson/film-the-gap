@@ -114,6 +114,56 @@ export default {
         },
       });
     }
+    if (request.method === 'POST' && url.pathname === '/markdown') {
+      const input = (await request.json()) as unknown;
+      if (typeof input !== 'object' || input === null) {
+        return json({ error: 'invalid_page_reader_input' }, 400);
+      }
+      const target = (input as Record<string, unknown>).url;
+      const pageReaderInput = input as Record<string, unknown>;
+      const gotoOptions = pageReaderInput.gotoOptions;
+      const extraHeaders = pageReaderInput.setExtraHTTPHeaders;
+      const rejectedResourceTypes = pageReaderInput.rejectResourceTypes;
+      if (
+        typeof target !== 'string' ||
+        !target.startsWith('https://example.com/products/acceptance-travel-bottle-') ||
+        !Array.isArray(pageReaderInput.allowRequestPattern) ||
+        pageReaderInput.allowRequestPattern.length !== 1 ||
+        pageReaderInput.allowRequestPattern[0] !== '/^https:\\/\\/example\\.com\\//' ||
+        !Array.isArray(rejectedResourceTypes) ||
+        !['stylesheet', 'image', 'media', 'font'].every((resource) =>
+          rejectedResourceTypes.includes(resource),
+        ) ||
+        typeof gotoOptions !== 'object' ||
+        gotoOptions === null ||
+        (gotoOptions as Record<string, unknown>).timeout !== 8_000 ||
+        (gotoOptions as Record<string, unknown>).waitUntil !== 'domcontentloaded' ||
+        pageReaderInput.actionTimeout !== 8_000 ||
+        pageReaderInput.bestAttempt !== true ||
+        pageReaderInput.cacheTTL !== 86_400 ||
+        typeof extraHeaders !== 'object' ||
+        extraHeaders === null ||
+        (extraHeaders as Record<string, unknown>).Accept !== 'text/markdown, text/html;q=0.9'
+      ) {
+        return json({ error: 'unsafe_page_reader_contract' }, 400);
+      }
+      return Response.json(
+        {
+          success: true,
+          result:
+            '# Acceptance travel bottle\n\nThe product page claims a leak-resistant lid. It does not show the requested upside-down test.',
+          meta: {
+            status: 200,
+            title: 'Acceptance travel bottle',
+            finalUrl: target,
+            headers: {
+              'content-signal': 'ai-train=no, search=yes, ai-input=yes',
+            },
+          },
+        },
+        { headers: { 'X-Browser-Ms-Used': '375' } },
+      );
+    }
     return json({ error: 'not_found' }, 404);
   },
 } satisfies ExportedHandler;

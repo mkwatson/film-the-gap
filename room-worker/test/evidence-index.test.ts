@@ -31,6 +31,7 @@ describe('standalone evidence Worker', () => {
         expiredEvidencePurge: 'daily',
         publicMissionBoard: true,
         publicMissionRetentionHours: 24,
+        productPageReader: true,
       },
     });
   });

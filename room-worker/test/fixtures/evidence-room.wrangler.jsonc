@@ -38,6 +38,10 @@
       "binding": "AI_ANALYSIS_OUTBOUND",
       "service": "webmcp-evidence-services-fixture",
     },
+    {
+      "binding": "PAGE_READER_OUTBOUND",
+      "service": "webmcp-evidence-services-fixture",
+    },
   ],
   "ratelimits": [
     {
@@ -60,5 +64,6 @@
   "vars": {
     "ALLOWED_ORIGINS": "http://localhost:3000,http://127.0.0.1:3000",
     "EVIDENCE_CASE_TTL_SECONDS": "86400",
+    "PAGE_READER_SHARED_SECRET": "acceptance-only-page-reader-secret",
   },
 }

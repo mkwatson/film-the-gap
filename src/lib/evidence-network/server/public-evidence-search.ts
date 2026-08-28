@@ -6,12 +6,13 @@ import {
   type ProductQuestionInput,
   type ReusableEvidenceSearchResponse,
 } from '../model';
+import { readRemoteKnownProductPage, type KnownPageReadResponse } from '../known-page-reader';
 import { searchRemoteReusableEvidence } from '../remote-client';
 import { canonicalizePublicDiscoveryUrl } from '../url-policy';
 import { searchGatewayWebEvidence } from './gateway-web-search';
 import { buildEvidenceSearchQuery, searchScrapeCreatorsEvidence } from './scrape-creators';
 
-const cacheVersion = 'v2';
+const cacheVersion = 'v3';
 const cacheTtlSeconds = 15 * 60;
 
 interface DiscoveryCacheSetOptions {
@@ -35,15 +36,19 @@ type ReusableEvidenceSearch = (
   signal?: AbortSignal,
 ) => Promise<ReusableEvidenceSearchResponse>;
 
+type KnownPageRead = (url: string, signal?: AbortSignal) => Promise<KnownPageReadResponse>;
+
 interface PublicEvidenceSearchDependencies {
   readonly scrapeCreatorsApiKey: string | undefined;
   readonly gatewayApiKey: string | undefined;
   readonly gatewayOidcAvailable?: boolean;
   readonly evidenceServiceUrl?: string;
+  readonly pageReaderToken?: string;
   readonly cache?: EvidenceDiscoveryCache;
   readonly searchSocial?: EvidenceSearch;
   readonly searchWeb?: EvidenceSearch;
   readonly searchNetwork?: ReusableEvidenceSearch;
+  readonly readKnownPage?: KnownPageRead;
 }
 
 function unavailableNetworkSearch(warning?: string): ReusableEvidenceSearchResponse {
@@ -95,8 +100,20 @@ function mergeReusableNetwork(
   });
 }
 
+function reusableOnlyDiscovery(input: ProductQuestionInput): EvidenceDiscoveryInput {
+  return evidenceDiscoveryInputSchema.parse({
+    provider: 'evidence_network',
+    status: 'complete',
+    query: buildEvidenceSearchQuery(input),
+    searchedPlatforms: [],
+    warnings: [],
+    leads: [],
+  });
+}
+
 function suppliedPageLead(
   input: ProductQuestionInput,
+  read: KnownPageReadResponse | null = null,
 ): EvidenceDiscoveryInput['leads'][number] | null {
   if (input.productUrl === undefined) {
     return null;
@@ -104,12 +121,83 @@ function suppliedPageLead(
   const hostname = new URL(input.productUrl).hostname;
   return {
     platform: 'web',
-    title: `${input.productName} · supplied product page`.slice(0, 240),
+    title:
+      `${read?.status === 'complete' ? read.title : input.productName} · supplied product page`.slice(
+        0,
+        240,
+      ),
     url: input.productUrl,
     summary:
-      'This page was supplied with the case as a place to inspect. Its copy and images are not treated as proof, and its contents have not been reviewed against the claim.',
-    creatorLabel: `Supplied page · ${hostname}`.slice(0, 120),
+      read?.status === 'complete'
+        ? `Untrusted product-page excerpt read by Cloudflare Browser Run: “${read.excerpt}”. Page copy remains a lead, never proof.${read.contentSignal === null ? '' : ` Origin content signal: ${read.contentSignal}.`}`.slice(
+            0,
+            360,
+          )
+        : 'This page was supplied with the case as a place to inspect. Its copy and images are not treated as proof, and its contents have not been read against the claim.',
+    creatorLabel:
+      read?.status === 'complete'
+        ? 'Product page · Cloudflare Browser Run'
+        : `Supplied page · ${hostname}`.slice(0, 120),
   };
+}
+
+async function readSuppliedProductPage(
+  input: ProductQuestionInput,
+  dependencies: PublicEvidenceSearchDependencies,
+  signal?: AbortSignal,
+): Promise<EvidenceDiscoveryInput | null> {
+  if (input.productUrl === undefined) {
+    return null;
+  }
+  const fallback = suppliedPageLead(input);
+  if (fallback === null) {
+    return null;
+  }
+  const token = dependencies.pageReaderToken?.trim();
+  const configuredReader = dependencies.readKnownPage;
+  if (
+    configuredReader === undefined &&
+    (dependencies.evidenceServiceUrl === undefined || token === undefined || token.length === 0)
+  ) {
+    return evidenceDiscoveryInputSchema.parse({
+      provider: 'evidence_network',
+      status: 'unavailable',
+      query: buildEvidenceSearchQuery(input),
+      searchedPlatforms: [],
+      warnings: ['Live product-page reading is not configured on this deployment.'],
+      leads: [fallback],
+    });
+  }
+  let read: KnownPageReadResponse;
+  try {
+    read = await (
+      configuredReader ??
+      ((url, readSignal) =>
+        readRemoteKnownProductPage(
+          { url },
+          {
+            serviceUrl: dependencies.evidenceServiceUrl ?? '',
+            token: token ?? '',
+            ...(readSignal === undefined ? {} : { signal: readSignal }),
+          },
+        ))
+    )(input.productUrl, signal);
+  } catch {
+    read = {
+      reader: 'cloudflare_browser_run',
+      status: 'unavailable',
+      requestedUrl: input.productUrl,
+      warning: 'The product-page reader was temporarily unreachable.',
+    };
+  }
+  return evidenceDiscoveryInputSchema.parse({
+    provider: 'evidence_network',
+    status: read.status,
+    query: buildEvidenceSearchQuery(input),
+    searchedPlatforms: read.status === 'complete' ? ['web'] : [],
+    warnings: read.status === 'complete' ? [] : [read.warning],
+    leads: [suppliedPageLead(input, read) ?? fallback],
+  });
 }
 
 function uniqueLeads(
@@ -133,18 +221,16 @@ function mergeDiscoveryResults(
   input: ProductQuestionInput,
   results: readonly EvidenceDiscoveryInput[],
 ): EvidenceDiscoveryInput {
-  const suppliedLead = suppliedPageLead(input);
   const successfulResults = results.filter(({ status }) => status !== 'unavailable');
   const status = results.every(({ status: resultStatus }) => resultStatus === 'complete')
     ? 'complete'
-    : successfulResults.length > 0 || suppliedLead !== null
+    : successfulResults.length > 0 || results.some(({ leads }) => leads.length > 0)
       ? 'partial'
       : 'unavailable';
   const searchedPlatforms = [
     ...new Set(results.flatMap(({ searchedPlatforms: platforms }) => platforms)),
   ];
   const leads = uniqueLeads([
-    ...(suppliedLead === null ? [] : [suppliedLead]),
     ...results.flatMap(({ leads: providerLeads }) => providerLeads),
   ]).slice(0, 12);
 
@@ -160,7 +246,7 @@ function mergeDiscoveryResults(
 
 function cacheKey(
   input: ProductQuestionInput,
-  providers: { readonly social: boolean; readonly web: boolean },
+  providers: { readonly page: boolean; readonly social: boolean; readonly web: boolean },
 ): string {
   const digest = createHash('sha256')
     .update(
@@ -213,8 +299,16 @@ export async function searchPublicProductEvidence(
   dependencies: PublicEvidenceSearchDependencies,
   signal?: AbortSignal,
 ): Promise<EvidenceDiscoveryInput> {
-  const networkSearch = searchReusableNetwork(input, dependencies, signal);
+  const networkResult = await searchReusableNetwork(input, dependencies, signal);
+  if (networkResult.records.length > 0) {
+    return mergeReusableNetwork(reusableOnlyDiscovery(input), networkResult);
+  }
   const providers = {
+    page:
+      input.productUrl !== undefined &&
+      (dependencies.readKnownPage !== undefined ||
+        (dependencies.evidenceServiceUrl !== undefined &&
+          (dependencies.pageReaderToken?.trim().length ?? 0) > 0)),
     social:
       dependencies.searchSocial !== undefined ||
       (dependencies.scrapeCreatorsApiKey?.trim().length ?? 0) > 0,
@@ -226,7 +320,7 @@ export async function searchPublicProductEvidence(
   const key = cacheKey(input, providers);
   const cached = await readCachedDiscovery(dependencies.cache, key);
   if (cached !== null) {
-    return mergeReusableNetwork(cached, await networkSearch);
+    return mergeReusableNetwork(cached, networkResult);
   }
 
   const socialSearch =
@@ -247,21 +341,27 @@ export async function searchPublicProductEvidence(
         },
         searchSignal,
       ));
-  const providerResults = await Promise.all([
+  const pageSearch =
+    input.productUrl === undefined ? null : readSuppliedProductPage(input, dependencies, signal);
+  const [pageResult, socialResult, webResult] = await Promise.all([
+    pageSearch,
     socialSearch(input, signal),
     webSearch(input, signal),
   ]);
+  const providerResults = [...(pageResult === null ? [] : [pageResult]), socialResult, webResult];
   const result = mergeDiscoveryResults(input, providerResults);
-  const configuredResults = providerResults.filter((_, index) =>
-    index === 0 ? providers.social : providers.web,
-  );
+  const configuredResults = [
+    ...(pageResult !== null && providers.page ? [pageResult] : []),
+    ...(providers.social ? [socialResult] : []),
+    ...(providers.web ? [webResult] : []),
+  ];
   if (
     configuredResults.length > 0 &&
     configuredResults.every(({ status }) => status === 'complete')
   ) {
     await writeCachedDiscovery(dependencies.cache, key, result);
   }
-  return mergeReusableNetwork(result, await networkSearch);
+  return mergeReusableNetwork(result, networkResult);
 }
 
 export const publicEvidenceSearchRuntime = {

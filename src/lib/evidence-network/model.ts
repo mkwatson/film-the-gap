@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { createCaptureChallenge, type CaptureChallenge } from './capture-challenge';
-import { publicHttpUrlSchema } from './url-policy';
+import { canonicalizePublicDiscoveryUrl, publicHttpUrlSchema } from './url-policy';
 
 export const evidenceAnswerStatuses = [
   'insufficient',
@@ -776,15 +776,56 @@ function recordEvidenceDiscovery(
       reviewedAt: record.observation.reviewedAt,
     }),
   );
+  const existingSourcesByUrl = new Map(
+    evidenceCase.sources.flatMap((source) => {
+      const key = source.url === null ? null : canonicalizePublicDiscoveryUrl(source.url);
+      return key === null ? [] : [[key, source] as const];
+    }),
+  );
+  const existingSourceIdsWithObservations = new Set(
+    evidenceCase.observations.map(({ citation }) => citation.sourceId),
+  );
+  const matchedExistingSourceIds = new Set<string>();
+  const existingLeadObservations: EvidenceObservation[] = [];
   const knownUrls = new Set([
-    ...evidenceCase.sources.flatMap(({ url }) => (url === null ? [] : [url])),
-    ...reusableSources.flatMap(({ url }) => (url === null ? [] : [url])),
+    ...existingSourcesByUrl.keys(),
+    ...reusableSources.flatMap(({ url }) => {
+      const key = url === null ? null : canonicalizePublicDiscoveryUrl(url);
+      return key === null ? [] : [key];
+    }),
   ]);
-  const uniqueLeads = parsed.data.leads.filter(({ url }) => {
-    if (knownUrls.has(url)) {
+  const uniqueLeads = parsed.data.leads.filter((lead, index) => {
+    const key = canonicalizePublicDiscoveryUrl(lead.url);
+    if (key === null) {
       return false;
     }
-    knownUrls.add(url);
+    const existingSource = existingSourcesByUrl.get(key);
+    if (existingSource !== undefined) {
+      matchedExistingSourceIds.add(existingSource.id);
+      if (!existingSourceIdsWithObservations.has(existingSource.id)) {
+        existingSourceIdsWithObservations.add(existingSource.id);
+        existingLeadObservations.push({
+          id: `observation-${revision}-existing-${index + 1}`,
+          claim: evidenceCase.question.text,
+          result: 'inconclusive',
+          confidence: 'low',
+          text: lead.summary,
+          citation: {
+            sourceId: existingSource.id,
+            startSeconds: null,
+            endSeconds: null,
+            label: 'Discovery lead · not claim-reviewed',
+          },
+          reviewedBy: lead.creatorLabel,
+          reviewedAt: now,
+        });
+      }
+      return false;
+    }
+    if (knownUrls.has(key)) {
+      return false;
+    }
+    knownUrls.add(key);
     return true;
   });
   const sources: EvidenceSource[] = uniqueLeads.map((lead, index) => ({
@@ -825,13 +866,22 @@ function recordEvidenceDiscovery(
     query: parsed.data.query,
     searchedPlatforms: parsed.data.searchedPlatforms,
     warnings: parsed.data.warnings,
-    sourceIds: [...reusableSources, ...sources].map(({ id }) => id),
+    sourceIds: [
+      ...matchedExistingSourceIds,
+      ...reusableSources.map(({ id }) => id),
+      ...sources.map(({ id }) => id),
+    ],
     searchedAt: now,
   };
   const nextCaseWithoutAnswer: ProductEvidenceCase = {
     ...evidenceCase,
     sources: [...evidenceCase.sources, ...reusableSources, ...sources],
-    observations: [...evidenceCase.observations, ...reusableObservations, ...observations],
+    observations: [
+      ...evidenceCase.observations,
+      ...existingLeadObservations,
+      ...reusableObservations,
+      ...observations,
+    ],
     discovery,
   };
   const networkAnswer = deriveEvidenceAnswer(nextCaseWithoutAnswer, revision, now);
@@ -861,9 +911,9 @@ function recordEvidenceDiscovery(
             ? `Reused ${uniqueReusableRecords.length} rights-cleared, claim-reviewed recording${uniqueReusableRecords.length === 1 ? '' : 's'} from the evidence network.`
             : parsed.data.status === 'unavailable'
               ? 'The live public-source provider was unavailable; no result was treated as evidence.'
-              : sources.length === 0
+              : matchedExistingSourceIds.size + sources.length === 0
                 ? 'Searched available public sources but found no claim-ready evidence leads.'
-                : `Indexed ${sources.length} public discovery lead${sources.length === 1 ? '' : 's'} without treating them as proof.`,
+                : `Indexed ${matchedExistingSourceIds.size + sources.length} public discovery lead${matchedExistingSourceIds.size + sources.length === 1 ? '' : 's'} without treating them as proof.`,
           now,
         ),
       ],
@@ -873,9 +923,9 @@ function recordEvidenceDiscovery(
         ? `Reused ${uniqueReusableRecords.length} reviewed network recording${uniqueReusableRecords.length === 1 ? '' : 's'}. The answer is now ${networkAnswer.status}.`
         : parsed.data.status === 'unavailable'
           ? 'Live public-source search was unavailable. A filming mission can still fill the gap.'
-          : sources.length === 0
+          : matchedExistingSourceIds.size + sources.length === 0
             ? 'Public-source search finished without a usable lead. A filming mission can fill the gap.'
-            : `Indexed ${sources.length} public lead${sources.length === 1 ? '' : 's'}. None is treated as proof until reviewed.`,
+            : `Indexed ${matchedExistingSourceIds.size + sources.length} public lead${matchedExistingSourceIds.size + sources.length === 1 ? '' : 's'}. None is treated as proof until reviewed.`,
   };
 }
 

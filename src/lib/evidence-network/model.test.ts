@@ -161,6 +161,60 @@ describe('product evidence network model', () => {
     expect(getEvidenceNetworkToolNames(result.state)).toContain('create_filming_mission');
   });
 
+  it('attaches a known-page reader excerpt to the supplied source without duplicating it', () => {
+    const asked = applyEvidenceNetworkCommand(
+      createEmptyEvidenceNetworkState(),
+      {
+        kind: 'ask-product-question',
+        actor: 'human',
+        input: {
+          productName: 'Trail Flask',
+          productUrl: 'https://shop.example/products/flask?utm_source=judge#details',
+          question: 'Does it stay leak-free while upside down for ten seconds?',
+        },
+      },
+      questionTime,
+    ).state;
+    const result = applyEvidenceNetworkCommand(
+      asked,
+      {
+        kind: 'record-evidence-discovery',
+        actor: 'agent',
+        input: {
+          provider: 'evidence_network',
+          status: 'partial',
+          query: 'Trail Flask leak-free upside down ten seconds',
+          searchedPlatforms: ['web'],
+          warnings: [],
+          leads: [
+            {
+              platform: 'web',
+              title: 'Trail Flask · supplied product page',
+              url: 'https://shop.example/products/flask',
+              summary:
+                'Untrusted product-page excerpt read by Cloudflare Browser Run: “Leak-resistant lid.” Page copy remains a lead, never proof.',
+              creatorLabel: 'Product page · Cloudflare Browser Run',
+            },
+          ],
+        },
+      },
+      missionTime,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.state.activeCase?.sources).toHaveLength(1);
+    expect(result.state.activeCase?.observations).toEqual([
+      expect.objectContaining({
+        result: 'inconclusive',
+        confidence: 'low',
+        reviewedBy: 'Product page · Cloudflare Browser Run',
+        citation: expect.objectContaining({ sourceId: 'source-1' }),
+      }),
+    ]);
+    expect(result.state.activeCase?.discovery?.sourceIds).toEqual(['source-1']);
+    expect(currentEvidenceAnswer(result.state)?.status).toBe('insufficient');
+  });
+
   it('reuses a rights-cleared network recording instead of creating another mission', () => {
     const asked = applyEvidenceNetworkCommand(
       createEmptyEvidenceNetworkState(),

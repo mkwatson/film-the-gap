@@ -1308,6 +1308,10 @@ select:focus-visible {
   color: #e6b879;
 }
 
+.evidence-search-receipt .evidence-page-reader-receipt {
+  color: #9ed8bb;
+}
+
 .evidence-sources > ul,
 .evidence-tool-list,
 .evidence-privacy ul,

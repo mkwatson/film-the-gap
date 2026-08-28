@@ -4,12 +4,17 @@ import {
 } from '../../src/lib/evidence-network/remote-protocol';
 import { publicNetworkEvidenceRetentionDays } from '../../src/lib/evidence-network/model';
 import { deleteExpiredReusableEvidence, routeReusableEvidenceRequest } from './evidence-library';
+import {
+  deleteExpiredPageReaderUsage,
+  routeKnownPageReaderRequest,
+  type KnownPageReaderWorkerEnv,
+} from './known-page-reader';
 import { routeProductEvidenceRequest, type ProductEvidenceWorkerEnv } from './product-evidence';
 import { deleteExpiredPublicMissions, routePublicMissionRequest } from './public-mission-board';
 
 export { ProductEvidenceCaseObject } from './product-evidence';
 
-export interface EvidenceWorkerEnv extends ProductEvidenceWorkerEnv {
+export interface EvidenceWorkerEnv extends ProductEvidenceWorkerEnv, KnownPageReaderWorkerEnv {
   readonly CF_VERSION_METADATA: WorkerVersionMetadata;
 }
 
@@ -68,12 +73,20 @@ async function route(request: Request, env: EvidenceWorkerEnv): Promise<Response
         expiredEvidencePurge: 'daily',
         publicMissionBoard: env.EVIDENCE_LIBRARY !== undefined,
         publicMissionRetentionHours: 24,
+        productPageReader:
+          (env.BROWSER !== undefined || env.PAGE_READER_OUTBOUND !== undefined) &&
+          env.EVIDENCE_LIBRARY !== undefined &&
+          (env.PAGE_READER_SHARED_SECRET?.trim().length ?? 0) >= 24,
       },
       workerVersion: env.CF_VERSION_METADATA,
     });
   }
   if (!requestOriginAllowed(request, env)) {
     return jsonResponse({ error: 'origin_not_allowed' }, 403);
+  }
+  const knownPageResponse = await routeKnownPageReaderRequest(request, env);
+  if (knownPageResponse !== null) {
+    return knownPageResponse;
   }
   const publicMissionResponse = await routePublicMissionRequest(
     request,
@@ -114,13 +127,15 @@ export default {
       return;
     }
     const now = new Date(controller.scheduledTime).toISOString();
-    const [reusableEvidence, publicMissions] = await Promise.all([
+    const [reusableEvidence, publicMissions, pageReaderUsage] = await Promise.all([
       deleteExpiredReusableEvidence(env.EVIDENCE_LIBRARY, now),
       deleteExpiredPublicMissions(env.EVIDENCE_LIBRARY, now),
+      deleteExpiredPageReaderUsage(env.EVIDENCE_LIBRARY, now.slice(0, 10)),
     ]);
     console.log('Expired evidence network purge completed.', {
       reusableEvidence,
       publicMissions,
+      pageReaderUsage,
     });
   },
 } satisfies ExportedHandler<EvidenceWorkerEnv>;

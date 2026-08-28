@@ -9,9 +9,9 @@ Updated August 28, 2026 PT. This document records what the current product-evide
 | `pnpm peers check`            | Pass, zero peer issues                             | The exact pinned dependency graph is internally compatible.                                                                                                      |
 | Production dependency audit   | Pass, no known vulnerabilities                     | Every installed production dependency declares a recognized open-source license.                                                                                 |
 | `pnpm check`                  | Pass                                               | Prettier, zero-warning ESLint, strict TypeScript, all tests, Worker bundle, and production Next.js build.                                                        |
-| App tests                     | 24 files, 147 tests pass                           | Product state, dynamic tools, privacy, review, search, reconnect, failures, and release checks.                                                                  |
-| Worker tests                  | 5 files, 27 tests pass in Workerd                  | Durable Object, D1, role capabilities, live-search handoff, uploads, model proposal, reuse, expiry, and denial paths.                                            |
-| Worker dry run                | Wrangler 4.127.0; 1,121.54 KiB / 187.83 KiB gzip   | The standalone evidence Worker bundles with every declared production binding.                                                                                   |
+| App tests                     | 25 files, 155 tests pass                           | Product state, dynamic tools, privacy, review, search, page-reading boundaries, reconnect, failures, and release checks.                                         |
+| Worker tests                  | 6 files, 34 tests pass in Workerd                  | Durable Object, D1, Browser Run contract, role capabilities, uploads, model proposal, reuse, expiry, quota, and denial paths.                                    |
+| Worker dry run                | Wrangler 4.127.0; 1,135.37 KiB / 191.11 KiB gzip   | The standalone evidence Worker bundles with every declared production binding, including Browser Run.                                                            |
 | Next.js build                 | Next.js 16.3.3; six route entries                  | The shopper, board, recorder, search, and health surfaces build for production.                                                                                  |
 | Cold clone                    | Frozen install and full gate pass; clean afterward | The repository does not depend on ignored files, generated files, or local package state.                                                                        |
 | Native Chrome journey         | Eight steps pass                                   | The real app, native WebMCP registration, Durable Object, D1, WebSocket, and browser state complete the causal journey against deterministic paid-edge fixtures. |
@@ -30,20 +30,20 @@ The search-first candidate `d332a7858bbecd20fc56e5fa4befb0794f4dd6b2` removed th
 
 Chrome 151 completed the following sequence against the real local Next.js app, Cloudflare Worker runtime, Durable Object, D1 database, migrations, WebSocket updates, and WebMCP registrations:
 
-1. Open the default unresolved case with Search—not mission creation—as the initial native capability: 1,374 ms.
-2. Open an arbitrary product and search existing evidence through WebMCP: 581 ms.
-3. Create a bounded missing-proof mission and private phone handoff: 793 ms.
-4. Explicitly publish the minimized request, then inspect and claim it from a fresh board context: 570 ms.
-5. Scrub the contributor capability from the URL and recover it after reload: 344 ms.
-6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, choose reuse rights, and publish: 1,453 ms.
-7. Observe the first shopper's live answer change and exact timestamp citation: 766 ms.
-8. Open a fresh matching case and reuse the same reviewed source without another mission: 664 ms.
+1. Open the default unresolved case with Search—not mission creation—as the initial native capability: 1,262 ms.
+2. Open an arbitrary product, read bounded page context, and search existing evidence through WebMCP: 510 ms.
+3. Create a bounded missing-proof mission and private phone handoff: 634 ms.
+4. Explicitly publish the minimized request, then inspect and claim it from a fresh board context: 426 ms.
+5. Scrub the contributor capability from the URL and recover it after reload: 314 ms.
+6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, choose reuse rights, and publish: 1,198 ms.
+7. Observe the first shopper's live answer change and exact timestamp citation: 575 ms.
+8. Open a fresh matching case, reuse the same reviewed source without another mission, and skip redundant public-provider calls: 510 ms.
 
-The fixtures replace only Cloudflare Stream and the video-model response. Browser egress to their public hosts is blocked during this test. The generated clip deliberately omits the random mission phrase, so the system preserves the honest `contributor_attested` label instead of inventing mission-challenge verification.
+The fixtures replace only Cloudflare Stream, Cloudflare Browser Run, and the video-model response. The page fixture rejects requests unless the Worker supplies the exact same-origin pattern, blocked resource types, headers, timeouts, and cache boundary expected in production. Browser egress to the public paid-service hosts is blocked during this test. The generated clip deliberately omits the random mission phrase, so the system preserves the honest `contributor_attested` label instead of inventing mission-challenge verification.
 
 ## Ordinary-browser end-to-end receipt
 
-The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,626, 210, 702, 352, 355, 1,432, 543, and 766 ms respectively. The run proved that a person can open and search an arbitrary case, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, review and correct the video proposal, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission.
+The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,329, 158, 557, 287, 321, 1,185, 418, and 599 ms respectively. The run proved that a person can open and search an arbitrary case, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, review and correct the video proposal, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission or public-provider call.
 
 This is an independent product-surface receipt, not a substitute for the native WebMCP receipt: together they establish that Site Tools are load-bearing for agent collaboration while every human role still has a complete ordinary web path.
 
@@ -80,6 +80,9 @@ The live Vercel AI Gateway catalog was re-read through CLI 59.9.1 on August 28. 
 - [Chrome secure-tool guidance](https://developer.chrome.com/docs/ai/webmcp/secure-tools)
 - [Chrome WebMCP evaluation guidance](https://developer.chrome.com/docs/ai/webmcp/evals)
 - [Cloudflare Stream direct creator uploads](https://developers.cloudflare.com/stream/uploading-videos/direct-creator-uploads/)
+- [Cloudflare Browser Run Markdown Quick Action](https://developers.cloudflare.com/browser-run/quick-actions/markdown-endpoint/)
+- [Cloudflare Browser Run pricing](https://developers.cloudflare.com/browser-run/pricing/)
+- [Cloudflare Markdown for Agents and Content Signals](https://developers.cloudflare.com/fundamentals/reference/markdown-for-agents/)
 - [Cloudflare Durable Object WebSocket hibernation](https://developers.cloudflare.com/durable-objects/best-practices/websockets/)
 - [Cloudflare D1 migrations](https://developers.cloudflare.com/d1/reference/migrations/)
 - [Vercel AI SDK](https://ai-sdk.dev/docs/introduction)
@@ -87,6 +90,8 @@ The live Vercel AI Gateway catalog was re-read through CLI 59.9.1 on August 28. 
 - [Google Gemini video understanding](https://ai.google.dev/gemini-api/docs/video-understanding)
 
 The OpenAI Site Tools guide was re-read on August 28. It confirms that ChatGPT's judged path is the latest desktop app's built-in browser with Site Tools enabled and GPT-5.6 Sol or Terra; Luna, Enterprise/Edu workspaces, ordinary ChatGPT web, declarative form tools, and tools registered inside iframes are not substitutes. The candidate imperatively registers JavaScript tools from each top-level page, keeps their inputs narrow, returns verifiable state, and preserves the complete ordinary-browser interface. The separately linked OpenAI API MCP guide concerns remote MCP servers and is not the WebMCP implementation source.
+
+Cloudflare's current Browser Run binding, Markdown Quick Action, timeout, pricing, and Content Signal documentation was re-read on August 28. The candidate uses the current `quickAction('markdown', …)` Worker contract, requires the current compatibility date, sends no Browser API token, records `X-Browser-Ms-Used`, restricts navigation and subresources to the supplied origin, and refuses page text when the origin declares `search=no` or `ai-input=no`. This is an implemented fixture-tested boundary; one authenticated request through the real production binding remains a release gate.
 
 ## Read-only release-account audit
 
@@ -99,6 +104,7 @@ The worktree's ignored Vercel link still names the older project. The approved r
 Do not convert these into public claims until each is recorded against the frozen release:
 
 - The current candidate has not been deployed to its final public Vercel and Cloudflare origins.
+- The current candidate has not yet completed a real Cloudflare Browser Run read on the final Worker origin.
 - A physical phone has not yet completed this candidate's real Stream upload and real Gateway video-analysis path.
 - The current candidate has not yet completed the full flow in ChatGPT's current in-app Browser.
 - The public D1 index has not yet been seeded by a real rights-clean bottle mission. Until that real capture exists, the app deliberately offers no completed-mission replay or synthetic pass/fail button; deterministic paid-edge fixtures remain test-only.

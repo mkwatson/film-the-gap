@@ -61,6 +61,9 @@ export async function POST(request: Request): Promise<Response> {
       scrapeCreatorsApiKey: process.env.SCRAPECREATORS_API_KEY,
       gatewayApiKey: process.env.AI_GATEWAY_DISCOVERY_API_KEY,
       gatewayOidcAvailable: process.env.VERCEL === '1',
+      ...(process.env.EVIDENCE_PAGE_READER_TOKEN?.trim()
+        ? { pageReaderToken: process.env.EVIDENCE_PAGE_READER_TOKEN.trim() }
+        : {}),
       ...(process.env.NEXT_PUBLIC_EVIDENCE_ROOM_URL?.trim()
         ? { evidenceServiceUrl: process.env.NEXT_PUBLIC_EVIDENCE_ROOM_URL.trim() }
         : {}),

@@ -104,8 +104,10 @@ function discoveryPlatformForUrl(url: string): EvidenceDiscoveryPlatform {
 function discoveryProviderReceipt(
   provider: EvidenceDiscoveryProvider,
   platforms: readonly EvidenceDiscoveryPlatform[],
+  warnings: readonly string[],
   hasSuppliedProductPage: boolean,
   reusableSourceCount: number,
+  pageReaderUsed: boolean,
 ): string {
   if (provider === 'rights_clean_demo') {
     return 'Rights-clean demo fixture';
@@ -116,28 +118,25 @@ function discoveryProviderReceipt(
   if (provider === 'vercel_ai_gateway') {
     return 'Exa through Vercel AI Gateway';
   }
-  const searchedSocial = platforms.some((platform) => platform !== 'web');
-  const searchedWeb = platforms.includes('web');
+  const providers: string[] = [];
   if (reusableSourceCount > 0) {
-    if (searchedSocial && searchedWeb) {
-      return 'Cloudflare D1 + ScrapeCreators + Exa through Vercel AI Gateway';
-    }
-    if (searchedSocial) {
-      return 'Cloudflare D1 + ScrapeCreators social search';
-    }
-    if (searchedWeb) {
-      return 'Cloudflare D1 + Exa through Vercel AI Gateway';
-    }
+    providers.push('Cloudflare D1');
+  }
+  if (pageReaderUsed) {
+    providers.push('Cloudflare Browser Run');
+  }
+  if (platforms.some((platform) => platform !== 'web')) {
+    providers.push('ScrapeCreators');
+  }
+  const gatewayFailed = warnings.some((warning) => /gateway|broad web search/iu.test(warning));
+  if (platforms.includes('web') && !gatewayFailed) {
+    providers.push('Exa through Vercel AI Gateway');
+  }
+  if (providers.length === 1 && providers[0] === 'Cloudflare D1') {
     return 'Cloudflare D1 reusable evidence';
   }
-  if (searchedSocial && searchedWeb) {
-    return 'ScrapeCreators + Exa through Vercel AI Gateway';
-  }
-  if (searchedSocial) {
-    return 'ScrapeCreators social search';
-  }
-  if (searchedWeb) {
-    return 'Exa through Vercel AI Gateway';
+  if (providers.length > 0) {
+    return [...new Set(providers)].join(' + ');
   }
   return hasSuppliedProductPage ? 'Supplied product page retained' : 'No live provider completed';
 }
@@ -636,10 +635,13 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
   const hasSuppliedProductPage =
     evidenceCase?.product.suppliedUrl !== null && evidenceCase?.product.suppliedUrl !== undefined;
   const discoveryCandidateCount =
-    (evidenceCase?.discovery?.sourceIds.length ?? 0) + (hasSuppliedProductPage ? 1 : 0);
+    evidenceCase?.discovery?.sourceIds.length ?? (hasSuppliedProductPage ? 1 : 0);
   const reusableSourceCount = sources.filter(
     ({ reuseScope }) => reuseScope === 'public_network',
   ).length;
+  const pageReaderUsed = allObservations.some(
+    ({ reviewedBy }) => reviewedBy === 'Product page · Cloudflare Browser Run',
+  );
   async function copyAgentStarter(): Promise<void> {
     if (navigator.clipboard === undefined) {
       setCopyStatus('error');
@@ -903,8 +905,10 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                     {discoveryProviderReceipt(
                       evidenceCase.discovery.provider,
                       evidenceCase.discovery.searchedPlatforms,
+                      evidenceCase.discovery.warnings,
                       hasSuppliedProductPage,
                       reusableSourceCount,
+                      pageReaderUsed,
                     )}{' '}
                     · {discoveryCandidateCount} candidate source
                     {discoveryCandidateCount === 1 ? '' : 's'} retained · unreviewed public leads
@@ -915,6 +919,12 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                       {warning}
                     </small>
                   ))}
+                  {pageReaderUsed ? (
+                    <small className="evidence-page-reader-receipt">
+                      Cloudflare Browser Run read the supplied page as untrusted context; its copy
+                      still cannot change the answer.
+                    </small>
+                  ) : null}
                 </p>
               </div>
             )}
@@ -958,7 +968,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                               observation.citation.endSeconds,
                               observation.citation.label,
                             )}{' '}
-                            · {observation.confidence} confidence
+                            · {observation.confidence} confidence · {observation.reviewedBy}
                           </code>
                         </div>
                       ))}

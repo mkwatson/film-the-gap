@@ -74,6 +74,7 @@ const roomHealthSchema = z.strictObject({
     expiredEvidencePurge: z.literal('daily'),
     publicMissionBoard: z.literal(true),
     publicMissionRetentionHours: z.literal(24),
+    productPageReader: z.literal(true),
   }),
   workerVersion: workerVersionSchema,
 });
