@@ -9,7 +9,7 @@ Updated August 28, 2026 PT. This document records what the current product-evide
 | `pnpm peers check`            | Pass, zero peer issues                             | The exact pinned dependency graph is internally compatible.                                                                                                                   |
 | Production dependency audit   | Pass, no known vulnerabilities                     | Every installed production dependency declares a recognized open-source license.                                                                                              |
 | `pnpm check`                  | Pass                                               | Prettier, zero-warning ESLint, strict TypeScript, all tests, Worker bundle, and production Next.js build.                                                                     |
-| App tests                     | 28 files, 168 tests pass                           | Product state, strict page handoff, product-page tool replacement, privacy, review, search, page-reading boundaries, reconnect, failures, and release checks.                 |
+| App tests                     | 28 files, 173 tests pass                           | Product state, strict page handoff, product-page tool replacement, privacy, review, search, page-reading boundaries, reconnect, failures, and release checks.                 |
 | Worker tests                  | 6 files, 34 tests pass in Workerd                  | Durable Object, D1, Browser Run contract, role capabilities, uploads, model proposal, reuse, expiry, quota, and denial paths.                                                 |
 | Worker dry run                | Wrangler 4.127.0; 1,136.00 KiB / 191.32 KiB gzip   | The standalone evidence Worker bundles with every declared production binding, including Browser Run.                                                                         |
 | Next.js build                 | Next.js 16.3.3; eight route entries                | The product page, strict handoff, shopper, board, recorder, search, and health surfaces build for production.                                                                 |
@@ -17,7 +17,7 @@ Updated August 28, 2026 PT. This document records what the current product-evide
 | Native Chrome journey         | Eight steps pass                                   | The real app, native WebMCP registration, Durable Object, D1, WebSocket, and browser state complete the causal journey against deterministic paid-edge fixtures.              |
 | Ordinary-browser journey      | Eight steps pass with WebMCP disabled              | The same shopper, board, recorder, review, update, and reuse loop works through visible controls; the product is not an agent-only façade.                                    |
 | Product-page native bridge    | Before → navigation → after passes                 | Native page tools open the exact strict case; reviewed evidence changes the visible page and replaces the stale handoff tool with evidence inspection.                        |
-| Chrome Labs independent smoke | 9/9 calls across four cases                        | The exact current source-built WebMCP evaluator independently discovers and executes the generic tool frontier.                                                               |
+| Chrome Labs independent smoke | 13/13 calls across five cases                      | The exact source-built evaluator executes the generic lifecycle plus product-page claim → navigation → case inspection.                                                       |
 | Desktop/mobile visual check   | Pass at desktop and 390×844                        | The demo product's claim-only and reviewed-evidence states are legible with no horizontal overflow or framework error overlay; prior shopper/board/phone checks remain valid. |
 | Repository content scan       | Pass                                               | The tracked tree contains text and one authored SVG, no binary media; a reachable-history secret-pattern scan found only environment-variable lookups.                        |
 
@@ -35,26 +35,28 @@ The explicit-review candidate `f9a00d690b6604361c180f0b847981326b1491c2` removes
 
 The product-page bridge candidate `215f02e24a2a39811026c52e66cd041ce3393d1b` makes the owned product page a native participant in the evidence network. Before proof, its Site Tools inspect the authored claim boundary and navigate through a strict, privacy-bounded `/case` handoff. After a reviewed D1 record appears, the visible page gains the timestamped result and its stale handoff tool is replaced by reviewed-evidence inspection. On August 28, an exact fresh clone passed the frozen install, zero-issue peer check, all 201 tests, Worker dry run at 1,136.00 KiB / 191.32 KiB gzip, the eight-route build, and a clean post-build worktree. The complete native and ordinary-browser journeys passed afterward.
 
-The handoff release-gate candidate `431a26d9a326c50e091a2734e97afc42b7dc41ff` locks the dynamic `/case` route to the buyer security boundary, makes the public verifier request the exact versioned product-page handoff, and fails release when the question or required Stream-playback policy is absent. It also replaces an imprecise extra-evidence claim with an exact omitted-record count. An exact fresh clone passed the frozen install, zero-issue peer check, all 202 tests, the unchanged Worker dry run, the eight-route build, and a clean post-build worktree. This is the current locally frozen code candidate.
+The handoff release-gate candidate `431a26d9a326c50e091a2734e97afc42b7dc41ff` locks the dynamic `/case` route to the buyer security boundary, makes the public verifier request the exact versioned product-page handoff, and fails release when the question or required Stream-playback policy is absent. It also replaces an imprecise extra-evidence claim with an exact omitted-record count. An exact fresh clone passed the frozen install, zero-issue peer check, all 202 tests, the unchanged Worker dry run, the eight-route build, and a clean post-build worktree.
+
+The product-page evaluation candidate `81a405ca991ae27704c06b78f0a0927c6b0e23f5` adds mechanically checked before/reviewed tool snapshots and an independent cross-document product-page trajectory. Chrome Labs' unmodified evaluator exposed two overbroad receipts; both now report the exact fields actually carried. On August 28, an exact fresh clone passed the frozen install, zero-issue peer check, all 207 tests, Worker dry run at 1,136.00 KiB / 191.32 KiB gzip, the eight-route build, and a clean post-build worktree. This is the current locally frozen code candidate.
 
 ## Native end-to-end receipt
 
 Chrome 151 completed the following sequence against the real local Next.js app, Cloudflare Worker runtime, Durable Object, D1 database, migrations, WebSocket updates, and WebMCP registrations:
 
-1. Open the default unresolved case with Search—not mission creation—as the initial native capability: 2,253 ms.
-2. Open an arbitrary product, read bounded page context, and search existing evidence through WebMCP: 580 ms.
-3. Create a bounded missing-proof mission and private phone handoff: 554 ms.
-4. Explicitly publish the minimized request, then inspect and claim it from a fresh board context: 390 ms.
-5. Scrub the contributor capability from the URL and recover it after reload: 264 ms.
-6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, deliberately choose rights, explicitly confirm the reviewed submission, and publish: 1,311 ms.
-7. Observe the first shopper's live answer change and exact timestamp citation: 523 ms.
-8. Open a fresh matching case, reuse the same reviewed source without another mission, and skip redundant public-provider calls: 468 ms.
+1. Open the default unresolved case with Search—not mission creation—as the initial native capability: 1,283 ms.
+2. Open an arbitrary product, read bounded page context, and search existing evidence through WebMCP: 487 ms.
+3. Create a bounded missing-proof mission and private phone handoff: 609 ms.
+4. Explicitly publish the minimized request, then inspect and claim it from a fresh board context: 420 ms.
+5. Scrub the contributor capability from the URL and recover it after reload: 275 ms.
+6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, deliberately choose rights, explicitly confirm the reviewed submission, and publish: 1,345 ms.
+7. Observe the first shopper's live answer change and exact timestamp citation: 560 ms.
+8. Open a fresh matching case, reuse the same reviewed source without another mission, and skip redundant public-provider calls: 507 ms.
 
 The fixtures replace only Cloudflare Stream, Cloudflare Browser Run, and the video-model response. The page fixture rejects requests unless the Worker supplies the exact same-origin pattern, blocked resource types, headers, timeouts, and cache boundary expected in production. Browser egress to the public paid-service hosts is blocked during this test. The generated clip deliberately omits the random mission phrase, so the system preserves the honest `contributor_attested` label instead of inventing mission-challenge verification.
 
 ## Ordinary-browser end-to-end receipt
 
-The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,290, 133, 487, 280, 261, 1,273, 401, and 528 ms respectively. The run proved that a person can open and search an arbitrary case, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, deliberately assert rights and confirm review, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission or public-provider call.
+The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,348, 146, 536, 281, 285, 1,325, 433, and 595 ms respectively. The run proved that a person can open and search an arbitrary case, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, deliberately assert rights and confirm review, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission or public-provider call.
 
 A separate native run captured all seven major screens. The 1,280-pixel-wide contributor receipt was visually inspected after the trust changes: the neutral contributor identity, deliberate rights choice, correction controls, final attestation, and disabled publication boundary are clear and coherent without an error overlay.
 
@@ -72,7 +74,7 @@ The compiled Next.js production server also returned the exact question from the
 
 ## Independent WebMCP contract check
 
-The Chrome Labs [`webmcp-tools`](https://github.com/GoogleChromeLabs/webmcp-tools) repository was freshly cloned and built at commit [`d39eae4bd51e8c12736b8cae840bd98f190f3179`](https://github.com/GoogleChromeLabs/webmcp-tools/commit/d39eae4bd51e8c12736b8cae840bd98f190f3179), the latest `main` revision checked on August 27. Its source-built smoke runner passed 9/9 calls across four generic cases, including the five-call stateful hero:
+The Chrome Labs [`webmcp-tools`](https://github.com/GoogleChromeLabs/webmcp-tools) repository was freshly cloned and built at commit [`d39eae4bd51e8c12736b8cae840bd98f190f3179`](https://github.com/GoogleChromeLabs/webmcp-tools/commit/d39eae4bd51e8c12736b8cae840bd98f190f3179), still the latest `main` revision checked on August 28. Its unmodified source-built smoke runner passed 13/13 calls across five cases. The generic five-call hero remains:
 
 ```text
 ask_product_question
@@ -81,6 +83,16 @@ ask_product_question
 → create_phone_capture_link
 → publish_filming_mission
 ```
+
+The new three-call cross-document product trajectory also passed:
+
+```text
+inspect_product_claim
+→ open_product_evidence_case
+→ inspect_product_evidence on the newly loaded /case page
+```
+
+The first re-run correctly rejected a stale private-handoff eval that attempted mission creation before the now-required evidence search. The corpus was fixed to search first and then create only the private phone handoff; the product was not weakened to satisfy the test. The external run also exposed and prompted fixes for two imprecise receipts: a localhost handoff no longer claims it carried a public URL, and the case privacy receipt names the exact public fields actually present.
 
 Tool availability changes with page state. Ordinary inspection, board search, and mission-open outputs are regression-bounded to Chrome's current 1,500-character recommendation. Names, descriptions, schemas, read-only hints, untrusted-content hints, cancellation, and stale-state behavior are also tested.
 
