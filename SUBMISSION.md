@@ -200,7 +200,7 @@ The criteria are equally weighted. WebMCP Leverage is the first tie-breaker, so 
 
 ## Repository, rights, and release checklist
 
-- [ ] Mark chooses the project name.
+- [x] Mark chose the public project name **Film the Gap**.
 - [ ] Mark confirms entrant/team/representative and eligibility facts.
 - [x] MIT license exists at the repository root with Mark Watson as copyright holder.
 - [x] Public repository `main` contains the generic evidence candidate and GitHub visibly detects its MIT license.

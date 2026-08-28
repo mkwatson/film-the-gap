@@ -2,7 +2,7 @@
 
 Updated 2026-08-28 PT. The target cut is `2:58`: establish that ChatGPT can discover real new products through UCP without a store integration; show that a listing claim cannot prove the shopper's exact question; let WebMCP turn the gap into a public filming request; let a person record and review one real observation; then show the recommendation and original product page change because of that cited video.
 
-This packet does not authorize a deployment, paid Stream/Gateway use, external recording, or YouTube publication. **Film the Gap** remains a reversible local identity until Mark approves using it externally.
+The public app, repository, and free-tier Worker rehearsal are authorized and live as **Film the Gap**. Paid Stream/Gateway use remains inside [LAUNCH.md](LAUNCH.md)'s approved envelope, and a rights-clean public video may be uploaded only after the real take passes this packet. **Codex must not submit Devpost under any circumstances.**
 
 ## The one thing viewers must remember
 

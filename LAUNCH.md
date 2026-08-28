@@ -6,32 +6,26 @@ Updated 2026-08-28 PT. This is the shortest safe path from the locally frozen ca
 
 On August 28, 2026, Mark authorized the standalone Film the Gap deployment under this card's cost and safety envelope, authorized pushing the public repository, and authorized uploading a rights-clean demo video after it exists. **Codex must not submit Devpost under any circumstances.** Submission remains a later, manual Mark-only decision even if every technical gate passes.
 
-## What Mark must do
+## What Mark still must do
 
-1. Approve the external release and its honest cost envelope. The recommended setup is Workers Paid (`$5` monthly minimum if not already active), one `$5` Stream storage block, postpaid Stream delivery under a 60-token/day operational ceiling, and one non-renewing `$5` Vercel AI Gateway project budget containing the 30-day video key. Disable Vercel auto top-up and omit live ScrapeCreators from the first release. Cloudflare does not document a hard dollar cap for Paid Browser Run or Stream delivery, so those residual risks cannot be described as “no overages.”
-2. In a one-off Cloudflare dashboard session, confirm or enable Workers Paid, enable Stream, and buy only the minimum storage block. Confirm the otherwise-idle account has the full 10 included Browser Run hours available. Mark also creates the budgeted video Gateway key privately and pastes both secrets only into non-echoing prompts in his own SSH/dashboard session; no secret enters the agent transcript.
-3. After deployment, use an ordinary phone to record the owned unbranded bottle for the issued ten-second mission. Review the actual clip, choose rights and 30-day reuse deliberately, correct the model if needed, and publish only what the video supports.
-4. Run the final journey once in the latest ChatGPT desktop app and recruit one unfamiliar cold tester. Approve repository push, public YouTube upload, and Devpost submission separately after every receipt passes.
+1. In a one-off Cloudflare dashboard session, enable Workers Paid at its `$5` monthly minimum, enable Stream, and buy only one `$5` storage block. Confirm the otherwise-idle account has the full 10 included Browser Run hours available. Cloudflare does not document a hard dollar cap for Paid Browser Run or Stream delivery, so those residual risks cannot be described as “no overages”; the app's reviewed limits keep the expected demo exposure small.
+2. Create the dedicated video Gateway key privately with a `$5` quota, no refresh, no BYOK, and no auto top-up. Paste that key and the separate page-reader secret only into non-echoing SSH/dashboard prompts; no secret enters the agent transcript.
+3. After the final Worker redeploy, use an ordinary phone to record the owned unbranded bottle for the issued ten-second mission. Review the actual clip, choose rights and 30-day reuse deliberately, correct the model if needed, and publish only what the video supports.
+4. Run the final journey once in the latest ChatGPT desktop app and recruit one unfamiliar cold tester. Codex may upload the resulting rights-clean public video under the recorded authority, but **Devpost remains untouched until Mark decides otherwise**.
 
-Suggested authorization sentence:
+## What Codex drives after the private gates
 
-> I authorize the standalone Film the Gap release using the agreed Vercel team and otherwise-idle Cloudflare account: Workers Paid at its $5 monthly minimum if needed, one $5 Stream storage block, the documented postpaid Stream-delivery residual under the 60-token/day control, and the single non-renewing $5 Gateway project/key envelope described in LAUNCH.md. I understand Cloudflare does not expose a vendor-enforced hard cap for those Paid usage surfaces. No Vercel auto top-up, live social-search spend, public repository push, YouTube upload, or Devpost submission is authorized unless I separately approve it.
-
-## What Codex drives after that approval
-
-1. Re-run the read-only account audit and show the exact Vercel scope, Cloudflare account, balances, Browser Run headroom, and proposed resource names before mutation.
-2. Create only the new standalone Vercel project, D1 database, Worker, non-secret budget, environment variables, and staged firewall rule described in the runbook. Pause for Mark's private Gateway-key creation and non-echoing secret entry. Stop on any unexpected account, hostname, price, permission, or existing-resource collision.
-3. Deploy the exact clean commit, run the public release verifier, and preserve immutable Vercel/Worker/commit receipts without logging capabilities or secrets.
-4. Drive the complete live UCP discovery → exact product question → open filming request → phone contribution → reviewed recommendation change → upgraded product page flow in WebMCP Chrome, ordinary-browser fallback, and every browser surface this session can control.
-5. Hand Mark only the irreducible ChatGPT-desktop, physical-phone, cold-tester, YouTube, and Devpost actions, with exact prompts and pass/fail checks.
+1. Verify only the private secret names and the approved account state; stop on any unexpected price, permission, hostname, or resource collision.
+2. Redeploy the exact clean commit with the paid-plan CPU ceiling, run the public release verifier, and preserve immutable Vercel/Worker/commit receipts without logging capabilities or secrets.
+3. Drive the complete live UCP discovery → exact product question → open filming request → phone contribution → reviewed recommendation change → upgraded product page flow in WebMCP Chrome, ordinary-browser fallback, and every browser surface this session can control.
+4. Upload the rights-clean final cut only after it exists and passes the checklist. Hand Mark the irreducible ChatGPT-desktop, physical-phone, and cold-tester actions; never submit Devpost.
 
 ## Release order
 
 ```text
-local frozen candidate
-  → Mark approves account mutations and bounded cost
+exact-commit app + repo + free-tier Worker rehearsal (done)
   → Workers Paid + Stream dashboard enablement
-  → new Vercel project + D1 + Worker + Mark-private secrets
+  → Mark-private Gateway and page-reader secrets
   → target guard proves the new link, clean commit, playback origin, Worker, and D1 IDs
   → final Vercel deployment + WAF
   → automated public verifier, including exact UCP profile + live catalog query
@@ -45,4 +39,4 @@ local frozen candidate
 
 Stop before proceeding if the public hostname carries unrelated branding, either origin requires login, the Cloudflare account is not otherwise idle, any vendor shows an unapproved price or usage state, the Gateway budget can renew, a secret appears in output or a URL, the model cannot fetch the authorized MP4 before publication, unsigned raw Stream playback still works after network publication, the signed viewer fails logged out, the product page does not replace its stale Site Tool after publication, ChatGPT cannot discover the native tools, or a cold tester needs coaching to understand the loop.
 
-The current local candidate adds privacy-minimized Shopify Global Catalog/UCP discovery, exact current-variant selection, explicit recommendation impact, a production UCP profile/build guard, and a live catalog release probe to the previously frozen signed-playback foundation. Both complete nine-step browser journeys and the independent 16/16 WebMCP smoke pass. The final full gate and cold clone are repeated on the exact release commit before this card is executed; public services, a real phone recording, current ChatGPT, and cold-user comprehension remain deliberately unclaimed until then.
+The public app, repository, and free-tier Worker rehearsal now identify one exact commit on production origins. The full gate, anonymous cold clone, live UCP/Exa discovery, native public WebMCP pre-video path, open board, and no-login recorder handoff pass. The paid CPU declaration, encrypted secrets, real Browser Run, real Stream/Gateway phone recording, current ChatGPT in-app run, and cold-user comprehension remain deliberately unclaimed until they pass.
