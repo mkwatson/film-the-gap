@@ -11,7 +11,7 @@ Updated August 28, 2026 PT. This document records what the current product-evide
 | `pnpm check`                  | Pass                                               | Prettier, zero-warning ESLint, strict TypeScript, all tests, Worker bundle, and production Next.js build.                                                        |
 | App tests                     | 26 files, 159 tests pass                           | Product state, owned demo page, dynamic tools, privacy, review, search, page-reading boundaries, reconnect, failures, and release checks.                        |
 | Worker tests                  | 6 files, 34 tests pass in Workerd                  | Durable Object, D1, Browser Run contract, role capabilities, uploads, model proposal, reuse, expiry, quota, and denial paths.                                    |
-| Worker dry run                | Wrangler 4.127.0; 1,135.50 KiB / 191.15 KiB gzip   | The standalone evidence Worker bundles with every declared production binding, including Browser Run.                                                            |
+| Worker dry run                | Wrangler 4.127.0; 1,135.56 KiB / 191.16 KiB gzip   | The standalone evidence Worker bundles with every declared production binding, including Browser Run.                                                            |
 | Next.js build                 | Next.js 16.3.3; seven route entries                | The shopper, owned demo product, board, recorder, search, and health surfaces build for production.                                                              |
 | Cold clone                    | Frozen install and full gate pass; clean afterward | The repository does not depend on ignored files, generated files, or local package state.                                                                        |
 | Native Chrome journey         | Eight steps pass                                   | The real app, native WebMCP registration, Durable Object, D1, WebSocket, and browser state complete the causal journey against deterministic paid-edge fixtures. |
@@ -28,26 +28,30 @@ The search-first candidate `d332a7858bbecd20fc56e5fa4befb0794f4dd6b2` removed th
 
 The Browser Run candidate `f4d5671f088581ef99aa73ce7617291dc7cea903` added authenticated, same-origin, rights-aware supplied-page reading while preserving page copy as inconclusive; exact reviewed D1 evidence now short-circuits redundant public-provider calls. On August 28, an exact fresh clone passed the frozen install, peer check, all 189 tests, the Browser Run-bound Worker dry run, the six-route production build, and a clean post-build worktree.
 
-The rights-clean source-page candidate `a008341d96b61dbd38e77bb80d584d08ad278fec` added an owned, same-origin `/demo-product` page, automatically binds it to the default case on public HTTPS and after reset, preserves the live Browser Run receipt beside the authored claim, and makes the exact page security policy and Content Signal part of release verification. On August 28, an exact fresh clone passed the frozen install, peer check, all 193 app/Worker tests, the Browser Run-bound Worker dry run, the seven-route production build, and a clean post-build worktree. This is the current locally frozen code candidate; `f4d5671f088581ef99aa73ce7617291dc7cea903` remains the previous clean fallback.
+The rights-clean source-page candidate `a008341d96b61dbd38e77bb80d584d08ad278fec` added an owned, same-origin `/demo-product` page, automatically binds it to the default case on public HTTPS and after reset, preserves the live Browser Run receipt beside the authored claim, and makes the exact page security policy and Content Signal part of release verification. On August 28, an exact fresh clone passed the frozen install, peer check, all 193 app/Worker tests, the Browser Run-bound Worker dry run, the seven-route production build, and a clean post-build worktree. It remains the previous clean code fallback; `f4d5671f088581ef99aa73ce7617291dc7cea903` is the fallback before it.
+
+The explicit-review candidate `f9a00d690b6604361c180f0b847981326b1491c2` removes the contributor UI's implied “Product owner” identity and preselected rights claim. Publication now requires a deliberate rights selection plus confirmation that the contributor reviewed the exact clip and every field; the Worker independently requires the literal confirmation. On August 28, an exact fresh clone passed `pnpm install --frozen-lockfile`, a zero-issue peer check, all 193 tests, the Browser Run-bound Worker dry run at 1,135.56 KiB / 191.16 KiB gzip, the seven-route production build, and a clean post-build worktree. This is the current locally frozen code candidate.
 
 ## Native end-to-end receipt
 
 Chrome 151 completed the following sequence against the real local Next.js app, Cloudflare Worker runtime, Durable Object, D1 database, migrations, WebSocket updates, and WebMCP registrations:
 
-1. Open the default unresolved case with Search—not mission creation—as the initial native capability: 2,533 ms.
-2. Open an arbitrary product, read bounded page context, and search existing evidence through WebMCP: 922 ms.
-3. Create a bounded missing-proof mission and private phone handoff: 912 ms.
-4. Explicitly publish the minimized request, then inspect and claim it from a fresh board context: 623 ms.
-5. Scrub the contributor capability from the URL and recover it after reload: 413 ms.
-6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, choose reuse rights, and publish: 1,643 ms.
-7. Observe the first shopper's live answer change and exact timestamp citation: 863 ms.
-8. Open a fresh matching case, reuse the same reviewed source without another mission, and skip redundant public-provider calls: 767 ms.
+1. Open the default unresolved case with Search—not mission creation—as the initial native capability: 1,187 ms.
+2. Open an arbitrary product, read bounded page context, and search existing evidence through WebMCP: 396 ms.
+3. Create a bounded missing-proof mission and private phone handoff: 557 ms.
+4. Explicitly publish the minimized request, then inspect and claim it from a fresh board context: 379 ms.
+5. Scrub the contributor capability from the URL and recover it after reload: 257 ms.
+6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, deliberately choose rights, explicitly confirm the reviewed submission, and publish: 1,259 ms.
+7. Observe the first shopper's live answer change and exact timestamp citation: 536 ms.
+8. Open a fresh matching case, reuse the same reviewed source without another mission, and skip redundant public-provider calls: 484 ms.
 
 The fixtures replace only Cloudflare Stream, Cloudflare Browser Run, and the video-model response. The page fixture rejects requests unless the Worker supplies the exact same-origin pattern, blocked resource types, headers, timeouts, and cache boundary expected in production. Browser egress to the public paid-service hosts is blocked during this test. The generated clip deliberately omits the random mission phrase, so the system preserves the honest `contributor_attested` label instead of inventing mission-challenge verification.
 
 ## Ordinary-browser end-to-end receipt
 
-The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,609, 209, 783, 425, 388, 1,608, 636, and 901 ms respectively. The run proved that a person can open and search an arbitrary case, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, review and correct the video proposal, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission or public-provider call.
+The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,400, 153, 537, 514, 334, 1,573, 585, and 591 ms respectively. The run proved that a person can open and search an arbitrary case, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, deliberately assert rights and confirm review, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission or public-provider call.
+
+A separate native run captured all seven major screens. The 1,280-pixel-wide contributor receipt was visually inspected after the trust changes: the neutral contributor identity, deliberate rights choice, correction controls, final attestation, and disabled publication boundary are clear and coherent without an error overlay.
 
 This is an independent product-surface receipt, not a substitute for the native WebMCP receipt: together they establish that Site Tools are load-bearing for agent collaboration while every human role still has a complete ordinary web path.
 
