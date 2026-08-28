@@ -166,12 +166,9 @@ function acceptanceConfig(
   return {
     appUrl,
     roomOrigin,
-    merchantOrigin: roomOrigin,
     browserExecutable: environment.EVIDENCE_ACCEPTANCE_BROWSER?.trim() || defaultBrowserExecutable,
     commandTimeoutMs: timeoutValue,
     headed: environment.EVIDENCE_ACCEPTANCE_HEADED === '1',
-    authenticatedCrowd: false,
-    appCookieFile: null,
   };
 }
 

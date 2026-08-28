@@ -5,12 +5,9 @@ import { resolve } from 'node:path';
 export interface AcceptanceConfig {
   readonly appUrl: string;
   readonly roomOrigin: string;
-  readonly merchantOrigin: string;
   readonly browserExecutable: string;
   readonly commandTimeoutMs: number;
   readonly headed: boolean;
-  readonly authenticatedCrowd: boolean;
-  readonly appCookieFile: string | null;
 }
 
 export interface AcceptanceStep {
@@ -89,7 +86,6 @@ export function readAcceptanceConfig(
 ): AcceptanceConfig {
   const browserExecutable =
     environment.EVIDENCE_ACCEPTANCE_BROWSER?.trim() || defaultBrowserExecutable;
-  const rawAppCookieFile = environment.EVIDENCE_ACCEPTANCE_APP_COOKIE_FILE?.trim();
   return {
     appUrl: readOrigin(environment, 'EVIDENCE_ACCEPTANCE_APP_URL', {
       defaultValue: 'http://127.0.0.1:3000',
@@ -98,17 +94,9 @@ export function readAcceptanceConfig(
     roomOrigin: readOrigin(environment, 'EVIDENCE_ACCEPTANCE_ROOM_ORIGIN', {
       requireHttps: true,
     }),
-    merchantOrigin: readOrigin(environment, 'EVIDENCE_ACCEPTANCE_MERCHANT_ORIGIN', {
-      requireHttps: true,
-    }),
     browserExecutable,
     commandTimeoutMs: readTimeout(environment),
     headed: environment.EVIDENCE_ACCEPTANCE_HEADED === '1',
-    authenticatedCrowd: environment.EVIDENCE_ACCEPTANCE_AUTHENTICATED_CROWD === '1',
-    appCookieFile:
-      rawAppCookieFile === undefined || rawAppCookieFile.length === 0
-        ? null
-        : resolve(rawAppCookieFile),
   };
 }
 
@@ -162,9 +150,7 @@ export function findSingleNewTab(
 }
 
 export function containsPrivateMaterial(value: string): boolean {
-  return /\$\s*450\b|(?:maximum|budget|ceiling)[^\n]{0,24}\b450\b|token=[A-Za-z0-9_-]{12,}|\/cart\/c\/[A-Za-z0-9_-]{12,}|(?:_vercel_jwt|x-vercel-protection-bypass)=[^\s;]+/i.test(
-    value,
-  );
+  return /token=[A-Za-z0-9_-]{12,}|(?:_vercel_jwt|x-vercel-protection-bypass)=[^\s;]+/i.test(value);
 }
 
 export function isStringArray(value: unknown): value is readonly string[] {
@@ -195,13 +181,9 @@ export function webMcpFeatureArgument(
 }
 
 export function browserAllowedDomains(
-  config: Pick<AcceptanceConfig, 'appUrl' | 'roomOrigin' | 'merchantOrigin'>,
+  config: Pick<AcceptanceConfig, 'appUrl' | 'roomOrigin'>,
 ): readonly string[] {
-  const domains = new Set([
-    new URL(config.appUrl).hostname,
-    new URL(config.roomOrigin).hostname,
-    new URL(config.merchantOrigin).hostname,
-  ]);
+  const domains = new Set([new URL(config.appUrl).hostname, new URL(config.roomOrigin).hostname]);
   if (domains.has('localhost') || domains.has('127.0.0.1')) {
     domains.add('localhost');
     domains.add('127.0.0.1');
@@ -225,8 +207,6 @@ export class NativeBrowserDriver {
       throw new Error('The configured Chrome executable does not exist.');
     }
     const allowedDomains = browserAllowedDomains(this.config);
-    const initialUrl =
-      this.config.appCookieFile === null ? this.config.appUrl : this.config.merchantOrigin;
     this.execute(
       'open clean browser',
       [
@@ -238,28 +218,10 @@ export class NativeBrowserDriver {
         allowedDomains.join(','),
         ...(this.config.headed ? ['--headed'] : []),
         'open',
-        initialUrl,
+        this.config.appUrl,
       ],
       undefined,
     );
-    if (this.config.appCookieFile !== null) {
-      if (!existsSync(this.config.appCookieFile)) {
-        throw new Error('The configured app cookie file does not exist.');
-      }
-      this.execute(
-        'load protected app cookies',
-        [
-          'cookies',
-          'set',
-          '--curl',
-          this.config.appCookieFile,
-          '--domain',
-          new URL(this.config.appUrl).hostname,
-        ],
-        undefined,
-      );
-      this.execute('open protected app', ['open', this.config.appUrl], undefined);
-    }
   }
 
   close(): void {

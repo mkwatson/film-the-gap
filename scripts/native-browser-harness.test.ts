@@ -53,68 +53,30 @@ describe('native browser acceptance harness', () => {
     const config = readAcceptanceConfig({
       EVIDENCE_ACCEPTANCE_APP_URL: 'http://127.0.0.1:3000/',
       EVIDENCE_ACCEPTANCE_ROOM_ORIGIN: 'https://room.example/',
-      EVIDENCE_ACCEPTANCE_MERCHANT_ORIGIN: 'https://merchant.example',
       EVIDENCE_ACCEPTANCE_TIMEOUT_MS: '12000',
       EVIDENCE_ACCEPTANCE_HEADED: '1',
     });
 
     expect(config.appUrl).toBe('http://127.0.0.1:3000');
     expect(config.roomOrigin).toBe('https://room.example');
-    expect(config.merchantOrigin).toBe('https://merchant.example');
     expect(config.commandTimeoutMs).toBe(12_000);
     expect(config.headed).toBe(true);
-    expect(config.authenticatedCrowd).toBe(false);
-    expect(config.appCookieFile).toBeNull();
-  });
-
-  it('enables the authenticated crowd lane only by explicit opt-in', () => {
-    const base = {
-      EVIDENCE_ACCEPTANCE_ROOM_ORIGIN: 'https://room.example',
-      EVIDENCE_ACCEPTANCE_MERCHANT_ORIGIN: 'https://merchant.example',
-    } as const;
-
-    expect(readAcceptanceConfig(base).authenticatedCrowd).toBe(false);
-    expect(
-      readAcceptanceConfig({
-        ...base,
-        EVIDENCE_ACCEPTANCE_AUTHENTICATED_CROWD: '1',
-      }).authenticatedCrowd,
-    ).toBe(true);
-    expect(
-      readAcceptanceConfig({
-        ...base,
-        EVIDENCE_ACCEPTANCE_AUTHENTICATED_CROWD: 'true',
-      }).authenticatedCrowd,
-    ).toBe(false);
-  });
-
-  it('resolves an optional protected-app cookie file without reading its contents', () => {
-    const config = readAcceptanceConfig({
-      EVIDENCE_ACCEPTANCE_ROOM_ORIGIN: 'https://room.example',
-      EVIDENCE_ACCEPTANCE_MERCHANT_ORIGIN: 'https://merchant.example',
-      EVIDENCE_ACCEPTANCE_APP_COOKIE_FILE: 'tmp/protected-preview.cookies',
-    });
-
-    expect(config.appCookieFile).toMatch(/\/tmp\/protected-preview\.cookies$/);
   });
 
   it('rejects credentialed, path-bearing, or insecure service URLs', () => {
     expect(() =>
       readAcceptanceConfig({
         EVIDENCE_ACCEPTANCE_ROOM_ORIGIN: 'https://user:secret@room.example',
-        EVIDENCE_ACCEPTANCE_MERCHANT_ORIGIN: 'https://merchant.example',
       }),
     ).toThrow(/credential-free/i);
     expect(() =>
       readAcceptanceConfig({
         EVIDENCE_ACCEPTANCE_ROOM_ORIGIN: 'https://room.example/api',
-        EVIDENCE_ACCEPTANCE_MERCHANT_ORIGIN: 'https://merchant.example',
       }),
     ).toThrow(/credential-free/i);
     expect(() =>
       readAcceptanceConfig({
-        EVIDENCE_ACCEPTANCE_ROOM_ORIGIN: 'https://room.example',
-        EVIDENCE_ACCEPTANCE_MERCHANT_ORIGIN: 'http://merchant.example',
+        EVIDENCE_ACCEPTANCE_ROOM_ORIGIN: 'http://room.example',
       }),
     ).toThrow(/must use HTTPS/i);
   });
@@ -137,17 +99,15 @@ describe('native browser acceptance harness', () => {
     expect(
       browserAllowedDomains({
         appUrl: 'http://localhost:3000',
-        roomOrigin: 'http://localhost:8792',
-        merchantOrigin: 'http://127.0.0.1:8793',
+        roomOrigin: 'http://127.0.0.1:8792',
       }),
     ).toEqual(['localhost', '127.0.0.1']);
     expect(
       browserAllowedDomains({
         appUrl: 'https://app.example',
         roomOrigin: 'https://room.example',
-        merchantOrigin: 'https://merchant.example',
       }),
-    ).toEqual(['app.example', 'room.example', 'merchant.example']);
+    ).toEqual(['app.example', 'room.example']);
   });
 
   it('parses dynamic browser tab identifiers without depending on a fixed tab count', () => {
@@ -166,19 +126,17 @@ describe('native browser acceptance harness', () => {
     );
   });
 
-  it('detects private ceilings and bearer paths without flagging generic privacy copy', () => {
-    expect(containsPrivateMaterial('maximum price is $450')).toBe(true);
-    expect(containsPrivateMaterial('https://example.test/cart/c/privateCredential123')).toBe(true);
+  it('detects bearer material without flagging generic privacy copy', () => {
     expect(containsPrivateMaterial('https://example.test/?token=privateCredential123')).toBe(true);
     expect(containsPrivateMaterial('_vercel_jwt=privateCredential123')).toBe(true);
-    expect(containsPrivateMaterial('Maximum price stays private.')).toBe(false);
+    expect(containsPrivateMaterial('The shopper identity stays private.')).toBe(false);
   });
 
   it('suppresses private failure details and removes arbitrary URLs from reports', () => {
     expect(sanitizeAcceptanceFailure(new Error('Failed at https://example.test/path?q=1'))).toBe(
       'Failed at [origin suppressed]',
     );
-    expect(sanitizeAcceptanceFailure(new Error('Failed at /cart/c/privateCredential123'))).toBe(
+    expect(sanitizeAcceptanceFailure(new Error('Failed at ?token=privateCredential123'))).toBe(
       'Acceptance failed; private material was suppressed.',
     );
   });
