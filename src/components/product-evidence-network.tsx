@@ -19,6 +19,7 @@ import {
   type EvidenceDiscoveryPlatform,
   type EvidenceDiscoveryProvider,
   type ProductQuestionInput,
+  type ProductEvidenceCase,
 } from '@/lib/evidence-network/model';
 import {
   configuredEvidenceServiceUrl,
@@ -100,7 +101,7 @@ function discoveryPlatformForUrl(url: string): EvidenceDiscoveryPlatform {
 function discoveryProviderReceipt(
   provider: EvidenceDiscoveryProvider,
   platforms: readonly EvidenceDiscoveryPlatform[],
-  sourceCount: number,
+  hasSuppliedProductPage: boolean,
 ): string {
   if (provider === 'rights_clean_demo') {
     return 'Rights-clean demo fixture';
@@ -122,7 +123,21 @@ function discoveryProviderReceipt(
   if (searchedWeb) {
     return 'Exa through Vercel AI Gateway';
   }
-  return sourceCount > 0 ? 'Supplied page only' : 'No live provider completed';
+  return hasSuppliedProductPage ? 'Supplied product page retained' : 'No live provider completed';
+}
+
+function isRightsCleanBottleDemo(evidenceCase: ProductEvidenceCase | null | undefined): boolean {
+  return (
+    evidenceCase?.id === 'case-1' &&
+    evidenceCase?.product.name === 'Everyday insulated travel bottle' &&
+    evidenceCase.sources.some(
+      ({ id, title, rights, provenance }) =>
+        id === 'source-1' &&
+        title === 'Rights-cleared demo product page' &&
+        rights === 'owned' &&
+        provenance === 'demo_replay',
+    )
+  );
 }
 
 function remoteDiscoveryForState(state: EvidenceNetworkState): EvidenceDiscoveryInput | undefined {
@@ -178,9 +193,7 @@ function remoteRequestForState(state: EvidenceNetworkState): CreateRemoteEvidenc
     minimumSeconds: mission.minimumSeconds,
     continuousTakeRequired: mission.continuousTakeRequired,
   };
-  const isDemoFixture =
-    evidenceCase.product.name === 'Everyday insulated travel bottle' &&
-    evidenceCase.sources.some(({ id }) => id === 'source-1');
+  const isDemoFixture = isRightsCleanBottleDemo(evidenceCase);
   const discovery = remoteDiscoveryForState(state);
   return isDemoFixture
     ? { seed: 'travel_bottle', mission: missionInput }
@@ -450,9 +463,11 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
   const sources = evidenceCase?.sources ?? [];
   const allObservations = evidenceCase?.observations ?? [];
   const mission = evidenceCase?.mission ?? null;
-  const isDemoCase =
-    evidenceCase?.product.name === 'Everyday insulated travel bottle' &&
-    evidenceCase.sources.some(({ id }) => id === 'source-1');
+  const hasSuppliedProductPage =
+    evidenceCase?.product.suppliedUrl !== null && evidenceCase?.product.suppliedUrl !== undefined;
+  const discoveryCandidateCount =
+    (evidenceCase?.discovery?.sourceIds.length ?? 0) + (hasSuppliedProductPage ? 1 : 0);
+  const isDemoCase = isRightsCleanBottleDemo(evidenceCase);
 
   async function copyAgentStarter(): Promise<void> {
     if (navigator.clipboard === undefined) {
@@ -476,8 +491,6 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     setSearchPhase('idle');
     setSearchError(null);
     clearPhoneConnection();
-    setSearchPhase('idle');
-    setSearchError(null);
   }
 
   function submitQuestion(event: FormEvent<HTMLFormElement>): void {
@@ -496,7 +509,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
 
   function createMission(): void {
     const activeCase = stateRef.current.activeCase;
-    const isBottleDemo = activeCase?.product.name === 'Everyday insulated travel bottle';
+    const isBottleDemo = isRightsCleanBottleDemo(activeCase);
     void dispatch({
       kind: 'create-filming-mission',
       actor: 'human',
@@ -575,9 +588,9 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
             If the web cannot prove it, ask someone with the product to film it.
           </h1>
           <p className="evidence-hero-copy">
-            ChatGPT searches public product videos for a shopper’s exact question. If none proves
-            it, ChatGPT creates the smallest useful filming request; a person with the product
-            records it, and the answer changes with a timestamped citation.
+            ChatGPT searches product pages, public videos, and the open web for a shopper’s exact
+            question. If none proves it, ChatGPT creates the smallest useful filming request; a
+            person with the product records it, and the answer changes with a timestamped citation.
           </p>
         </div>
         <ol className="evidence-flow" aria-label="Complete product evidence loop">
@@ -712,18 +725,21 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                     {evidenceCase.discovery.status === 'unavailable'
                       ? 'Live public search unavailable'
                       : evidenceCase.discovery.status === 'partial'
-                        ? `${evidenceCase.discovery.searchedPlatforms.length} source channels completed; some unavailable`
-                        : `${evidenceCase.discovery.searchedPlatforms.length} public source channels searched`}
+                        ? evidenceCase.discovery.searchedPlatforms.length === 0 &&
+                          hasSuppliedProductPage
+                          ? 'Only the supplied product page is available'
+                          : `${evidenceCase.discovery.searchedPlatforms.length} source ${evidenceCase.discovery.searchedPlatforms.length === 1 ? 'channel' : 'channels'} searched; others unavailable`
+                        : `${evidenceCase.discovery.searchedPlatforms.length} public source ${evidenceCase.discovery.searchedPlatforms.length === 1 ? 'channel' : 'channels'} searched`}
                   </strong>
                   <small>
                     {discoveryProviderReceipt(
                       evidenceCase.discovery.provider,
                       evidenceCase.discovery.searchedPlatforms,
-                      evidenceCase.discovery.sourceIds.length,
+                      hasSuppliedProductPage,
                     )}{' '}
-                    · {evidenceCase.discovery.sourceIds.length} discovered source
-                    {evidenceCase.discovery.sourceIds.length === 1 ? '' : 's'} · public leads never
-                    count as proof
+                    · {discoveryCandidateCount} candidate source
+                    {discoveryCandidateCount === 1 ? '' : 's'} retained · public leads never count
+                    as proof
                   </small>
                   {evidenceCase.discovery.warnings.map((warning) => (
                     <small className="evidence-search-warning" key={warning}>

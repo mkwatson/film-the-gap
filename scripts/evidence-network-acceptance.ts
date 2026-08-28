@@ -294,6 +294,17 @@ async function run(): Promise<void> {
           (value) => isStringArray(value) && sameStringSet(value, initialTools),
           config.commandTimeoutMs,
         );
+        await waitForBrowserValue(
+          driver,
+          'truthful supplied-page receipt',
+          pageIncludesScript(
+            'Only the supplied product page is available',
+            '1 candidate source retained',
+            'public leads never count as proof',
+          ),
+          (value) => value === true,
+          config.commandTimeoutMs,
+        );
         const inspected = driver.eval(
           invokeToolScript(
             'inspect_product_evidence',

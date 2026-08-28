@@ -180,6 +180,58 @@ describe('ProductEvidenceNetwork', () => {
     expect(screen.queryByText('Replay a completed rights-clean mission')).toBeNull();
   });
 
+  it('does not reuse the bottle fixture for a new case that happens to share its name', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (): Promise<Response> =>
+        Response.json({
+          provider: 'evidence_network',
+          status: 'partial',
+          query: 'Everyday insulated travel bottle handle heat test',
+          searchedPlatforms: [],
+          warnings: ['Live public providers are not configured.'],
+          leads: [
+            {
+              platform: 'web',
+              title: 'Supplied travel bottle page',
+              url: 'https://shop.example/products/travel-bottle',
+              summary: 'Supplied page; not treated as proof.',
+              creatorLabel: 'Supplied page · shop.example',
+            },
+          ],
+        }),
+      ),
+    );
+    setModelContext(undefined);
+    render(<ProductEvidenceNetwork />);
+
+    fireEvent.change(screen.getByLabelText('Product'), {
+      target: { value: 'Everyday insulated travel bottle' },
+    });
+    fireEvent.change(screen.getByLabelText(/Public product URL/), {
+      target: { value: 'https://shop.example/products/travel-bottle' },
+    });
+    fireEvent.change(screen.getByLabelText('What do you need to know?'), {
+      target: { value: 'Does the handle stay cool after ten minutes with hot liquid?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Open new evidence case' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Search existing evidence' }));
+
+    expect(await screen.findByText('Only the supplied product page is available')).toBeTruthy();
+    expect(
+      screen.getByText(/Supplied product page retained · 1 candidate source retained/),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Create claim-specific filming mission' }));
+
+    expect(
+      await screen.findByText(/Record one continuous take that visibly answers:.*handle stay cool/),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText('Fill the bottle, close the lid, and hold it upside down over dry paper.'),
+    ).toBeNull();
+    expect(screen.queryByText('Replay a completed rights-clean mission')).toBeNull();
+  });
+
   it('shows the concrete social and broad-web discovery receipt without promoting leads to proof', async () => {
     vi.stubGlobal(
       'fetch',
