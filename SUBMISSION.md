@@ -163,7 +163,7 @@ The criteria are equally weighted. WebMCP Leverage is the first tie-breaker, so 
 - A separate native browser receipt begins on `/demo-product` with `inspect_product_claim` + `open_product_evidence_case`, executes the navigation tool into the strict prefilled route, then injects a schema-valid reviewed-index response and proves the live page and tool frontier change to `inspect_reviewed_product_evidence`. Its returned citation/provenance payload is 872 characters; a four-record worst-case test remains below 1,500 characters by returning the newest reviewed record and disclosing the additional-record count.
 - Chrome Labs' current source-built evaluator independently executes the live seven-call shopper trajectory—including inspect → exact-revision refine—and the cross-page product handoff: 15/15 calls pass across five cases.
 - A separate Chrome acceptance run starts with WebMCP explicitly disabled and completes the same arbitrary-product → search → human mission refinement → public mission → stranger claim → recorder → review → live answer change → fresh-case reuse loop through visible controls only. This proves the app remains a coherent ordinary website rather than an agent-only façade.
-- An exact cold clone of `8e0493e4c4b481aae63c90b591138d21516b04fa` passes its frozen install, strict TypeScript, formatting, linting, all 226 application/Workerd tests, Worker dry run, eight-route Next.js production build, and clean post-build worktree.
+- An exact cold clone of `208c0bfd2620bc63ff94cd12f76f80e51a6dd524` passes its frozen install, strict TypeScript, formatting, linting, all 232 application/Workerd tests, Worker dry run, eight-route Next.js production build, and clean post-build worktree.
 
 ### Must pass before equivalent public claims
 
