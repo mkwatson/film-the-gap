@@ -65,6 +65,8 @@ Challenge-critical direct dependencies are pinned rather than ranged. As of Augu
 
 TypeScript 7.0.2 and ESLint 10.9.1 were tested as an upgrade candidate. Next.js itself accepts them, but the current `@typescript-eslint` stack requires TypeScript below 6.1 and the current React/import/accessibility lint plugins require ESLint 9 or earlier. The release therefore pins TypeScript 5.9.3 and ESLint 9.39.5: the newest peer-valid cohesive matrix, with `pnpm peers check` clean.
 
+The live Vercel AI Gateway catalog was re-read through CLI 59.9.1 on August 28. It still lists `google/gemini-3.7-flash` and the `google/gemini-3.6-flash` fallback with video input and no-training routing, and lists `openai/gpt-5.4-nano` for the bounded Exa tool call. Catalog availability does not substitute for the final authenticated video/search requests.
+
 ## Current first-party references
 
 - [OpenAI WebMCP Challenge](https://openai.com/webmcp-challenge/)
