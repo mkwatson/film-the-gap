@@ -20,6 +20,8 @@ Updated August 28, 2026 PT. This document records what the current product-evide
 
 The exact browser-release candidate `3d1fa4491b9ef640a7e4f943a0c602e5640bf2a5` passed a fresh clone, frozen install, peer check, full quality gate, production builds, and clean post-build worktree on August 28.
 
+The later standalone-cleanup candidate `7611ec6f853cf93ae1967209239be1f08213ef62` removed the retired merchant, protected-preview, and synthetic-crowd harness paths. Both complete browser journeys and the same fresh-clone gate passed afterward; the product runtime did not change.
+
 ## Native end-to-end receipt
 
 Chrome 151 completed the following sequence against the real local Next.js app, Cloudflare Worker runtime, Durable Object, D1 database, migrations, WebSocket updates, and WebMCP registrations:

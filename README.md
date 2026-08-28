@@ -124,8 +124,8 @@ pnpm --dir room-worker dev:evidence-services
 # Shell 2: real room Worker + Durable Object, bound to that service
 pnpm --dir room-worker dev:evidence-acceptance
 
-# Shell 3: app
-NEXT_PUBLIC_EVIDENCE_ROOM_URL=http://localhost:8792 pnpm dev
+# Shell 3: app; the acceptance runner intentionally exercises both loopback aliases
+ALLOWED_DEV_ORIGINS=127.0.0.1 NEXT_PUBLIC_EVIDENCE_ROOM_URL=http://localhost:8792 pnpm dev
 
 # Shell 4: native Chrome 150+ with WebMCP
 pnpm acceptance:evidence-network

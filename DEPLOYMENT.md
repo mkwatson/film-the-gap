@@ -141,7 +141,7 @@ pnpm check
 pnpm --dir room-worker d1:migrate:evidence-acceptance
 pnpm --dir room-worker dev:evidence-services
 pnpm --dir room-worker dev:evidence-acceptance
-NEXT_PUBLIC_EVIDENCE_ROOM_URL=http://localhost:8792 pnpm dev
+ALLOWED_DEV_ORIGINS=127.0.0.1 NEXT_PUBLIC_EVIDENCE_ROOM_URL=http://localhost:8792 pnpm dev
 pnpm acceptance:evidence-network
 pnpm acceptance:evidence-network:fallback
 ```
