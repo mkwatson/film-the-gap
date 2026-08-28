@@ -136,7 +136,7 @@ describe('release target guard', () => {
     ).toThrow(/declare numeric cpu_ms/i);
   });
 
-  it('rejects credentialed, path-bearing, shared, or branded origins', () => {
+  it('rejects credentialed, path-bearing, or shared origins', () => {
     expect(() =>
       verifyReleaseTarget(guardInput({ appOrigin: 'https://user:pass@app.example' })),
     ).toThrow(/credential-free HTTPS origin/i);
@@ -151,9 +151,6 @@ describe('release target guard', () => {
         }),
       ),
     ).toThrow(/must be distinct/i);
-    expect(() =>
-      verifyReleaseTarget(guardInput({ appOrigin: 'https://vidably-demo.example' })),
-    ).toThrow(/unrelated Vidably branding/i);
     expect(() =>
       verifyReleaseTarget(
         guardInput({

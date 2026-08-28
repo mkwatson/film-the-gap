@@ -4,23 +4,23 @@ Updated August 28, 2026 PT. This document records what the current product-evide
 
 ## Current release matrix
 
-| Gate                          | Result                                             | What it proves                                                                                                                                                                   |
-| ----------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm peers check`            | Pass, zero peer issues                             | The exact pinned dependency graph is internally compatible.                                                                                                                      |
-| Production dependency audit   | Pass, no known vulnerabilities                     | Every installed production dependency declares a recognized open-source license.                                                                                                 |
-| `pnpm check`                  | Pass                                               | Prettier, zero-warning ESLint, strict TypeScript, all tests, Worker bundle, and production Next.js build.                                                                        |
-| App tests                     | 29 files, 193 tests pass                           | Product state, revision-safe mission refinement, strict handoff, dynamic tools, privacy, review, search, reconnect, failures, and release checks.                                |
-| Worker tests                  | 6 files, 39 tests pass in Workerd                  | Durable Object, D1, Browser Run, signed Stream playback, role capabilities, uploads, model proposal, reuse, expiry, quota, compensation, and denial paths.                       |
-| Worker dry run                | Wrangler 4.127.0; 1,155.67 KiB / 195.85 KiB gzip   | The standalone evidence Worker bundles with every declared production binding, including Browser Run and Stream.                                                                 |
-| Next.js build                 | Next.js 16.3.3; eight route entries                | The product page, strict handoff, shopper, board, recorder, search, and health surfaces build for production.                                                                    |
-| Cold clone                    | Frozen install and full gate pass; clean afterward | The repository does not depend on ignored files, generated files, or local package state.                                                                                        |
-| Native Chrome journey         | Eight steps pass                                   | The real app, native WebMCP registration, inspected mission refinement, Durable Object, D1, WebSocket, and browser state complete the causal journey against paid-edge fixtures. |
-| Ordinary-browser journey      | Eight steps pass with WebMCP disabled              | The same search, human refinement, board, recorder, review, update, and reuse loop works through visible controls; the product is not an agent-only façade.                      |
-| Product-page native bridge    | Before → navigation → after passes                 | Native page tools open the exact strict case; reviewed evidence changes the visible page and replaces the stale handoff tool with evidence inspection.                           |
-| Chrome Labs independent smoke | 15/15 calls across five cases                      | The exact source-built evaluator executes create → inspect → exact-revision refine → handoff → publish plus product-page claim → navigation → case inspection.                   |
-| Release target guard          | Current target rejected as intended                | The clean candidate cannot mutate external services while its ignored Vercel link names the retired project; placeholder D1 IDs are independently rejected.                      |
-| Desktop/mobile visual check   | Pass at desktop and 390×844                        | Claim-only, reviewed-evidence, pre-handoff mission, and signed-playback states are legible with no overflow or framework overlay; prior shopper/board/phone checks remain valid. |
-| Repository content scan       | Pass                                               | The tracked tree contains text and one authored SVG, no binary media; a reachable-history secret-pattern scan found only environment-variable lookups.                           |
+| Gate                          | Result                                               | What it proves                                                                                                                                                                               |
+| ----------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm peers check`            | Pass, zero peer issues                               | The exact pinned dependency graph is internally compatible.                                                                                                                                  |
+| Production dependency audit   | Pass, no known vulnerabilities; licenses inventoried | The production graph has no advisory reported by pnpm and every installed production dependency declares a license.                                                                          |
+| `pnpm check`                  | Pass                                                 | Prettier, zero-warning ESLint, strict TypeScript, all tests, Worker bundle, and production Next.js build.                                                                                    |
+| App tests                     | 38 files, 239 tests pass                             | UCP negotiation and discovery, product state, recommendation impact, mission refinement, strict handoff, dynamic tools, privacy, review, search, reconnect, failures, and release checks.    |
+| Worker tests                  | 6 files, 39 tests pass in Workerd                    | Durable Object, D1, Browser Run, signed Stream playback, role capabilities, uploads, model proposal, reuse, expiry, quota, compensation, and denial paths.                                   |
+| Worker dry run                | Wrangler 4.127.0; 1,155.67 KiB / 195.85 KiB gzip     | The standalone evidence Worker bundles with every declared production binding, including Browser Run and Stream.                                                                             |
+| Next.js build                 | Next.js 16.3.3; ten route entries                    | UCP profile/search, product page, strict handoff, shopper, board, recorder, evidence search, and health surfaces build for production.                                                       |
+| Cold clone                    | Frozen install and full gate pass; clean afterward   | The repository does not depend on ignored files, generated files, or local package state.                                                                                                    |
+| Native Chrome journey         | Nine stages pass                                     | Native WebMCP discovers a real UCP product, rejects stale selection, then completes the Durable Object, phone, review, recommendation-change, and reuse loop against paid-edge fixtures.     |
+| Ordinary-browser journey      | Nine stages pass with WebMCP disabled                | The same UCP discovery, case, mission, board, recorder, review, changed recommendation, and reuse loop works through visible controls; the product is not an agent-only façade.              |
+| Product-page native bridge    | Before → navigation → after passes                   | Native page tools open the exact strict case; reviewed evidence changes the visible page and replaces the stale handoff tool with evidence inspection.                                       |
+| Chrome Labs independent smoke | 16/16 calls across six cases                         | The exact source-built evaluator executes live UCP discovery plus create → inspect → exact-revision refine → handoff → publish and the product-page claim → navigation → case trajectory.    |
+| Release target guard          | Current target rejected as intended                  | The clean candidate cannot mutate external services while its ignored Vercel link names the retired project; placeholder D1 IDs are independently rejected.                                  |
+| Desktop/mobile visual check   | Pass; zero Axe violations at 390×844                 | The UCP discovery, blocked recommendation, claim-only, reviewed-evidence, pre-handoff mission, and signed-playback states are legible with no overflow, console error, or framework overlay. |
+| Repository content scan       | Pass                                                 | The tracked tree contains text and one authored SVG, no binary media; a reachable-history secret-pattern scan found only environment-variable lookups.                                       |
 
 The exact browser-release candidate `3d1fa4491b9ef640a7e4f943a0c602e5640bf2a5` passed a fresh clone, frozen install, peer check, full quality gate, production builds, and clean post-build worktree on August 28.
 
@@ -50,26 +50,29 @@ The upload-rights hardening candidate `1533454da3843ae5392c083718f6b4d07bdb3e84`
 
 The revision-safe mission candidate `8e0493e4c4b481aae63c90b591138d21516b04fa` lets ChatGPT and ordinary-browser shoppers inspect and tighten an open filming mission before contributor handoff. Refinement replaces the complete recording recipe only against the exact inspected case revision, preserves the fresh-capture challenge, and becomes unavailable once a phone case exists. A reference captured before handoff also fails closed afterward, so the target cannot silently change beneath a contributor. The current Chrome Labs source-built evaluator passed the seven-call live hero, including inspect → refine, and the product-page trajectory passed unchanged: 15/15 calls across five cases. Both complete eight-step browser journeys passed, the refined state was visually inspected, and an exact cold clone of this commit passed the frozen install, all 226 tests, Worker dry run at 1,141.54 KiB / 192.67 KiB gzip, the eight-route build, and a clean post-build worktree. This remains the immediate pre-signed-playback fallback.
 
-The signed-playback candidate `208c0bfd2620bc63ff94cd12f76f80e51a6dd524` makes every network-reusable Stream recording inaccessible through unsigned playback before its D1 publication commits. Reusable citations now point to a stable, no-login Worker viewer that checks the fresh D1 record, atomically enforces a 60-token daily ceiling, issues a short-lived signed token, starts at the reviewed citation, avoids autoplay, escapes reviewed text, and emits a strict no-store browser boundary. If D1 publication fails after the Stream privacy change, the Worker restores the pre-publication policy and leaves the mission open. The release guard also locks the signed-viewer origin to the Worker and preserves a 100 ms CPU ceiling. On August 28, both complete eight-step journeys passed with signed citations, the current Chrome Labs evaluator passed 15/15 calls, and desktop plus 390×844 render checks found the citation visible with no overflow or blocking overlay. An exact cold clone passed the frozen install, zero-issue peer check, production audit, all 232 tests, Worker dry run at 1,155.67 KiB / 195.85 KiB gzip, the eight-route build, and a clean post-build worktree. This is the current locally frozen code candidate.
+The signed-playback candidate `208c0bfd2620bc63ff94cd12f76f80e51a6dd524` makes every network-reusable Stream recording inaccessible through unsigned playback before its D1 publication commits. Reusable citations now point to a stable, no-login Worker viewer that checks the fresh D1 record, atomically enforces a 60-token daily ceiling, issues a short-lived signed token, starts at the reviewed citation, avoids autoplay, escapes reviewed text, and emits a strict no-store browser boundary. If D1 publication fails after the Stream privacy change, the Worker restores the pre-publication policy and leaves the mission open. The release guard also locks the signed-viewer origin to the Worker and preserves a 100 ms CPU ceiling. On August 28, both complete eight-step journeys passed with signed citations, the current Chrome Labs evaluator passed 15/15 calls, and desktop plus 390×844 render checks found the citation visible with no overflow or blocking overlay. An exact cold clone passed the frozen install, zero-issue peer check, production audit, all 232 tests, Worker dry run at 1,155.67 KiB / 195.85 KiB gzip, the eight-route build, and a clean post-build worktree. This is the last fully frozen fallback before the integrated UCP/recommendation release candidate.
+
+The integrated UCP/recommendation candidate makes permissionless real-product discovery the first native capability. Shopify Global Catalog supplies current products and exact variants over UCP while its text remains explicitly unverified; the app-owned profile and a live compatible search are both release-verified. The selected product opens a privacy-minimized evidence question, reviewed video changes a question-scoped recommendation from blocked to eligible, excluded, or caveated, and stale catalog results cannot open a case. Both nine-stage browser journeys, 16/16 independent Chrome Labs calls, all 278 tests, the ten-route production build, and the responsive zero-violation accessibility check passed on August 28.
 
 ## Native end-to-end receipt
 
 Chrome 151 completed the following sequence against the real local Next.js app, Cloudflare Worker runtime, Durable Object, D1 database, migrations, WebSocket updates, and WebMCP registrations:
 
-1. Open the default unresolved case with Search—not mission creation—as the initial native capability: 1,438 ms.
-2. Open an arbitrary product, read bounded page context, and search existing evidence through WebMCP: 571 ms.
-3. Create a bounded missing-proof mission, inspect and refine its exact revision, create the locked phone handoff, and explicitly publish the minimized request: 825 ms.
-4. Inspect and claim the request from a fresh board context with no customer list: 421 ms.
-5. Scrub the contributor capability from the URL and recover it after reload: 291 ms.
-6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, deliberately choose rights, explicitly confirm the reviewed submission, and publish: 1,485 ms.
-7. Observe the first shopper's live answer change and exact timestamp citation: 560 ms.
-8. Open a fresh matching case, reuse the same reviewed source through its stable signed viewer without another mission, and skip redundant public-provider calls: 499 ms.
+1. Search Shopify Global Catalog through native WebMCP/UCP using only a generic query and country, choose an exact current variant, reject a stale variant, and keep its inferred claim out of evidence: 4,664 ms.
+2. Open the selected product's generic evidence case with its question-scoped recommendation blocked: 171 ms.
+3. Open an arbitrary product, read bounded page context, and search existing evidence through WebMCP: 655 ms.
+4. Create a bounded missing-proof mission, inspect and refine its exact revision, create the locked phone handoff, and explicitly publish the minimized request: 1,085 ms.
+5. Inspect and claim the request from a fresh board context with no customer list: 568 ms.
+6. Scrub the contributor capability from the URL and recover it after reload: 354 ms.
+7. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, deliberately choose rights, explicitly confirm the reviewed submission, and publish: 1,929 ms.
+8. Observe the first shopper's live answer change, blocked → excluded recommendation impact, and exact timestamp citation: 911 ms.
+9. Open a fresh matching case, reuse the same reviewed source through its stable signed viewer without another mission, and skip redundant public-provider calls: 605 ms.
 
 The fixtures replace only Cloudflare Stream, Cloudflare Browser Run, and the video-model response. The page fixture rejects requests unless the Worker supplies the exact same-origin pattern, blocked resource types, headers, timeouts, and cache boundary expected in production. Browser egress to the public paid-service hosts is blocked during this test. The generated clip deliberately omits the random mission phrase, so the system preserves the honest `contributor_attested` label instead of inventing mission-challenge verification.
 
 ## Ordinary-browser end-to-end receipt
 
-The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,278, 147, 761, 275, 281, 1,463, 403, and 584 ms respectively. The run proved that a person can open and search an arbitrary case, refine the mission through the human editor, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, deliberately assert rights and confirm review, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission or public-provider call.
+The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same nine stages in 2,798, 580, 205, 991, 325, 349, 1,882, 574, and 889 ms respectively. The run proved that a person can discover and select a real UCP product without Site Tools, open and search an arbitrary case, refine the mission through the human editor, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, deliberately assert rights and confirm review, receive the answer and recommendation change, and reuse the reviewed citation in a fresh case without a redundant mission or public-provider call.
 
 A separate run captured all major screens in both modes. The 1,280-pixel-wide pre-handoff receipt was visually inspected after refinement: the exact 11-second recipe, acceptance boundary, preserved phrase, four-tool frontier, and phone-link boundary are coherent without an error overlay. The earlier contributor receipt still shows the neutral contributor identity, deliberate rights choice, correction controls, final attestation, and disabled publication boundary. The exact signed-viewer renderer also passed 1,280×720 and 390×844 visual checks with its citation visible, responsive player, titled iframe, no horizontal overflow, and no blocking overlay.
 
@@ -87,7 +90,13 @@ The compiled Next.js production server also returned the exact question from the
 
 ## Independent WebMCP contract check
 
-The Chrome Labs [`webmcp-tools`](https://github.com/GoogleChromeLabs/webmcp-tools) repository was freshly cloned and built at commit [`d39eae4bd51e8c12736b8cae840bd98f190f3179`](https://github.com/GoogleChromeLabs/webmcp-tools/commit/d39eae4bd51e8c12736b8cae840bd98f190f3179), still the latest `main` revision checked on August 28. Its unmodified source-built smoke runner passed 15/15 calls across five cases. The generic seven-call hero is now:
+The Chrome Labs [`webmcp-tools`](https://github.com/GoogleChromeLabs/webmcp-tools) repository was freshly cloned and built at commit [`d39eae4bd51e8c12736b8cae840bd98f190f3179`](https://github.com/GoogleChromeLabs/webmcp-tools/commit/d39eae4bd51e8c12736b8cae840bd98f190f3179), still the latest `main` revision checked on August 28. Its unmodified source-built smoke runner passed 16/16 calls across six cases. One additional live canary executed:
+
+```text
+search_product_catalog through the real Shopify Global Catalog UCP endpoint
+```
+
+It returned a valid UCP `2026-04-08` result while keeping private budget/history outside the tool arguments. The generic seven-call hero remains:
 
 ```text
 ask_product_question
@@ -111,6 +120,8 @@ The current hero re-polls the live dynamic registry after each call, reads revis
 
 Tool availability changes with page state. Ordinary inspection, board search, and mission-open outputs are regression-bounded to Chrome's current 1,500-character recommendation. Names, descriptions, schemas, read-only hints, untrusted-content hints, cancellation, and stale-state behavior are also tested.
 
+Separate static frontiers freeze the catalog before and after search. They require only a generic query/country initially, expose exact-variant selection only after a current result, reject stale selection and unexpected private fields, keep tool output below 1,500 characters, and verify that an inferred catalog claim never appears in the opened evidence case.
+
 ## Exact dependency decision
 
 Challenge-critical direct dependencies are pinned rather than ranged. As of August 27, all product-critical packages are current: pnpm 11.24.0, Next.js 16.3.3, React 19.2.8, AI SDK 7.0.83, Wrangler 4.127.0, Vitest 4.1.11, Zod 4.4.3, and `webmcp-types` 0.1.5.
@@ -118,6 +129,8 @@ Challenge-critical direct dependencies are pinned rather than ranged. As of Augu
 TypeScript 7.0.2 and ESLint 10.9.1 were tested as an upgrade candidate. Next.js itself accepts them, but the current `@typescript-eslint` stack requires TypeScript below 6.1 and the current React/import/accessibility lint plugins require ESLint 9 or earlier. The release therefore pins TypeScript 5.9.3 and ESLint 9.39.5: the newest peer-valid cohesive matrix, with `pnpm peers check` clean.
 
 The live Vercel AI Gateway catalog was re-read through CLI 59.9.1 on August 28. It still lists `google/gemini-3.7-flash` and the `google/gemini-3.6-flash` fallback with video input and no-training routing, and lists `openai/gpt-5.4-nano` for the bounded Exa tool call. Catalog availability does not substitute for the final authenticated video/search requests.
+
+UCP's latest release is `2026-08-25`. Shopify Global Catalog's live endpoint and the official JavaScript SDK's current `0.4.x` line negotiate `2026-04-08`, so the candidate deliberately implements the newest mutually supported version. A live read-only search on August 28 returned real multi-merchant products with stable Shopify product/variant GIDs. Inferred merchandising fields were retained only as `unverified_catalog_context`. The production release verifier now requires the exact app-owned UCP profile and a live nonempty compatible search.
 
 ## Current first-party references
 
@@ -130,6 +143,9 @@ The live Vercel AI Gateway catalog was re-read through CLI 59.9.1 on August 28. 
 - [Chrome WebMCP imperative API](https://developer.chrome.com/docs/ai/webmcp/imperative-api)
 - [Chrome secure-tool guidance](https://developer.chrome.com/docs/ai/webmcp/secure-tools)
 - [Chrome WebMCP evaluation guidance](https://developer.chrome.com/docs/ai/webmcp/evals)
+- [Universal Commerce Protocol](https://ucp.dev/)
+- [UCP v2026-08-25 release](https://github.com/Universal-Commerce-Protocol/ucp/releases/tag/v2026-08-25)
+- [Shopify Global Catalog over UCP/MCP](https://shopify.dev/docs/agents/catalog/global-catalog)
 - [Cloudflare Stream direct creator uploads](https://developers.cloudflare.com/stream/uploading-videos/direct-creator-uploads/)
 - [Cloudflare Browser Run Markdown Quick Action](https://developers.cloudflare.com/browser-run/quick-actions/markdown-endpoint/)
 - [Cloudflare Browser Run pricing](https://developers.cloudflare.com/browser-run/pricing/)

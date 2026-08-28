@@ -13,6 +13,10 @@ import {
   maximumUploadsPerEvidenceCase,
   remoteEvidenceProtocolVersion,
 } from '../src/lib/evidence-network/remote-protocol.ts';
+import {
+  filmTheGapUcpPlatformProfile,
+  shopifyCatalogProtocolVersion,
+} from '../src/lib/evidence-network/ucp-catalog.ts';
 import { buildAppSecurityHeaders } from '../src/lib/security-headers.ts';
 import {
   readReleaseConfig,
@@ -76,6 +80,9 @@ function appPage(marker: string, options: AppPageOptions): Response {
 }
 
 interface ReleaseFetchOptions {
+  readonly catalogAvailable?: boolean;
+  readonly catalogHasProducts?: boolean;
+  readonly catalogProtocolVersion?: string;
   readonly workerTag?: string;
   readonly publicEvidenceOrigin?: string;
   readonly contributorCameraAllowed?: boolean;
@@ -85,6 +92,7 @@ interface ReleaseFetchOptions {
   readonly reusableIndexAvailable?: boolean;
   readonly demoProductContentSignal?: string;
   readonly productCaseStreamPlaybackAllowed?: boolean;
+  readonly ucpProfile?: unknown;
 }
 
 function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
@@ -100,6 +108,45 @@ function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
         commit,
         evidenceRoomOrigin: config.roomOrigin,
         evidenceRoomConfigured: true,
+      });
+    }
+    if (url.href === `${config.appOrigin}/ucp/agent-profile`) {
+      return json(options.ucpProfile ?? filmTheGapUcpPlatformProfile, 200, {
+        'Cache-Control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
+        'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'",
+        'X-Content-Type-Options': 'nosniff',
+      });
+    }
+    if (url.href === `${config.appOrigin}/api/catalog/search` && method === 'POST') {
+      const products =
+        options.catalogHasProducts === false
+          ? []
+          : [
+              {
+                productId: 'gid://shopify/Product/123',
+                variantId: 'gid://shopify/ProductVariant/456',
+                title: 'Plain stainless insulated bottle',
+                variantTitle: '32 ounce',
+                productUrl: 'https://merchant.example/products/plain-bottle',
+                seller: { name: 'Example merchant', domain: 'merchant.example' },
+                price: { amount: 4_500, currency: 'USD' },
+                condition: ['new'],
+                catalogClaims: [
+                  {
+                    text: 'Leak-resistant lid',
+                    provenance: 'shopify_inferred',
+                    evidenceStatus: 'unverified_catalog_context',
+                  },
+                ],
+              },
+            ];
+      return json({
+        provider: 'shopify_global_catalog',
+        protocolVersion: options.catalogProtocolVersion ?? shopifyCatalogProtocolVersion,
+        status: options.catalogAvailable === false ? 'unavailable' : 'complete',
+        query: 'plain stainless insulated bottle',
+        products,
+        warnings: options.catalogAvailable === false ? ['Catalog unavailable.'] : [],
       });
     }
     if (url.href === `${config.roomOrigin}/healthz`) {
@@ -274,6 +321,7 @@ describe('public release preflight', () => {
     });
     expect(report.steps.map((step) => step.name)).toEqual([
       'app health and commit',
+      'UCP profile and live catalog discovery',
       'evidence service health, commit, and cost controls',
       'reusable evidence index',
       'public filming mission board',
@@ -282,6 +330,27 @@ describe('public release preflight', () => {
     ]);
     expect(serialized).not.toContain(ownerToken);
     expect(serialized).not.toContain(contributorToken);
+  });
+
+  it('fails closed when the deployed UCP profile differs from the reviewed contract', async () => {
+    await expect(
+      verifyPublicRelease(config, releaseFetch({ ucpProfile: { ucp: { version: 'unknown' } } })),
+    ).rejects.toThrow(/UCP agent profile.*unexpected capability contract/i);
+  });
+
+  it('fails closed when live UCP catalog discovery is unavailable or empty', async () => {
+    await expect(
+      verifyPublicRelease(config, releaseFetch({ catalogAvailable: false })),
+    ).rejects.toThrow(/catalog unavailable or empty/i);
+    await expect(
+      verifyPublicRelease(config, releaseFetch({ catalogHasProducts: false })),
+    ).rejects.toThrow(/catalog unavailable or empty/i);
+  });
+
+  it('fails closed when live catalog discovery negotiates an unexpected UCP version', async () => {
+    await expect(
+      verifyPublicRelease(config, releaseFetch({ catalogProtocolVersion: '2026-08-25' })),
+    ).rejects.toThrow(/invalid response contract/i);
   });
 
   it('fails closed when the evidence service is not the reviewed commit', async () => {

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import browserJourneyEvals from '../../../evals/browser-journey-evals.json';
+import catalogInitialEvals from '../../../evals/catalog-initial-evals.json';
+import catalogInitialTools from '../../../evals/catalog-initial-tools.json';
+import catalogResultEvals from '../../../evals/catalog-result-evals.json';
+import catalogResultTools from '../../../evals/catalog-result-tools.json';
 import evidenceInitialEvals from '../../../evals/evidence-initial-evals.json';
 import evidenceInitialTools from '../../../evals/evidence-initial-tools.json';
 import evidenceMissionEvals from '../../../evals/evidence-mission-evals.json';
@@ -10,14 +14,18 @@ import productPageJourneyEvals from '../../../evals/product-page-journey-evals.j
 import productPageReviewedEvals from '../../../evals/product-page-reviewed-evals.json';
 import productPageReviewedTools from '../../../evals/product-page-reviewed-tools.json';
 import { createDemoProductEvidenceTools } from '../../components/demo-product-evidence-bridge';
+import { createCatalogSiteTools, type CatalogSiteToolRuntime } from './catalog-site-tools';
 import {
   applyEvidenceNetworkCommand,
   createDemoEvidenceNetworkState,
   createDemoEvidenceQuestionState,
 } from './model';
 import { createEvidenceSiteTools, type EvidenceSiteToolRuntime } from './site-tools';
+import type { ShopifyCatalogSearchResponse } from './ucp-catalog';
 
 const allEvidenceToolNames = new Set([
+  'search_product_catalog',
+  'open_catalog_product_question',
   'inspect_product_evidence',
   'ask_product_question',
   'search_product_evidence',
@@ -35,12 +43,41 @@ const allEvidenceToolNames = new Set([
 ]);
 
 const allEvals = [
+  ...catalogInitialEvals,
+  ...catalogResultEvals,
   ...evidenceInitialEvals,
   ...evidenceMissionEvals,
   ...browserJourneyEvals,
   ...productPageJourneyEvals,
   ...productPageReviewedEvals,
 ];
+
+const catalogResult: ShopifyCatalogSearchResponse = {
+  provider: 'shopify_global_catalog',
+  protocolVersion: '2026-04-08',
+  status: 'complete',
+  query: 'plain stainless insulated bottle',
+  products: [
+    {
+      productId: 'gid://shopify/Product/123',
+      variantId: 'gid://shopify/ProductVariant/456',
+      title: 'Plain insulated bottle',
+      variantTitle: '24 oz stainless steel',
+      productUrl: 'https://merchant.example/products/bottle',
+      seller: { name: 'Example merchant', domain: 'merchant.example' },
+      price: { amount: 3_999, currency: 'USD' },
+      condition: ['new'],
+      catalogClaims: [
+        {
+          text: 'Leak-resistant lid.',
+          provenance: 'shopify_inferred',
+          evidenceStatus: 'unverified_catalog_context',
+        },
+      ],
+    },
+  ],
+  warnings: [],
+};
 
 interface ExpectedFunctionCall {
   readonly functionName: string;
@@ -62,6 +99,26 @@ function expectedCalls(value: unknown): readonly ExpectedFunctionCall[] {
 }
 
 describe('generic product-evidence WebMCP eval corpus', () => {
+  it('keeps both UCP catalog schema snapshots identical to the dynamic tools', () => {
+    const project = (result: ShopifyCatalogSearchResponse | null): readonly object[] => {
+      const runtime: CatalogSiteToolRuntime = {
+        readResult: () => result,
+        search: async () => catalogResult,
+        openQuestion: async () => {
+          throw new Error('Schema comparison must not execute a tool.');
+        },
+      };
+      return createCatalogSiteTools(runtime).map(({ name, description, inputSchema }) => ({
+        name,
+        description,
+        inputSchema,
+      }));
+    };
+
+    expect(catalogInitialTools.tools).toEqual(project(null));
+    expect(catalogResultTools.tools).toEqual(project(catalogResult));
+  });
+
   it('keeps the static initial schema identical to the actual initial page tools', () => {
     const state = createDemoEvidenceQuestionState();
     const runtime: EvidenceSiteToolRuntime = {
@@ -142,9 +199,24 @@ describe('generic product-evidence WebMCP eval corpus', () => {
     );
 
     expect(serializedArguments).not.toContain('275');
+    expect(serializedArguments).not.toContain('50');
     expect(serializedArguments).not.toMatch(
       /budget|home situation|shopping history|purchase history|private preferences|buyer identity/i,
     );
+  });
+
+  it('keeps UCP discovery minimal and turns catalog copy into a separate question', () => {
+    expect(expectedCalls(catalogInitialEvals[0]?.expectedCall)).toEqual([
+      {
+        functionName: 'search_product_catalog',
+        arguments: { query: 'plain stainless insulated bottle', country: 'US' },
+      },
+    ]);
+    const selection = expectedCalls(catalogResultEvals[0]?.expectedCall);
+    expect(selection.map(({ functionName }) => functionName)).toEqual([
+      'open_catalog_product_question',
+    ]);
+    expect(JSON.stringify(selection)).not.toMatch(/leak-resistant|budget|identity|history/i);
   });
 
   it('models the product-page handoff as a cross-document WebMCP trajectory', () => {

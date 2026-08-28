@@ -515,12 +515,18 @@ describe('product evidence Site Tools', () => {
       '2026-08-27T16:02:00.000Z',
     ).state;
 
-    expect(answerChangeSnapshot(state)).toMatchObject({
+    const snapshot = answerChangeSnapshot(state);
+    expect(snapshot).toMatchObject({
       changed: true,
       before: { status: 'insufficient' },
       after: { status: 'supported' },
+      recommendationChange: {
+        before: 'blocked',
+        after: 'eligible',
+      },
       decisiveEvidence: [{ timestamp: '00:00–00:10', captureTiming: 'preexisting' }],
     });
+    expect(JSON.stringify(snapshot).length).toBeLessThanOrEqual(1_500);
     expect(createEvidenceSiteTools(runtime(state).runtime).map(({ name }) => name)).toContain(
       'inspect_answer_change',
     );

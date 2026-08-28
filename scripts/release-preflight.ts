@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from 'node:util';
+
 import { z } from 'zod';
 
 import {
@@ -14,6 +16,11 @@ import {
   remoteEvidenceCaseSnapshotSchema,
   remoteEvidenceProtocolVersion,
 } from '../src/lib/evidence-network/remote-protocol.ts';
+import {
+  filmTheGapUcpPlatformProfile,
+  shopifyCatalogProtocolVersion,
+  shopifyCatalogSearchResponseSchema,
+} from '../src/lib/evidence-network/ucp-catalog.ts';
 
 export interface ReleaseConfig {
   readonly appOrigin: string;
@@ -345,6 +352,56 @@ export async function verifyPublicRelease(
       health.evidenceRoomOrigin !== config.roomOrigin
     ) {
       throw probeError(label, 'deployed configuration mismatch');
+    }
+  });
+
+  await step('UCP profile and live catalog discovery', async () => {
+    const profileLabel = 'UCP agent profile';
+    const profileResponse = await probe(
+      fetcher,
+      config,
+      profileLabel,
+      `${config.appOrigin}/ucp/agent-profile`,
+    );
+    requireStatus(profileResponse, 200, profileLabel);
+    requireHeaderIncludes(profileResponse, 'Cache-Control', 'public', profileLabel);
+    requireHeader(
+      profileResponse,
+      'Content-Security-Policy',
+      "default-src 'none'; frame-ancestors 'none'",
+      profileLabel,
+    );
+    requireHeader(profileResponse, 'X-Content-Type-Options', 'nosniff', profileLabel);
+    const profile = await jsonBody(profileResponse, profileLabel);
+    if (!isDeepStrictEqual(profile, filmTheGapUcpPlatformProfile)) {
+      throw probeError(profileLabel, 'unexpected capability contract');
+    }
+
+    const catalogLabel = 'live Shopify UCP catalog discovery';
+    const catalogResponse = await probe(
+      fetcher,
+      config,
+      catalogLabel,
+      `${config.appOrigin}/api/catalog/search`,
+      {
+        method: 'POST',
+        headers: { Origin: config.appOrigin, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: 'plain stainless insulated bottle', country: 'US' }),
+      },
+    );
+    requireStatus(catalogResponse, 200, catalogLabel);
+    requireHeaderIncludes(catalogResponse, 'Cache-Control', 'no-store', catalogLabel);
+    const catalog = parseWithSchema(
+      shopifyCatalogSearchResponseSchema,
+      await jsonBody(catalogResponse, catalogLabel),
+      catalogLabel,
+    );
+    if (
+      catalog.status !== 'complete' ||
+      catalog.protocolVersion !== shopifyCatalogProtocolVersion ||
+      catalog.products.length === 0
+    ) {
+      throw probeError(catalogLabel, 'catalog unavailable or empty');
     }
   });
 

@@ -1,0 +1,49 @@
+{
+  "tools": [
+    {
+      "name": "search_product_catalog",
+      "description": "Search new products across participating Shopify merchants through the Universal Commerce Protocol. This is read-only discovery: send only a generic product query and country. Returned catalog claims are unverified context, never evidence.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 160,
+            "description": "A generic product category and only public characteristics the user wants sent to the catalog. Never include identity, budget, history, private preferences, or conversation text."
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{2}$",
+            "description": "Optional two-letter country code for merchant availability. Defaults to US."
+          }
+        },
+        "required": ["query"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "open_catalog_product_question",
+      "description": "Select one exact variant from the current UCP search and open a product-evidence case for one observable question. The merchant URL is retained as unverified context; catalog copy cannot affect the answer.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "variantId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240,
+            "description": "Exact variantId from the current search_product_catalog result."
+          },
+          "question": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 280,
+            "description": "One public, concrete product question that observable video evidence could answer. Never include private shopper context."
+          }
+        },
+        "required": ["variantId", "question"],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

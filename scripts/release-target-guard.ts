@@ -75,9 +75,6 @@ function releaseOrigin(value: string, label: string): string {
   ) {
     throw new Error(`${label} must be a credential-free HTTPS origin.`);
   }
-  if (url.hostname.toLowerCase().includes('vidably')) {
-    throw new Error(`${label} must not carry unrelated Vidably branding.`);
-  }
   return url.origin;
 }
 
@@ -110,10 +107,7 @@ function configuredNumber(configText: string, key: string): number {
 export function verifyReleaseTarget(input: ReleaseTargetGuardInput): ReleaseTargetGuardReport {
   const expectedVercelScope = releaseSlug(input.expectedVercelScope, 'WEBMCP_VERCEL_SCOPE');
   const expectedVercelProject = releaseSlug(input.expectedVercelProject, 'WEBMCP_VERCEL_PROJECT');
-  if (
-    retiredVercelProjects.has(expectedVercelProject) ||
-    expectedVercelProject.includes('vidably')
-  ) {
+  if (retiredVercelProjects.has(expectedVercelProject)) {
     throw new Error('WEBMCP_VERCEL_PROJECT must name the new standalone release project.');
   }
 

@@ -2,6 +2,7 @@
 
 These fixtures use Chrome Labs' current `webmcp-evals` format and exercise the product that is actually submitted:
 
+- `catalog-initial-tools.json` and `catalog-result-tools.json` freeze the UCP catalog frontier before and after a search. Their evals enforce a generic query/country privacy boundary and require an exact current variant to become a separate observable evidence question; catalog claims never become answers.
 - `evidence-initial-tools.json` is an exact checked-in projection of the three Site Tools available on first load.
 - `evidence-initial-evals.json` tests read-only inspection, arbitrary-product intake, privacy minimization, and mission creation against that static frontier.
 - `evidence-mission-tools.json` is the exact open-mission frontier before a contributor link exists; `evidence-mission-evals.json` requires inspection before a revision-bound refinement and preserves a read-only path.
@@ -10,7 +11,7 @@ These fixtures use Chrome Labs' current `webmcp-evals` format and exercise the p
 - `product-page-journey-evals.json` is a live cross-document trajectory: inspect the authored-claim boundary, execute the page-owned case navigation, then inspect the newly loaded evidence case through its own tools.
 - `product-page-reviewed-evals.json` checks that the resolved page returns timestamped reviewed evidence without requesting another recording and still distinguishes the authored claim from proof.
 
-`src/lib/evidence-network/webmcp-evals.test.ts` rejects schema drift in all four static frontiers, unknown tool names, private test material in expected arguments, mission refinement without a prior inspection and exact revision, public recruitment without a distinct confirmation call, private handoff without search first, and a reviewed page that still expects the stale handoff.
+`src/lib/evidence-network/webmcp-evals.test.ts` rejects schema drift in all six static frontiers, unknown tool names, private test material in expected arguments, UCP catalog copy masquerading as evidence, mission refinement without a prior inspection and exact revision, public recruitment without a distinct confirmation call, private handoff without search first, and a reviewed page that still expects the stale handoff.
 
 ## Current source and published package
 
@@ -26,6 +27,11 @@ git clone https://github.com/GoogleChromeLabs/webmcp-tools.git /tmp/webmcp-tools
 git -C /tmp/webmcp-tools checkout d39eae4bd51e8c12736b8cae840bd98f190f3179
 npm --prefix /tmp/webmcp-tools/webmcp-evals ci
 npm --prefix /tmp/webmcp-tools/webmcp-evals run build
+node /tmp/webmcp-tools/webmcp-evals/dist/bin/webmcp-evals.js smoke \
+  --chrome-channel chrome \
+  --url http://localhost:3000 \
+  --evals evals/catalog-initial-evals.json
+
 node /tmp/webmcp-tools/webmcp-evals/dist/bin/webmcp-evals.js smoke \
   --chrome-channel chrome \
   --url http://localhost:3000 \
@@ -46,6 +52,14 @@ Keep the state-changing smoke on the isolated local fixture. Do not add `--verbo
 Only run this when an already-authorized provider and budget are available:
 
 ```bash
+npx --yes webmcp-evals@0.0.3 local \
+  --tools evals/catalog-initial-tools.json \
+  --evals evals/catalog-initial-evals.json
+
+npx --yes webmcp-evals@0.0.3 local \
+  --tools evals/catalog-result-tools.json \
+  --evals evals/catalog-result-evals.json
+
 npx --yes webmcp-evals@0.0.3 local \
   --tools evals/evidence-initial-tools.json \
   --evals evals/evidence-initial-evals.json

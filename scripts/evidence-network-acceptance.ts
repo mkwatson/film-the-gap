@@ -19,37 +19,78 @@ import {
 
 const defaultBrowserExecutable = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const missionCreationTools = [
+  'search_product_catalog',
   'inspect_product_evidence',
   'ask_product_question',
   'create_filming_mission',
 ] as const;
 const searchTools = [
+  'search_product_catalog',
+  'inspect_product_evidence',
+  'ask_product_question',
+  'search_product_evidence',
+] as const;
+const catalogResultTools = [
+  'search_product_catalog',
+  'open_catalog_product_question',
   'inspect_product_evidence',
   'ask_product_question',
   'search_product_evidence',
 ] as const;
 const missionTools = [
+  'search_product_catalog',
   'inspect_product_evidence',
   'ask_product_question',
   'refine_filming_mission',
   'create_phone_capture_link',
 ] as const;
 const publicMissionPublishTools = [
+  'search_product_catalog',
   'inspect_product_evidence',
   'ask_product_question',
   'publish_filming_mission',
 ] as const;
 const publicMissionRemoveTools = [
+  'search_product_catalog',
   'inspect_product_evidence',
   'ask_product_question',
   'remove_public_filming_mission',
 ] as const;
 const boardTools = ['inspect_open_filming_missions', 'open_filming_mission'] as const;
 const finalTools = [
+  'search_product_catalog',
   'inspect_product_evidence',
   'ask_product_question',
   'inspect_answer_change',
 ] as const;
+const catalogVariantId = 'gid://shopify/ProductVariant/acceptance-plain';
+const catalogQuestion = 'Does it stay leak-free upside down for ten seconds?';
+const catalogFixture = {
+  provider: 'shopify_global_catalog',
+  protocolVersion: '2026-04-08',
+  status: 'complete',
+  query: 'plain stainless insulated bottle',
+  products: [
+    {
+      productId: 'gid://shopify/Product/acceptance-plain',
+      variantId: catalogVariantId,
+      title: 'Plain insulated bottle',
+      variantTitle: '24 oz stainless steel',
+      productUrl: 'https://merchant.example/products/plain-insulated-bottle',
+      seller: { name: 'Example merchant', domain: 'merchant.example' },
+      price: { amount: 3_999, currency: 'USD' },
+      condition: ['new'],
+      catalogClaims: [
+        {
+          text: 'Leak-resistant lid.',
+          provenance: 'shopify_inferred',
+          evidenceStatus: 'unverified_catalog_context',
+        },
+      ],
+    },
+  ],
+  warnings: [],
+} as const;
 const correctedObservation =
   'A thin wet line becomes visible on the paper at 00:08 while the closed bottle remains inverted.';
 const refinedMissionInstruction =
@@ -130,6 +171,58 @@ function invokeToolScript(
   ${assertionBody}
 })()
 `;
+}
+
+function invokeToolErrorScript(
+  name: string,
+  input: Readonly<Record<string, unknown>>,
+  expectedError: string,
+): string {
+  return `
+(async () => {
+  const context = document.modelContext;
+  if (!context?.getTools || !context.executeTool) return false;
+  const tool = (await context.getTools()).find((candidate) => candidate.name === ${JSON.stringify(name)});
+  if (!tool) return false;
+  const output = await context.executeTool(tool, JSON.stringify(${JSON.stringify(input)}));
+  const pending = [output];
+  const visited = new Set();
+  while (pending.length > 0) {
+    const value = pending.pop();
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed.includes(${JSON.stringify(expectedError)})) return true;
+      if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+        try { pending.push(JSON.parse(trimmed)); } catch { /* Text tool content need not be JSON. */ }
+      }
+      continue;
+    }
+    if (value === null || typeof value !== 'object' || visited.has(value)) continue;
+    visited.add(value);
+    if (value.error === ${JSON.stringify(expectedError)}) return true;
+    if (Array.isArray(value)) pending.push(...value);
+    else pending.push(...Object.values(value));
+  }
+  return false;
+})()
+`;
+}
+
+function installCatalogFixtureScript(): string {
+  return `(() => {
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = async (input, init) => {
+      const url = input instanceof Request ? input.url : input instanceof URL ? input.href : String(input);
+      if (url === '/api/catalog/search' || url.endsWith('/api/catalog/search')) {
+        window.__filmTheGapCatalogRequest = typeof init?.body === 'string' ? init.body : null;
+        return Response.json(${JSON.stringify(catalogFixture)}, {
+          headers: { 'Cache-Control': 'no-store' },
+        });
+      }
+      return originalFetch(input, init);
+    };
+    return true;
+  })()`;
 }
 
 function refineMissionToolScript(input: Readonly<Record<string, unknown>>): string {
@@ -343,10 +436,164 @@ async function run(): Promise<void> {
   const steps: AcceptanceStep[] = [];
   let buyerTab: AcceptanceTab | null = null;
   try {
+    await recordAcceptanceStep(
+      steps,
+      humanControls
+        ? 'discover and select a real product through ordinary-browser UCP controls'
+        : 'discover and select a real product through native WebMCP and UCP',
+      async () => {
+        driver.open();
+        buyerTab = driver.listTabs().at(0) ?? null;
+        if (buyerTab === null) throw new Error('The buyer tab did not open.');
+        if (!humanControls) {
+          await waitForBrowserValue(
+            driver,
+            'initial catalog and evidence Site Tools',
+            toolNamesScript,
+            (value) => isStringArray(value) && sameStringSet(value, searchTools),
+            config.commandTimeoutMs,
+          );
+        } else {
+          await waitForBrowserValue(
+            driver,
+            'ordinary-browser catalog controls',
+            pageIncludesScript(
+              'NO STORE INTEGRATION REQUIRED',
+              'Start with a real product from the open commerce web.',
+              'Sent to the catalog: this query and country only.',
+            ),
+            (value) => value === true,
+            config.commandTimeoutMs,
+          );
+        }
+        if (driver.eval(installCatalogFixtureScript()) !== true) {
+          throw new Error('The deterministic UCP catalog fixture could not be installed.');
+        }
+
+        if (humanControls) {
+          driver.fill(
+            '.evidence-catalog-search label:first-child input',
+            'plain stainless insulated bottle',
+            'fill catalog query',
+          );
+          if (driver.eval(clickExactButtonScript('Find real products')) !== true) {
+            throw new Error('The ordinary-browser UCP search could not start.');
+          }
+        } else {
+          const searched = driver.eval(
+            invokeToolScript(
+              'search_product_catalog',
+              { query: 'plain stainless insulated bottle', country: 'US' },
+              `return parsedValues.some((value) => value.ok === true) &&
+                serialized.includes('"protocol":"UCP 2026-04-08"') &&
+                serialized.includes(${JSON.stringify(catalogVariantId)}) &&
+                serialized.includes('"privateShopperContext"') === false &&
+                serialized.includes('identity, budget, history, preferences, conversation');`,
+            ),
+            'invoke search_product_catalog',
+          );
+          if (searched !== true) {
+            throw new Error('Native WebMCP did not return the privacy-bounded UCP result.');
+          }
+          await waitForBrowserValue(
+            driver,
+            'catalog selection frontier',
+            toolNamesScript,
+            (value) => isStringArray(value) && sameStringSet(value, catalogResultTools),
+            config.commandTimeoutMs,
+          );
+          const staleRejected = driver.eval(
+            invokeToolErrorScript(
+              'open_catalog_product_question',
+              {
+                variantId: 'gid://shopify/ProductVariant/stale',
+                question: catalogQuestion,
+              },
+              'stale_catalog_selection',
+            ),
+            'reject stale UCP selection',
+          );
+          if (staleRejected !== true) {
+            throw new Error('Native WebMCP accepted a stale UCP selection.');
+          }
+        }
+
+        await waitForBrowserValue(
+          driver,
+          'visible catalog result and claim boundary',
+          pageIncludesScript(
+            'Plain insulated bottle',
+            'CATALOG CONTEXT · NOT PROOF',
+            'Leak-resistant lid.',
+          ),
+          (value) => value === true,
+          config.commandTimeoutMs,
+        );
+        const requestWasMinimal = driver.eval(
+          `window.__filmTheGapCatalogRequest === ${JSON.stringify(
+            JSON.stringify({ query: 'plain stainless insulated bottle', country: 'US' }),
+          )}`,
+          'verify minimal UCP request',
+        );
+        if (requestWasMinimal !== true) {
+          throw new Error('The UCP request contained unexpected shopper context.');
+        }
+
+        if (humanControls) {
+          driver.fill(
+            '.evidence-catalog-question textarea',
+            catalogQuestion,
+            'fill catalog proof question',
+          );
+          if (driver.eval(clickExactButtonScript('Ask what this page cannot prove')) !== true) {
+            throw new Error('The ordinary-browser catalog selection could not open.');
+          }
+        } else {
+          const selected = driver.eval(
+            invokeToolScript(
+              'open_catalog_product_question',
+              { variantId: catalogVariantId, question: catalogQuestion },
+              `return parsedValues.some((value) => value.ok === true) &&
+                serialized.includes(${JSON.stringify(catalogVariantId)}) &&
+                serialized.includes('"privateShopperContext":"not collected or transmitted"') &&
+                serialized.includes('Leak-resistant lid.') === false;`,
+            ),
+            'invoke open_catalog_product_question',
+          );
+          if (selected !== true) {
+            throw new Error('Native WebMCP did not open the selected missing-proof question.');
+          }
+        }
+        await waitForBrowserValue(
+          driver,
+          'selected catalog product evidence case',
+          pageIncludesScript(
+            'Plain insulated bottle · 24 oz stainless steel',
+            catalogQuestion,
+            'Not enough proof',
+            'Recommendation blocked',
+          ),
+          (value) => value === true,
+          config.commandTimeoutMs,
+        );
+        if (artifacts !== null) driver.screenshot(join(artifacts, '00-ucp-product.png'));
+
+        driver.reload();
+        await waitForBrowserValue(
+          driver,
+          humanControls
+            ? 'ordinary-browser reset after UCP canary'
+            : 'native reset after UCP canary',
+          humanControls ? pageIncludesScript('Human controls ready') : toolNamesScript,
+          humanControls
+            ? (value) => value === true
+            : (value) => isStringArray(value) && sameStringSet(value, searchTools),
+          config.commandTimeoutMs,
+        );
+      },
+    );
+
     await recordAcceptanceStep(steps, 'open generic product evidence case', async () => {
-      driver.open();
-      buyerTab = driver.listTabs().at(0) ?? null;
-      if (buyerTab === null) throw new Error('The buyer tab did not open.');
       if (humanControls) {
         await waitForBrowserValue(
           driver,
@@ -1030,7 +1277,12 @@ async function run(): Promise<void> {
       await waitForBrowserValue(
         driver,
         'buyer answer update',
-        pageIncludesScript('Reviewed evidence published', 'Contradicted', 'Video 00:01–00:11'),
+        pageIncludesScript(
+          'Reviewed evidence published',
+          'Contradicted',
+          'Exclude for this requirement',
+          'Video 00:01–00:11',
+        ),
         (value) => value === true,
         config.commandTimeoutMs,
       );
@@ -1061,6 +1313,7 @@ async function run(): Promise<void> {
             `return serialized.includes('"changed":true') &&
               serialized.includes('"status":"insufficient"') &&
               serialized.includes('"status":"contradicted"') &&
+              serialized.includes('"recommendationChange":{"before":"blocked","after":"excluded"') &&
               serialized.includes('"timestamp":"00:01–00:11"') &&
               serialized.includes('"captureTiming":"contributor_attested"') &&
               serialized.includes(${JSON.stringify(correctedObservation)});`,
@@ -1109,6 +1362,7 @@ async function run(): Promise<void> {
               'Cloudflare D1 reusable evidence',
               'The evidence network already has a reviewed answer.',
               'reusable network evidence',
+              'Exclude for this requirement',
               'Video 00:01–00:11',
             ),
             (value) => value === true,
@@ -1173,6 +1427,7 @@ async function run(): Promise<void> {
             'Cloudflare D1 reusable evidence',
             'The evidence network already has a reviewed answer.',
             'reusable network evidence',
+            'Exclude for this requirement',
             'Video 00:01–00:11',
           ),
           (value) => value === true,

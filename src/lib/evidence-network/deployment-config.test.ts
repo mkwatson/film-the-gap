@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { evidenceRoomOriginForBuild } from './deployment-config';
+import { evidenceRoomOriginForBuild, ucpAgentProfileUrlForBuild } from './deployment-config';
 
 describe('evidence deployment configuration', () => {
   it('allows an unconfigured local build for the honest manual fallback', () => {
@@ -53,5 +53,45 @@ describe('evidence deployment configuration', () => {
         VERCEL: '1',
       }),
     ).toBe('https://evidence.example');
+  });
+});
+
+describe('UCP deployment configuration', () => {
+  it('allows the official development fallback only outside Vercel', () => {
+    expect(ucpAgentProfileUrlForBuild({})).toBeUndefined();
+    expect(() => ucpAgentProfileUrlForBuild({ VERCEL: '1' })).toThrow(
+      'UCP_AGENT_PROFILE_URL is required for every Vercel build.',
+    );
+  });
+
+  it.each([
+    'not a URL',
+    'http://proof.example/ucp/agent-profile',
+    'https://user:secret@proof.example/ucp/agent-profile',
+    'https://proof.example/ucp/other',
+    'https://proof.example/ucp/agent-profile?token=secret',
+    'https://proof.example/ucp/agent-profile#fragment',
+  ])('rejects an invalid production profile target: %s', (value) => {
+    expect(() => ucpAgentProfileUrlForBuild({ UCP_AGENT_PROFILE_URL: value })).toThrow(
+      /UCP_AGENT_PROFILE_URL/,
+    );
+  });
+
+  it('accepts the exact public app-owned profile path', () => {
+    expect(
+      ucpAgentProfileUrlForBuild({
+        UCP_AGENT_PROFILE_URL: ' https://proof.example/ucp/agent-profile ',
+        VERCEL: '1',
+      }),
+    ).toBe('https://proof.example/ucp/agent-profile');
+  });
+
+  it('rejects local profile targets on Vercel', () => {
+    expect(() =>
+      ucpAgentProfileUrlForBuild({
+        UCP_AGENT_PROFILE_URL: 'https://localhost/ucp/agent-profile',
+        VERCEL: '1',
+      }),
+    ).toThrow('UCP_AGENT_PROFILE_URL must be public');
   });
 });

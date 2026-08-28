@@ -7,6 +7,7 @@ Updated 2026-08-28 PT. Nothing described here is publicly deployed yet. This run
 | Surface                           | Runtime                                            | Responsibility                                                                                                   |
 | --------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | Product, shopper, board, recorder | Next.js 16 on Vercel                               | Native WebMCP tools, exact case handoff, open requests, QR handoff, discovery, video review, playback            |
+| New-product catalog               | Shopify Global Catalog over UCP/MCP                | Permissionless real-product search and exact variant identity; catalog claims remain unverified context          |
 | Evidence service                  | Cloudflare Worker + SQLite Durable Object          | Revisioned cases, random capture phrases, scoped capabilities, WebSocket updates, uploads, reviewed evidence     |
 | Mission/reuse index               | Cloudflare D1                                      | 24-hour public filming requests plus exact opted-in product/question evidence lookup                             |
 | Video                             | Cloudflare Stream binding                          | One-time direct phone uploads, encoding, authorized MP4 analysis, signed-only network media, signed playback     |
@@ -23,29 +24,30 @@ The deployable Worker is [evidence-index.ts](room-worker/src/evidence-index.ts),
 
 These are defense-in-depth controls, not claims of perfect abuse prevention.
 
-| Cost surface           | Enforced control                                                                                                                         |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Evidence-case creation | 12 requests per client fingerprint per 60 seconds and 120 total per 60 seconds, per Cloudflare location                                  |
-| Worker CPU             | Reviewed `limits.cpu_ms: 100` ceiling in Wrangler; the release-target guard rejects a missing or loosened value                          |
-| Client fingerprint     | SHA-256 of Cloudflare IP plus user agent; raw IP is not retained by application code                                                     |
-| Upload reservations    | At most two over a temporary case's lifetime                                                                                             |
-| Upload bytes           | At most 95 MiB; basic direct POST only                                                                                                   |
-| Reserved duration      | Actual browser-measured duration plus five seconds, bounded by the mission and 90-second maximum                                         |
-| Upload capability      | One-time Stream URL with a 15-minute expiry and allowed app hostname                                                                     |
-| Stored video           | Scheduled deletion after 31 days; enough for judging, not indefinite storage                                                             |
-| Reusable evidence      | Explicit contributor opt-in; exact product/question matching; 30-day expiry and daily D1 purge                                           |
-| Reusable video         | Stream requires signed URLs at publication; stable Worker viewer issues one-hour tokens only for fresh D1 records; no autoplay           |
-| Playback issuance      | Atomic D1 maximum of 60 new Stream tokens per UTC day; the player starts at the cited interval and preloads metadata only                |
-| Capture timing         | Random per-mission phrase; server-stored model receipt; honest contributor-attested/preexisting fallback; never labeled authenticity     |
-| Device permissions     | Shopper and board deny camera/microphone; only the contributor route permits same-origin camera and microphone for a user-initiated take |
-| Public mission board   | Explicit shopper confirmation; public fields only; 24-hour expiry; daily purge; fulfilled jobs hidden                                    |
-| Public recorder path   | Separate case-scoped capability; removal revokes it without invalidating the private contributor link                                    |
-| Model calls            | One cached successful proposal per upload and no more than two crash-recovery attempts                                                   |
-| Video AI spend         | Dedicated AI Gateway key with a hard non-renewing budget and 30-day expiry                                                               |
-| Broad web search       | Vercel OIDC under a non-renewing project budget, one Exa `instant` call, four results, exact-query receipt check, and 20-second timeout  |
-| Product-page reading   | Server capability; public HTTPS/default port only; same-origin navigation; 24-hour Browser Run cache; atomic D1 maximum of 60 reads/day  |
-| Discovery reuse        | SHA-256 cache key; successful configured searches reused for 15 minutes through Vercel Runtime Cache                                     |
-| Public discovery       | Same-origin JSON only, Vercel WAF fixed-window limit, bounded Gateway credit exposure, and a fixed-credit social key                     |
+| Cost surface           | Enforced control                                                                                                                          |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Evidence-case creation | 12 requests per client fingerprint per 60 seconds and 120 total per 60 seconds, per Cloudflare location                                   |
+| Worker CPU             | Reviewed `limits.cpu_ms: 100` ceiling in Wrangler; the release-target guard rejects a missing or loosened value                           |
+| Client fingerprint     | SHA-256 of Cloudflare IP plus user agent; raw IP is not retained by application code                                                      |
+| Upload reservations    | At most two over a temporary case's lifetime                                                                                              |
+| Upload bytes           | At most 95 MiB; basic direct POST only                                                                                                    |
+| Reserved duration      | Actual browser-measured duration plus five seconds, bounded by the mission and 90-second maximum                                          |
+| Upload capability      | One-time Stream URL with a 15-minute expiry and allowed app hostname                                                                      |
+| Stored video           | Scheduled deletion after 31 days; enough for judging, not indefinite storage                                                              |
+| Reusable evidence      | Explicit contributor opt-in; exact product/question matching; 30-day expiry and daily D1 purge                                            |
+| Reusable video         | Stream requires signed URLs at publication; stable Worker viewer issues one-hour tokens only for fresh D1 records; no autoplay            |
+| Playback issuance      | Atomic D1 maximum of 60 new Stream tokens per UTC day; the player starts at the cited interval and preloads metadata only                 |
+| Capture timing         | Random per-mission phrase; server-stored model receipt; honest contributor-attested/preexisting fallback; never labeled authenticity      |
+| Device permissions     | Shopper and board deny camera/microphone; only the contributor route permits same-origin camera and microphone for a user-initiated take  |
+| Public mission board   | Explicit shopper confirmation; public fields only; 24-hour expiry; daily purge; fulfilled jobs hidden                                     |
+| Public recorder path   | Separate case-scoped capability; removal revokes it without invalidating the private contributor link                                     |
+| Model calls            | One cached successful proposal per upload and no more than two crash-recovery attempts                                                    |
+| Video AI spend         | Dedicated AI Gateway key with a hard non-renewing budget and 30-day expiry                                                                |
+| Broad web search       | Vercel OIDC under a non-renewing project budget, one Exa `instant` call, four results, exact-query receipt check, and 20-second timeout   |
+| Product-page reading   | Server capability; public HTTPS/default port only; same-origin navigation; 24-hour Browser Run cache; atomic D1 maximum of 60 reads/day   |
+| Discovery reuse        | SHA-256 cache key; successful configured searches reused for 15 minutes through Vercel Runtime Cache                                      |
+| Public discovery       | Same-origin JSON only, Vercel WAF fixed-window limit, bounded Gateway credit exposure, and a fixed-credit social key                      |
+| UCP catalog discovery  | Same-origin JSON only; query/country schema; 12-second client and 10-second provider limits; 256 KiB response cap; 5-minute Runtime Cache |
 
 Cloudflare's current Worker rate-limit binding is deliberately permissive, eventually consistent, and local to a Cloudflare location. It is useful overload protection, not exact global accounting. Browser Run therefore uses an atomic D1 daily ceiling instead: even if all 60 actions consume both eight-second timeout phases on every day of a 31-day month, this candidate stays below 8.3 browser hours. Cloudflare currently includes 10 Browser Run hours per month on Workers Paid; Workers Paid is a separate account plan with a `$5` monthly minimum, and unrelated account usage could consume its included headroom. Current public documentation does not promise a hard Browser Run dollar cap on Paid, so the release must use an otherwise-idle account or explicitly accept that residual shared-account risk after checking current usage.
 
@@ -104,7 +106,7 @@ The recommended release uses Workers Paid plus Stream. If the intended Cloudflar
 
    Keep the binding name exactly `EVIDENCE_LIBRARY`. Do not deploy while either placeholder UUID or `https://rooms.example` remains.
 
-4. Commit the dedicated D1 IDs and exact signed-playback origin, link the newly created Vercel project, and run the local target guard before creating a budget, secret, firewall rule, or deployment. The guard fails when the worktree is dirty, the commit differs, the ignored Vercel link still names the retired project, either D1 ID is a placeholder, the D1 IDs differ, the configured playback origin differs from `WEBMCP_ROOM_ORIGIN`, an origin carries credentials or a path, or either origin carries unrelated Vidably branding. It never prints opaque Vercel account/project IDs or the D1 UUID.
+4. Commit the dedicated D1 IDs and exact signed-playback origin, link the newly created Vercel project, and run the local target guard before creating a budget, secret, firewall rule, or deployment. The guard fails when the worktree is dirty, the commit differs, the ignored Vercel link still names the retired project, either D1 ID is a placeholder, the D1 IDs differ, the configured playback origin differs from `WEBMCP_ROOM_ORIGIN`, or an origin carries credentials or a path. It never prints opaque Vercel account/project IDs or the D1 UUID.
 
    ```bash
    WEBMCP_VERCEL_SCOPE=YOUR-STANDALONE-TEAM-SLUG
@@ -236,12 +238,13 @@ Then:
 5. Configure the new Vercel project's Production environment:
 
    - `NEXT_PUBLIC_EVIDENCE_ROOM_URL=$WEBMCP_ROOM_ORIGIN` — required and compiled at build time.
+   - `UCP_AGENT_PROFILE_URL=$WEBMCP_APP_ORIGIN/ucp/agent-profile` — required on Vercel; exact public, credential-free app-owned profile used for Shopify Global Catalog negotiation.
    - `EVIDENCE_PAGE_READER_TOKEN` — required, server-only, identical to the Worker's `PAGE_READER_SHARED_SECRET`, and never prefixed `NEXT_PUBLIC_`.
    - `AI_GATEWAY_DISCOVERY_API_KEY` — omit on the final Vercel release; automatically refreshed OIDC stays inside the project-scoped `$5` budget.
    - `SCRAPECREATORS_API_KEY` — optional, server-only, dedicated to this demo.
    - Do not add `AI_GATEWAY_API_KEY`; the video-analysis key belongs only on the Worker.
 
-   The build fails closed on Vercel when `NEXT_PUBLIC_EVIDENCE_ROOM_URL` is absent, non-HTTPS, credentialed, or not an exact origin. This prevents a healthy-looking deployment whose phone action silently falls back to “service not configured.”
+   The build fails closed on Vercel when `NEXT_PUBLIC_EVIDENCE_ROOM_URL` is absent, non-HTTPS, credentialed, or not an exact origin. It independently fails when `UCP_AGENT_PROFILE_URL` is absent, local, credentialed, query-bearing, or does not end exactly at `/ucp/agent-profile`. This prevents healthy-looking deployments whose phone or real-product entry silently uses a local fallback.
 
 6. Deploy the exact Git commit to Vercel. Prefer a Git-associated Production build so `VERCEL_GIT_COMMIT_SHA` is authoritative. A reviewed prebuilt artifact uses the already frozen `WEBMCP_RELEASE_COMMIT_SHA`, but the room origin must be present during `vercel build`; changing it after the build cannot update the client bundle.
 7. Confirm Vercel Deployment Protection is disabled on the final judge hostname. The page must work logged out with no share parameter, password, trusted IP, or bypass header.
@@ -250,12 +253,23 @@ Then:
 
 Vercel WAF rate limiting is available on all plans, but the first rule may show a pricing acknowledgement. Stage and inspect it; Mark publishes each stage.
 
-1. Add a fixed-window rule for only `POST /api/evidence/search`, initially logging overflow after 20 requests per IP per minute:
+1. Add separate fixed-window rules for `POST /api/evidence/search` and `POST /api/catalog/search`, initially logging overflow after 20 requests per IP per minute:
 
    ```bash
    pnpm dlx vercel@59.9.1 firewall rules add "Product evidence search ceiling" \
      --project "$WEBMCP_VERCEL_PROJECT" \
      --condition '{"type":"path","op":"eq","value":"/api/evidence/search"}' \
+     --condition '{"type":"method","op":"eq","value":"POST"}' \
+     --action rate_limit \
+     --rate-limit-window 60 \
+     --rate-limit-requests 20 \
+     --rate-limit-keys ip \
+     --rate-limit-action log \
+     --yes \
+     --scope "$WEBMCP_VERCEL_SCOPE"
+   pnpm dlx vercel@59.9.1 firewall rules add "UCP catalog search ceiling" \
+     --project "$WEBMCP_VERCEL_PROJECT" \
+     --condition '{"type":"path","op":"eq","value":"/api/catalog/search"}' \
      --condition '{"type":"method","op":"eq","value":"POST"}' \
      --action rate_limit \
      --rate-limit-window 60 \
@@ -278,10 +292,19 @@ Vercel WAF rate limiting is available on all plans, but the first rule may show 
      --scope "$WEBMCP_VERCEL_SCOPE"
    ```
 
-3. After legitimate traffic is confirmed, retain the rule and change overflow to HTTP 429:
+3. After legitimate traffic is confirmed, retain both rules and change overflow to HTTP 429:
 
    ```bash
    pnpm dlx vercel@59.9.1 firewall rules edit "Product evidence search ceiling" \
+     --project "$WEBMCP_VERCEL_PROJECT" \
+     --action rate_limit \
+     --rate-limit-window 60 \
+     --rate-limit-requests 20 \
+     --rate-limit-keys ip \
+     --rate-limit-action rate_limit \
+     --yes \
+     --scope "$WEBMCP_VERCEL_SCOPE"
+   pnpm dlx vercel@59.9.1 firewall rules edit "UCP catalog search ceiling" \
      --project "$WEBMCP_VERCEL_PROJECT" \
      --action rate_limit \
      --rate-limit-window 60 \
@@ -311,17 +334,18 @@ pnpm release:verify
 The verifier uses manual redirects and bounded bodies. It proves:
 
 1. the app exposes the exact reviewed commit and compiled Worker origin;
-2. the standalone Worker exposes the same commit and playback origin, both rate-limit bindings, the two-upload cap, Stream, signed playback with a 60-token daily D1 ceiling, Browser Run, live video analysis, D1, the 30-day reuse boundary, and daily expiry purge;
-3. real read-only D1 queries succeed through both the reusable-evidence and open-mission contracts, proving the binding and migrations rather than trusting health metadata;
-4. shopper, owned demo-product, strict product-evidence handoff, mission-board, and contributor pages have the intended route-scoped camera, microphone, upload, playback, CORS, CSP, referrer, and content-type boundaries; the handoff renders the exact product question, and the demo-product page also exposes exactly `search=yes, ai-input=yes, ai-train=no`;
-5. an untrusted browser origin is rejected; and
-6. one disposable evidence case is created and survives a Durable Object read-back.
+2. the app-owned UCP profile is the exact reviewed capability contract and a live Shopify Global Catalog query negotiates the expected version and returns at least one product;
+3. the standalone Worker exposes the same commit and playback origin, both rate-limit bindings, the two-upload cap, Stream, signed playback with a 60-token daily D1 ceiling, Browser Run, live video analysis, D1, the 30-day reuse boundary, and daily expiry purge;
+4. real read-only D1 queries succeed through both the reusable-evidence and open-mission contracts, proving the binding and migrations rather than trusting health metadata;
+5. shopper, owned demo-product, strict product-evidence handoff, mission-board, and contributor pages have the intended route-scoped camera, microphone, upload, playback, CORS, CSP, referrer, and content-type boundaries; the handoff renders the exact product question, and the demo-product page also exposes exactly `search=yes, ai-input=yes, ai-train=no`;
+6. an untrusted browser origin is rejected; and
+7. one disposable evidence case is created and survives a Durable Object read-back.
 
 The report contains only public Worker metadata and step timings. It parses but never returns or logs the disposable owner/contributor capabilities.
 
 Then perform one user-approved paid rehearsal on the final origins:
 
-1. Clean unauthenticated desktop browser: open `/demo-product`, confirm zero reviewed videos and the initial `inspect_product_claim` + `open_product_evidence_case` Site Tools, then execute the native handoff into the exact prefilled `/case` route. Search the default question and confirm a real Browser Run receipt whose page text remains non-decisive. Also repeat once with an arbitrary public product URL/question before creating the mission and QR/link.
+1. Clean unauthenticated desktop browser: open `/`, call `search_product_catalog` with a generic query/country, confirm real products and `open_catalog_product_question`, reject a stale variant, then open one selected observable question and confirm catalog copy remains non-decisive. Continue at `/demo-product`, confirm zero reviewed videos and the initial `inspect_product_claim` + `open_product_evidence_case` Site Tools, execute the native handoff, and confirm a real Browser Run receipt whose page text remains non-decisive.
 2. Physical phone: owned unbranded object, say or show the issued phrase with the product visible, continuous recording, real direct Stream upload, real Gateway proposal and phrase check, explicit correction/review, publish. Confirm the Gateway fetches the authorized MP4 before publication, then confirm publication changes the Stream video to require signed URLs; a failure to apply that privacy update must leave network publication uncommitted.
 3. Contributor deliberately selects publishing rights, explicitly confirms the complete review, and opts into 30-day network reuse; confirm a missing confirmation or missing rights selection cannot publish, and weak/inconclusive evidence cannot be selected for reuse.
 4. Desktop reload: same durable case and timestamped evidence still visible.

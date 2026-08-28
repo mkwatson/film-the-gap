@@ -1,5 +1,6 @@
 export interface EvidenceBuildEnvironment {
   readonly NEXT_PUBLIC_EVIDENCE_ROOM_URL?: string;
+  readonly UCP_AGENT_PROFILE_URL?: string;
   readonly VERCEL?: string;
 }
 
@@ -46,4 +47,39 @@ export function evidenceRoomOriginForBuild(
     );
   }
   return url.origin;
+}
+
+export function ucpAgentProfileUrlForBuild(
+  environment: EvidenceBuildEnvironment,
+): string | undefined {
+  const value = environment.UCP_AGENT_PROFILE_URL?.trim();
+  const vercelBuild = environment.VERCEL === '1';
+  if (value === undefined || value.length === 0) {
+    if (vercelBuild) {
+      throw new Error('UCP_AGENT_PROFILE_URL is required for every Vercel build.');
+    }
+    return undefined;
+  }
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error('UCP_AGENT_PROFILE_URL must be an absolute HTTPS profile URL.');
+  }
+  if (
+    url.protocol !== 'https:' ||
+    url.username.length > 0 ||
+    url.password.length > 0 ||
+    url.search.length > 0 ||
+    url.hash.length > 0 ||
+    url.pathname !== '/ucp/agent-profile'
+  ) {
+    throw new Error(
+      'UCP_AGENT_PROFILE_URL must be a credential-free HTTPS URL ending at /ucp/agent-profile.',
+    );
+  }
+  if (vercelBuild && localHostnames.has(url.hostname)) {
+    throw new Error('UCP_AGENT_PROFILE_URL must be public for every Vercel build.');
+  }
+  return url.toString();
 }

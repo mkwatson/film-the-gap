@@ -1,0 +1,26 @@
+{
+  "tools": [
+    {
+      "name": "search_product_catalog",
+      "description": "Search new products across participating Shopify merchants through the Universal Commerce Protocol. This is read-only discovery: send only a generic product query and country. Returned catalog claims are unverified context, never evidence.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 160,
+            "description": "A generic product category and only public characteristics the user wants sent to the catalog. Never include identity, budget, history, private preferences, or conversation text."
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{2}$",
+            "description": "Optional two-letter country code for merchant availability. Defaults to US."
+          }
+        },
+        "required": ["query"],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

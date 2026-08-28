@@ -146,7 +146,11 @@ describe('ProductEvidenceNetwork', () => {
     ).toBeTruthy();
     expect(await screen.findByText('Human controls ready')).toBeTruthy();
     expect(screen.getByText('Not enough proof')).toBeTruthy();
-    expect(screen.getByText(/explicit confirmation to publish those fields/)).toBeTruthy();
+    expect(screen.getByText('Recommendation blocked')).toBeTruthy();
+    expect(
+      screen.getByText(/Do not recommend this product for this requirement until reviewed video/),
+    ).toBeTruthy();
+    expect(screen.getByText(/Never send my identity, preferences, history, budget/)).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Search existing evidence' }));
     fireEvent.click(
@@ -163,6 +167,7 @@ describe('ProductEvidenceNetwork', () => {
 
     await waitFor(() => {
       expect(modelContext.activeToolNames()).toEqual([
+        'search_product_catalog',
         'inspect_product_evidence',
         'ask_product_question',
         'search_product_evidence',
@@ -198,6 +203,97 @@ describe('ProductEvidenceNetwork', () => {
     expect(
       modelContext.registrations.filter(({ tool }) => tool.name === 'inspect_product_evidence'),
     ).toHaveLength(1);
+  });
+
+  it('discovers a real catalog product through UCP and opens its missing-proof question', async () => {
+    const fetcher = vi.fn(
+      async (input: RequestInfo | URL, _init?: RequestInit): Promise<Response> => {
+        void _init;
+        if (String(input) === '/api/catalog/search') {
+          return Response.json({
+            provider: 'shopify_global_catalog',
+            protocolVersion: '2026-04-08',
+            status: 'complete',
+            query: 'plain stainless insulated bottle',
+            products: [
+              {
+                productId: 'gid://shopify/p/bottle',
+                variantId: 'gid://shopify/ProductVariant/plain',
+                title: 'Plain insulated bottle',
+                variantTitle: '24 oz stainless steel',
+                productUrl: 'https://merchant.example/products/plain-bottle',
+                seller: { name: 'Example merchant', domain: 'merchant.example' },
+                price: { amount: 3_999, currency: 'USD' },
+                condition: ['new'],
+                catalogClaims: [
+                  {
+                    text: 'Leak-resistant lid.',
+                    provenance: 'shopify_inferred',
+                    evidenceStatus: 'unverified_catalog_context',
+                  },
+                ],
+              },
+            ],
+            warnings: [],
+          });
+        }
+        return Response.json({
+          provider: 'evidence_network',
+          status: 'complete',
+          query: 'plain insulated bottle leak test',
+          searchedPlatforms: [],
+          warnings: [],
+          leads: [],
+        });
+      },
+    );
+    vi.stubGlobal('fetch', fetcher);
+    const modelContext = new RecordingModelContext();
+    setModelContext(modelContext);
+    render(<ProductEvidenceNetwork />);
+
+    const catalogOutput = await modelContext
+      .latestTool('search_product_catalog')
+      .execute(
+        { query: 'plain stainless insulated bottle', country: 'US' },
+        { signal: new AbortController().signal },
+      );
+
+    expect(catalogOutput).toMatchObject({
+      protocol: 'UCP 2026-04-08',
+      products: [{ variantId: 'gid://shopify/ProductVariant/plain' }],
+    });
+    expect(await screen.findByText('Leak-resistant lid.')).toBeTruthy();
+    expect(screen.getByText('Catalog context · not proof')).toBeTruthy();
+    await waitFor(() => {
+      expect(modelContext.activeToolNames()).toContain('open_catalog_product_question');
+    });
+
+    const selected = await modelContext.latestTool('open_catalog_product_question').execute(
+      {
+        variantId: 'gid://shopify/ProductVariant/plain',
+        question: 'Does it stay leak-free upside down for ten seconds?',
+      },
+      { signal: new AbortController().signal },
+    );
+
+    expect(selected).toMatchObject({
+      ok: true,
+      selected: { productId: 'gid://shopify/p/bottle' },
+      privateShopperContext: 'not collected or transmitted',
+    });
+    await waitFor(() => {
+      expect(screen.getByText('Plain insulated bottle · 24 oz stainless steel')).toBeTruthy();
+      expect(
+        screen.getAllByText('Does it stay leak-free upside down for ten seconds?'),
+      ).toHaveLength(2);
+    });
+    const catalogCall = fetcher.mock.calls.find(
+      ([input]) => String(input) === '/api/catalog/search',
+    );
+    expect(catalogCall?.[1]?.body).toBe(
+      JSON.stringify({ query: 'plain stainless insulated bottle', country: 'US' }),
+    );
   });
 
   it('opens an unseen product case without a product-specific code path', async () => {

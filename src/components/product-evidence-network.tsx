@@ -4,6 +4,17 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
+import {
+  ProductCatalogDiscovery,
+  type CatalogSearchPhase,
+} from '@/components/product-catalog-discovery';
+import { discoverCatalogProducts } from '@/lib/evidence-network/catalog-client';
+import {
+  catalogProductQuestion,
+  createCatalogSiteTools,
+  getCatalogToolNames,
+  type CatalogSiteToolRuntime,
+} from '@/lib/evidence-network/catalog-site-tools';
 import { discoverProductEvidence } from '@/lib/evidence-network/discovery-client';
 import {
   applyEvidenceNetworkCommand,
@@ -55,12 +66,18 @@ import {
   type EvidenceSiteToolRuntime,
 } from '@/lib/evidence-network/site-tools';
 import { isPublicHttpUrl } from '@/lib/evidence-network/url-policy';
+import type {
+  ShopifyCatalogProduct,
+  ShopifyCatalogSearchInput,
+  ShopifyCatalogSearchResponse,
+} from '@/lib/evidence-network/ucp-catalog';
+import { recommendationImpactForAnswer } from '@/lib/evidence-network/recommendation-impact';
 import { useDynamicSiteTools } from '@/lib/webmcp/use-dynamic-site-tools';
 
 const defaultMission = demoProduct.mission;
 
 const agentStarter =
-  'Use this page’s Site Tools. Inspect the active product question and search existing evidence. Treat ordinary web results as leads, never proof; only rights-cleared, human-reviewed network recordings may change the answer. If the sources still do not prove it, create the smallest continuous filming mission, inspect it, and refine it if its acceptance boundary is ambiguous. Then create a phone capture link and publish only that mission’s public product, question, and filming fields to the open request board. This is my explicit confirmation to publish those fields—never my identity, preferences, history, budget, or conversation. Do not infer the result. Stop before anyone records; after reviewed evidence arrives, inspect exactly how the answer changed.';
+  'Use this page’s Site Tools. If I name a category instead of an exact item, search the real product catalog through UCP using only public criteria I approve, then open one observable question for the selected variant. Inspect the active case and search existing evidence. Treat catalog copy and ordinary web results as leads, never proof; only rights-cleared, human-reviewed network recordings may change the answer. If proof is missing, create the smallest continuous filming mission, inspect it, and refine it if ambiguous. Then create a phone capture link. Never send my identity, preferences, history, budget, or conversation. Do not infer the result; after reviewed evidence arrives, inspect exactly how the answer changed.';
 
 const answerLabels: Readonly<Record<EvidenceAnswerStatus, string>> = {
   insufficient: 'Not enough proof',
@@ -377,6 +394,12 @@ export function ProductEvidenceNetwork({
     initialHandoff?.question.question ??
       'Can the phone charge while the receiver is connected and recording?',
   );
+  const [catalogQuery, setCatalogQuery] = useState('plain stainless insulated bottle');
+  const [catalogCountry, setCatalogCountry] = useState('US');
+  const [catalogQuestion, setCatalogQuestion] = useState('');
+  const [catalogResult, setCatalogResult] = useState<ShopifyCatalogSearchResponse | null>(null);
+  const [catalogPhase, setCatalogPhase] = useState<CatalogSearchPhase>('idle');
+  const [catalogError, setCatalogError] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const [searchPhase, setSearchPhase] = useState<'idle' | 'searching' | 'complete' | 'error'>(
     'idle',
@@ -395,6 +418,17 @@ export function ProductEvidenceNetwork({
   const serviceUrl = configuredEvidenceServiceUrl();
   const stateRef = useRef(state);
   const phoneConnectionRef = useRef(phoneConnection);
+  const catalogResultRef = useRef(catalogResult);
+  const catalogAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(
+    () => () => {
+      catalogAbortRef.current?.abort(
+        new DOMException('The product catalog view was closed.', 'AbortError'),
+      );
+    },
+    [],
+  );
 
   useEffect(() => {
     if (initialHandoff !== undefined) {
@@ -490,6 +524,63 @@ export function ProductEvidenceNetwork({
       return result;
     },
     [clearPhoneConnection, initialHandoff, revokeOpenPublicMission],
+  );
+  const searchCatalog = useCallback(
+    async (
+      input: ShopifyCatalogSearchInput,
+      signal?: AbortSignal,
+    ): Promise<ShopifyCatalogSearchResponse> => {
+      catalogAbortRef.current?.abort(
+        new DOMException('A newer product catalog search started.', 'AbortError'),
+      );
+      const controller = new AbortController();
+      catalogAbortRef.current = controller;
+      const signals = [controller.signal, AbortSignal.timeout(12_000)];
+      if (signal !== undefined) {
+        signals.push(signal);
+      }
+      const boundedSignal = AbortSignal.any(signals);
+      setCatalogPhase('searching');
+      setCatalogError(null);
+      try {
+        const result = await discoverCatalogProducts(input, boundedSignal);
+        boundedSignal.throwIfAborted();
+        catalogResultRef.current = result;
+        setCatalogResult(result);
+        setCatalogPhase('complete');
+        return result;
+      } catch (error: unknown) {
+        if (catalogAbortRef.current === controller) {
+          const message = error instanceof Error ? error.message : String(error);
+          setCatalogError(message);
+          setCatalogPhase('error');
+        }
+        throw error;
+      } finally {
+        if (catalogAbortRef.current === controller) {
+          catalogAbortRef.current = null;
+        }
+      }
+    },
+    [],
+  );
+  const openCatalogQuestion = useCallback(
+    async (
+      input: ProductQuestionInput,
+      actor: Extract<EvidenceNetworkCommand, { kind: 'ask-product-question' }>['actor'],
+    ): Promise<EvidenceNetworkTransition> => {
+      setProductName(input.productName);
+      setProductUrl(input.productUrl ?? '');
+      setQuestion(input.question);
+      return dispatch({ kind: 'ask-product-question', actor, input });
+    },
+    [dispatch],
+  );
+  const openHumanCatalogQuestion = useCallback(
+    (product: ShopifyCatalogProduct): void => {
+      void openCatalogQuestion(catalogProductQuestion(product, catalogQuestion), 'human');
+    },
+    [catalogQuestion, openCatalogQuestion],
   );
   const refineMission = useCallback(
     async (input: FilmingMissionInput): Promise<EvidenceNetworkTransition> => {
@@ -738,20 +829,31 @@ export function ProductEvidenceNetwork({
     }),
     [dispatch, evidenceSearchRuntime, missionBoardRuntime, phoneCaptureRuntime, readState],
   );
-  const createTools = useCallback(
-    () => createEvidenceSiteTools(siteToolRuntime),
-    [siteToolRuntime],
+  const catalogSiteToolRuntime = useMemo<CatalogSiteToolRuntime>(
+    () => ({
+      readResult: () => catalogResultRef.current,
+      search: searchCatalog,
+      openQuestion: (input) => openCatalogQuestion(input, 'agent'),
+    }),
+    [openCatalogQuestion, searchCatalog],
   );
-  const availableToolNames = [...getEvidenceNetworkToolNames(state)];
+  const createTools = useCallback(
+    () => [
+      ...createCatalogSiteTools(catalogSiteToolRuntime),
+      ...createEvidenceSiteTools(siteToolRuntime),
+    ],
+    [catalogSiteToolRuntime, siteToolRuntime],
+  );
+  const evidenceToolNames = [...getEvidenceNetworkToolNames(state)];
   if (phoneConnection === null && state.activeCase?.mission?.status === 'open') {
-    availableToolNames.push('refine_filming_mission');
+    evidenceToolNames.push('refine_filming_mission');
   }
   if (
     serviceUrl !== null &&
     phoneConnection === null &&
     state.activeCase?.mission?.status === 'open'
   ) {
-    availableToolNames.push('create_phone_capture_link');
+    evidenceToolNames.push('create_phone_capture_link');
   }
   if (
     serviceUrl !== null &&
@@ -759,11 +861,12 @@ export function ProductEvidenceNetwork({
     state.activeCase?.mission?.status === 'open'
   ) {
     if (phoneConnection.publicMission?.status === 'open') {
-      availableToolNames.push('remove_public_filming_mission');
+      evidenceToolNames.push('remove_public_filming_mission');
     } else {
-      availableToolNames.push('publish_filming_mission');
+      evidenceToolNames.push('publish_filming_mission');
     }
   }
+  const availableToolNames = [...getCatalogToolNames(catalogResult), ...evidenceToolNames];
   const siteToolStatus = useDynamicSiteTools(createTools, availableToolNames.join('|'));
 
   useEffect(() => {
@@ -833,6 +936,8 @@ export function ProductEvidenceNetwork({
 
   const evidenceCase = state.activeCase;
   const answer = currentEvidenceAnswer(state);
+  const recommendationImpact =
+    answer === null ? null : recommendationImpactForAnswer(answer.status);
   const beforeAnswer = initialEvidenceAnswer(state);
   const answerChanged = evidenceCase !== null && evidenceCase.answers.length > 1;
   const sources = evidenceCase?.sources ?? [];
@@ -880,6 +985,15 @@ export function ProductEvidenceNetwork({
     setCopyStatus('idle');
     setSearchPhase('idle');
     setSearchError(null);
+    catalogAbortRef.current?.abort(
+      new DOMException('The product catalog search was reset.', 'AbortError'),
+    );
+    catalogAbortRef.current = null;
+    catalogResultRef.current = null;
+    setCatalogResult(null);
+    setCatalogPhase('idle');
+    setCatalogError(null);
+    setCatalogQuestion('');
     clearPhoneConnection();
     if (initialHandoff !== undefined) {
       window.history.replaceState(window.history.state, '', '/');
@@ -896,6 +1010,12 @@ export function ProductEvidenceNetwork({
         ...(productUrl.trim().length === 0 ? {} : { productUrl: productUrl.trim() }),
         question,
       },
+    });
+  }
+
+  function runCatalogSearch(): void {
+    void searchCatalog({ query: catalogQuery, country: catalogCountry }).catch(() => {
+      // The catalog panel exposes the validated provider or network error.
     });
   }
 
@@ -969,25 +1089,25 @@ export function ProductEvidenceNetwork({
             If the web cannot prove it, ask someone with the product to film it.
           </h1>
           <p className="evidence-hero-copy">
-            ChatGPT searches reviewed network evidence, product pages, public videos, and the open
-            web for a shopper’s exact question. If none proves it, ChatGPT creates the smallest
-            useful filming request; a person with the product records it, and the answer changes
-            with a timestamped citation.
+            ChatGPT can find real new products across merchants through UCP, then search reviewed
+            network evidence, product pages, public videos, and the open web for the shopper’s exact
+            question. If none proves it, ChatGPT asks someone with the product for the smallest
+            useful video—and the answer changes with a timestamped citation.
           </p>
         </div>
         <ol className="evidence-flow" aria-label="Complete product evidence loop">
           <li className="flow-complete">
             <span>1</span>
             <p>
-              <strong>Ask</strong>
-              Any product question
+              <strong>Discover</strong>
+              Real products through UCP
             </p>
           </li>
           <li className={evidenceCase?.discovery === null ? 'flow-current' : 'flow-complete'}>
             <span>2</span>
             <p>
-              <strong>Find the gap</strong>
-              Claims are not proof
+              <strong>Ask</strong>
+              What listings cannot prove
             </p>
           </li>
           <li
@@ -1016,6 +1136,20 @@ export function ProductEvidenceNetwork({
           </li>
         </ol>
       </section>
+
+      <ProductCatalogDiscovery
+        country={catalogCountry}
+        error={catalogError}
+        evidenceQuestion={catalogQuestion}
+        phase={catalogPhase}
+        query={catalogQuery}
+        result={catalogResult}
+        onCountryChange={setCatalogCountry}
+        onEvidenceQuestionChange={setCatalogQuestion}
+        onOpenQuestion={openHumanCatalogQuestion}
+        onQueryChange={setCatalogQuery}
+        onSearch={runCatalogSearch}
+      />
 
       <section className="evidence-agent-brief" aria-labelledby="agent-brief-title">
         <div>
@@ -1050,6 +1184,18 @@ export function ProductEvidenceNetwork({
               <p>{answer?.summary}</p>
             </div>
           </div>
+
+          {recommendationImpact === null ? null : (
+            <div
+              className={`evidence-recommendation recommendation-${recommendationImpact.state}`}
+              role="group"
+              aria-label="Question-scoped shopping recommendation"
+            >
+              <small>Shopping recommendation · for this requirement</small>
+              <strong>{recommendationImpact.headline}</strong>
+              <p>{recommendationImpact.guidance}</p>
+            </div>
+          )}
 
           {answerChanged ? (
             <div className="evidence-before-after" aria-label="Evidence-caused answer change">
@@ -1476,14 +1622,17 @@ export function ProductEvidenceNetwork({
             ))}
           </ul>
           <p className="evidence-contract-note">
-            Mission creation disappears when its job is done. A bounded phone-link tool appears for
-            an open mission; answer-diff inspection appears only after reviewed evidence arrives.
+            Catalog selection appears only after a UCP result. Mission creation disappears when its
+            job is done; answer-diff inspection appears only after reviewed evidence arrives.
           </p>
 
           <section className="evidence-privacy" aria-labelledby="privacy-title">
             <small>Private context stays in ChatGPT</small>
-            <strong id="privacy-title">The page accepts only three public fields</strong>
-            <p>Product name · optional product URL · observable product question</p>
+            <strong id="privacy-title">Every tool has a narrow public boundary</strong>
+            <p>
+              Catalog: generic query + country. Evidence: product name + optional URL + observable
+              question.
+            </p>
             <ul>
               <li>No identity</li>
               <li>No budget</li>

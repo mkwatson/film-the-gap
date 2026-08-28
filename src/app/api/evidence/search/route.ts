@@ -8,6 +8,7 @@ import {
   searchPublicProductEvidence,
   type EvidenceDiscoveryCache,
 } from '@/lib/evidence-network/server/public-evidence-search';
+import { isSameOriginJsonRequest } from '@/lib/http/same-origin-json';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -25,24 +26,8 @@ function json(body: object, status = 200): Response {
   });
 }
 
-function sameOriginJsonRequest(request: Request): boolean {
-  const contentType = request.headers.get('Content-Type')?.toLowerCase() ?? '';
-  if (!contentType.startsWith('application/json')) {
-    return false;
-  }
-  const origin = request.headers.get('Origin');
-  if (origin === null) {
-    return true;
-  }
-  try {
-    return new URL(origin).origin === new URL(request.url).origin;
-  } catch {
-    return false;
-  }
-}
-
 export async function POST(request: Request): Promise<Response> {
-  if (!sameOriginJsonRequest(request)) {
+  if (!isSameOriginJsonRequest(request)) {
     return json({ error: 'same_origin_json_required' }, 403);
   }
   let input: unknown;

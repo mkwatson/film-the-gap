@@ -10,6 +10,7 @@ import {
   type ShopifyCatalogSearchInput,
   type ShopifyCatalogSearchResponse,
 } from '@/lib/evidence-network/ucp-catalog';
+import { isSameOriginJsonRequest } from '@/lib/http/same-origin-json';
 
 export const runtime = 'nodejs';
 export const maxDuration = 15;
@@ -22,22 +23,6 @@ function json(body: object, status = 200): Response {
     status,
     headers: { 'Cache-Control': 'no-store' },
   });
-}
-
-function sameOriginJsonRequest(request: Request): boolean {
-  const contentType = request.headers.get('Content-Type')?.toLowerCase() ?? '';
-  if (!contentType.startsWith('application/json')) {
-    return false;
-  }
-  const origin = request.headers.get('Origin');
-  if (origin === null) {
-    return true;
-  }
-  try {
-    return new URL(origin).origin === new URL(request.url).origin;
-  } catch {
-    return false;
-  }
 }
 
 export interface CatalogEnvironment {
@@ -99,7 +84,7 @@ export async function handleCatalogSearch(
   request: Request,
   dependencies: CatalogSearchRouteDependencies = {},
 ): Promise<Response> {
-  if (!sameOriginJsonRequest(request)) {
+  if (!isSameOriginJsonRequest(request)) {
     return json({ error: 'same_origin_json_required' }, 403);
   }
   let input: unknown;

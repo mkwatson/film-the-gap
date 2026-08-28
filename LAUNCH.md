@@ -18,7 +18,7 @@ Suggested authorization sentence:
 1. Re-run the read-only account audit and show the exact Vercel scope, Cloudflare account, balances, Browser Run headroom, and proposed resource names before mutation.
 2. Create only the new standalone Vercel project, D1 database, Worker, non-secret budget, environment variables, and staged firewall rule described in the runbook. Pause for Mark's private Gateway-key creation and non-echoing secret entry. Stop on any unexpected account, hostname, price, permission, or existing-resource collision.
 3. Deploy the exact clean commit, run the public release verifier, and preserve immutable Vercel/Worker/commit receipts without logging capabilities or secrets.
-4. Drive the complete product page → exact evidence case → open filming request → phone contribution → reviewed answer change → upgraded product page flow in WebMCP Chrome, ordinary-browser fallback, and every browser surface this session can control.
+4. Drive the complete live UCP discovery → exact product question → open filming request → phone contribution → reviewed recommendation change → upgraded product page flow in WebMCP Chrome, ordinary-browser fallback, and every browser surface this session can control.
 5. Hand Mark only the irreducible ChatGPT-desktop, physical-phone, cold-tester, YouTube, and Devpost actions, with exact prompts and pass/fail checks.
 
 ## Release order
@@ -30,7 +30,7 @@ local frozen candidate
   → new Vercel project + D1 + Worker + Mark-private secrets
   → target guard proves the new link, clean commit, playback origin, Worker, and D1 IDs
   → final Vercel deployment + WAF
-  → automated public verifier
+  → automated public verifier, including exact UCP profile + live catalog query
   → real bottle / phone / Stream / Gateway rehearsal
   → same product page visibly gains reviewed evidence
   → Chrome + ChatGPT + ordinary-browser + cold-tester receipts
@@ -41,4 +41,4 @@ local frozen candidate
 
 Stop before proceeding if the public hostname carries unrelated branding, either origin requires login, the Cloudflare account is not otherwise idle, any vendor shows an unapproved price or usage state, the Gateway budget can renew, a secret appears in output or a URL, the model cannot fetch the authorized MP4 before publication, unsigned raw Stream playback still works after network publication, the signed viewer fails logged out, the product page does not replace its stale Site Tool after publication, ChatGPT cannot discover the native tools, or a cold tester needs coaching to understand the loop.
 
-The signed-playback code candidate `208c0bfd2620bc63ff94cd12f76f80e51a6dd524` passes all 232 tests, the Worker dry run, the eight-route production build, both complete browser journeys, desktop and phone inspection of the signed viewer, the native product-page bridge check, the independent 15/15 WebMCP smoke, and an exact cold-clone gate. Public services, a real phone recording, current ChatGPT, and cold-user comprehension remain deliberately unclaimed until this card is executed.
+The current local candidate adds privacy-minimized Shopify Global Catalog/UCP discovery, exact current-variant selection, explicit recommendation impact, a production UCP profile/build guard, and a live catalog release probe to the previously frozen signed-playback foundation. Both complete nine-step browser journeys and the independent 16/16 WebMCP smoke pass. The final full gate and cold clone are repeated on the exact release commit before this card is executed; public services, a real phone recording, current ChatGPT, and cold-user comprehension remain deliberately unclaimed until then.

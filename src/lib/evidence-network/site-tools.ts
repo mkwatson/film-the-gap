@@ -11,6 +11,7 @@ import {
   type EvidenceNetworkState,
   type EvidenceNetworkTransition,
 } from './model';
+import { recommendationImpactForAnswer } from './recommendation-impact';
 import type { EvidencePhoneCaptureReceipt } from './phone-session';
 import type { PublicEvidenceMission } from './remote-protocol';
 
@@ -375,6 +376,10 @@ export function answerChangeSnapshot(state: EvidenceNetworkState): object {
     question: evidenceCase.question.text,
     before,
     after,
+    recommendationChange: {
+      before: before === null ? null : recommendationImpactForAnswer(before.status).state,
+      after: after === null ? null : recommendationImpactForAnswer(after.status).state,
+    },
     decisiveEvidence: evidenceCase.observations
       .filter(({ id }) => after?.decisiveObservationIds.includes(id) ?? false)
       .map(({ result, confidence, text, citation }) => {
@@ -580,7 +585,7 @@ function allEvidenceSiteTools(
       name: 'inspect_answer_change',
       title: 'Inspect evidence-caused answer change',
       description:
-        'Compare the original answer with the current answer and return only the reviewed observations and timestamp citations that caused the change.',
+        'Compare the original answer and question-scoped recommendation state with the current result, then return only the reviewed observations and timestamp citations that caused the change.',
       inputSchema: emptyInputSchema,
       annotations: {
         readOnlyHint: true,

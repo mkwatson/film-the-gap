@@ -1,0 +1,21 @@
+[
+  {
+    "name": "A catalog claim becomes a separate observable evidence question",
+    "messages": [
+      {
+        "role": "user",
+        "type": "message",
+        "content": "The visible UCP result includes gid://shopify/ProductVariant/456. Select that exact variant and ask whether the filled bottle stays leak-free upside down for ten seconds. Treat the listing's leak-resistant claim as unverified context, not an answer."
+      }
+    ],
+    "expectedCall": [
+      {
+        "functionName": "open_catalog_product_question",
+        "arguments": {
+          "variantId": "gid://shopify/ProductVariant/456",
+          "question": "Does the filled bottle stay leak-free upside down for ten seconds?"
+        }
+      }
+    ]
+  }
+]

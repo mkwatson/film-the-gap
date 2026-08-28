@@ -4,7 +4,7 @@ These instructions apply to the entire repository.
 
 ## Product contract
 
-- Keep one coherent end-to-end product: a shopper asks an observable product question; existing reviewed evidence answers it or WebMCP creates a bounded filming mission; a product owner records and reviews the missing proof; the first answer changes; a later matching shopper reuses the citation.
+- Keep one coherent end-to-end product: a shopper asks an observable product question; existing reviewed evidence answers it or WebMCP creates a bounded filming mission; someone with access to the product records and reviews the missing proof; the first answer changes; a later matching shopper reuses the citation.
 - WebMCP is load-bearing. Tools must be page-owned, narrow, state-dependent, human-visible, cancellable where the runtime permits, and protected against stale state.
 - Keep public discovery leads, media reuse rights, model proposals, contributor review, capture timing, and claim truth explicitly distinct.
 - Never claim that a phrase, digest, model, public URL, or contributor assertion proves identity, ownership, authenticity, deepfake absence, or ground truth.

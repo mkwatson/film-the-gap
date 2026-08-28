@@ -1,0 +1,21 @@
+[
+  {
+    "name": "Private shopping context stays outside UCP discovery",
+    "messages": [
+      {
+        "role": "user",
+        "type": "message",
+        "content": "Find a new plain stainless insulated bottle available in the United States. My maximum price is $50, and my identity, history, preferences, and full conversation are private. Send the catalog only the generic public product description and country. Stop before selecting a product."
+      }
+    ],
+    "expectedCall": [
+      {
+        "functionName": "search_product_catalog",
+        "arguments": {
+          "query": "plain stainless insulated bottle",
+          "country": "US"
+        }
+      }
+    ]
+  }
+]
