@@ -23,6 +23,12 @@ import {
   type ProductEvidenceCase,
 } from '@/lib/evidence-network/model';
 import {
+  createEvidenceNetworkStateFromHandoff,
+  evidenceCaseHandoffSource,
+  type EvidenceCaseHandoff,
+} from '@/lib/evidence-network/case-handoff';
+import { demoProduct } from '@/lib/evidence-network/demo-product';
+import {
   configuredEvidenceServiceUrl,
   contributorPath,
   createRemoteEvidenceCase,
@@ -50,12 +56,7 @@ import {
 import { isPublicHttpUrl } from '@/lib/evidence-network/url-policy';
 import { useDynamicSiteTools } from '@/lib/webmcp/use-dynamic-site-tools';
 
-const defaultMission = {
-  instruction: 'Fill the bottle, close the lid, and hold it upside down over dry paper.',
-  successCriterion: 'Keep the closed lid and dry paper visible for the entire test.',
-  minimumSeconds: 10,
-  continuousTakeRequired: true,
-} as const;
+const defaultMission = demoProduct.mission;
 
 const agentStarter =
   'Use this page’s Site Tools. Inspect the active product question and search existing evidence. Treat ordinary web results as leads, never proof; only rights-cleared, human-reviewed network recordings may change the answer. If the sources still do not prove it, create the smallest continuous filming mission and a phone capture link, then publish only that mission’s public product, question, and filming fields to the open request board. This is my explicit confirmation to publish those fields—never my identity, preferences, history, budget, or conversation. Do not infer the result. Stop before anyone records; after reviewed evidence arrives, inspect exactly how the answer changed.';
@@ -242,15 +243,42 @@ function remoteRequestForState(state: EvidenceNetworkState): CreateRemoteEvidenc
       };
 }
 
-export function ProductEvidenceNetwork(): React.JSX.Element {
-  const [state, setState] = useState<EvidenceNetworkState>(createDemoEvidenceQuestionState);
-  const [lastMessage, setLastMessage] = useState(
-    'One source was indexed. Its marketing claim does not prove the physical behavior.',
+function phoneConnectionMatchesHandoff(
+  connection: EvidencePhoneConnection,
+  handoff: EvidenceCaseHandoff,
+): boolean {
+  const evidenceCase = connection.credentials.state.activeCase;
+  return (
+    evidenceCase?.product.name === handoff.question.productName &&
+    evidenceCase.product.suppliedUrl === (handoff.question.productUrl ?? null) &&
+    evidenceCase.question.text === handoff.question.question
   );
-  const [productName, setProductName] = useState('USB-C lavalier microphone');
-  const [productUrl, setProductUrl] = useState('');
+}
+
+interface ProductEvidenceNetworkProps {
+  readonly initialHandoff?: EvidenceCaseHandoff;
+}
+
+export function ProductEvidenceNetwork({
+  initialHandoff,
+}: ProductEvidenceNetworkProps = {}): React.JSX.Element {
+  const [state, setState] = useState<EvidenceNetworkState>(() =>
+    initialHandoff === undefined
+      ? createDemoEvidenceQuestionState()
+      : createEvidenceNetworkStateFromHandoff(initialHandoff),
+  );
+  const [lastMessage, setLastMessage] = useState(
+    initialHandoff === undefined
+      ? 'One source was indexed. Its marketing claim does not prove the physical behavior.'
+      : 'The product page opened this exact evidence question without carrying private shopping context.',
+  );
+  const [productName, setProductName] = useState(
+    initialHandoff?.question.productName ?? 'USB-C lavalier microphone',
+  );
+  const [productUrl, setProductUrl] = useState(initialHandoff?.question.productUrl ?? '');
   const [question, setQuestion] = useState(
-    'Can the phone charge while the receiver is connected and recording?',
+    initialHandoff?.question.question ??
+      'Can the phone charge while the receiver is connected and recording?',
   );
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const [searchPhase, setSearchPhase] = useState<'idle' | 'searching' | 'complete' | 'error'>(
@@ -272,13 +300,16 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
   const phoneConnectionRef = useRef(phoneConnection);
 
   useEffect(() => {
+    if (initialHandoff !== undefined) {
+      return;
+    }
     const nextState = attachCurrentDemoProductPage(stateRef.current, window.location.href);
     if (nextState === stateRef.current) {
       return;
     }
     stateRef.current = nextState;
     setState(nextState);
-  }, []);
+  }, [initialHandoff]);
 
   const clearPhoneConnection = useCallback((): void => {
     clearEvidencePhoneConnection(window.sessionStorage);
@@ -353,12 +384,15 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
       if (result.ok && ['ask-product-question', 'create-filming-mission'].includes(command.kind)) {
         clearPhoneConnection();
       }
+      if (result.ok && command.kind === 'ask-product-question' && initialHandoff !== undefined) {
+        window.history.replaceState(window.history.state, '', '/');
+      }
       stateRef.current = result.state;
       setState(result.state);
       setLastMessage(result.message);
       return result;
     },
-    [clearPhoneConnection, revokeOpenPublicMission],
+    [clearPhoneConnection, initialHandoff, revokeOpenPublicMission],
   );
   const createPhoneCapture = useCallback(async (): Promise<EvidencePhoneCaptureReceipt> => {
     const existing = phoneConnectionRef.current;
@@ -367,6 +401,33 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     }
     if (serviceUrl === null) {
       throw new Error('The shared evidence service is not configured on this deployment.');
+    }
+    if (initialHandoff !== undefined) {
+      const restored = restoreEvidencePhoneConnection(
+        window.sessionStorage,
+        serviceUrl,
+        window.location.origin,
+      );
+      if (restored !== null) {
+        if (!phoneConnectionMatchesHandoff(restored, initialHandoff)) {
+          const message =
+            'A different live evidence case is still connected in this tab. Return home and reset or finish it before replacing its private capability.';
+          setPhoneError(message);
+          setPhonePhase('error');
+          throw new Error(message);
+        }
+        phoneConnectionRef.current = restored;
+        setPhoneConnection(restored);
+        stateRef.current = restored.credentials.state;
+        setState(restored.credentials.state);
+        setLastMessage('Reconnected to the existing durable product-evidence case.');
+        setPhonePhase(
+          restored.credentials.state.activeCase?.mission?.status === 'fulfilled'
+            ? 'complete'
+            : 'waiting',
+        );
+        return restored.receipt;
+      }
     }
     setPhonePhase('connecting');
     setPhoneError(null);
@@ -404,7 +465,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
       setPhonePhase('error');
       throw error;
     }
-  }, [serviceUrl]);
+  }, [initialHandoff, serviceUrl]);
 
   useEffect(() => {
     if (serviceUrl === null || phoneConnectionRef.current !== null) {
@@ -416,6 +477,9 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
       window.location.origin,
     );
     if (restored === null) {
+      return;
+    }
+    if (initialHandoff !== undefined && !phoneConnectionMatchesHandoff(restored, initialHandoff)) {
       return;
     }
     let active = true;
@@ -437,7 +501,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     return () => {
       active = false;
     };
-  }, [serviceUrl]);
+  }, [initialHandoff, serviceUrl]);
   const searchEvidence = useCallback(
     async (
       actor: Extract<EvidenceNetworkCommand, { kind: 'record-evidence-discovery' }>['actor'],
@@ -696,6 +760,9 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
     setSearchPhase('idle');
     setSearchError(null);
     clearPhoneConnection();
+    if (initialHandoff !== undefined) {
+      window.history.replaceState(window.history.state, '', '/');
+    }
   }
 
   function submitQuestion(event: FormEvent<HTMLFormElement>): void {
@@ -713,7 +780,11 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
 
   function createMission(): void {
     const activeCase = stateRef.current.activeCase;
-    const isBottleDemo = isRightsCleanBottleDemo(activeCase);
+    const isBottleDemo =
+      isRightsCleanBottleDemo(activeCase) ||
+      (initialHandoff?.source === evidenceCaseHandoffSource &&
+        activeCase?.product.name === demoProduct.name &&
+        activeCase.question.text === demoProduct.question);
     void dispatch({
       kind: 'create-filming-mission',
       actor: 'human',

@@ -581,7 +581,7 @@ async function run(): Promise<void> {
         await waitForBrowserValue(
           driver,
           'public mission board listing',
-          pageIncludesScript(productName, productQuestion, 'I have this product'),
+          pageIncludesScript(productName, productQuestion, 'I can film this product'),
           (value) => value === true,
           config.commandTimeoutMs,
         );
@@ -619,7 +619,7 @@ async function run(): Promise<void> {
           const claimed = driver.eval(`(() => {
             const article = document.getElementById(${JSON.stringify(`mission-${missionId}`)});
             const button = [...(article?.querySelectorAll('button') ?? [])].find(
-              (candidate) => candidate.textContent?.trim() === 'I have this product',
+              (candidate) => candidate.textContent?.trim() === 'I can film this product',
             );
             if (!(button instanceof HTMLButtonElement) || button.disabled) return false;
             button.click();

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { createCaptureChallenge, type CaptureChallenge } from './capture-challenge';
+import { demoProduct } from './demo-product';
 import { canonicalizePublicDiscoveryUrl, publicHttpUrlSchema } from './url-policy';
 
 export const evidenceAnswerStatuses = [
@@ -557,12 +558,12 @@ export function createDemoEvidenceQuestionState(): EvidenceNetworkState {
     id: 'case-1',
     product: {
       id: 'product-1',
-      name: 'Everyday insulated travel bottle',
+      name: demoProduct.name,
       suppliedUrl: null,
     },
     question: {
       id: 'question-1',
-      text: 'Does the filled bottle stay leak-free when held upside down for 10 seconds?',
+      text: demoProduct.question,
       createdAt: demoTimestamp,
     },
     sources: [source],
@@ -596,7 +597,7 @@ export function attachDemoProductPageUrl(
     !parsed.success ||
     new URL(parsed.data).protocol !== 'https:' ||
     evidenceCase?.id !== 'case-1' ||
-    evidenceCase.product.name !== 'Everyday insulated travel bottle'
+    evidenceCase.product.name !== demoProduct.name
   ) {
     return state;
   }

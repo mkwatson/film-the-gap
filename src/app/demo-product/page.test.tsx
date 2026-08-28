@@ -12,9 +12,14 @@ describe('rights-clean demo product page', () => {
     ).toBeTruthy();
     expect(screen.getByRole('heading', { level: 2, name: '“Leak resistant.”' })).toBeTruthy();
     expect(screen.getByText('Claim only · not verified evidence')).toBeTruthy();
-    expect(screen.getByText('No continuous inverted test is shown.')).toBeTruthy();
-    expect(screen.getByText('No reviewed video or timestamp supports an answer.')).toBeTruthy();
-    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getByText('The claim shows no continuous inverted test.')).toBeTruthy();
+    expect(
+      screen.getByText('The listing copy provides no reviewed video or timestamp.'),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('link', { name: 'Ask someone to film the missing proof →' }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /buy|purchase|add to cart/i })).toBeNull();
     expect(
       screen.getByRole('link', { name: '← Product evidence network' }).getAttribute('href'),
     ).toBe('/');

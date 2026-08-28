@@ -8,8 +8,8 @@
     "dev": "wrangler dev -c wrangler.evidence.jsonc",
     "d1:migrate:evidence-local": "wrangler d1 migrations apply webmcp-product-evidence-library --local --config wrangler.evidence.jsonc",
     "d1:migrate:evidence-acceptance": "wrangler d1 migrations apply webmcp-evidence-library-acceptance --local --config test/fixtures/evidence-room.wrangler.jsonc",
-    "dev:evidence-acceptance": "wrangler dev -c test/fixtures/evidence-room.wrangler.jsonc --port 8792",
-    "dev:evidence-services": "wrangler dev -c test/fixtures/evidence-services.wrangler.jsonc --port 8793",
+    "dev:evidence-acceptance": "wrangler dev -c test/fixtures/evidence-room.wrangler.jsonc --port 8792 --inspector-port 9233",
+    "dev:evidence-services": "wrangler dev -c test/fixtures/evidence-services.wrangler.jsonc --port 8793 --inspector-port 9232",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

@@ -5,6 +5,11 @@ import {
   applyEvidenceNetworkCommand,
   createDemoEvidenceNetworkState,
 } from '@/lib/evidence-network/model';
+import {
+  evidenceCaseHandoffSource,
+  evidenceCaseHandoffVersion,
+} from '@/lib/evidence-network/case-handoff';
+import { demoProduct } from '@/lib/evidence-network/demo-product';
 import { remoteEvidenceProtocolVersion } from '@/lib/evidence-network/remote-protocol';
 
 import { ProductEvidenceNetwork } from './product-evidence-network';
@@ -99,6 +104,36 @@ afterEach(() => {
 });
 
 describe('ProductEvidenceNetwork', () => {
+  it('opens directly on the exact public question handed off by a product page', async () => {
+    setModelContext(undefined);
+    render(
+      <ProductEvidenceNetwork
+        initialHandoff={{
+          version: evidenceCaseHandoffVersion,
+          source: evidenceCaseHandoffSource,
+          question: {
+            productName: demoProduct.name,
+            productUrl: 'https://catalog.example/demo-product',
+            question: demoProduct.question,
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText(demoProduct.name)).toBeTruthy();
+    expect(screen.getAllByText(demoProduct.question)).toHaveLength(2);
+    expect(screen.getByText('Shopper-supplied product page')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Open source page ↗' }).getAttribute('href')).toBe(
+      'https://catalog.example/demo-product',
+    );
+    expect(
+      screen.getByText(
+        /product page opened this exact evidence question without carrying private/i,
+      ),
+    ).toBeTruthy();
+    expect(await screen.findByText('Human controls ready')).toBeTruthy();
+  });
+
   it('keeps the search and filming handoff usable without native Site Tools', async () => {
     setModelContext(undefined);
     render(<ProductEvidenceNetwork />);
