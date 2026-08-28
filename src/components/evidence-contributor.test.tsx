@@ -229,6 +229,7 @@ describe('EvidenceContributor', () => {
       'https://rooms.example',
       'BCDF2345',
       expect.objectContaining({
+        confirmRightsForUpload: true,
         fileSizeBytes: file.size,
         maxDurationSeconds: 15,
         mimeType: 'video/mp4',

@@ -268,6 +268,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
     try {
       const reserved = await reserveRemoteEvidenceUpload(serviceUrl, caseId, {
         token,
+        confirmRightsForUpload: true,
         fileSizeBytes: file.size,
         maxDurationSeconds: Math.min(
           90,

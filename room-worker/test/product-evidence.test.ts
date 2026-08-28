@@ -348,6 +348,7 @@ describe('generic product evidence cases', () => {
         headers: { 'Content-Type': 'application/json', Origin: origin },
         body: JSON.stringify({
           token: credentials.contributorToken,
+          confirmRightsForUpload: true,
           fileSizeBytes: 2_000_000,
           maxDurationSeconds: 30,
           mimeType: 'video/mp4',
@@ -515,6 +516,7 @@ describe('generic product evidence cases', () => {
         headers: { 'Content-Type': 'application/json', Origin: origin },
         body: JSON.stringify({
           token: publicContributorToken,
+          confirmRightsForUpload: true,
           fileSizeBytes: 2_000_000,
           maxDurationSeconds: 30,
           mimeType: 'video/mp4',
@@ -585,6 +587,7 @@ describe('generic product evidence cases', () => {
         headers: { 'Content-Type': 'application/json', Origin: origin },
         body: JSON.stringify({
           token: credentials.contributorToken,
+          confirmRightsForUpload: true,
           fileSizeBytes: 2_000_000,
           maxDurationSeconds: 30,
           mimeType: 'video/mp4',
@@ -643,6 +646,7 @@ describe('generic product evidence cases', () => {
         headers: { 'Content-Type': 'application/json', Origin: origin },
         body: JSON.stringify({
           token: credentials.contributorToken,
+          confirmRightsForUpload: true,
           fileSizeBytes: 2_000_000,
           maxDurationSeconds: 30,
           mimeType: 'video/mp4',
@@ -690,6 +694,7 @@ describe('generic product evidence cases', () => {
         headers: { 'Content-Type': 'application/json', Origin: origin },
         body: JSON.stringify({
           token: credentials.ownerToken,
+          confirmRightsForUpload: true,
           fileSizeBytes: 1_000_000,
           maxDurationSeconds: 30,
           mimeType: 'video/mp4',
@@ -702,12 +707,29 @@ describe('generic product evidence cases', () => {
 
   it('caps upload attempts and rejects clips larger than the bounded analysis path', async () => {
     const { credentials } = await createCase();
+    const unconfirmed = await SELF.fetch(
+      `https://rooms.example/evidence-cases/${credentials.caseId}/uploads`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({
+          token: credentials.contributorToken,
+          fileSizeBytes: 2_000_000,
+          maxDurationSeconds: 15,
+          mimeType: 'video/mp4',
+        }),
+      },
+    );
+    expect(unconfirmed.status).toBe(400);
+    expect(await unconfirmed.json()).toMatchObject({ error: 'invalid_upload_request' });
+
     const reserve = (fileSizeBytes: number): Promise<Response> =>
       SELF.fetch(`https://rooms.example/evidence-cases/${credentials.caseId}/uploads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Origin: origin },
         body: JSON.stringify({
           token: credentials.contributorToken,
+          confirmRightsForUpload: true,
           fileSizeBytes,
           maxDurationSeconds: 15,
           mimeType: 'video/mp4',
@@ -735,6 +757,7 @@ describe('generic product evidence cases', () => {
         headers: { 'Content-Type': 'application/json', Origin: origin },
         body: JSON.stringify({
           token: credentials.contributorToken,
+          confirmRightsForUpload: true,
           fileSizeBytes: 2_000_000,
           maxDurationSeconds: 30,
           mimeType: 'video/mp4',
@@ -765,6 +788,7 @@ describe('generic product evidence cases', () => {
         headers: { 'Content-Type': 'application/json', Origin: origin },
         body: JSON.stringify({
           token: credentials.contributorToken,
+          confirmRightsForUpload: true,
           fileSizeBytes: 2_000_000,
           maxDurationSeconds: 30,
           mimeType: 'video/mp4',

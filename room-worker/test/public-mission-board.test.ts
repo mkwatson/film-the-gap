@@ -143,6 +143,7 @@ describe('public product filming mission board', () => {
         headers: { 'Content-Type': 'application/json', Origin: appOrigin },
         body: JSON.stringify({
           token: claim.contributorToken,
+          confirmRightsForUpload: true,
           fileSizeBytes: 1_000_000,
           maxDurationSeconds: 20,
           mimeType: 'video/mp4',

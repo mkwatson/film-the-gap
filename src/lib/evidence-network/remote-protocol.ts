@@ -273,6 +273,7 @@ export type OwnerEvidenceCommandRequest = z.infer<typeof ownerEvidenceCommandReq
 
 export const reserveEvidenceUploadRequestSchema = z.strictObject({
   token: tokenSchema,
+  confirmRightsForUpload: z.literal(true),
   fileSizeBytes: z.number().int().positive().max(maximumDirectUploadBytes),
   maxDurationSeconds: z.number().int().min(2).max(90),
   mimeType: z.string().trim().min(3).max(120),

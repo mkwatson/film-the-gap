@@ -9,6 +9,7 @@ import {
   publicEvidenceMissionListSchema,
   publishRemoteEvidenceRequestSchema,
   remoteEvidenceCaseCredentialsSchema,
+  reserveEvidenceUploadRequestSchema,
   toReviewedEvidenceInput,
 } from './remote-protocol';
 
@@ -149,8 +150,27 @@ describe('remote product evidence protocol', () => {
     });
   });
 
-  it('requires a literal rights confirmation before model analysis', () => {
+  it('requires literal rights confirmations before upload and model analysis', () => {
     const token = 'c'.repeat(43);
+    const upload = {
+      token,
+      fileSizeBytes: 2_000_000,
+      maxDurationSeconds: 30,
+      mimeType: 'video/mp4',
+    };
+    expect(reserveEvidenceUploadRequestSchema.safeParse(upload).success).toBe(false);
+    expect(
+      reserveEvidenceUploadRequestSchema.safeParse({
+        ...upload,
+        confirmRightsForUpload: false,
+      }).success,
+    ).toBe(false);
+    expect(
+      reserveEvidenceUploadRequestSchema.safeParse({
+        ...upload,
+        confirmRightsForUpload: true,
+      }).success,
+    ).toBe(true);
     expect(analyzeEvidenceVideoRequestSchema.safeParse({ token }).success).toBe(false);
     expect(
       analyzeEvidenceVideoRequestSchema.safeParse({
