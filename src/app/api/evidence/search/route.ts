@@ -4,6 +4,7 @@ import {
   evidenceDiscoveryInputSchema,
   productQuestionInputSchema,
 } from '@/lib/evidence-network/model';
+import { demoProduct } from '@/lib/evidence-network/demo-product';
 import {
   searchPublicProductEvidence,
   type EvidenceDiscoveryCache,
@@ -26,6 +27,31 @@ function json(body: object, status = 200): Response {
   });
 }
 
+function isSameOriginDemoQuestion(
+  input: {
+    readonly productName: string;
+    readonly productUrl?: string | undefined;
+    readonly question: string;
+  },
+  requestUrl: string,
+): boolean {
+  if (
+    input.productName !== demoProduct.name ||
+    input.question !== demoProduct.question ||
+    input.productUrl === undefined
+  ) {
+    return false;
+  }
+  const request = new URL(requestUrl);
+  const product = new URL(input.productUrl);
+  return (
+    product.origin === request.origin &&
+    product.pathname === demoProduct.path &&
+    product.search === '' &&
+    product.hash === ''
+  );
+}
+
 export async function POST(request: Request): Promise<Response> {
   if (!isSameOriginJsonRequest(request)) {
     return json({ error: 'same_origin_json_required' }, 403);
@@ -40,13 +66,14 @@ export async function POST(request: Request): Promise<Response> {
   if (!parsed.success) {
     return json({ error: 'invalid_product_question', issues: parsed.error.issues }, 400);
   }
+  const demoQuestion = isSameOriginDemoQuestion(parsed.data, request.url);
   const result = await searchPublicProductEvidence(
     parsed.data,
     {
-      scrapeCreatorsApiKey: process.env.SCRAPECREATORS_API_KEY,
-      gatewayApiKey: process.env.AI_GATEWAY_DISCOVERY_API_KEY,
-      gatewayOidcAvailable: process.env.VERCEL === '1',
-      ...(process.env.EVIDENCE_PAGE_READER_TOKEN?.trim()
+      scrapeCreatorsApiKey: demoQuestion ? undefined : process.env.SCRAPECREATORS_API_KEY,
+      gatewayApiKey: demoQuestion ? undefined : process.env.AI_GATEWAY_DISCOVERY_API_KEY,
+      gatewayOidcAvailable: !demoQuestion && process.env.VERCEL === '1',
+      ...(!demoQuestion && process.env.EVIDENCE_PAGE_READER_TOKEN?.trim()
         ? { pageReaderToken: process.env.EVIDENCE_PAGE_READER_TOKEN.trim() }
         : {}),
       ...(process.env.NEXT_PUBLIC_EVIDENCE_ROOM_URL?.trim()

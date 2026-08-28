@@ -1,12 +1,17 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { demoProduct } from '@/lib/evidence-network/demo-product';
 
 import { POST } from './route';
 
 const originalKey = process.env.SCRAPECREATORS_API_KEY;
 const originalGatewayKey = process.env.AI_GATEWAY_DISCOVERY_API_KEY;
 const originalVercel = process.env.VERCEL;
+const originalPageReaderToken = process.env.EVIDENCE_PAGE_READER_TOKEN;
+const originalEvidenceRoomUrl = process.env.NEXT_PUBLIC_EVIDENCE_ROOM_URL;
 
 afterEach(() => {
+  vi.unstubAllGlobals();
   if (originalKey === undefined) {
     delete process.env.SCRAPECREATORS_API_KEY;
   } else {
@@ -21,6 +26,16 @@ afterEach(() => {
     delete process.env.VERCEL;
   } else {
     process.env.VERCEL = originalVercel;
+  }
+  if (originalPageReaderToken === undefined) {
+    delete process.env.EVIDENCE_PAGE_READER_TOKEN;
+  } else {
+    process.env.EVIDENCE_PAGE_READER_TOKEN = originalPageReaderToken;
+  }
+  if (originalEvidenceRoomUrl === undefined) {
+    delete process.env.NEXT_PUBLIC_EVIDENCE_ROOM_URL;
+  } else {
+    process.env.NEXT_PUBLIC_EVIDENCE_ROOM_URL = originalEvidenceRoomUrl;
   }
 });
 
@@ -83,5 +98,42 @@ describe('product evidence search route', () => {
       status: 'unavailable',
       leads: [],
     });
+  });
+
+  it('checks only reusable evidence for the same-origin rights-clean judge example', async () => {
+    process.env.VERCEL = '1';
+    process.env.SCRAPECREATORS_API_KEY = 'configured-social-key';
+    process.env.AI_GATEWAY_DISCOVERY_API_KEY = 'configured-gateway-key';
+    process.env.EVIDENCE_PAGE_READER_TOKEN = 'configured-page-reader-token';
+    process.env.NEXT_PUBLIC_EVIDENCE_ROOM_URL = 'https://evidence.example';
+    const fetcher = vi.fn(async (input: string | URL | Request): Promise<Response> => {
+      if (String(input) === 'https://evidence.example/evidence-library/search') {
+        return Response.json({ status: 'complete', records: [], warnings: [] });
+      }
+      throw new Error(`The judge example reached an unexpected public provider: ${String(input)}`);
+    });
+    vi.stubGlobal('fetch', fetcher);
+
+    const response = await POST(
+      new Request('https://film.example/api/evidence/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productName: demoProduct.name,
+          productUrl: `https://film.example${demoProduct.path}`,
+          question: demoProduct.question,
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      provider: 'evidence_network',
+      status: 'partial',
+      searchedPlatforms: [],
+      reviewedEvidence: [],
+    });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher.mock.calls[0]?.[0]).toBe('https://evidence.example/evidence-library/search');
   });
 });
