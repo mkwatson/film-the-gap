@@ -293,7 +293,7 @@ The verifier uses manual redirects and bounded bodies. It proves:
 1. the app exposes the exact reviewed commit and compiled Worker origin;
 2. the standalone Worker exposes the same commit, both rate-limit bindings, the two-upload cap, Stream, Browser Run, live video analysis, D1, the 30-day reuse boundary, and daily expiry purge;
 3. real read-only D1 queries succeed through both the reusable-evidence and open-mission contracts, proving the binding and migrations rather than trusting health metadata;
-4. shopper, owned demo-product, mission-board, and contributor pages have the intended route-scoped camera, microphone, upload, playback, CORS, CSP, referrer, and content-type boundaries; the demo-product page also exposes exactly `search=yes, ai-input=yes, ai-train=no`;
+4. shopper, owned demo-product, strict product-evidence handoff, mission-board, and contributor pages have the intended route-scoped camera, microphone, upload, playback, CORS, CSP, referrer, and content-type boundaries; the handoff renders the exact product question, and the demo-product page also exposes exactly `search=yes, ai-input=yes, ai-train=no`;
 5. an untrusted browser origin is rejected; and
 6. one disposable evidence case is created and survives a Durable Object read-back.
 
@@ -301,18 +301,20 @@ The report contains only public Worker metadata and step timings. It parses but 
 
 Then perform one user-approved paid rehearsal on the final origins:
 
-1. Clean unauthenticated desktop browser: open the same-origin `/demo-product` source, then search the default question and confirm a real Browser Run receipt whose page text remains non-decisive. Also repeat once with an arbitrary public product URL/question before creating the mission and QR/link.
+1. Clean unauthenticated desktop browser: open `/demo-product`, confirm zero reviewed videos and the initial `inspect_product_claim` + `open_product_evidence_case` Site Tools, then execute the native handoff into the exact prefilled `/case` route. Search the default question and confirm a real Browser Run receipt whose page text remains non-decisive. Also repeat once with an arbitrary public product URL/question before creating the mission and QR/link.
 2. Physical phone: owned unbranded object, say or show the issued phrase with the product visible, continuous recording, real direct Stream upload, real Gateway proposal and phrase check, explicit correction/review, publish.
    Confirm specifically that the Gateway provider can fetch the generated public MP4 while Stream playback-origin restrictions are active; current Cloudflare documentation describes those restrictions for HLS/DASH playback but does not explicitly guarantee this downstream-download combination.
 3. Contributor deliberately selects publishing rights, explicitly confirms the complete review, and opts into 30-day network reuse; confirm a missing confirmation or missing rights selection cannot publish, and weak/inconclusive evidence cannot be selected for reuse.
 4. Desktop reload: same durable case and timestamped evidence still visible.
-5. Open a fresh case for the exact same product URL and question; confirm D1 returns the reviewed Stream citation and no new filming mission appears.
-6. Current WebMCP-enabled Chrome: complete native Site Tool journey.
-7. Latest ChatGPT desktop app: use a non-Enterprise, non-Edu workspace; select GPT-5.6 Sol or Terra; turn on **Settings → Browser → Permissions → Enable site tools**. Then start a fresh desktop Codex thread, explicitly invoke `@Browser`, open the final URL in that built-in browser, and confirm **Site tools → Available site tools** lists the native tools before prompting the journey. Complete the same journey and capture **Recently used → Sources**. A CLI/IDE/background goal session may lack the trusted browser bridge even on the same Mac, so do not spend release time trying to repair that session. Do not substitute ChatGPT in an ordinary web browser or GPT-5.6 Luna, where Site Tools are unavailable.
+5. Return to the exact `/demo-product` URL. Confirm the page now shows the reviewed Stream citation and timestamp, its handoff tool is absent, and `inspect_reviewed_product_evidence` returns the same record. As a separate reuse check, open a fresh case for the exact same URL/question and confirm no new filming mission appears.
+6. Current WebMCP-enabled Chrome: complete the native Site Tool journey from the product page, through filming and review, and back to the upgraded product page.
+7. Latest ChatGPT desktop app: use a non-Enterprise, non-Edu workspace; select GPT-5.6 Sol or Terra; turn on **Settings → Browser → Permissions → Enable site tools**. Then start a fresh desktop Codex thread, explicitly invoke `@Browser`, open the final product URL in that built-in browser, and confirm **Site tools → Available site tools** lists the native product-page tools before prompting the journey. Complete the same product page → evidence request → reviewed video → upgraded product page loop and capture **Recently used → Sources**. A CLI/IDE/background goal session may lack the trusted browser bridge even on the same Mac, so do not spend release time trying to repair that session. Do not substitute ChatGPT in an ordinary web browser or GPT-5.6 Luna, where Site Tools are unavailable.
 8. Ordinary-browser fallback: complete the journey without Site Tools.
 9. Cold tester: understands and completes the canonical flow without coaching.
 
 Record actual result, duration, browser/build versions, Worker version, model ID, Stream UID, and failures. Do not put contributor capabilities, Gateway keys, vendor keys, or raw private URLs in the receipt.
+
+After every mandatory receipt passes, and only within Mark's approved Browser Run budget, optionally use Cloudflare's WebMCP lab as an external canary: open the final `/demo-product`, list the two initial tools, execute the exact handoff, and re-list the case tools. Preserve its session/runtime receipt as extra evidence that a remote browser can consume the dynamic frontier. The lab currently uses Chrome 146 beta, so it is sponsor-product verification—not a substitute for current ChatGPT or Chrome 149+ judging clients.
 
 ## Freeze manifest
 

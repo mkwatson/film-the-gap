@@ -4,21 +4,22 @@ Updated August 28, 2026 PT. This document records what the current product-evide
 
 ## Current release matrix
 
-| Gate                          | Result                                             | What it proves                                                                                                                                                   |
-| ----------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm peers check`            | Pass, zero peer issues                             | The exact pinned dependency graph is internally compatible.                                                                                                      |
-| Production dependency audit   | Pass, no known vulnerabilities                     | Every installed production dependency declares a recognized open-source license.                                                                                 |
-| `pnpm check`                  | Pass                                               | Prettier, zero-warning ESLint, strict TypeScript, all tests, Worker bundle, and production Next.js build.                                                        |
-| App tests                     | 26 files, 159 tests pass                           | Product state, owned demo page, dynamic tools, privacy, review, search, page-reading boundaries, reconnect, failures, and release checks.                        |
-| Worker tests                  | 6 files, 34 tests pass in Workerd                  | Durable Object, D1, Browser Run contract, role capabilities, uploads, model proposal, reuse, expiry, quota, and denial paths.                                    |
-| Worker dry run                | Wrangler 4.127.0; 1,135.56 KiB / 191.16 KiB gzip   | The standalone evidence Worker bundles with every declared production binding, including Browser Run.                                                            |
-| Next.js build                 | Next.js 16.3.3; seven route entries                | The shopper, owned demo product, board, recorder, search, and health surfaces build for production.                                                              |
-| Cold clone                    | Frozen install and full gate pass; clean afterward | The repository does not depend on ignored files, generated files, or local package state.                                                                        |
-| Native Chrome journey         | Eight steps pass                                   | The real app, native WebMCP registration, Durable Object, D1, WebSocket, and browser state complete the causal journey against deterministic paid-edge fixtures. |
-| Ordinary-browser journey      | Eight steps pass with WebMCP disabled              | The same shopper, board, recorder, review, update, and reuse loop works through visible controls; the product is not an agent-only façade.                       |
-| Chrome Labs independent smoke | 9/9 calls across four cases                        | The exact current source-built WebMCP evaluator independently discovers and executes the generic tool frontier.                                                  |
-| Desktop/mobile visual check   | Pass at desktop and 390×844                        | Shopper, owned demo-product, board, and contributor pages remain legible with no horizontal overflow or framework error overlay.                                 |
-| Repository content scan       | Pass                                               | The tracked tree contains text and one authored SVG, no binary media; a reachable-history secret-pattern scan found only environment-variable lookups.           |
+| Gate                          | Result                                             | What it proves                                                                                                                                                                |
+| ----------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm peers check`            | Pass, zero peer issues                             | The exact pinned dependency graph is internally compatible.                                                                                                                   |
+| Production dependency audit   | Pass, no known vulnerabilities                     | Every installed production dependency declares a recognized open-source license.                                                                                              |
+| `pnpm check`                  | Pass                                               | Prettier, zero-warning ESLint, strict TypeScript, all tests, Worker bundle, and production Next.js build.                                                                     |
+| App tests                     | 28 files, 168 tests pass                           | Product state, strict page handoff, product-page tool replacement, privacy, review, search, page-reading boundaries, reconnect, failures, and release checks.                 |
+| Worker tests                  | 6 files, 34 tests pass in Workerd                  | Durable Object, D1, Browser Run contract, role capabilities, uploads, model proposal, reuse, expiry, quota, and denial paths.                                                 |
+| Worker dry run                | Wrangler 4.127.0; 1,136.00 KiB / 191.32 KiB gzip   | The standalone evidence Worker bundles with every declared production binding, including Browser Run.                                                                         |
+| Next.js build                 | Next.js 16.3.3; eight route entries                | The product page, strict handoff, shopper, board, recorder, search, and health surfaces build for production.                                                                 |
+| Cold clone                    | Frozen install and full gate pass; clean afterward | The repository does not depend on ignored files, generated files, or local package state.                                                                                     |
+| Native Chrome journey         | Eight steps pass                                   | The real app, native WebMCP registration, Durable Object, D1, WebSocket, and browser state complete the causal journey against deterministic paid-edge fixtures.              |
+| Ordinary-browser journey      | Eight steps pass with WebMCP disabled              | The same shopper, board, recorder, review, update, and reuse loop works through visible controls; the product is not an agent-only façade.                                    |
+| Product-page native bridge    | Before → navigation → after passes                 | Native page tools open the exact strict case; reviewed evidence changes the visible page and replaces the stale handoff tool with evidence inspection.                        |
+| Chrome Labs independent smoke | 9/9 calls across four cases                        | The exact current source-built WebMCP evaluator independently discovers and executes the generic tool frontier.                                                               |
+| Desktop/mobile visual check   | Pass at desktop and 390×844                        | The demo product's claim-only and reviewed-evidence states are legible with no horizontal overflow or framework error overlay; prior shopper/board/phone checks remain valid. |
+| Repository content scan       | Pass                                               | The tracked tree contains text and one authored SVG, no binary media; a reachable-history secret-pattern scan found only environment-variable lookups.                        |
 
 The exact browser-release candidate `3d1fa4491b9ef640a7e4f943a0c602e5640bf2a5` passed a fresh clone, frozen install, peer check, full quality gate, production builds, and clean post-build worktree on August 28.
 
@@ -30,30 +31,44 @@ The Browser Run candidate `f4d5671f088581ef99aa73ce7617291dc7cea903` added authe
 
 The rights-clean source-page candidate `a008341d96b61dbd38e77bb80d584d08ad278fec` added an owned, same-origin `/demo-product` page, automatically binds it to the default case on public HTTPS and after reset, preserves the live Browser Run receipt beside the authored claim, and makes the exact page security policy and Content Signal part of release verification. On August 28, an exact fresh clone passed the frozen install, peer check, all 193 app/Worker tests, the Browser Run-bound Worker dry run, the seven-route production build, and a clean post-build worktree. It remains the previous clean code fallback; `f4d5671f088581ef99aa73ce7617291dc7cea903` is the fallback before it.
 
-The explicit-review candidate `f9a00d690b6604361c180f0b847981326b1491c2` removes the contributor UI's implied “Product owner” identity and preselected rights claim. Publication now requires a deliberate rights selection plus confirmation that the contributor reviewed the exact clip and every field; the Worker independently requires the literal confirmation. On August 28, an exact fresh clone passed `pnpm install --frozen-lockfile`, a zero-issue peer check, all 193 tests, the Browser Run-bound Worker dry run at 1,135.56 KiB / 191.16 KiB gzip, the seven-route production build, and a clean post-build worktree. This is the current locally frozen code candidate.
+The explicit-review candidate `f9a00d690b6604361c180f0b847981326b1491c2` removes the contributor UI's implied “Product owner” identity and preselected rights claim. Publication now requires a deliberate rights selection plus confirmation that the contributor reviewed the exact clip and every field; the Worker independently requires the literal confirmation. On August 28, an exact fresh clone passed `pnpm install --frozen-lockfile`, a zero-issue peer check, all 193 tests, the Browser Run-bound Worker dry run at 1,135.56 KiB / 191.16 KiB gzip, the seven-route production build, and a clean post-build worktree. It remains the fallback before the product-page bridge.
+
+The product-page bridge candidate `215f02e24a2a39811026c52e66cd041ce3393d1b` makes the owned product page a native participant in the evidence network. Before proof, its Site Tools inspect the authored claim boundary and navigate through a strict, privacy-bounded `/case` handoff. After a reviewed D1 record appears, the visible page gains the timestamped result and its stale handoff tool is replaced by reviewed-evidence inspection. On August 28, an exact fresh clone passed the frozen install, zero-issue peer check, all 201 tests, Worker dry run at 1,136.00 KiB / 191.32 KiB gzip, the eight-route build, and a clean post-build worktree. The complete native and ordinary-browser journeys passed afterward.
+
+The handoff release-gate candidate `431a26d9a326c50e091a2734e97afc42b7dc41ff` locks the dynamic `/case` route to the buyer security boundary, makes the public verifier request the exact versioned product-page handoff, and fails release when the question or required Stream-playback policy is absent. It also replaces an imprecise extra-evidence claim with an exact omitted-record count. An exact fresh clone passed the frozen install, zero-issue peer check, all 202 tests, the unchanged Worker dry run, the eight-route build, and a clean post-build worktree. This is the current locally frozen code candidate.
 
 ## Native end-to-end receipt
 
 Chrome 151 completed the following sequence against the real local Next.js app, Cloudflare Worker runtime, Durable Object, D1 database, migrations, WebSocket updates, and WebMCP registrations:
 
-1. Open the default unresolved case with Search—not mission creation—as the initial native capability: 1,187 ms.
-2. Open an arbitrary product, read bounded page context, and search existing evidence through WebMCP: 396 ms.
-3. Create a bounded missing-proof mission and private phone handoff: 557 ms.
-4. Explicitly publish the minimized request, then inspect and claim it from a fresh board context: 379 ms.
-5. Scrub the contributor capability from the URL and recover it after reload: 257 ms.
-6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, deliberately choose rights, explicitly confirm the reviewed submission, and publish: 1,259 ms.
-7. Observe the first shopper's live answer change and exact timestamp citation: 536 ms.
-8. Open a fresh matching case, reuse the same reviewed source without another mission, and skip redundant public-provider calls: 484 ms.
+1. Open the default unresolved case with Search—not mission creation—as the initial native capability: 2,253 ms.
+2. Open an arbitrary product, read bounded page context, and search existing evidence through WebMCP: 580 ms.
+3. Create a bounded missing-proof mission and private phone handoff: 554 ms.
+4. Explicitly publish the minimized request, then inspect and claim it from a fresh board context: 390 ms.
+5. Scrub the contributor capability from the URL and recover it after reload: 264 ms.
+6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, deliberately choose rights, explicitly confirm the reviewed submission, and publish: 1,311 ms.
+7. Observe the first shopper's live answer change and exact timestamp citation: 523 ms.
+8. Open a fresh matching case, reuse the same reviewed source without another mission, and skip redundant public-provider calls: 468 ms.
 
 The fixtures replace only Cloudflare Stream, Cloudflare Browser Run, and the video-model response. The page fixture rejects requests unless the Worker supplies the exact same-origin pattern, blocked resource types, headers, timeouts, and cache boundary expected in production. Browser egress to the public paid-service hosts is blocked during this test. The generated clip deliberately omits the random mission phrase, so the system preserves the honest `contributor_attested` label instead of inventing mission-challenge verification.
 
 ## Ordinary-browser end-to-end receipt
 
-The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,400, 153, 537, 514, 334, 1,573, 585, and 591 ms respectively. The run proved that a person can open and search an arbitrary case, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, deliberately assert rights and confirm review, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission or public-provider call.
+The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,290, 133, 487, 280, 261, 1,273, 401, and 528 ms respectively. The run proved that a person can open and search an arbitrary case, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, deliberately assert rights and confirm review, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission or public-provider call.
 
 A separate native run captured all seven major screens. The 1,280-pixel-wide contributor receipt was visually inspected after the trust changes: the neutral contributor identity, deliberate rights choice, correction controls, final attestation, and disabled publication boundary are clear and coherent without an error overlay.
 
 This is an independent product-surface receipt, not a substitute for the native WebMCP receipt: together they establish that Site Tools are load-bearing for agent collaboration while every human role still has a complete ordinary web path.
+
+## Product-page bridge receipt
+
+A native source-browser run opened `/demo-product` in the real Next.js app and observed exactly two initial tools: `inspect_product_claim` and `open_product_evidence_case`. Executing the native handoff tool navigated to the versioned `/case` URL with the exact product name and observable question; no identity, history, preference, conversation, or budget field exists in that contract. The resulting case rendered the same question and ordinary search controls with no framework overlay.
+
+In a separate same-page transition, a local HTTP fixture returned a schema-valid record through the real reusable-evidence client boundary. The page changed from **This claim still needs observable proof** and zero reviewed videos to **The missing test has now been filmed**, the reviewed observation, `00:02–00:13`, high confidence, continuous take, owned rights, and the cited video link. Native `getTools()` simultaneously changed to `inspect_product_claim` + `inspect_reviewed_product_evidence`; the retired handoff tool was absent. Executing the new inspection tool returned an 872-character payload with result, confidence, rights, provenance, continuity, capture timing, contributor label, source URL, and exact interval. A four-record maximum-shape test remains under the 1,500-character recommendation by returning the newest reviewed record and disclosing the additional-record count.
+
+Desktop and 390×844 screenshots of both product-page states showed no horizontal overflow or framework overlay. This proves page/tool behavior and presentation against a schema-valid local edge response. It does not substitute for the pending final-origin D1 record produced by the real phone → Stream → Gateway → review flow.
+
+The compiled Next.js production server also returned the exact question from the versioned handoff with HTTP 200, `camera=()` and `microphone=()`, `no-referrer`, `nosniff`, and a restrictive CSP that permits Stream playback but no creator upload. The public release verifier now repeats that route-level check against the final origin.
 
 ## Independent WebMCP contract check
 
@@ -82,9 +97,10 @@ The live Vercel AI Gateway catalog was re-read through CLI 59.9.1 on August 28. 
 - [OpenAI WebMCP Challenge](https://openai.com/webmcp-challenge/)
 - [Official rules](https://webmcp.devpost.com/rules)
 - [Official resources](https://webmcp.devpost.com/resources)
-- [OpenAI Site Tools (WebMCP)](https://developers.openai.com/codex/webmcp)
+- [OpenAI Site Tools (WebMCP)](https://learn.chatgpt.com/docs/webmcp)
 - [WebMCP draft and explainer](https://github.com/webmachinelearning/webmcp)
 - [Chrome WebMCP guide](https://developer.chrome.com/docs/ai/webmcp)
+- [Chrome WebMCP imperative API](https://developer.chrome.com/docs/ai/webmcp/imperative-api)
 - [Chrome secure-tool guidance](https://developer.chrome.com/docs/ai/webmcp/secure-tools)
 - [Chrome WebMCP evaluation guidance](https://developer.chrome.com/docs/ai/webmcp/evals)
 - [Cloudflare Stream direct creator uploads](https://developers.cloudflare.com/stream/uploading-videos/direct-creator-uploads/)
@@ -97,7 +113,7 @@ The live Vercel AI Gateway catalog was re-read through CLI 59.9.1 on August 28. 
 - [Vercel AI Gateway](https://vercel.com/docs/ai-gateway)
 - [Google Gemini video understanding](https://ai.google.dev/gemini-api/docs/video-understanding)
 
-The OpenAI Site Tools guide was re-read on August 28. It confirms that ChatGPT's judged path is the latest desktop app's built-in browser with Site Tools enabled and GPT-5.6 Sol or Terra; Luna, Enterprise/Edu workspaces, ordinary ChatGPT web, declarative form tools, and tools registered inside iframes are not substitutes. The candidate imperatively registers JavaScript tools from each top-level page, keeps their inputs narrow, returns verifiable state, and preserves the complete ordinary-browser interface. The separately linked OpenAI API MCP guide concerns remote MCP servers and is not the WebMCP implementation source.
+The OpenAI Site Tools guide was re-read on August 28. It confirms that ChatGPT's judged path is the latest desktop app's built-in browser with Site Tools enabled and GPT-5.6 Sol or Terra; Luna, Enterprise/Edu workspaces, ordinary ChatGPT web, declarative form tools, and tools registered inside iframes are not substitutes. The candidate imperatively registers JavaScript tools from each top-level page, keeps their inputs narrow, returns verifiable state, and preserves the complete ordinary-browser interface. OpenAI and Chrome both document navigation as a valid page-owned tool action; the product-page handoff uses that pattern while explicitly stating everything it does not publish or create. The separately linked OpenAI API MCP guide concerns remote MCP servers and is not the WebMCP implementation source.
 
 Cloudflare's current Browser Run binding, Markdown Quick Action, timeout, pricing, and Content Signal documentation was re-read on August 28. The candidate uses the current `quickAction('markdown', …)` Worker contract, requires the current compatibility date, sends no Browser API token, records `X-Browser-Ms-Used`, restricts navigation and subresources to the supplied origin, and refuses page text when the origin declares `search=no` or `ai-input=no`. This is an implemented fixture-tested boundary; one authenticated request through the real production binding remains a release gate.
 

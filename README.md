@@ -4,13 +4,13 @@ Film the Gap is an open product-evidence network with native WebMCP Site Tools f
 
 Instead of stopping at product search or summarizing the claims already online, Film the Gap creates the exact piece of evidence the web is missing and makes it reusable.
 
-The public demo needs no merchant or borrowed catalog. It includes an owned, same-origin `/demo-product` page for an unbranded bottle. On a public HTTPS deployment, the default case points to that real page automatically, so Cloudflare Browser Run reads the exact source a judge can inspect; the page's “leak resistant” copy remains explicitly insufficient until someone records the requested physical test.
+The public demo needs no merchant or borrowed catalog. It includes an owned, same-origin `/demo-product` page for an unbranded bottle. Before evidence exists, that page's own Site Tools distinguish its “leak resistant” claim from the unproven ten-second test and open an exact, privacy-bounded evidence case. After a contributor publishes reviewed video, the same page reads the durable evidence index, replaces its missing-proof action with the cited result, and replaces its handoff tool with reviewed-evidence inspection. The page visibly learns a verifiable fact without its author rewriting the claim.
 
 The shopper, public-request board, and phone recorder are ordinary web pages. WebMCP lets ChatGPT understand and operate the same state-dependent actions a person sees, while the contributor records and reviews evidence in any normal mobile browser.
 
 ## The complete loop
 
-1. A shopper or agent adds any product URL and asks one concrete question.
+1. A product page, shopper, or agent opens one concrete product question. A participating page can expose the exact claim boundary and hand it to the network through WebMCP; the generic form accepts products the app has never seen.
 2. The app first searches its rights-cleared evidence network for the same product and question. An exact reviewed answer returns immediately without recrawling public sources. Otherwise, for a supplied product URL, a bounded Cloudflare Browser Run action extracts readable page text and origin Content Signals; the copy remains an untrusted, link-only lead and is discarded when the origin forbids search or AI input. The app also searches public social video through ScrapeCreators and the broader web through Exa on Vercel AI Gateway—while keeping links, rights, and evidence strength distinct.
 3. It shows what is already supported, contradicted, or still unproven—down to claim-level sources and timestamps.
 4. If decisive proof is missing, a narrow WebMCP Site Tool creates a filming mission with one observable instruction and success criterion.
@@ -18,19 +18,20 @@ The shopper, public-request board, and phone recorder are ordinary web pages. We
 6. Anyone with access to the product can open the board request on a phone—no store partnership, customer list, account, or app—record one continuous video, and upload it directly to Cloudflare Stream. Each mission also issues a random phrase that can be spoken or shown in frame to bound a fresh recording to after the request was created. Existing authorized clips remain useful but are labeled preexisting. Removing a listing revokes its public recorder capability without breaking the separate private link.
 7. Once Stream produces an authorized MP4, Vercel AI Gateway sends it to a video-capable model for a bounded, timestamped proposal and separately checks for the exact mission phrase. The contributor must review or correct the result, confidence, continuity, observation, and cited interval; choose their publishing rights; and explicitly confirm the complete review before the server accepts it. Their public relationship label is self-described and defaults to “Anonymous contributor.” Only the server-side model receipt can upgrade timing from contributor-attested to mission-challenge verified.
 8. The contributor chooses whether the reviewed clip is case-only or reusable for matching product questions for up to 30 days. Only a conclusive, medium-or-high-confidence continuous recording can enter the reusable index.
-9. The first shopper's answer changes live. When a later shopper asks the same question about the same product, the reviewed recording and timestamp resolve it immediately instead of creating another filming mission.
+9. The first shopper's answer changes live. The original product page and later matching shoppers now receive the reviewed recording and timestamp immediately instead of creating another filming mission.
 
 This is not a text-review demo and it does not claim that video is impossible to fake. Its useful boundary is narrower: answers cite the contributor-authorized recording, distinguish public leads from reusable media, preserve whether a clip is imported, contributor-attested, or mission-challenge verified, require human review, expose limitations, and abstain when a recording does not prove the claim. A detected mission phrase bounds capture timing; it does not prove identity, ownership, product authenticity, or ground truth.
 
 ## Why WebMCP is load-bearing
 
-WebMCP exposes the product's real, state-dependent actions to a browser agent without hiding a parallel API behind the demo. On the shopper page, the agent can inspect evidence, search permitted sources, create one missing-proof mission, create its private phone case, explicitly publish or remove its public request, and consume the newly published result. On the open board, WebMCP can inspect current requests and open one exact bounded recorder. Human controls mirror the same contracts. Mutating tools are narrow, confirmation-gated where public disclosure is involved, cancellable where applicable, and protected against stale state.
+WebMCP exposes the product's real, state-dependent actions to a browser agent without hiding a parallel API behind the demo. On the product page, the agent can inspect the authored claim boundary and either open the exact missing-proof case or, after publication, inspect reviewed evidence. On the shopper page, it can search permitted sources, create one missing-proof mission, create its private phone case, explicitly publish or remove its public request, and consume the newly published result. On the open board, it can inspect current requests and open one exact bounded recorder. Human controls mirror the same contracts. Mutating tools are narrow, confirmation-gated where public disclosure is involved, cancellable where applicable, and protected against stale state.
 
 The demo's before/after is therefore causal and inspectable:
 
 ```text
-Question → evidence gap → WebMCP mission → open request board → person with product
-         → real phone video → AI proposal → human review → better answer → reuse
+Product-page claim → WebMCP evidence case → exact gap → public filming mission
+                   → person with product → reviewed video → better answer
+                   → the product page gains a reusable cited fact
 ```
 
 ## Load-bearing stack
@@ -51,7 +52,7 @@ Question → evidence gap → WebMCP mission → open request board → person w
 
 The continuous-video path currently targets `google/gemini-3.7-flash` through AI Gateway, with `google/gemini-3.6-flash` as fallback. No live model or Stream request runs in the default test suite.
 
-The direct WebMCP implementation is in [site-tools.ts](src/lib/evidence-network/site-tools.ts), with dynamic registration in [use-dynamic-site-tools.ts](src/lib/webmcp/use-dynamic-site-tools.ts) and independent browser-evaluation cases documented in [evals/README.md](evals/README.md).
+The shopper WebMCP implementation is in [site-tools.ts](src/lib/evidence-network/site-tools.ts); the product-page bridge is in [demo-product-evidence-bridge.tsx](src/components/demo-product-evidence-bridge.tsx); both use dynamic registration from [use-dynamic-site-tools.ts](src/lib/webmcp/use-dynamic-site-tools.ts). Independent browser-evaluation cases are documented in [evals/README.md](evals/README.md).
 
 ## Challenge-period provenance
 
@@ -144,13 +145,13 @@ The two runners generate a rights-clean 12-second MP4 and drive the same complet
 ## Current status and honest boundaries
 
 - Generic products and questions are persistent and can be created without code or database changes.
-- The default public-HTTPS case is bound to a rights-clean, inspectable product page at `/demo-product`; reset preserves that binding, and the release verifier enforces both its restrictive browser policy and its explicit `search=yes, ai-input=yes, ai-train=no` Content Signal.
+- The rights-clean `/demo-product` page is an active WebMCP participant: it opens a strict `/case` handoff before proof exists, queries the same D1 evidence index used by generic searches, and changes its visible result and Site Tool frontier after reviewed evidence arrives. Its authored claim remains explicitly non-decisive. The release verifier checks its `search=yes, ai-input=yes, ai-train=no` Content Signal, then follows the exact handoff and enforces the resulting route's restrictive browser policy.
 - Claim-level evidence, provenance, capture timing, random mission phrases, rights, confidence, revisions, dynamic Site Tools, bounded product-page reading, social lead discovery, private contributor URLs, a public missing-proof board, revocable public recorder paths, direct Stream uploads, timestamped video proposals, server-enforced final human confirmation, deliberate rights selection, and rights-explicit cross-case reuse are implemented.
 - Conclusive evidence for a continuous-take mission is rejected when the cited interval is invalid or continuity is edited/unknown.
 - The app has deterministic automated coverage for success, denial, stale revisions, manual fallback, dependency failures, simultaneous analysis coalescing, fragment scrubbing, contributor reload, and buyer reconnect. It does not call paid services during tests.
 - The standalone deployable Worker exposes only the evidence API. It rate-limits case creation, permits two upload reservations per temporary case, caps clips at 95 MiB/90 seconds, expires upload URLs, schedules Stream deletion, bounds model retries, caps Browser Run to 60 authenticated reads per UTC day, and physically purges expired board/reuse/usage D1 records daily. Public board listings last at most 24 hours, carry only public product/filming fields, and use a capability that can be revoked independently of the private link. The release runbook adds one budgeted cross-cloud Gateway key, automatic Vercel OIDC for search, and a Vercel WAF ceiling.
-- Native Chrome completes arbitrary-product search → mission → public board → stranger claim → phone evidence → first answer change → fresh-case evidence reuse in roughly five seconds against real local Durable Object/D1 state and deterministic paid-service fixtures.
-- Chrome with WebMCP explicitly disabled completes the same visible-control journey in roughly five seconds, proving the ordinary website is not an agent-only façade.
+- Native Chrome completes arbitrary-product search → mission → public board → stranger claim → phone evidence → first answer change → fresh-case evidence reuse in roughly six seconds against real local Durable Object/D1 state and deterministic paid-service fixtures. A separate native browser check proves the product page's missing-proof tool navigates to its exact case and is replaced by reviewed-evidence inspection when evidence appears.
+- Chrome with WebMCP explicitly disabled completes the same visible-control journey in roughly five seconds, proving the ordinary website is not an agent-only façade. The product-page handoff also remains a normal link.
 - This candidate is not yet deployed and has not yet passed a real Browser Run product-page read or Stream → Gateway → physical-phone journey on the final origins. Those remain mandatory release gates, not inferred claims.
 - It does not claim universal access to people with products, guaranteed fulfillment, independently verified contributor labels, product authenticity, or perfect deepfake detection. The board demonstrates permissionless discoverability, not a mature incentive marketplace.
 - It does not place an order, charge a user, contact strangers, scrape private data, or reuse third-party media without rights.

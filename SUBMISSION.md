@@ -6,7 +6,7 @@ Updated 2026-08-28 PT. This is the candidate Devpost copy, judge runbook, claims
 
 ## The whole product in one sentence
 
-> When a shopper asks something the web cannot prove, ChatGPT publishes the exact missing-proof video request, anyone with the product can record and review it, and that timestamped evidence answers this shopper—and later matching shoppers—without another recording.
+> When a product page cannot prove a shopper's exact question, ChatGPT turns the gap into a tiny filming request; a person records and reviews the missing observation, and the page gains cited video evidence that future shoppers and agents can reuse.
 
 ## Asset manifest
 
@@ -28,7 +28,7 @@ The project was created entirely during the submission period. Its first commit,
 
 Product pages answer the questions their authors anticipated. Shoppers often need something more specific: does this bottle actually leak upside down, can this microphone charge while recording, or how loud is this appliance in a quiet room?
 
-Instead of stopping at product search or summarizing the claims already online, Film the Gap creates the exact piece of evidence the web is missing and makes it reusable.
+Instead of stopping at product search or summarizing the claims already online, Film the Gap creates the exact piece of evidence the web is missing and makes it reusable. A participating product page can expose its own proof gap to ChatGPT, open the exact evidence case, then visibly gain a reviewed result and new Site Tool after someone records it.
 
 This app lets ChatGPT inspect the evidence for any product question. Its default case uses a real, rights-clean product page shipped on the same public origin—not a fictional merchant or hidden fixture—whose “leak resistant” claim deliberately cannot answer the shopper's ten-second leak question. If existing pages and public videos do not prove the answer, WebMCP gives ChatGPT narrow tools to create one observable filming mission and, with explicit confirmation, publish only its product/question/recording fields to a 24-hour open request board. The board receives no shopper identity, preferences, history, budget, or ChatGPT conversation. Anyone with access to the product can discover that request without a store partnership or customer list, open its no-login phone recorder, capture a continuous video, and say or show a random mission phrase that bounds the recording to after the request. They review or correct the AI's timestamped proposal, deliberately choose publishing rights, and explicitly confirm the complete review before the server accepts it. The original answer then visibly changes from “not enough proof” to supported, contradicted, mixed, or still inconclusive—with the decisive interval attached.
 
@@ -38,9 +38,9 @@ The contributor explicitly chooses whether the clip stays in one case or can ans
 
 ### Why is this use case a strong fit for WebMCP?
 
-The useful tools depend on the exact product, question, sources, filming mission, public-listing status, contributor status, and reviewed evidence visible on the page right now. WebMCP lets the site expose that live capability frontier directly to ChatGPT: inspect the current evidence, search available public leads, create one bounded filming mission, create its phone handoff, explicitly publish or revoke its public request, inspect/open current board requests, and—only after evidence arrives—inspect exactly how the answer changed.
+The useful tools depend on the exact product, question, sources, filming mission, public-listing status, contributor status, and reviewed evidence visible on the page right now. WebMCP lets each page expose its live capability frontier directly to ChatGPT: a product page distinguishes authored claims from reviewed proof and opens the exact missing-evidence case; the shopper page searches, creates, publishes, and consumes the result; the board exposes current requests and one bounded recorder.
 
-That state dependence is the product. Mission creation disappears once a mission is open; the phone-link action appears only when valid; public publication becomes public revocation; and answer-difference inspection appears only after reviewed evidence arrives. The separate board exposes only current open jobs and one exact recorder handoff. A detached backend tool or DOM-driving agent would lose the human-visible context, lifecycle, privacy receipt, and shared authority that make this collaboration understandable and safe.
+That state dependence is the product. On the original product page, `open_product_evidence_case` disappears when reviewed evidence arrives and `inspect_reviewed_product_evidence` replaces it. In the case, mission creation disappears once a mission is open; the phone-link action appears only when valid; public publication becomes public revocation; and answer-difference inspection appears only after review. A detached backend tool or DOM-driving agent would lose the human-visible context, lifecycle, privacy receipt, and shared authority that make this collaboration understandable and safe.
 
 ### How does it create a better user experience?
 
@@ -52,12 +52,15 @@ The contributor needs no account or app. Their phone shows the product question,
 
 An agent can now turn its own uncertainty into a precise, discoverable request for new physical-world evidence, while a person remains in control of what is recorded and what the recording actually establishes. Neither side can complete the loop alone: ChatGPT knows which fact blocks the shopper's decision and can formulate the minimum test; a distributed person with access to the product has the camera and judgment; the page joins them without requiring a merchant integration, customer list, or shared account.
 
-The working prototype proves the complete causal loop on an ordinary product: an unproven claim becomes a WebMCP filming mission, a real phone video becomes human-reviewed evidence, that evidence materially changes the first answer, and a fresh matching shopper case reuses the same cited recording without another mission. The broader opportunity is a compounding evidence layer for products: future agents search what has already been shown and ask people to film only the gaps that remain.
+The working prototype proves the complete causal loop on an ordinary product: an unproven claim becomes a WebMCP filming mission, a real phone video becomes human-reviewed evidence, that evidence materially changes the first answer, and the original product page gains the same cited recording without another mission. The broader opportunity is a compounding evidence layer for products: future agents search what has already been shown and ask people to film only the gaps that remain.
 
 ### How was WebMCP implemented?
 
-The Next.js shopper and public-board pages register native tools through `document.modelContext.registerTool`. Ten narrow tools exist across the two surfaces, with only the state-valid subset registered at a time:
+The Next.js product, shopper, and public-board pages register native tools through `document.modelContext.registerTool`. Thirteen narrow tool names exist across the three surfaces, with only the state-valid subset registered at a time:
 
+- `inspect_product_claim`
+- `open_product_evidence_case`
+- `inspect_reviewed_product_evidence`
 - `inspect_product_evidence`
 - `ask_product_question`
 - `search_product_evidence`
@@ -69,7 +72,9 @@ The Next.js shopper and public-board pages register native tools through `docume
 - `inspect_open_filming_missions`
 - `open_filming_mission`
 
-Each tool has a strict JSON Schema, accurate read-only and untrusted-content annotations, runtime validation, and a human-visible equivalent. A name-keyed React reconciler awaits registrations, keeps unchanged tools stable, aborts work when the current runtime provides a cancellation signal, and unregisters capabilities that are no longer valid.
+Each tool has a strict JSON Schema, accurate read-only and untrusted-content annotations, runtime validation, a compact verifiable result, and a human-visible equivalent. A name-keyed React reconciler awaits registrations, keeps unchanged tools stable, defers retirement until an in-flight call returns, aborts work when the current runtime provides a cancellation signal, and unregisters capabilities that are no longer valid.
+
+The product-page bridge queries the same exact D1 evidence contract used by shopper search. Its strict `/case` handoff carries only the public product URL, product name, observable question, source kind, and protocol version; unknown fields, duplicate query values, private URLs, and version mismatches fail closed. Before reviewed evidence exists, the page exposes claim inspection plus case navigation. After evidence appears, it changes both visible UI and native tools to return the reviewed result, confidence, rights, provenance, capture timing, continuity, source URL, and exact interval.
 
 `search_product_evidence` calls the same-origin public-discovery route. On public HTTPS, the default case automatically supplies the app's owned `/demo-product` URL; that page explicitly permits search and AI input while denying AI training, and reset preserves the same binding. The route checks a Cloudflare D1 index fresh on every request for an exact normalized question and exact canonical product URL (or exact normalized name when no URL exists). An exact reviewed answer returns immediately without repeating public-provider calls. Otherwise, for a supplied URL, the route invokes a server-authenticated Cloudflare Browser Run `/markdown` action with same-origin navigation, blocked media, two bounded eight-second phases, a 24-hour action cache, and an atomic 60-read daily D1 ceiling. The resulting page excerpt remains untrusted, link-only, low-confidence, and inconclusive; explicit `search=no` or `ai-input=no` Content Signals discard it. The route also searches public TikTok/Instagram/YouTube metadata through ScrapeCreators and invokes Exa's bounded `instant` search tool through Vercel AI Gateway for broader web/PDP leads. It accepts the Gateway output only when the tool receipt preserves the exact claim-aware query, caps results, deduplicates canonical URLs, and stores every ordinary public result as `external_link` + `link_only` + `inconclusive`. Successful configured searches are reused for 15 minutes through Vercel Runtime Cache, while D1 is checked fresh so a newly reviewed recording is never hidden by that cache.
 
@@ -79,28 +84,34 @@ A Cloudflare Durable Object owns each case, revision, random capture phrase, rol
 
 This path requires no Film the Gap account. For ChatGPT, use the latest desktop app's built-in browser with **Enable site tools** on in **Settings → Browser → Permissions** and select **GPT-5.6 Sol** or **GPT-5.6 Terra**; Luna currently has WebMCP disabled, and Site Tools are not available in Enterprise or Edu workspaces. WebMCP-enabled Chrome is the alternate buyer client. The contributor phone can use any ordinary browser.
 
-1. Open **[LIVE URL]** in ChatGPT's built-in browser and confirm the page header says **Site Tools live**. In the address bar, choose **Site tools → Available site tools** and confirm the page's tools are listed. Open the default source link once: it is the same deployment's rights-clean `/demo-product` page, and it states both “leak resistant” and exactly what that copy does not prove. Return to the buyer page, which starts at **Not enough proof**.
+1. Open **[LIVE URL]/demo-product** in ChatGPT's built-in browser. The rights-clean page says **“Leak resistant”**, labels that text **Claim only · not verified evidence**, asks the exact ten-second question, and shows zero reviewed videos. In **Site tools → Available site tools**, confirm the page exposes claim inspection and an exact evidence-case handoff.
 2. In ChatGPT, send:
+
+   > Use this page's Site Tools. Inspect the product claim and its proof boundary. If reviewed evidence is missing, open the exact evidence case. Do not treat the marketing claim as proof.
+
+   ChatGPT should navigate to a prefilled case containing only the public product URL, product name, and observable question. The answer starts at **Not enough proof**.
+
+3. Then send:
 
    > Use this page's Site Tools. Inspect the active product question and search existing evidence. Treat ordinary public results as leads, never proof. If the reviewed sources still do not prove the answer, create the smallest continuous filming mission, create its bounded phone case, and publish only that mission to the open request board. Do not infer the result from marketing copy. Stop before anyone records.
 
-3. Watch ChatGPT inspect the case, search D1/social/product-page/open-web sources, preserve ordinary results as non-decisive leads, create a bounded ten-second leak-test mission, and explicitly publish only its public fields. Open **Open filming requests** in a second browser context and ask ChatGPT: “Inspect the open filming requests and open the exact request for this bottle.” The board returns the bounded recorder; no merchant or customer data exists.
-4. On the contributor page, record the owned bottle over dry paper for at least ten continuous seconds. Say or show the displayed mission phrase near the start while the bottle remains visible. Upload it, wait for the timestamped proposal and separate phrase check, correct anything the model got wrong, choose provenance, continuity, rights, and reuse scope, explicitly confirm the complete review, then publish.
-5. Return to the buyer page. It updates without a reset and shows **Before: Not enough proof → After: [ACTUAL RESULT]**. In ChatGPT, send:
+4. Watch ChatGPT search D1/social/product-page/open-web sources, preserve ordinary results as non-decisive leads, create a bounded ten-second leak-test mission, and explicitly publish only its public fields. Open **Open filming requests** in a second browser context and ask ChatGPT: “Inspect the open filming requests and open the exact request for this bottle.” The board returns the bounded recorder; no merchant or customer data exists.
+5. On the contributor page, record the owned bottle over dry paper for at least ten continuous seconds. Say or show the displayed mission phrase near the start while the bottle remains visible. Upload it, wait for the timestamped proposal and separate phrase check, correct anything the model got wrong, choose provenance, continuity, rights, and reuse scope, explicitly confirm the complete review, then publish.
+6. Return to the buyer page. It updates without a reset and shows **Before: Not enough proof → After: [ACTUAL RESULT]**. In ChatGPT, send:
 
    > Re-inspect the product evidence and use the new answer-change tool. Tell me only what changed, what the reviewed video establishes, and the exact cited interval.
 
-6. The result must match the contributor's reviewed finding and include the exact video timestamp. If the contributor opted into reuse, open the exact same product URL and question as a fresh case and run search: the D1 receipt, cited Stream recording, changed answer, and absence of a new filming mission prove the network effect. To try another product, use **Open a case for a product we have never seen**; no code edit is required.
+7. Return to **[LIVE URL]/demo-product**. The missing-proof action is now a reviewed-video result with the same citation, and its Site Tool frontier has changed from case handoff to reviewed-evidence inspection. Ask ChatGPT to inspect it. This bookend proves the page gained reusable evidence; it is not a scripted second answer.
 
-After the first real bottle mission is published with network-reuse consent, a judge without a second device can reset the page and search the exact same bottle question. D1 returns the earlier reviewed Stream recording and timestamp with no filming mission. That is the only completed-mission replay: the app does not manufacture a pass/fail transition.
+After the first real bottle mission is published with network-reuse consent, a judge without a second device can begin directly at `/demo-product`: D1 returns the earlier reviewed Stream recording and timestamp, and no filming request appears. That is the only completed-mission replay; the app does not manufacture a pass/fail transition.
 
 ## What the three-minute video must prove
 
 The primary cut in [DEMO.md](DEMO.md) is the edit contract. A cold viewer must see this causal chain, not merely hear it:
 
 ```text
-unproven answer
-    → native WebMCP identifies the exact gap
+product page with an unproven claim
+    → native WebMCP opens the exact evidence gap
     → native WebMCP creates a bounded filming mission
     → explicit public request recruits someone with the product
     → a real phone records and uploads one continuous test
@@ -108,18 +119,19 @@ unproven answer
     → reviewed evidence publishes
     → a new WebMCP answer-change tool appears
     → ChatGPT cites the evidence and changes its answer
+    → the original product page gains reviewed video and a new Site Tool
 ```
 
 Sponsor logos and long architecture explanations do not belong in the primary cut. They dilute the judge-visible product transformation.
 
 ## Rubric proof matrix
 
-| Criterion             | Judge-visible proof                                                                                                                                                       | Repository proof                                                                                                                                                        | Remaining final gate                                                                                            |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| WebMCP Leverage       | ChatGPT's tools change from evidence search → mission → public recruitment, while the board exposes request inspection/opening and the resolved case exposes answer diff. | Ten native page-owned tools across two surfaces, dynamic lifecycle, strict schemas, explicit disclosure confirmation, annotations, cancellation, stale-state tests.     | Repeat the exact two-surface flow in the final ChatGPT build and capture the Site Tool calls and page changes.  |
-| Execution             | No-login shopper → open board → stranger phone → reviewed video → updated answer loop, plus fallback controls and reconnect recovery.                                     | Next.js shopper/board/contributor UI, revocable capabilities, Durable Object state, Stream upload, Gateway proposal, human review, WebSocket update, native acceptance. | Deploy this branch; pass a real Stream/Gateway/phone run and an unfamiliar-user run.                            |
-| Potential Impact      | Anyone with the product can fill a knowledge gap once; the current and later matching shoppers reuse the result.                                                          | Generic model, public missing-proof distribution, rights/provenance, timestamps, abstention, exact D1 reuse/expiry.                                                     | Keep the audience/problem concrete and show the board plus second-case reuse.                                   |
-| Creativity & Ambition | ChatGPT turns uncertainty into an open physical-world data request, recruits distributed human sensors, then compounds reviewed evidence across agents.                   | Agent-authored missions, permissionless request board, phone capabilities, multimodal proposal, human authority, answer diff, cross-case reuse.                         | Make public recruitment, first before/after, and second no-mission resolution unmistakable under three minutes. |
+| Criterion             | Judge-visible proof                                                                                                                                        | Repository proof                                                                                                                                                                    | Remaining final gate                                                                                             |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| WebMCP Leverage       | The product page changes from claim inspection → exact case handoff → reviewed-evidence inspection; the case and board expose their own state-valid tools. | Thirteen native page-owned tool names across three surfaces, dynamic lifecycle, strict schemas, explicit disclosure confirmation, compact outputs, cancellation, stale-state tests. | Repeat the exact three-surface flow in the final ChatGPT build and capture the Site Tool calls and page changes. |
+| Execution             | No-login shopper → open board → stranger phone → reviewed video → updated answer loop, plus fallback controls and reconnect recovery.                      | Next.js shopper/board/contributor UI, revocable capabilities, Durable Object state, Stream upload, Gateway proposal, human review, WebSocket update, native acceptance.             | Deploy this branch; pass a real Stream/Gateway/phone run and an unfamiliar-user run.                             |
+| Potential Impact      | Anyone with the product can fill a knowledge gap once; the original product page and later matching shoppers reuse the result.                             | Generic model, public missing-proof distribution, rights/provenance, timestamps, abstention, exact D1 reuse/expiry.                                                                 | Keep the audience/problem concrete and bookend the demo on the upgraded product page.                            |
+| Creativity & Ambition | ChatGPT turns uncertainty into an open physical-world data request, recruits distributed human sensors, then compounds reviewed evidence across agents.    | Agent-authored missions, permissionless request board, phone capabilities, multimodal proposal, human authority, answer diff, cross-case reuse.                                     | Make public recruitment, first before/after, and second no-mission resolution unmistakable under three minutes.  |
 
 The criteria are equally weighted. WebMCP Leverage is the first tie-breaker, so the video must visibly show native tool calls, dynamic capability changes, and their corresponding human UI state.
 
@@ -128,7 +140,7 @@ The criteria are equally weighted. WebMCP Leverage is the first tie-breaker, so 
 ### Safe to claim now
 
 - Any product name, optional public URL, and observable question can open a case without a code or database change.
-- On public HTTPS, the default source is the app's owned `/demo-product` page. It remains inspectable by people, readable by Browser Run, non-decisive by design, and is covered by the production release verifier including its Content Signal.
+- On public HTTPS, the owned `/demo-product` page directly inspects the exact D1 evidence contract. Before proof it exposes claim inspection and a strict `/case` handoff; after proof it displays the reviewed citation and swaps in reviewed-evidence inspection. Its authored marketing copy remains non-decisive, it is readable by Browser Run, and the production release verifier covers its Content Signal.
 - The page directly registers native, dynamic WebMCP Site Tools; human controls call the same domain transitions.
 - Public social discovery results remain link-only leads and do not become proof merely because they are public.
 - A no-login contributor capability is limited to one case's upload and reviewed-evidence publication.
@@ -146,8 +158,9 @@ The criteria are equally weighted. WebMCP Leverage is the first tie-breaker, so 
 - Broad-web discovery is implemented with the current AI SDK/Gateway-native Exa tool, exact-query receipt verification, four-result/20-second bounds, automatically refreshed Vercel OIDC under a non-renewing project budget, and Vercel Runtime Cache. Its malformed, rewritten-query, provider-error, duplicate, OIDC-without-stored-key, and outage paths pass offline tests; a real Gateway search on the final Vercel origin remains an external-account acceptance gate.
 - Supplied-page reading is implemented with the current Cloudflare Browser Run Worker binding. Authentication, private/non-HTTPS/default-port denial, same-origin navigation, cross-origin redirect rejection, Content Signal refusal, bounded excerpt sanitation, D1 quota exhaustion, and dependency failure pass Workerd tests; a real Browser Run read on the final origin remains an external-service acceptance gate.
 - The deterministic native-Chrome acceptance test opens an arbitrary product, searches through its dynamically registered Site Tool, preserves the supplied page as an inconclusive link-only lead, then completes mission → explicit public-board publication → fresh board context inspection/claim → phone handoff → upload → model-shaped proposal → human correction → explicit reuse consent → publication → timestamped answer diff. It finally opens a fresh matching case and proves the same reviewed Stream citation changes the answer without another mission. The real app, Durable Object, D1 database, migrations, and revocable capability boundary run unchanged; only the paid Stream and model edges are strict local fixtures.
+- A separate native browser receipt begins on `/demo-product` with `inspect_product_claim` + `open_product_evidence_case`, executes the navigation tool into the strict prefilled route, then injects a schema-valid reviewed-index response and proves the live page and tool frontier change to `inspect_reviewed_product_evidence`. Its returned citation/provenance payload is 872 characters; a four-record worst-case test remains below 1,500 characters by returning the newest reviewed record and disclosing the additional-record count.
 - A separate Chrome acceptance run starts with WebMCP explicitly disabled and completes the same arbitrary-product → search → public mission → stranger claim → recorder → review → live answer change → fresh-case reuse loop through visible controls only. This proves the app remains a coherent ordinary website rather than an agent-only façade.
-- Strict TypeScript, formatting, linting, application tests, Workerd tests, Worker dry runs, and a Next.js production build pass on the current branch.
+- Strict TypeScript, formatting, linting, 202 application/Workerd tests, Worker dry runs, and an eight-route Next.js production build pass on the current branch and from an exact frozen-install clone of `431a26d9a326c50e091a2734e97afc42b7dc41ff`.
 
 ### Must pass before equivalent public claims
 
