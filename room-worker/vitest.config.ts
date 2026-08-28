@@ -180,7 +180,10 @@ export default defineConfig(async () => {
           d1Databases: { EVIDENCE_LIBRARY: 'test-evidence-library' },
           bindings: {
             AI_GATEWAY_API_KEY: 'test-only-budgeted-key',
+            ALLOWED_ORIGINS: 'http://localhost:3000,http://127.0.0.1:3000',
+            EVIDENCE_CASE_TTL_SECONDS: '86400',
             PAGE_READER_SHARED_SECRET: 'test-only-page-reader-secret',
+            PUBLIC_EVIDENCE_ORIGIN: 'https://rooms.example',
             TEST_EVIDENCE_LIBRARY_MIGRATIONS: migrations,
           },
           serviceBindings: {
