@@ -309,6 +309,7 @@ export const publishRemoteEvidenceRequestSchema = z
       citationEndSeconds: z.number().int().positive(),
       confidence: z.enum(evidenceConfidences),
       continuity: z.enum(['continuous', 'edited', 'unknown']),
+      provenance: z.enum(['live_capture', 'authorized_import']),
       rights: z.enum(['owned', 'authorized']),
       reuseScope: z.enum(['case_only', 'public_network']),
       capturedAt: timestampSchema,
@@ -376,7 +377,6 @@ export function toReviewedEvidenceInput(
 ): ReviewedEvidenceInput {
   return {
     ...request.review,
-    provenance: 'live_capture',
     streamUid: request.uploadId,
   };
 }

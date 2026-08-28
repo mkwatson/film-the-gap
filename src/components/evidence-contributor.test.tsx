@@ -210,7 +210,11 @@ describe('EvidenceContributor', () => {
     expect(remoteMocks.analyze).toHaveBeenCalledOnce();
     expect(screen.getByText('google/gemini-3.7-flash')).toBeTruthy();
     expect(screen.getByText('Proposed citation 00:01–00:10')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Publish reviewed evidence' }).hasAttribute('disabled'),
+    ).toBe(true);
 
+    fireEvent.click(screen.getByLabelText('I recorded it now for this mission'));
     fireEvent.click(screen.getByLabelText('Future matching product questions too'));
     fireEvent.click(screen.getByRole('button', { name: 'Publish reviewed evidence' }));
 
@@ -227,6 +231,7 @@ describe('EvidenceContributor', () => {
           reuseScope: 'public_network',
           confidence: 'high',
           continuity: 'continuous',
+          provenance: 'live_capture',
           citationStartSeconds: 1,
           citationEndSeconds: 10,
         }),

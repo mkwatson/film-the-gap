@@ -592,6 +592,17 @@ async function run(): Promise<void> {
           end instanceof HTMLInputElement && end.value === '11';
       })()`);
       if (reviewed !== true) throw new Error('The reviewed evidence fields did not stay bounded.');
+      const liveCaptureAttested = driver.eval(`(() => {
+        const radio = [...document.querySelectorAll('input[name="provenance"]')].find(
+          (candidate) => candidate.parentElement?.textContent?.includes('I recorded it now for this mission'),
+        );
+        if (!(radio instanceof HTMLInputElement)) return false;
+        radio.click();
+        return radio.checked;
+      })()`);
+      if (liveCaptureAttested !== true) {
+        throw new Error('The contributor could not attest the clip provenance.');
+      }
       const publicReuseSelected = driver.eval(`(() => {
         const radio = [...document.querySelectorAll('input[name="reuse-scope"]')].find(
           (candidate) => candidate.parentElement?.textContent?.includes('Future matching product questions too'),

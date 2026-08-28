@@ -1241,7 +1241,6 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
     const evidenceInput: ReviewedEvidenceInput = {
       ...parsed.data.review,
       durationSeconds: actualDuration,
-      provenance: 'live_capture',
       streamUid: parsed.data.uploadId,
       ...(video.previewUrl === null ? {} : { videoUrl: video.previewUrl }),
     };
@@ -1295,7 +1294,7 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
           title: 'Contributor-recorded mission video',
           videoUrl: video.previewUrl,
           rights: parsed.data.review.rights,
-          provenance: 'live_capture',
+          provenance: parsed.data.review.provenance,
           continuity: parsed.data.review.continuity,
           contributorLabel: parsed.data.review.contributorLabel,
           capturedAt: parsed.data.review.capturedAt,

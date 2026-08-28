@@ -357,6 +357,7 @@ describe('generic product evidence cases', () => {
             citationEndSeconds: 10,
             confidence: 'high',
             continuity: 'continuous',
+            provenance: 'live_capture',
             rights: 'owned',
             reuseScope: 'public_network',
             capturedAt: new Date().toISOString(),
@@ -385,7 +386,7 @@ describe('generic product evidence cases', () => {
       }),
     ).toMatchObject([
       {
-        source: { streamUid: upload.uploadId, rights: 'owned' },
+        source: { streamUid: upload.uploadId, rights: 'owned', provenance: 'live_capture' },
         observation: { result: 'supports', citationStartSeconds: 1, citationEndSeconds: 10 },
       },
     ]);
@@ -474,6 +475,7 @@ describe('generic product evidence cases', () => {
             citationEndSeconds: 10,
             confidence: 'high',
             continuity: 'continuous',
+            provenance: 'authorized_import',
             rights: 'owned',
             reuseScope: 'case_only',
             capturedAt: new Date().toISOString(),
@@ -485,7 +487,16 @@ describe('generic product evidence cases', () => {
     expect(publishResponse.status).toBe(200);
     expect(await publishResponse.json()).toMatchObject({
       ok: true,
-      snapshot: { state: { activeCase: { mission: { status: 'fulfilled' } } } },
+      snapshot: {
+        state: {
+          activeCase: {
+            mission: { status: 'fulfilled' },
+            sources: expect.arrayContaining([
+              expect.objectContaining({ provenance: 'authorized_import' }),
+            ]),
+          },
+        },
+      },
     });
 
     await expect(
@@ -532,6 +543,7 @@ describe('generic product evidence cases', () => {
             citationEndSeconds: 10,
             confidence: 'low',
             continuity: 'continuous',
+            provenance: 'live_capture',
             rights: 'owned',
             reuseScope: 'public_network',
             capturedAt: new Date().toISOString(),

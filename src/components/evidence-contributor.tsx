@@ -93,6 +93,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
   const [snapshot, setSnapshot] = useState<RemoteEvidenceCaseSnapshot | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [selectedAt, setSelectedAt] = useState<string | null>(null);
   const [localVideoUrl, setLocalVideoUrl] = useState<string | null>(null);
   const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
   const [sha256, setSha256] = useState<string | null>(null);
@@ -105,6 +106,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
   const [citationStartSeconds, setCitationStartSeconds] = useState(0);
   const [citationEndSeconds, setCitationEndSeconds] = useState(1);
   const [contributorLabel, setContributorLabel] = useState('Product owner');
+  const [provenance, setProvenance] = useState<'live_capture' | 'authorized_import' | null>(null);
   const [rights, setRights] = useState<'owned' | 'authorized'>('owned');
   const [reuseScope, setReuseScope] = useState<'case_only' | 'public_network'>('case_only');
   const [error, setError] = useState<string | null>(null);
@@ -209,10 +211,12 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
       URL.revokeObjectURL(localVideoUrl);
     }
     setFile(selected);
+    setSelectedAt(new Date().toISOString());
     setLocalVideoUrl(URL.createObjectURL(selected));
     setDurationSeconds(null);
     setSha256(null);
     setAnalysis(null);
+    setProvenance(null);
     setError(null);
     setPhase('hashing');
     try {
@@ -329,8 +333,11 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
       token === null ||
       snapshot === null ||
       upload === null ||
+      file === null ||
+      selectedAt === null ||
       durationSeconds === null ||
-      sha256 === null
+      sha256 === null ||
+      provenance === null
     ) {
       return;
     }
@@ -351,9 +358,11 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
           citationEndSeconds,
           confidence,
           continuity,
+          provenance,
           rights,
           reuseScope,
-          capturedAt: new Date(file?.lastModified ?? Date.now()).toISOString(),
+          capturedAt:
+            provenance === 'live_capture' ? selectedAt : new Date(file.lastModified).toISOString(),
           sha256,
         },
       });
@@ -629,6 +638,31 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                 />
               </label>
               <fieldset>
+                <legend>How was this clip made?</legend>
+                <label>
+                  <input
+                    type="radio"
+                    name="provenance"
+                    checked={provenance === 'live_capture'}
+                    onChange={() => setProvenance('live_capture')}
+                  />
+                  I recorded it now for this mission
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="provenance"
+                    checked={provenance === 'authorized_import'}
+                    onChange={() => setProvenance('authorized_import')}
+                  />
+                  I selected an existing clip I may share
+                </label>
+                <small>
+                  This is your attestation. The file timestamp and digest do not independently prove
+                  when or how the video was made.
+                </small>
+              </fieldset>
+              <fieldset>
                 <legend>Permission to publish this clip</legend>
                 <label>
                   <input
@@ -682,6 +716,7 @@ export function EvidenceContributor({ caseId }: EvidenceContributorProps): React
                 type="button"
                 disabled={
                   phase === 'publishing' ||
+                  provenance === null ||
                   observation.trim().length < 4 ||
                   !Number.isInteger(citationStartSeconds) ||
                   !Number.isInteger(citationEndSeconds) ||

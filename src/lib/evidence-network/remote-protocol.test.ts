@@ -8,6 +8,7 @@ import {
   publicEvidenceMissionListSchema,
   publishRemoteEvidenceRequestSchema,
   remoteEvidenceCaseCredentialsSchema,
+  toReviewedEvidenceInput,
 } from './remote-protocol';
 
 describe('remote product evidence protocol', () => {
@@ -80,6 +81,7 @@ describe('remote product evidence protocol', () => {
         citationEndSeconds: 10,
         confidence: 'high',
         continuity: 'continuous',
+        provenance: 'authorized_import',
         rights: 'owned',
         reuseScope: 'case_only',
         capturedAt: '2026-08-27T16:00:00.000Z',
@@ -93,6 +95,15 @@ describe('remote product evidence protocol', () => {
         review: { ...base.review, sha256: 'a'.repeat(64) },
       }).success,
     ).toBe(true);
+    expect(
+      toReviewedEvidenceInput({
+        ...base,
+        review: { ...base.review, sha256: 'a'.repeat(64) },
+      }),
+    ).toMatchObject({
+      provenance: 'authorized_import',
+      streamUid: base.uploadId,
+    });
   });
 
   it('keeps public board listings capability-free while claims stay case-scoped', () => {
