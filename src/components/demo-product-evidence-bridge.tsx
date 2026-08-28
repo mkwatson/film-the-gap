@@ -407,7 +407,7 @@ export function DemoProductEvidenceBridge({
         </div>
       )}
 
-      <div className="demo-product-tool-receipt" aria-label="Product page Site Tools">
+      <div className="demo-product-tool-receipt" role="group" aria-label="Product page Site Tools">
         <span>
           {toolStatus.phase === 'ready'
             ? `${toolStatus.registeredNames.length} Site Tools live`

@@ -111,6 +111,7 @@ describe('DemoProductEvidenceBridge', () => {
     render(<DemoProductEvidenceBridge />);
 
     expect(await screen.findByText('Human controls ready')).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Product page Site Tools' })).toBeTruthy();
     expect(screen.getByText('This claim still needs observable proof.')).toBeTruthy();
     const link = screen.getByRole('link', { name: 'Ask someone to film the missing proof →' });
     const url = new URL(link.getAttribute('href') ?? '', window.location.origin);
