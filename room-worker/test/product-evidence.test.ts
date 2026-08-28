@@ -230,6 +230,46 @@ describe('generic product evidence cases', () => {
     expect(credentials.state.activeCase?.answers.at(-1)?.status).toBe('insufficient');
   });
 
+  it('persists live search results for the bottle case instead of restoring a canned search', async () => {
+    const response = await SELF.fetch('https://rooms.example/evidence-cases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: origin },
+      body: JSON.stringify({
+        seed: 'travel_bottle',
+        discovery: {
+          provider: 'evidence_network',
+          status: 'complete',
+          query: 'travel bottle continuous upside-down leak test',
+          searchedPlatforms: ['youtube', 'web'],
+          warnings: [],
+          leads: [
+            {
+              platform: 'youtube',
+              title: 'Public bottle test lead',
+              url: 'https://www.youtube.com/watch?v=bottle123',
+              summary: 'Public lead only; this video has not been claim-reviewed.',
+              creatorLabel: 'YouTube · Bottle Lab',
+            },
+          ],
+        },
+        mission,
+      }),
+    });
+    const credentials = remoteEvidenceCaseCredentialsSchema.parse(await response.json());
+
+    expect(response.status).toBe(201);
+    expect(credentials.state.activeCase).toMatchObject({
+      discovery: { provider: 'evidence_network', searchedPlatforms: ['youtube', 'web'] },
+      mission: { status: 'open' },
+    });
+    expect(credentials.state.activeCase?.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ title: 'Rights-cleared demo product page', rights: 'owned' }),
+        expect.objectContaining({ title: 'Public bottle test lead', rights: 'link_only' }),
+      ]),
+    );
+  });
+
   it('lets the owner create a mission but rejects stale or unauthorized mutations', async () => {
     const { credentials } = await createCase(false);
     const command = {

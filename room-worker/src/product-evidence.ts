@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import {
   applyEvidenceNetworkCommand,
+  createDemoEvidenceQuestionState,
   createDemoEvidenceNetworkState,
   createEmptyEvidenceNetworkState,
   publicNetworkEvidenceRetentionDays,
@@ -350,9 +351,12 @@ function snapshot(caseId: string, stored: StoredEvidenceCase): RemoteEvidenceCas
 }
 
 function initialState(request: CreateRemoteEvidenceCaseRequest, now: string): EvidenceNetworkState {
+  const discovery = requestDiscovery(request);
   let state =
     request.seed === 'travel_bottle'
-      ? createDemoEvidenceNetworkState()
+      ? discovery === null
+        ? createDemoEvidenceNetworkState()
+        : createDemoEvidenceQuestionState()
       : createEmptyEvidenceNetworkState();
   const question = requestQuestion(request);
   if (question !== null) {
@@ -366,7 +370,6 @@ function initialState(request: CreateRemoteEvidenceCaseRequest, now: string): Ev
     }
     state = transition.state;
   }
-  const discovery = requestDiscovery(request);
   if (discovery !== null) {
     const transition = applyEvidenceNetworkCommand(
       state,

@@ -2037,14 +2037,6 @@ select:focus-visible {
   }
 }
 
-.mission-replay {
-  margin-top: 0;
-  padding: 14px;
-  border: 1px dashed rgba(159, 150, 255, 0.35);
-  border-radius: 12px;
-  background: rgba(159, 150, 255, 0.04);
-}
-
 .evidence-source-media {
   display: flex;
   align-items: center;
@@ -2068,43 +2060,6 @@ select:focus-visible {
   font-size: 8px;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.mission-replay small,
-.mission-replay strong {
-  display: block;
-}
-
-.mission-replay small {
-  color: var(--violet);
-  font-size: 8px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.mission-replay strong {
-  margin-top: 4px;
-  font-size: 12px;
-}
-
-.mission-replay p {
-  margin: 6px 0 0;
-  color: var(--muted);
-  font-size: 10px;
-  line-height: 1.45;
-}
-
-.mission-replay-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 13px;
-}
-
-.mission-replay-actions button {
-  min-height: 44px;
-  padding: 8px 10px;
 }
 
 .mission-complete {
@@ -2478,8 +2433,7 @@ select:focus-visible {
   }
 
   .evidence-tool-list,
-  .evidence-try-panel form,
-  .mission-replay-actions {
+  .evidence-try-panel form {
     grid-template-columns: 1fr;
   }
 

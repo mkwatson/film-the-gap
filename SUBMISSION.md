@@ -82,9 +82,9 @@ This path requires no Film the Gap account. For ChatGPT, use the latest desktop 
 1. Open **[LIVE URL]** in ChatGPT's built-in browser and confirm the page header says **Site Tools live**. In the address bar, choose **Site tools → Available site tools** and confirm the page's tools are listed. The default bottle question starts at **Not enough proof** because “leak resistant” marketing copy is not a continuous leak test.
 2. In ChatGPT, send:
 
-   > Use this page's Site Tools. Inspect the active product question. If the current sources do not prove the answer, create the smallest continuous filming mission, create its bounded phone case, and publish only that mission to the open request board. Do not infer the result from marketing copy. Stop before anyone records.
+   > Use this page's Site Tools. Inspect the active product question and search existing evidence. Treat ordinary public results as leads, never proof. If the reviewed sources still do not prove the answer, create the smallest continuous filming mission, create its bounded phone case, and publish only that mission to the open request board. Do not infer the result from marketing copy. Stop before anyone records.
 
-3. Watch ChatGPT inspect the case, create a bounded ten-second leak-test mission, and explicitly publish only its public fields. Open **Open filming requests** in a second browser context and ask ChatGPT: “Inspect the open filming requests and open the exact request for this bottle.” The board returns the bounded recorder; no merchant or customer data exists.
+3. Watch ChatGPT inspect the case, search D1/social/product-page/open-web sources, preserve ordinary results as non-decisive leads, create a bounded ten-second leak-test mission, and explicitly publish only its public fields. Open **Open filming requests** in a second browser context and ask ChatGPT: “Inspect the open filming requests and open the exact request for this bottle.” The board returns the bounded recorder; no merchant or customer data exists.
 4. On the contributor page, record the owned bottle over dry paper for at least ten continuous seconds. Say or show the displayed mission phrase near the start while the bottle remains visible. Upload it, wait for the timestamped proposal and separate phrase check, correct anything the model got wrong, confirm provenance, continuity, rights, and reuse scope, then publish.
 5. Return to the buyer page. It updates without a reset and shows **Before: Not enough proof → After: [ACTUAL RESULT]**. In ChatGPT, send:
 
@@ -92,7 +92,7 @@ This path requires no Film the Gap account. For ChatGPT, use the latest desktop 
 
 6. The result must match the contributor's reviewed finding and include the exact video timestamp. If the contributor opted into reuse, open the exact same product URL and question as a fresh case and run search: the D1 receipt, cited Stream recording, changed answer, and absence of a new filming mission prove the network effect. To try another product, use **Open a case for a product we have never seen**; no code edit is required.
 
-If a judge cannot use a second device, the default bottle case contains an explicitly labeled completed-mission replay. It exercises the same reviewed-evidence transition but is a fallback, not the primary demo claim.
+After the first real bottle mission is published with network-reuse consent, a judge without a second device can reset the page and search the exact same bottle question. D1 returns the earlier reviewed Stream recording and timestamp with no filming mission. That is the only completed-mission replay: the app does not manufacture a pass/fail transition.
 
 ## What the three-minute video must prove
 
@@ -165,7 +165,7 @@ The criteria are equally weighted. WebMCP Leverage is the first tie-breaker, so 
 - The app automatically contacts every product owner/customer, guarantees that an open request is fulfilled, or already has a mature incentive marketplace. The current pilot provides permissionless discoverability and a real fulfillment path.
 - Reuse is permanent, semantic, cross-product, or available beyond the exact 30-day product/question contract.
 - The model is authoritative, or a contributor's statement proves a hidden historical fact.
-- A replay fixture is a live person, a live model call, or fresh physical evidence.
+- A previously recorded mission is a new live person, a new model call, or fresh physical evidence.
 - The generic branch is publicly deployed before it actually is.
 - Checkout, payment, private systems, private research, and customer data are not part of the judged product.
 

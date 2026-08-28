@@ -38,35 +38,11 @@
       }
     },
     {
-      "name": "create_filming_mission",
-      "description": "Turn the unresolved product question into one bounded recording instruction and acceptance criterion for a person who has the product. This creates no review, recommendation, purchase, or message to an unknown person.",
+      "name": "search_product_evidence",
+      "description": "Search the rights-cleared evidence network, supplied product pages, public social video, and the open web for the active product and observable question. Only previously reviewed network recordings can affect the answer; ordinary public results remain link-only leads.",
       "inputSchema": {
         "type": "object",
-        "properties": {
-          "instruction": {
-            "type": "string",
-            "minLength": 8,
-            "maxLength": 280,
-            "description": "Exactly what a person with the product should record."
-          },
-          "successCriterion": {
-            "type": "string",
-            "minLength": 8,
-            "maxLength": 280,
-            "description": "What must stay visible or audible for the result to be useful."
-          },
-          "minimumSeconds": {
-            "type": "integer",
-            "minimum": 2,
-            "maximum": 60,
-            "description": "Minimum continuous observation length in seconds."
-          },
-          "continuousTakeRequired": {
-            "type": "boolean",
-            "description": "Whether cuts would weaken what this evidence can establish."
-          }
-        },
-        "required": ["instruction", "successCriterion", "minimumSeconds", "continuousTakeRequired"],
+        "properties": {},
         "additionalProperties": false
       }
     }

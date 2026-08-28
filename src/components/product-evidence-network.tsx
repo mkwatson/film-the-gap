@@ -7,7 +7,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { discoverProductEvidence } from '@/lib/evidence-network/discovery-client';
 import {
   applyEvidenceNetworkCommand,
-  createDemoEvidenceNetworkState,
+  createDemoEvidenceQuestionState,
   currentEvidenceAnswer,
   getEvidenceNetworkToolNames,
   initialEvidenceAnswer,
@@ -15,7 +15,6 @@ import {
   type EvidenceNetworkCommand,
   type EvidenceNetworkState,
   type EvidenceNetworkTransition,
-  type EvidenceResult,
   type EvidenceDiscoveryInput,
   type EvidenceDiscoveryPlatform,
   type EvidenceDiscoveryProvider,
@@ -152,7 +151,7 @@ function isRightsCleanBottleDemo(evidenceCase: ProductEvidenceCase | null | unde
         id === 'source-1' &&
         title === 'Rights-cleared demo product page' &&
         rights === 'owned' &&
-        provenance === 'demo_replay',
+        provenance === 'authored_fixture',
     )
   );
 }
@@ -213,7 +212,11 @@ function remoteRequestForState(state: EvidenceNetworkState): CreateRemoteEvidenc
   const isDemoFixture = isRightsCleanBottleDemo(evidenceCase);
   const discovery = remoteDiscoveryForState(state);
   return isDemoFixture
-    ? { seed: 'travel_bottle', mission: missionInput }
+    ? {
+        seed: 'travel_bottle',
+        ...(discovery === undefined ? {} : { discovery }),
+        mission: missionInput,
+      }
     : {
         seed: 'empty',
         question: {
@@ -229,7 +232,7 @@ function remoteRequestForState(state: EvidenceNetworkState): CreateRemoteEvidenc
 }
 
 export function ProductEvidenceNetwork(): React.JSX.Element {
-  const [state, setState] = useState<EvidenceNetworkState>(createDemoEvidenceNetworkState);
+  const [state, setState] = useState<EvidenceNetworkState>(createDemoEvidenceQuestionState);
   const [lastMessage, setLastMessage] = useState(
     'One source was indexed. Its marketing claim does not prove the physical behavior.',
   );
@@ -637,8 +640,6 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
   const reusableSourceCount = sources.filter(
     ({ reuseScope }) => reuseScope === 'public_network',
   ).length;
-  const isDemoCase = isRightsCleanBottleDemo(evidenceCase);
-
   async function copyAgentStarter(): Promise<void> {
     if (navigator.clipboard === undefined) {
       setCopyStatus('error');
@@ -661,7 +662,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
       );
       return;
     }
-    const nextState = createDemoEvidenceNetworkState();
+    const nextState = createDemoEvidenceQuestionState();
     stateRef.current = nextState;
     setState(nextState);
     setLastMessage('Demo reset to one indexed source and one unresolved product question.');
@@ -703,31 +704,6 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
             minimumSeconds: 10,
             continuousTakeRequired: true,
           },
-    });
-  }
-
-  function publishReplay(result: Extract<EvidenceResult, 'supports' | 'contradicts'>): void {
-    const supports = result === 'supports';
-    void dispatch({
-      kind: 'publish-reviewed-evidence',
-      actor: 'contributor',
-      input: {
-        result,
-        observation: supports
-          ? 'No water reached the paper during the continuous ten-second inversion.'
-          : 'Water appeared on the paper below the lid during the continuous inversion.',
-        contributorLabel: 'Clearly labeled replay contributor',
-        durationSeconds: 10,
-        citationStartSeconds: 0,
-        citationEndSeconds: 10,
-        confidence: 'high',
-        continuity: 'continuous',
-        captureTiming: 'preexisting',
-        rights: 'owned',
-        reuseScope: 'case_only',
-        provenance: 'demo_replay',
-        capturedAt: new Date().toISOString(),
-      },
     });
   }
 
@@ -1225,35 +1201,6 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                       {boardError === null ? null : <p role="alert">{boardError}</p>}
                     </div>
                   )}
-
-                  {phoneConnection === null && isDemoCase ? (
-                    <div className="mission-replay">
-                      <div>
-                        <small>Judge-safe fallback</small>
-                        <strong>Replay a completed rights-clean mission</strong>
-                        <p>
-                          This deterministic lower rung is explicitly labeled and exercises the same
-                          reviewed-evidence transition without a second device.
-                        </p>
-                      </div>
-                      <div className="mission-replay-actions">
-                        <button
-                          className="evidence-primary-button"
-                          type="button"
-                          onClick={() => publishReplay('supports')}
-                        >
-                          Replay: test passed
-                        </button>
-                        <button
-                          className="evidence-danger-button"
-                          type="button"
-                          onClick={() => publishReplay('contradicts')}
-                        >
-                          Replay: test failed
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
                 </div>
               ) : (
                 <div className="mission-complete">
@@ -1262,7 +1209,7 @@ export function ProductEvidenceNetwork(): React.JSX.Element {
                     <strong>Reviewed evidence published</strong>
                     {sources.at(-1)?.provenance === 'live_capture'
                       ? 'A real contributor video fulfilled the mission through the bounded phone capability.'
-                      : 'The deterministic evidence is explicitly labeled as a replay rather than a live capture.'}
+                      : 'The published source keeps its non-live provenance label.'}
                   </p>
                 </div>
               )}

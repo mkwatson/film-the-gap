@@ -49,23 +49,18 @@
     ]
   },
   {
-    "name": "Turn the unresolved demo claim into an observable recording task",
+    "name": "Search existing evidence before requesting another recording",
     "messages": [
       {
         "role": "user",
         "type": "message",
-        "content": "The bottle evidence is still insufficient. Create a single continuous filming task that can show whether the filled, closed bottle leaks while inverted for ten seconds. Do not create a phone link or publish anything."
+        "content": "Search the existing evidence network, public videos, product pages, and open web for the current bottle question. Treat ordinary links as leads and do not create a filming mission yet."
       }
     ],
     "expectedCall": [
       {
-        "functionName": "create_filming_mission",
-        "arguments": {
-          "instruction": "Fill the bottle, close the lid, and hold it upside down over dry paper for ten seconds.",
-          "successCriterion": "Keep the closed lid, inverted bottle, and dry paper visible throughout the continuous take.",
-          "minimumSeconds": 10,
-          "continuousTakeRequired": true
-        }
+        "functionName": "search_product_evidence",
+        "arguments": {}
       }
     ]
   }

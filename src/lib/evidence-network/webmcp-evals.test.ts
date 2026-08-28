@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import browserJourneyEvals from '../../../evals/browser-journey-evals.json';
 import evidenceInitialEvals from '../../../evals/evidence-initial-evals.json';
 import evidenceInitialTools from '../../../evals/evidence-initial-tools.json';
-import { createDemoEvidenceNetworkState } from './model';
+import { createDemoEvidenceQuestionState } from './model';
 import { createEvidenceSiteTools, type EvidenceSiteToolRuntime } from './site-tools';
 
 const allEvidenceToolNames = new Set([
@@ -38,7 +38,7 @@ function expectedCalls(value: unknown): readonly ExpectedFunctionCall[] {
 
 describe('generic product-evidence WebMCP eval corpus', () => {
   it('keeps the static initial schema identical to the actual initial page tools', () => {
-    const state = createDemoEvidenceNetworkState();
+    const state = createDemoEvidenceQuestionState();
     const runtime: EvidenceSiteToolRuntime = {
       readState: () => state,
       dispatch: async () => {

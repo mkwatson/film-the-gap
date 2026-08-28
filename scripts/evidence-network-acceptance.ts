@@ -18,7 +18,7 @@ import {
 } from './native-browser-harness.ts';
 
 const defaultBrowserExecutable = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const initialTools = [
+const missionCreationTools = [
   'inspect_product_evidence',
   'ask_product_question',
   'create_filming_mission',
@@ -289,7 +289,7 @@ async function run(): Promise<void> {
         driver,
         'initial generic Site Tools',
         toolNamesScript,
-        (value) => isStringArray(value) && sameStringSet(value, initialTools),
+        (value) => isStringArray(value) && sameStringSet(value, searchTools),
         config.commandTimeoutMs,
       );
       const inspected = driver.eval(
@@ -368,7 +368,7 @@ async function run(): Promise<void> {
           driver,
           'post-search mission frontier',
           toolNamesScript,
-          (value) => isStringArray(value) && sameStringSet(value, initialTools),
+          (value) => isStringArray(value) && sameStringSet(value, missionCreationTools),
           config.commandTimeoutMs,
         );
         await waitForBrowserValue(

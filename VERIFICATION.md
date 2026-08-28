@@ -9,9 +9,9 @@ Updated August 28, 2026 PT. This document records what the current product-evide
 | `pnpm peers check`            | Pass, zero peer issues                             | The exact pinned dependency graph is internally compatible.                                                                                                      |
 | Production dependency audit   | Pass, no known vulnerabilities                     | Every installed production dependency declares a recognized open-source license.                                                                                 |
 | `pnpm check`                  | Pass                                               | Prettier, zero-warning ESLint, strict TypeScript, all tests, Worker bundle, and production Next.js build.                                                        |
-| App tests                     | 24 files, 146 tests pass                           | Product state, dynamic tools, privacy, review, search, reconnect, failures, and release checks.                                                                  |
-| Worker tests                  | 5 files, 26 tests pass in Workerd                  | Durable Object, D1, role capabilities, uploads, model proposal, reuse, expiry, and denial paths.                                                                 |
-| Worker dry run                | Wrangler 4.127.0; 1,120.96 KiB / 187.69 KiB gzip   | The standalone evidence Worker bundles with every declared production binding.                                                                                   |
+| App tests                     | 24 files, 147 tests pass                           | Product state, dynamic tools, privacy, review, search, reconnect, failures, and release checks.                                                                  |
+| Worker tests                  | 5 files, 27 tests pass in Workerd                  | Durable Object, D1, role capabilities, live-search handoff, uploads, model proposal, reuse, expiry, and denial paths.                                            |
+| Worker dry run                | Wrangler 4.127.0; 1,121.54 KiB / 187.83 KiB gzip   | The standalone evidence Worker bundles with every declared production binding.                                                                                   |
 | Next.js build                 | Next.js 16.3.3; six route entries                  | The shopper, board, recorder, search, and health surfaces build for production.                                                                                  |
 | Cold clone                    | Frozen install and full gate pass; clean afterward | The repository does not depend on ignored files, generated files, or local package state.                                                                        |
 | Native Chrome journey         | Eight steps pass                                   | The real app, native WebMCP registration, Durable Object, D1, WebSocket, and browser state complete the causal journey against deterministic paid-edge fixtures. |
@@ -28,20 +28,20 @@ The later standalone-cleanup candidate `7611ec6f853cf93ae1967209239be1f08213ef62
 
 Chrome 151 completed the following sequence against the real local Next.js app, Cloudflare Worker runtime, Durable Object, D1 database, migrations, WebSocket updates, and WebMCP registrations:
 
-1. Open an arbitrary product/question: 978 ms.
-2. Search existing evidence through the current Site Tool: 587 ms.
-3. Create a bounded missing-proof mission and private phone handoff: 590 ms.
-4. Explicitly publish the minimized request, then inspect and claim it from a fresh board context: 424 ms.
-5. Scrub the contributor capability from the URL and recover it after reload: 263 ms.
-6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, choose reuse rights, and publish: 1,119 ms.
-7. Observe the first shopper's live answer change and exact timestamp citation: 559 ms.
-8. Open a fresh matching case and reuse the same reviewed source without another mission: 486 ms.
+1. Open the default unresolved case with Search—not mission creation—as the initial native capability: 1,374 ms.
+2. Open an arbitrary product and search existing evidence through WebMCP: 581 ms.
+3. Create a bounded missing-proof mission and private phone handoff: 793 ms.
+4. Explicitly publish the minimized request, then inspect and claim it from a fresh board context: 570 ms.
+5. Scrub the contributor capability from the URL and recover it after reload: 344 ms.
+6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, choose reuse rights, and publish: 1,453 ms.
+7. Observe the first shopper's live answer change and exact timestamp citation: 766 ms.
+8. Open a fresh matching case and reuse the same reviewed source without another mission: 664 ms.
 
 The fixtures replace only Cloudflare Stream and the video-model response. Browser egress to their public hosts is blocked during this test. The generated clip deliberately omits the random mission phrase, so the system preserves the honest `contributor_attested` label instead of inventing mission-challenge verification.
 
 ## Ordinary-browser end-to-end receipt
 
-The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,245, 138, 524, 268, 268, 1,104, 406, and 568 ms respectively. The run proved that a person can open and search an arbitrary case, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, review and correct the video proposal, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission.
+The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,626, 210, 702, 352, 355, 1,432, 543, and 766 ms respectively. The run proved that a person can open and search an arbitrary case, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, review and correct the video proposal, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission.
 
 This is an independent product-surface receipt, not a substitute for the native WebMCP receipt: together they establish that Site Tools are load-bearing for agent collaboration while every human role still has a complete ordinary web path.
 
@@ -99,6 +99,7 @@ Do not convert these into public claims until each is recorded against the froze
 - The current candidate has not been deployed to its final public Vercel and Cloudflare origins.
 - A physical phone has not yet completed this candidate's real Stream upload and real Gateway video-analysis path.
 - The current candidate has not yet completed the full flow in ChatGPT's current in-app Browser.
+- The public D1 index has not yet been seeded by a real rights-clean bottle mission. Until that real capture exists, the app deliberately offers no completed-mission replay or synthetic pass/fail button; deterministic paid-edge fixtures remain test-only.
 - An unfamiliar person still needs to complete the no-login flow without coaching.
 - The final rights-clean video, public YouTube URL, stable live URL, and frozen repository revision do not yet exist.
 

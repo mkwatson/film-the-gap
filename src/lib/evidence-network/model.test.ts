@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applyEvidenceNetworkCommand,
+  createDemoEvidenceQuestionState,
   createDemoEvidenceNetworkState,
   createEmptyEvidenceNetworkState,
   currentEvidenceAnswer,
@@ -64,6 +65,14 @@ describe('product evidence network model', () => {
     expect(state.activeCase?.observations[0]?.result).toBe('inconclusive');
     expect(currentEvidenceAnswer(state)?.status).toBe('insufficient');
     expect(getEvidenceNetworkToolNames(state)).toContain('create_filming_mission');
+  });
+
+  it('makes the judge-facing bottle case search before it can request new footage', () => {
+    const state = createDemoEvidenceQuestionState();
+
+    expect(state.activeCase?.discovery).toBeNull();
+    expect(getEvidenceNetworkToolNames(state)).toContain('search_product_evidence');
+    expect(getEvidenceNetworkToolNames(state)).not.toContain('create_filming_mission');
   });
 
   it('requires an existing-evidence search before requesting new footage', () => {

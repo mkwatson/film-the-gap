@@ -23,6 +23,7 @@ export type SourceRights = (typeof sourceRights)[number];
 export const sourceProvenanceKinds = [
   'live_capture',
   'authorized_import',
+  'authored_fixture',
   'demo_replay',
   'external_link',
 ] as const;
@@ -521,14 +522,14 @@ export function createEmptyEvidenceNetworkState(): EvidenceNetworkState {
   };
 }
 
-export function createDemoEvidenceNetworkState(): EvidenceNetworkState {
+export function createDemoEvidenceQuestionState(): EvidenceNetworkState {
   const source: EvidenceSource = {
     id: 'source-1',
     title: 'Rights-cleared demo product page',
     url: null,
     mediaType: 'web_page',
     rights: 'owned',
-    provenance: 'demo_replay',
+    provenance: 'authored_fixture',
     continuity: 'unknown',
     captureTiming: 'preexisting',
     reuseScope: 'case_only',
@@ -566,15 +567,7 @@ export function createDemoEvidenceNetworkState(): EvidenceNetworkState {
     },
     sources: [source],
     observations: [observation],
-    discovery: {
-      provider: 'rights_clean_demo',
-      status: 'complete',
-      query: 'travel bottle continuous upside-down leak test',
-      searchedPlatforms: ['web'],
-      warnings: [],
-      sourceIds: [source.id],
-      searchedAt: demoTimestamp,
-    },
+    discovery: null,
     mission: null,
     answers: [insufficientAnswer(1, demoTimestamp)],
   };
@@ -590,6 +583,29 @@ export function createDemoEvidenceNetworkState(): EvidenceNetworkState {
         demoTimestamp,
       ),
     ],
+  };
+}
+
+export function createDemoEvidenceNetworkState(): EvidenceNetworkState {
+  const state = createDemoEvidenceQuestionState();
+  const evidenceCase = state.activeCase;
+  if (evidenceCase === null) {
+    throw new Error('The rights-clean demo question must contain an active case.');
+  }
+  return {
+    ...state,
+    activeCase: {
+      ...evidenceCase,
+      discovery: {
+        provider: 'rights_clean_demo',
+        status: 'complete',
+        query: 'travel bottle continuous upside-down leak test',
+        searchedPlatforms: ['web'],
+        warnings: [],
+        sourceIds: [evidenceCase.sources[0]?.id ?? 'source-1'],
+        searchedAt: demoTimestamp,
+      },
+    },
   };
 }
 

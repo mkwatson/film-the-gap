@@ -73,6 +73,19 @@ function setModelContext(modelContext: WebMCP.ModelContext | undefined): void {
 
 beforeEach(() => {
   window.sessionStorage.clear();
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (): Promise<Response> =>
+      Response.json({
+        provider: 'evidence_network',
+        status: 'complete',
+        query: 'travel bottle continuous upside-down leak test',
+        searchedPlatforms: ['web'],
+        warnings: [],
+        leads: [],
+      }),
+    ),
+  );
   remoteMocks.evidenceServiceUrl = null;
   remoteMocks.createRemoteEvidenceCase.mockReset();
   remoteMocks.publishPublicEvidenceMission.mockReset();
@@ -86,7 +99,7 @@ afterEach(() => {
 });
 
 describe('ProductEvidenceNetwork', () => {
-  it('keeps the complete evidence loop usable without native Site Tools', async () => {
+  it('keeps the search and filming handoff usable without native Site Tools', async () => {
     setModelContext(undefined);
     render(<ProductEvidenceNetwork />);
 
@@ -100,13 +113,12 @@ describe('ProductEvidenceNetwork', () => {
     expect(screen.getByText('Not enough proof')).toBeTruthy();
     expect(screen.getByText(/explicit confirmation to publish those fields/)).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create claim-specific filming mission' }));
-    expect(await screen.findByText('Replay a completed rights-clean mission')).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Replay: test passed' }));
-    expect(await screen.findByText('Evidence changes answer')).toBeTruthy();
-    expect(screen.getAllByText('Supported').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Reviewed evidence published')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Search existing evidence' }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Create claim-specific filming mission' }),
+    );
+    expect(await screen.findByText('Put this exact mission on any phone.')).toBeTruthy();
+    expect(screen.queryByText(/Replay a completed rights-clean mission/)).toBeNull();
   });
 
   it('reconciles the native tool frontier as evidence state changes', async () => {
@@ -118,13 +130,20 @@ describe('ProductEvidenceNetwork', () => {
       expect(modelContext.activeToolNames()).toEqual([
         'inspect_product_evidence',
         'ask_product_question',
-        'create_filming_mission',
+        'search_product_evidence',
       ]);
     });
 
     const inspectRegistration = modelContext.registrations.find(
       ({ tool }) => tool.name === 'inspect_product_evidence',
     );
+    await modelContext
+      .latestTool('search_product_evidence')
+      .execute({}, { signal: new AbortController().signal });
+    await waitFor(() => {
+      expect(modelContext.activeToolNames()).toContain('create_filming_mission');
+      expect(modelContext.activeToolNames()).not.toContain('search_product_evidence');
+    });
     await modelContext.latestTool('create_filming_mission').execute(
       {
         instruction: 'Invert the filled bottle over dry paper for ten seconds.',
@@ -137,29 +156,12 @@ describe('ProductEvidenceNetwork', () => {
 
     await waitFor(() => {
       expect(modelContext.activeToolNames()).not.toContain('create_filming_mission');
-      expect(screen.getByText('Replay a completed rights-clean mission')).toBeTruthy();
+      expect(screen.getByText('Put this exact mission on any phone.')).toBeTruthy();
     });
     expect(inspectRegistration?.signal?.aborted).toBe(false);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Replay: test passed' }));
-
-    await waitFor(() => {
-      expect(modelContext.activeToolNames()).toContain('inspect_answer_change');
-      expect(screen.getAllByText('Supported').length).toBeGreaterThanOrEqual(1);
-    });
     expect(
       modelContext.registrations.filter(({ tool }) => tool.name === 'inspect_product_evidence'),
     ).toHaveLength(1);
-
-    const result = await modelContext
-      .latestTool('inspect_answer_change')
-      .execute({}, { signal: new AbortController().signal });
-    expect(result).toMatchObject({
-      changed: true,
-      before: { status: 'insufficient' },
-      after: { status: 'supported' },
-      decisiveEvidence: [{ timestamp: '00:00–00:10' }],
-    });
   });
 
   it('opens an unseen product case without a product-specific code path', async () => {
@@ -262,7 +264,10 @@ describe('ProductEvidenceNetwork', () => {
     setModelContext(undefined);
     render(<ProductEvidenceNetwork />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create claim-specific filming mission' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Search existing evidence' }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Create claim-specific filming mission' }),
+    );
     fireEvent.click(await screen.findByRole('button', { name: 'Create phone capture link' }));
     expect(await screen.findByText(/Private live case BCDF2345/)).toBeTruthy();
     fireEvent.click(

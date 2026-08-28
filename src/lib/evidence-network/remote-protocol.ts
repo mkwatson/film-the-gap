@@ -141,6 +141,7 @@ export const evidenceNetworkStateSchema: z.ZodType<EvidenceNetworkState> = z.str
 
 const createFromDemoSchema = z.strictObject({
   seed: z.literal('travel_bottle'),
+  discovery: evidenceDiscoveryInputSchema.optional(),
   mission: filmingMissionInputSchema.optional(),
 });
 
@@ -403,5 +404,5 @@ export function requestMission(
 export function requestDiscovery(
   request: CreateRemoteEvidenceCaseRequest,
 ): EvidenceDiscoveryInput | null {
-  return request.seed === 'empty' ? (request.discovery ?? null) : null;
+  return request.discovery ?? null;
 }

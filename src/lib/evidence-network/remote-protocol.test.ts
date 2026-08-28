@@ -26,6 +26,19 @@ describe('remote product evidence protocol', () => {
     );
     expect(
       createRemoteEvidenceCaseRequestSchema.safeParse({
+        seed: 'travel_bottle',
+        discovery: {
+          provider: 'evidence_network',
+          status: 'complete',
+          query: 'travel bottle continuous upside-down leak test',
+          searchedPlatforms: ['web'],
+          warnings: [],
+          leads: [],
+        },
+      }).success,
+    ).toBe(true);
+    expect(
+      createRemoteEvidenceCaseRequestSchema.safeParse({
         seed: 'empty',
         question: {
           productName: 'USB-C lavalier microphone',
