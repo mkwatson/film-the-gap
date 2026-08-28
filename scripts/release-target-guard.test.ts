@@ -7,9 +7,15 @@ import { verifyReleaseTarget, type ReleaseTargetGuardInput } from './release-tar
 const commit = 'a'.repeat(40);
 const d1DatabaseId = '12345678-1234-4567-89ab-1234567890ab';
 
-function workerConfig(databaseId = d1DatabaseId, previewDatabaseId = databaseId): string {
+function workerConfig(
+  databaseId = d1DatabaseId,
+  previewDatabaseId = databaseId,
+  publicEvidenceOrigin = 'https://webmcp-product-evidence.example.workers.dev',
+): string {
   return `{
     "name": "webmcp-product-evidence",
+    "vars": {"PUBLIC_EVIDENCE_ORIGIN": "${publicEvidenceOrigin}"},
+    "limits": {"cpu_ms": 100},
     "d1_databases": [{
       "database_id": "${databaseId}",
       "preview_database_id": "${previewDatabaseId}"
@@ -53,6 +59,8 @@ describe('release target guard', () => {
         worker: 'webmcp-product-evidence',
         roomOrigin: 'https://webmcp-product-evidence.example.workers.dev',
         d1Configured: true,
+        signedPlaybackOriginConfigured: true,
+        cpuLimitMilliseconds: 100,
       },
     });
     expect(serialized).not.toContain('team_opaque');
@@ -115,6 +123,19 @@ describe('release target guard', () => {
     ).toThrow(/same dedicated D1 database/i);
   });
 
+  it('rejects a missing or loosened Worker CPU ceiling', () => {
+    expect(() =>
+      verifyReleaseTarget(
+        guardInput({ workerConfigText: workerConfig().replace('"cpu_ms": 100', '"cpu_ms": 101') }),
+      ),
+    ).toThrow(/100 ms CPU ceiling/i);
+    expect(() =>
+      verifyReleaseTarget(
+        guardInput({ workerConfigText: workerConfig().replace('"limits": {"cpu_ms": 100},', '') }),
+      ),
+    ).toThrow(/declare numeric cpu_ms/i);
+  });
+
   it('rejects credentialed, path-bearing, shared, or branded origins', () => {
     expect(() =>
       verifyReleaseTarget(guardInput({ appOrigin: 'https://user:pass@app.example' })),
@@ -133,5 +154,12 @@ describe('release target guard', () => {
     expect(() =>
       verifyReleaseTarget(guardInput({ appOrigin: 'https://vidably-demo.example' })),
     ).toThrow(/unrelated Vidably branding/i);
+    expect(() =>
+      verifyReleaseTarget(
+        guardInput({
+          workerConfigText: workerConfig(d1DatabaseId, d1DatabaseId, 'https://wrong.example'),
+        }),
+      ),
+    ).toThrow(/PUBLIC_EVIDENCE_ORIGIN.*match WEBMCP_ROOM_ORIGIN/i);
   });
 });

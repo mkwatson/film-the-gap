@@ -77,6 +77,7 @@ function appPage(marker: string, options: AppPageOptions): Response {
 
 interface ReleaseFetchOptions {
   readonly workerTag?: string;
+  readonly publicEvidenceOrigin?: string;
   readonly contributorCameraAllowed?: boolean;
   readonly contributorMicrophoneAllowed?: boolean;
   readonly globalRateLimitConfigured?: boolean;
@@ -106,6 +107,7 @@ function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
         ok: true,
         service: 'webmcp-product-evidence',
         protocolVersion: remoteEvidenceProtocolVersion,
+        publicEvidenceOrigin: options.publicEvidenceOrigin ?? config.roomOrigin,
         abuseControls: {
           perClientCaseCreation: true,
           globalCaseCreation: options.globalRateLimitConfigured ?? true,
@@ -113,6 +115,8 @@ function releaseFetch(options: ReleaseFetchOptions = {}): ReleaseFetch {
         },
         evidenceServices: {
           stream: true,
+          signedStreamPlayback: true,
+          streamPlaybackDailyTokenLimit: 60,
           videoAnalysis: true,
           missionBoundCapture: options.missionBoundCapture ?? true,
           reusableEvidence: true,
@@ -290,6 +294,15 @@ describe('public release preflight', () => {
     await expect(
       verifyPublicRelease(config, releaseFetch({ globalRateLimitConfigured: false })),
     ).rejects.toThrow(/invalid response contract/i);
+  });
+
+  it('fails closed when signed playback points at a different Worker origin', async () => {
+    await expect(
+      verifyPublicRelease(
+        config,
+        releaseFetch({ publicEvidenceOrigin: 'https://different.example' }),
+      ),
+    ).rejects.toThrow(/signed playback origin does not match/i);
   });
 
   it('fails closed when mission-bound capture is not deployed', async () => {

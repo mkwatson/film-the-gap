@@ -37,6 +37,8 @@ export interface ReleaseTargetGuardReport {
     readonly worker: string;
     readonly roomOrigin: string;
     readonly d1Configured: true;
+    readonly signedPlaybackOriginConfigured: true;
+    readonly cpuLimitMilliseconds: 100;
   };
 }
 
@@ -96,6 +98,15 @@ function configuredD1Id(configText: string, key: string): string {
   return value.toLowerCase();
 }
 
+function configuredNumber(configText: string, key: string): number {
+  const match = new RegExp(`"${key}"\\s*:\\s*(\\d+)`, 'u').exec(configText);
+  const value = Number(match?.[1]);
+  if (!Number.isSafeInteger(value)) {
+    throw new Error(`room-worker/wrangler.evidence.jsonc must declare numeric ${key}.`);
+  }
+  return value;
+}
+
 export function verifyReleaseTarget(input: ReleaseTargetGuardInput): ReleaseTargetGuardReport {
   const expectedVercelScope = releaseSlug(input.expectedVercelScope, 'WEBMCP_VERCEL_SCOPE');
   const expectedVercelProject = releaseSlug(input.expectedVercelProject, 'WEBMCP_VERCEL_PROJECT');
@@ -147,6 +158,18 @@ export function verifyReleaseTarget(input: ReleaseTargetGuardInput): ReleaseTarg
       'database_id and preview_database_id must name the same dedicated D1 database.',
     );
   }
+  const configuredPlaybackOrigin = releaseOrigin(
+    configString(input.workerConfigText, 'PUBLIC_EVIDENCE_ORIGIN'),
+    'PUBLIC_EVIDENCE_ORIGIN in room-worker/wrangler.evidence.jsonc',
+  );
+  if (configuredPlaybackOrigin !== roomOrigin) {
+    throw new Error(
+      'PUBLIC_EVIDENCE_ORIGIN in room-worker/wrangler.evidence.jsonc must match WEBMCP_ROOM_ORIGIN.',
+    );
+  }
+  if (configuredNumber(input.workerConfigText, 'cpu_ms') !== 100) {
+    throw new Error('The release Worker must retain its reviewed 100 ms CPU ceiling.');
+  }
 
   return {
     ok: true,
@@ -160,6 +183,8 @@ export function verifyReleaseTarget(input: ReleaseTargetGuardInput): ReleaseTarg
       worker: workerName,
       roomOrigin,
       d1Configured: true,
+      signedPlaybackOriginConfigured: true,
+      cpuLimitMilliseconds: 100,
     },
   };
 }

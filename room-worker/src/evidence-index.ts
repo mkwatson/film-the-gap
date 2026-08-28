@@ -11,10 +11,17 @@ import {
 } from './known-page-reader';
 import { routeProductEvidenceRequest, type ProductEvidenceWorkerEnv } from './product-evidence';
 import { deleteExpiredPublicMissions, routePublicMissionRequest } from './public-mission-board';
+import {
+  deleteExpiredStreamPlaybackUsage,
+  routeStreamPlaybackRequest,
+  streamPlaybackDailyTokenLimit,
+  type StreamPlaybackWorkerEnv,
+} from './stream-playback';
 
 export { ProductEvidenceCaseObject } from './product-evidence';
 
-export interface EvidenceWorkerEnv extends ProductEvidenceWorkerEnv, KnownPageReaderWorkerEnv {
+export interface EvidenceWorkerEnv
+  extends ProductEvidenceWorkerEnv, KnownPageReaderWorkerEnv, StreamPlaybackWorkerEnv {
   readonly CF_VERSION_METADATA: WorkerVersionMetadata;
 }
 
@@ -57,6 +64,7 @@ async function route(request: Request, env: EvidenceWorkerEnv): Promise<Response
       ok: true,
       service: 'webmcp-product-evidence',
       protocolVersion: remoteEvidenceProtocolVersion,
+      publicEvidenceOrigin: env.PUBLIC_EVIDENCE_ORIGIN,
       abuseControls: {
         perClientCaseCreation: env.CASE_CREATION_PER_CLIENT_RATE_LIMITER !== undefined,
         globalCaseCreation: env.CASE_CREATION_GLOBAL_RATE_LIMITER !== undefined,
@@ -64,6 +72,10 @@ async function route(request: Request, env: EvidenceWorkerEnv): Promise<Response
       },
       evidenceServices: {
         stream: env.STREAM !== undefined || env.STREAM_OUTBOUND !== undefined,
+        signedStreamPlayback:
+          (env.STREAM !== undefined || env.STREAM_OUTBOUND !== undefined) &&
+          env.EVIDENCE_LIBRARY !== undefined,
+        streamPlaybackDailyTokenLimit,
         videoAnalysis:
           env.AI_ANALYSIS_OUTBOUND !== undefined ||
           (env.AI_GATEWAY_API_KEY?.trim().length ?? 0) > 0,
@@ -87,6 +99,10 @@ async function route(request: Request, env: EvidenceWorkerEnv): Promise<Response
   const knownPageResponse = await routeKnownPageReaderRequest(request, env);
   if (knownPageResponse !== null) {
     return knownPageResponse;
+  }
+  const streamPlaybackResponse = await routeStreamPlaybackRequest(request, env);
+  if (streamPlaybackResponse !== null) {
+    return streamPlaybackResponse;
   }
   const publicMissionResponse = await routePublicMissionRequest(
     request,
@@ -127,15 +143,18 @@ export default {
       return;
     }
     const now = new Date(controller.scheduledTime).toISOString();
-    const [reusableEvidence, publicMissions, pageReaderUsage] = await Promise.all([
-      deleteExpiredReusableEvidence(env.EVIDENCE_LIBRARY, now),
-      deleteExpiredPublicMissions(env.EVIDENCE_LIBRARY, now),
-      deleteExpiredPageReaderUsage(env.EVIDENCE_LIBRARY, now.slice(0, 10)),
-    ]);
+    const [reusableEvidence, publicMissions, pageReaderUsage, streamPlaybackUsage] =
+      await Promise.all([
+        deleteExpiredReusableEvidence(env.EVIDENCE_LIBRARY, now),
+        deleteExpiredPublicMissions(env.EVIDENCE_LIBRARY, now),
+        deleteExpiredPageReaderUsage(env.EVIDENCE_LIBRARY, now.slice(0, 10)),
+        deleteExpiredStreamPlaybackUsage(env.EVIDENCE_LIBRARY, now.slice(0, 10)),
+      ]);
     console.log('Expired evidence network purge completed.', {
       reusableEvidence,
       publicMissions,
       pageReaderUsage,
+      streamPlaybackUsage,
     });
   },
 } satisfies ExportedHandler<EvidenceWorkerEnv>;

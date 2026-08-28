@@ -261,6 +261,47 @@ export async function searchReusableEvidence(
   return result.results.map(rowToRecord);
 }
 
+export async function findReusableEvidenceByStreamUid(
+  database: D1Database,
+  streamUid: string,
+  now = new Date().toISOString(),
+): Promise<ReusableEvidenceRecord | null> {
+  const row = await database
+    .withSession('first-primary')
+    .prepare(
+      `SELECT
+        evidence_id,
+        product_name,
+        product_url,
+        question,
+        source_title,
+        video_url,
+        rights,
+        provenance,
+        continuity,
+        capture_timing,
+        contributor_label,
+        captured_at,
+        stream_uid,
+        sha256,
+        duration_seconds,
+        result,
+        confidence,
+        observation_text,
+        citation_start_seconds,
+        citation_end_seconds,
+        reviewed_at,
+        indexed_at,
+        expires_at
+      FROM reusable_evidence
+      WHERE stream_uid = ? AND expires_at > ?
+      LIMIT 1`,
+    )
+    .bind(streamUid, now)
+    .first<EvidenceLibraryRow>();
+  return row === null ? null : rowToRecord(row);
+}
+
 export async function reusableEvidenceSearchResponse(
   database: D1Database | undefined,
   input: ProductQuestionInput,

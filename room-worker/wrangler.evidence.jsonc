@@ -55,10 +55,14 @@
   ],
   "vars": {
     "ALLOWED_ORIGINS": "http://localhost:3000,http://127.0.0.1:3000",
+    "PUBLIC_EVIDENCE_ORIGIN": "https://rooms.example",
     "EVIDENCE_CASE_TTL_SECONDS": "86400",
   },
   "triggers": {
     "crons": ["17 5 * * *"],
+  },
+  "limits": {
+    "cpu_ms": 100,
   },
   "observability": {
     "enabled": true,

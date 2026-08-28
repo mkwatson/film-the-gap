@@ -41,6 +41,32 @@ async function mockCloudflareStream(request: Request): Promise<Response> {
       url: 'https://customer-demo.cloudflarestream.com/0123456789abcdef0123456789abcdef/downloads/default.mp4',
     });
   }
+  if (
+    request.method === 'POST' &&
+    url.pathname === '/videos/0123456789abcdef0123456789abcdef/privacy'
+  ) {
+    const input = (await request.json()) as Record<string, unknown>;
+    if (
+      typeof input.requireSignedURLs !== 'boolean' ||
+      !Array.isArray(input.allowedOrigins) ||
+      (input.requireSignedURLs
+        ? !input.allowedOrigins.includes('rooms.example')
+        : !input.allowedOrigins.includes('localhost'))
+    ) {
+      return json({ error: 'unsafe_stream_privacy_contract' }, 400);
+    }
+    return json({ protected: input.requireSignedURLs });
+  }
+  if (
+    request.method === 'POST' &&
+    url.pathname === '/videos/0123456789abcdef0123456789abcdef/token'
+  ) {
+    return json({
+      token: 'signed.acceptance.token.0123456789abcdef',
+      previewUrl:
+        'https://customer-demo.cloudflarestream.com/0123456789abcdef0123456789abcdef/watch',
+    });
+  }
   return json({ error: 'not_found' }, 404);
 }
 

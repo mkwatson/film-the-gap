@@ -8,10 +8,12 @@ import {
 } from '../../src/lib/evidence-network/model';
 import {
   deleteExpiredReusableEvidence,
+  findReusableEvidenceByStreamUid,
   indexReusableEvidence,
   normalizeEvidenceMatchText,
   searchReusableEvidence,
 } from '../src/evidence-library';
+import { streamPlaybackDailyTokenLimit } from '../src/stream-playback';
 
 const database = (env as unknown as { readonly EVIDENCE_LIBRARY: D1Database }).EVIDENCE_LIBRARY;
 const appOrigin = 'http://localhost:3000';
@@ -138,6 +140,77 @@ describe('reusable evidence library', () => {
         '2026-08-27T20:00:00.000Z',
       ),
     ).toEqual([]);
+  });
+
+  it('looks up only fresh reusable evidence by its Stream identifier', async () => {
+    const fresh = record('networkvideo00000009');
+    const expired = record('networkvideo00000010', {
+      indexedAt: '2026-08-27T19:02:00.000Z',
+      expiresAt: '2026-08-28T19:02:00.000Z',
+    });
+    await indexReusableEvidence(database, fresh);
+    await indexReusableEvidence(database, expired);
+
+    await expect(
+      findReusableEvidenceByStreamUid(database, fresh.source.streamUid, '2026-08-29T00:00:00.000Z'),
+    ).resolves.toMatchObject({ source: { streamUid: fresh.source.streamUid } });
+    await expect(
+      findReusableEvidenceByStreamUid(
+        database,
+        expired.source.streamUid,
+        '2026-08-29T00:00:00.000Z',
+      ),
+    ).resolves.toBeNull();
+  });
+
+  it('stops issuing signed playback tokens at the atomic daily ceiling', async () => {
+    const protectedRecord = record('networkvideo00000011', {
+      source: {
+        ...record('networkvideo00000011').source,
+        videoUrl: 'https://rooms.example/evidence-library/videos/networkvideo00000011',
+      },
+    });
+    await indexReusableEvidence(database, protectedRecord);
+    const day = new Date().toISOString().slice(0, 10);
+    await database
+      .prepare('INSERT INTO stream_playback_daily_usage (day, tokens) VALUES (?, ?)')
+      .bind(day, streamPlaybackDailyTokenLimit)
+      .run();
+
+    const response = await SELF.fetch(protectedRecord.source.videoUrl, {
+      headers: { Origin: appOrigin },
+    });
+
+    expect(response.status).toBe(429);
+    expect(await response.json()).toEqual({ error: 'stream_playback_daily_budget_exhausted' });
+    await database.prepare('DELETE FROM stream_playback_daily_usage WHERE day = ?').bind(day).run();
+  });
+
+  it('escapes reviewed text in the no-login signed playback page', async () => {
+    const streamUid = '0123456789abcdef0123456789abcdef';
+    const protectedRecord = record(streamUid, {
+      productName: '<script>unsafe product</script>',
+      source: {
+        ...record(streamUid).source,
+        videoUrl: `https://rooms.example/evidence-library/videos/${streamUid}`,
+      },
+      observation: {
+        ...record(streamUid).observation,
+        text: '<img src=x onerror=alert(1)> No liquid reached the paper.',
+      },
+    });
+    await indexReusableEvidence(database, protectedRecord);
+
+    const response = await SELF.fetch(protectedRecord.source.videoUrl, {
+      headers: { Origin: appOrigin },
+    });
+    const html = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(html).toContain('&lt;script&gt;unsafe product&lt;/script&gt;');
+    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    expect(html).not.toContain('<script>unsafe product</script>');
+    expect(html).not.toContain('<img src=x onerror=alert(1)>');
   });
 
   it('upserts a reviewed Stream recording and serves it through the public Worker route', async () => {

@@ -1039,12 +1039,12 @@ async function run(): Promise<void> {
           'a[data-stream-uid="acceptancevideo0000000000000001"]',
         );
         return link instanceof HTMLAnchorElement &&
-          link.href === 'https://customer-acceptance.cloudflarestream.com/acceptancevideo0000000000000001/watch' &&
+          link.href === 'https://rooms.example/evidence-library/videos/acceptancevideo0000000000000001' &&
           link.textContent?.includes('Watch cited video') === true &&
           link.rel.includes('noreferrer');
       })()`);
       if (playbackBound !== true) {
-        throw new Error('The reviewed citation was not bound to its Stream playback source.');
+        throw new Error('The reviewed citation was not bound to its stable signed viewer.');
       }
       if (!humanControls) {
         await waitForBrowserValue(

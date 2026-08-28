@@ -17,6 +17,7 @@ describe('standalone evidence Worker', () => {
       ok: true,
       service: 'webmcp-product-evidence',
       protocolVersion: remoteEvidenceProtocolVersion,
+      publicEvidenceOrigin: 'https://rooms.example',
       abuseControls: {
         perClientCaseCreation: true,
         globalCaseCreation: true,
@@ -24,6 +25,8 @@ describe('standalone evidence Worker', () => {
       },
       evidenceServices: {
         stream: true,
+        signedStreamPlayback: true,
+        streamPlaybackDailyTokenLimit: 60,
         videoAnalysis: true,
         missionBoundCapture: true,
         reusableEvidence: true,

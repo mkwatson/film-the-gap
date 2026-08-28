@@ -43,18 +43,21 @@ import {
 } from '../../src/lib/evidence-network/video-analysis';
 import { indexReusableEvidence } from './evidence-library';
 import { markPublicMissionFulfilled } from './public-mission-board';
+import {
+  protectReusableStreamVideo,
+  restoreUnpublishedStreamVideo,
+  reusableEvidencePlaybackUrl,
+  streamAllowedOriginDomains,
+  type StreamPlaybackWorkerEnv,
+} from './stream-playback';
 
-export interface ProductEvidenceWorkerEnv {
+export interface ProductEvidenceWorkerEnv extends StreamPlaybackWorkerEnv {
   readonly CASES: DurableObjectNamespace<ProductEvidenceCaseObject>;
   readonly EVIDENCE_CASE_TTL_SECONDS: string;
-  readonly ALLOWED_ORIGINS: string;
   readonly CASE_CREATION_PER_CLIENT_RATE_LIMITER?: RateLimit;
   readonly CASE_CREATION_GLOBAL_RATE_LIMITER?: RateLimit;
-  readonly STREAM?: StreamBinding;
-  readonly STREAM_OUTBOUND?: Fetcher;
   readonly AI_GATEWAY_API_KEY?: string;
   readonly AI_ANALYSIS_OUTBOUND?: Fetcher;
-  readonly EVIDENCE_LIBRARY?: D1Database;
 }
 
 interface StoredUploadReservation {
@@ -269,26 +272,7 @@ function evidenceCaseTtlMilliseconds(env: ProductEvidenceWorkerEnv): number {
   return seconds * 1_000;
 }
 
-export function streamAllowedOriginDomains(allowedOrigins: string): readonly string[] {
-  return [
-    ...new Set(
-      allowedOrigins
-        .split(',')
-        .map((origin) => origin.trim())
-        .filter((origin) => origin.length > 0)
-        .flatMap((origin) => {
-          try {
-            const url = new URL(origin);
-            return ['http:', 'https:'].includes(url.protocol) && url.hostname.length > 0
-              ? [url.hostname]
-              : [];
-          } catch {
-            return [];
-          }
-        }),
-    ),
-  ];
-}
+export { streamAllowedOriginDomains } from './stream-playback';
 
 interface CaseCreationRateLimiters {
   readonly perClient: RateLimit | undefined;
@@ -1255,12 +1239,64 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
         400,
       );
     }
+    const publishesToNetwork = parsed.data.review.reuseScope === 'public_network';
+    if (publishesToNetwork && !qualifiesForPublicNetworkReuse(parsed.data.review)) {
+      return jsonResponse(
+        {
+          error: 'evidence_not_reusable',
+          message:
+            'Network reuse requires a conclusive, medium-or-high-confidence continuous recording. Choose case-only publication or strengthen the review.',
+        },
+        422,
+      );
+    }
+    const evidenceLibrary = this.workerEnv.EVIDENCE_LIBRARY;
+    if (publishesToNetwork && evidenceLibrary === undefined) {
+      return jsonResponse(
+        {
+          error: 'evidence_library_unavailable',
+          message:
+            'This deployment cannot make the clip reusable yet. Choose case-only publication or retry later.',
+        },
+        503,
+      );
+    }
+    if (publishesToNetwork && video.previewUrl === null) {
+      return jsonResponse(
+        {
+          error: 'video_playback_unavailable',
+          message:
+            'Cloudflare Stream has not exposed a reusable playback URL yet. Retry after processing finishes.',
+        },
+        503,
+      );
+    }
+    let publicPlaybackUrl: string | undefined;
+    if (publishesToNetwork) {
+      try {
+        publicPlaybackUrl = reusableEvidencePlaybackUrl(this.workerEnv, parsed.data.uploadId);
+      } catch (error: unknown) {
+        console.error('Public evidence playback origin is invalid', error);
+        return jsonResponse(
+          {
+            error: 'video_privacy_unavailable',
+            message:
+              'This deployment cannot protect reusable playback yet. Choose case-only publication or retry later.',
+          },
+          503,
+        );
+      }
+    }
     const evidenceInput: ReviewedEvidenceInput = {
       ...parsed.data.review,
       captureTiming: captureTimingForReview(parsed.data.review.provenance, reservation),
       durationSeconds: actualDuration,
       streamUid: parsed.data.uploadId,
-      ...(video.previewUrl === null ? {} : { videoUrl: video.previewUrl }),
+      ...(publicPlaybackUrl === undefined
+        ? video.previewUrl === null
+          ? {}
+          : { videoUrl: video.previewUrl }
+        : { videoUrl: publicPlaybackUrl }),
     };
     const reviewedAt = new Date().toISOString();
     const transition = applyEvidenceNetworkCommand(
@@ -1272,33 +1308,19 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
       },
       reviewedAt,
     );
-    if (transition.ok && parsed.data.review.reuseScope === 'public_network') {
-      if (!qualifiesForPublicNetworkReuse(parsed.data.review)) {
-        return jsonResponse(
-          {
-            error: 'evidence_not_reusable',
-            message:
-              'Network reuse requires a conclusive, medium-or-high-confidence continuous recording. Choose case-only publication or strengthen the review.',
-          },
-          422,
-        );
+    if (transition.ok && publishesToNetwork) {
+      if (evidenceLibrary === undefined || publicPlaybackUrl === undefined) {
+        return jsonResponse({ error: 'evidence_library_unavailable' }, 503);
       }
-      if (this.workerEnv.EVIDENCE_LIBRARY === undefined) {
+      try {
+        await protectReusableStreamVideo(this.workerEnv, parsed.data.uploadId);
+      } catch (error: unknown) {
+        console.error('Cloudflare Stream reusable-video privacy update failed', error);
         return jsonResponse(
           {
-            error: 'evidence_library_unavailable',
+            error: 'video_privacy_unavailable',
             message:
-              'This deployment cannot make the clip reusable yet. Choose case-only publication or retry later.',
-          },
-          503,
-        );
-      }
-      if (video.previewUrl === null) {
-        return jsonResponse(
-          {
-            error: 'video_playback_unavailable',
-            message:
-              'Cloudflare Stream has not exposed a reusable playback URL yet. Retry after processing finishes.',
+              'Cloudflare Stream did not protect this reusable clip. Choose case-only publication or retry later.',
           },
           503,
         );
@@ -1313,7 +1335,7 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
             parsed.data.review.provenance === 'live_capture'
               ? 'Contributor-recorded mission video'
               : 'Contributor-authorized existing video',
-          videoUrl: video.previewUrl,
+          videoUrl: publicPlaybackUrl,
           rights: parsed.data.review.rights,
           provenance: parsed.data.review.provenance,
           continuity: parsed.data.review.continuity,
@@ -1336,14 +1358,25 @@ export class ProductEvidenceCaseObject extends DurableObject<ProductEvidenceWork
         expiresAt: new Date(Date.now() + reusableEvidenceRetentionMilliseconds).toISOString(),
       });
       try {
-        await indexReusableEvidence(this.workerEnv.EVIDENCE_LIBRARY, reusableRecord);
+        await indexReusableEvidence(evidenceLibrary, reusableRecord);
       } catch (error: unknown) {
         console.error('Cloudflare D1 reusable evidence write failed', error);
+        let playbackRestored = false;
+        try {
+          await restoreUnpublishedStreamVideo(this.workerEnv, parsed.data.uploadId);
+          playbackRestored = true;
+        } catch (restoreError: unknown) {
+          console.error(
+            'Cloudflare Stream pre-publication policy restoration failed',
+            restoreError,
+          );
+        }
         return jsonResponse(
           {
             error: 'evidence_library_unavailable',
-            message:
-              'The reusable evidence index did not accept this clip. Choose case-only publication or retry later.',
+            message: playbackRestored
+              ? 'The reusable evidence index did not accept this clip. Its pre-publication playback policy was restored; choose case-only publication or retry later.'
+              : 'The reusable evidence index did not accept this clip and Stream could not restore its prior playback policy. Retry network publication before choosing another scope.',
           },
           503,
         );

@@ -9,9 +9,9 @@ Updated August 28, 2026 PT. This document records what the current product-evide
 | `pnpm peers check`            | Pass, zero peer issues                             | The exact pinned dependency graph is internally compatible.                                                                                                                      |
 | Production dependency audit   | Pass, no known vulnerabilities                     | Every installed production dependency declares a recognized open-source license.                                                                                                 |
 | `pnpm check`                  | Pass                                               | Prettier, zero-warning ESLint, strict TypeScript, all tests, Worker bundle, and production Next.js build.                                                                        |
-| App tests                     | 29 files, 191 tests pass                           | Product state, revision-safe mission refinement, strict handoff, dynamic tools, privacy, review, search, reconnect, failures, and release checks.                                |
-| Worker tests                  | 6 files, 35 tests pass in Workerd                  | Durable Object, D1, Browser Run contract, role capabilities, uploads, model proposal, reuse, expiry, quota, and denial paths.                                                    |
-| Worker dry run                | Wrangler 4.127.0; 1,141.54 KiB / 192.67 KiB gzip   | The standalone evidence Worker bundles with every declared production binding, including Browser Run.                                                                            |
+| App tests                     | 29 files, 193 tests pass                           | Product state, revision-safe mission refinement, strict handoff, dynamic tools, privacy, review, search, reconnect, failures, and release checks.                                |
+| Worker tests                  | 6 files, 39 tests pass in Workerd                  | Durable Object, D1, Browser Run, signed Stream playback, role capabilities, uploads, model proposal, reuse, expiry, quota, compensation, and denial paths.                       |
+| Worker dry run                | Wrangler 4.127.0; 1,155.67 KiB / 195.85 KiB gzip   | The standalone evidence Worker bundles with every declared production binding, including Browser Run and Stream.                                                                 |
 | Next.js build                 | Next.js 16.3.3; eight route entries                | The product page, strict handoff, shopper, board, recorder, search, and health surfaces build for production.                                                                    |
 | Cold clone                    | Frozen install and full gate pass; clean afterward | The repository does not depend on ignored files, generated files, or local package state.                                                                                        |
 | Native Chrome journey         | Eight steps pass                                   | The real app, native WebMCP registration, inspected mission refinement, Durable Object, D1, WebSocket, and browser state complete the causal journey against paid-edge fixtures. |
@@ -19,7 +19,7 @@ Updated August 28, 2026 PT. This document records what the current product-evide
 | Product-page native bridge    | Before → navigation → after passes                 | Native page tools open the exact strict case; reviewed evidence changes the visible page and replaces the stale handoff tool with evidence inspection.                           |
 | Chrome Labs independent smoke | 15/15 calls across five cases                      | The exact source-built evaluator executes create → inspect → exact-revision refine → handoff → publish plus product-page claim → navigation → case inspection.                   |
 | Release target guard          | Current target rejected as intended                | The clean candidate cannot mutate external services while its ignored Vercel link names the retired project; placeholder D1 IDs are independently rejected.                      |
-| Desktop/mobile visual check   | Pass at desktop and 390×844                        | Claim-only, reviewed-evidence, and pre-handoff refined-mission states are legible with no framework overlay; prior shopper/board/phone checks remain valid.                      |
+| Desktop/mobile visual check   | Pass at desktop and 390×844                        | Claim-only, reviewed-evidence, pre-handoff mission, and signed-playback states are legible with no overflow or framework overlay; prior shopper/board/phone checks remain valid. |
 | Repository content scan       | Pass                                               | The tracked tree contains text and one authored SVG, no binary media; a reachable-history secret-pattern scan found only environment-variable lookups.                           |
 
 The exact browser-release candidate `3d1fa4491b9ef640a7e4f943a0c602e5640bf2a5` passed a fresh clone, frozen install, peer check, full quality gate, production builds, and clean post-build worktree on August 28.
@@ -54,22 +54,22 @@ The revision-safe mission candidate `8e0493e4c4b481aae63c90b591138d21516b04fa` l
 
 Chrome 151 completed the following sequence against the real local Next.js app, Cloudflare Worker runtime, Durable Object, D1 database, migrations, WebSocket updates, and WebMCP registrations:
 
-1. Open the default unresolved case with Search—not mission creation—as the initial native capability: 1,768 ms.
-2. Open an arbitrary product, read bounded page context, and search existing evidence through WebMCP: 537 ms.
-3. Create a bounded missing-proof mission, inspect and refine its exact revision, create the locked phone handoff, and explicitly publish the minimized request: 757 ms.
-4. Inspect and claim the request from a fresh board context with no customer list: 378 ms.
-5. Scrub the contributor capability from the URL and recover it after reload: 248 ms.
-6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, deliberately choose rights, explicitly confirm the reviewed submission, and publish: 1,418 ms.
-7. Observe the first shopper's live answer change and exact timestamp citation: 557 ms.
-8. Open a fresh matching case, reuse the same reviewed source without another mission, and skip redundant public-provider calls: 482 ms.
+1. Open the default unresolved case with Search—not mission creation—as the initial native capability: 1,438 ms.
+2. Open an arbitrary product, read bounded page context, and search existing evidence through WebMCP: 571 ms.
+3. Create a bounded missing-proof mission, inspect and refine its exact revision, create the locked phone handoff, and explicitly publish the minimized request: 825 ms.
+4. Inspect and claim the request from a fresh board context with no customer list: 421 ms.
+5. Scrub the contributor capability from the URL and recover it after reload: 291 ms.
+6. Upload a generated rights-clean clip, receive a model-shaped proposal, correct it, deliberately choose rights, explicitly confirm the reviewed submission, and publish: 1,485 ms.
+7. Observe the first shopper's live answer change and exact timestamp citation: 560 ms.
+8. Open a fresh matching case, reuse the same reviewed source through its stable signed viewer without another mission, and skip redundant public-provider calls: 499 ms.
 
 The fixtures replace only Cloudflare Stream, Cloudflare Browser Run, and the video-model response. The page fixture rejects requests unless the Worker supplies the exact same-origin pattern, blocked resource types, headers, timeouts, and cache boundary expected in production. Browser egress to the public paid-service hosts is blocked during this test. The generated clip deliberately omits the random mission phrase, so the system preserves the honest `contributor_attested` label instead of inventing mission-challenge verification.
 
 ## Ordinary-browser end-to-end receipt
 
-The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,267, 149, 739, 269, 269, 1,445, 430, and 590 ms respectively. The run proved that a person can open and search an arbitrary case, refine the mission through the human editor, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, deliberately assert rights and confirm review, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission or public-provider call.
+The same Chrome executable then started with WebMCP explicitly disabled. Using only visible controls, it completed the same eight boundaries in 1,278, 147, 761, 275, 281, 1,463, 403, and 584 ms respectively. The run proved that a person can open and search an arbitrary case, refine the mission through the human editor, explicitly publish a privacy-minimized request, discover and claim it from a fresh board context, recover a scrubbed recorder capability, deliberately assert rights and confirm review, receive the live answer change, and reuse the reviewed citation in a fresh case without a redundant mission or public-provider call.
 
-A separate run captured all major screens in both modes. The 1,280-pixel-wide pre-handoff receipt was visually inspected after refinement: the exact 11-second recipe, acceptance boundary, preserved phrase, four-tool frontier, and phone-link boundary are coherent without an error overlay. The earlier contributor receipt still shows the neutral contributor identity, deliberate rights choice, correction controls, final attestation, and disabled publication boundary.
+A separate run captured all major screens in both modes. The 1,280-pixel-wide pre-handoff receipt was visually inspected after refinement: the exact 11-second recipe, acceptance boundary, preserved phrase, four-tool frontier, and phone-link boundary are coherent without an error overlay. The earlier contributor receipt still shows the neutral contributor identity, deliberate rights choice, correction controls, final attestation, and disabled publication boundary. The exact signed-viewer renderer also passed 1,280×720 and 390×844 visual checks with its citation visible, responsive player, titled iframe, no horizontal overflow, and no blocking overlay.
 
 This is an independent product-surface receipt, not a substitute for the native WebMCP receipt: together they establish that Site Tools are load-bearing for agent collaboration while every human role still has a complete ordinary web path.
 

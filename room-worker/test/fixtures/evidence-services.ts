@@ -80,6 +80,25 @@ export default {
         url: `https://customer-acceptance.cloudflarestream.com/${fixtureUploadId}/downloads/default.mp4`,
       });
     }
+    if (request.method === 'POST' && url.pathname === `/videos/${fixtureUploadId}/privacy`) {
+      const input = (await request.json()) as Record<string, unknown>;
+      if (
+        typeof input.requireSignedURLs !== 'boolean' ||
+        !Array.isArray(input.allowedOrigins) ||
+        (input.requireSignedURLs
+          ? !input.allowedOrigins.includes('rooms.example')
+          : !input.allowedOrigins.includes('localhost'))
+      ) {
+        return json({ error: 'unsafe_stream_privacy_contract' }, 400);
+      }
+      return json({ protected: input.requireSignedURLs });
+    }
+    if (request.method === 'POST' && url.pathname === `/videos/${fixtureUploadId}/token`) {
+      return json({
+        token: 'signed.acceptance.token.0123456789abcdef',
+        previewUrl: `https://customer-acceptance.cloudflarestream.com/${fixtureUploadId}/watch`,
+      });
+    }
     if (request.method === 'POST' && url.pathname === '/video') {
       const parsed = analysisInput((await request.json()) as unknown);
       if (

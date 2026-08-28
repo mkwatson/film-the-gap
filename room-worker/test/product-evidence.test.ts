@@ -443,12 +443,11 @@ describe('generic product evidence cases', () => {
     };
     expect(published.snapshot.state.activeCase.answers.at(-1)?.status).toBe('supported');
     expect(published.snapshot.state.activeCase.sources.at(-1)?.streamUid).toBe(upload.uploadId);
-    expect(
-      await searchReusableEvidence(evidenceLibrary, {
-        productName: 'EVERYDAY insulated travel bottle',
-        question: 'Does the filled bottle stay leak-free when held upside down for 10 seconds?',
-      }),
-    ).toMatchObject([
+    const reusableEvidence = await searchReusableEvidence(evidenceLibrary, {
+      productName: 'EVERYDAY insulated travel bottle',
+      question: 'Does the filled bottle stay leak-free when held upside down for 10 seconds?',
+    });
+    expect(reusableEvidence).toMatchObject([
       {
         source: {
           streamUid: upload.uploadId,
@@ -459,6 +458,24 @@ describe('generic product evidence cases', () => {
         observation: { result: 'supports', citationStartSeconds: 1, citationEndSeconds: 10 },
       },
     ]);
+    expect(reusableEvidence[0]?.source.videoUrl).toBe(
+      `https://rooms.example/evidence-library/videos/${upload.uploadId}`,
+    );
+
+    const playbackResponse = await SELF.fetch(reusableEvidence[0]?.source.videoUrl ?? '', {
+      headers: { Origin: origin },
+    });
+    const playbackHtml = await playbackResponse.text();
+    expect(playbackResponse.status).toBe(200);
+    expect(playbackResponse.headers.get('Cache-Control')).toBe('no-store');
+    expect(playbackResponse.headers.get('Content-Security-Policy')).toContain(
+      'frame-src https://customer-demo.cloudflarestream.com',
+    );
+    expect(playbackHtml).toContain('Private, signed Cloudflare Stream playback');
+    expect(playbackHtml).toContain(
+      'https://customer-demo.cloudflarestream.com/signed.acceptance.token.0123456789abcdef/iframe?preload=metadata&amp;startTime=1',
+    );
+    expect(playbackHtml).not.toContain('/downloads/default.mp4');
 
     const updatedMessage = await reader.next('case-snapshot');
     expect(updatedMessage).toMatchObject({
@@ -628,6 +645,82 @@ describe('generic product evidence cases', () => {
 
     expect(publishResponse.status).toBe(422);
     expect(await publishResponse.json()).toMatchObject({ error: 'evidence_not_reusable' });
+    const snapshotResponse = await SELF.fetch(
+      `https://rooms.example/evidence-cases/${credentials.caseId}/snapshot`,
+      { headers: { Origin: origin } },
+    );
+    expect(await snapshotResponse.json()).toMatchObject({
+      state: { activeCase: { mission: { status: 'open' }, answers: [{ status: 'insufficient' }] } },
+    });
+  });
+
+  it('restores pre-publication Stream playback when the reusable index rejects a write', async () => {
+    const { credentials } = await createCase();
+    const uploadResponse = await SELF.fetch(
+      `https://rooms.example/evidence-cases/${credentials.caseId}/uploads`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({
+          token: credentials.contributorToken,
+          confirmRightsForUpload: true,
+          fileSizeBytes: 2_000_000,
+          maxDurationSeconds: 30,
+          mimeType: 'video/mp4',
+        }),
+      },
+    );
+    const upload = reservedEvidenceUploadSchema.parse(await uploadResponse.json());
+    await evidenceLibrary
+      .prepare(
+        `CREATE TRIGGER reject_test_reusable_evidence
+         BEFORE INSERT ON reusable_evidence
+         BEGIN
+           SELECT RAISE(ABORT, 'test reusable index failure');
+         END`,
+      )
+      .run();
+
+    let publishResponse: Response;
+    try {
+      publishResponse = await SELF.fetch(
+        `https://rooms.example/evidence-cases/${credentials.caseId}/evidence`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Origin: origin },
+          body: JSON.stringify({
+            token: credentials.contributorToken,
+            commandId: crypto.randomUUID(),
+            expectedRevision: credentials.state.revision,
+            uploadId: upload.uploadId,
+            confirmReviewedEvidence: true,
+            review: {
+              result: 'supports',
+              observation: 'No water reached the paper during the continuous inversion.',
+              contributorLabel: 'Bottle owner',
+              durationSeconds: 10,
+              citationStartSeconds: 1,
+              citationEndSeconds: 10,
+              confidence: 'high',
+              continuity: 'continuous',
+              provenance: 'live_capture',
+              rights: 'owned',
+              reuseScope: 'public_network',
+              capturedAt: new Date().toISOString(),
+              sha256: 'd'.repeat(64),
+            },
+          }),
+        },
+      );
+    } finally {
+      await evidenceLibrary.prepare('DROP TRIGGER reject_test_reusable_evidence').run();
+    }
+
+    expect(publishResponse.status).toBe(503);
+    expect(await publishResponse.json()).toMatchObject({
+      error: 'evidence_library_unavailable',
+      message: expect.stringMatching(/pre-publication playback policy was restored/i),
+    });
     const snapshotResponse = await SELF.fetch(
       `https://rooms.example/evidence-cases/${credentials.caseId}/snapshot`,
       { headers: { Origin: origin } },

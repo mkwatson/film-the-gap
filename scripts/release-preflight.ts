@@ -66,6 +66,7 @@ const roomHealthSchema = z.strictObject({
   ok: z.literal(true),
   service: z.literal('webmcp-product-evidence'),
   protocolVersion: z.literal(remoteEvidenceProtocolVersion),
+  publicEvidenceOrigin: z.string().url(),
   abuseControls: z.strictObject({
     perClientCaseCreation: z.literal(true),
     globalCaseCreation: z.literal(true),
@@ -73,6 +74,8 @@ const roomHealthSchema = z.strictObject({
   }),
   evidenceServices: z.strictObject({
     stream: z.literal(true),
+    signedStreamPlayback: z.literal(true),
+    streamPlaybackDailyTokenLimit: z.literal(60),
     videoAnalysis: z.literal(true),
     missionBoundCapture: z.literal(true),
     reusableEvidence: z.literal(true),
@@ -351,6 +354,9 @@ export async function verifyPublicRelease(
     requireStatus(response, 200, label);
     requireHeaderIncludes(response, 'Cache-Control', 'no-store', label);
     const health = parseWithSchema(roomHealthSchema, await jsonBody(response, label), label);
+    if (health.publicEvidenceOrigin !== config.roomOrigin) {
+      throw probeError(label, 'signed playback origin does not match evidence service');
+    }
     validateWorkerVersion(health.workerVersion, config.expectedCommit, label);
     roomVersion = health.workerVersion;
   });
