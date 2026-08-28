@@ -172,6 +172,8 @@ Then:
    - `SCRAPECREATORS_API_KEY` — optional, server-only, dedicated to this demo.
    - Do not add `AI_GATEWAY_API_KEY`; the video-analysis key belongs only on the Worker.
 
+   The build fails closed on Vercel when `NEXT_PUBLIC_EVIDENCE_ROOM_URL` is absent, non-HTTPS, credentialed, or not an exact origin. This prevents a healthy-looking deployment whose phone action silently falls back to “service not configured.”
+
 6. Deploy the exact Git commit to Vercel. Prefer a Git-associated Production build so `VERCEL_GIT_COMMIT_SHA` is authoritative. A reviewed prebuilt artifact may use `WEBMCP_RELEASE_COMMIT_SHA=$RELEASE_SHA`, but the room origin must be present during `vercel build`; changing it after the build cannot update the client bundle.
 7. Confirm Vercel Deployment Protection is disabled on the final judge hostname. The page must work logged out with no share parameter, password, trusted IP, or bypass header.
 
