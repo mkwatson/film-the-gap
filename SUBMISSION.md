@@ -91,8 +91,8 @@ A Cloudflare Durable Object owns each case, revision, random capture phrase, rol
 
 This path requires no Film the Gap account. For ChatGPT, use the latest desktop app's built-in browser with **Enable site tools** on in **Settings → Browser → Permissions** and select **GPT-5.6 Sol** or **GPT-5.6 Terra**; Luna currently has WebMCP disabled, and Site Tools are not available in Enterprise or Edu workspaces. WebMCP-enabled Chrome is the alternate buyer client. The contributor phone can use any ordinary browser.
 
-1. Open **[LIVE URL]** and inspect Site Tools. Send: “Find a new plain stainless insulated bottle available in the US. My maximum price and history are private. Send only a generic product query and country. Stop after the catalog results.” Confirm `search_product_catalog` returns real products through Shopify Global Catalog/UCP, exposes exact variant IDs, and labels every catalog claim **not proof**. After the result, `open_catalog_product_question` should appear. This is the permissionless real-product entry; no merchant account or demo catalog is involved.
-2. Open **[LIVE URL]/demo-product** for the rights-clean complete loop. The page says **“Leak resistant”**, labels that text **Claim only · not verified evidence**, asks the exact ten-second question, and shows zero reviewed videos. In **Site tools → Available site tools**, confirm the page exposes claim inspection and an exact evidence-case handoff.
+1. Open **https://film-the-gap.vercel.app** and inspect Site Tools. Send: “Find a new plain stainless insulated bottle available in the US. My maximum price and history are private. Send only a generic product query and country. Stop after the catalog results.” Confirm `search_product_catalog` returns real products through Shopify Global Catalog/UCP, exposes exact variant IDs, and labels every catalog claim **not proof**. After the result, `open_catalog_product_question` should appear. This is the permissionless real-product entry; no merchant account or demo catalog is involved.
+2. Open **https://film-the-gap.vercel.app/demo-product** for the rights-clean complete loop. The page says **“Leak resistant”**, labels that text **Claim only · not verified evidence**, asks the exact ten-second question, and shows zero reviewed videos. In **Site tools → Available site tools**, confirm the page exposes claim inspection and an exact evidence-case handoff.
 3. In ChatGPT, send:
 
    > Use this page's Site Tools. Inspect the product claim and its proof boundary. If reviewed evidence is missing, open the exact evidence case. Do not treat the marketing claim as proof.
@@ -109,7 +109,7 @@ This path requires no Film the Gap account. For ChatGPT, use the latest desktop 
 
    > Re-inspect the product evidence and use the new answer-change tool. Tell me only what changed, what the reviewed video establishes, and the exact cited interval.
 
-8. Return to **[LIVE URL]/demo-product**. The missing-proof action is now a reviewed-video result with the same citation, and its Site Tool frontier has changed from case handoff to reviewed-evidence inspection. Ask ChatGPT to inspect it. This bookend proves the page gained reusable evidence; it is not a scripted second answer.
+8. Return to **https://film-the-gap.vercel.app/demo-product**. The missing-proof action is now a reviewed-video result with the same citation, and its Site Tool frontier has changed from case handoff to reviewed-evidence inspection. Ask ChatGPT to inspect it. This bookend proves the page gained reusable evidence; it is not a scripted second answer.
 
 After the first real bottle mission is published with network-reuse consent, a judge without a second device can begin directly at `/demo-product`: D1 returns the earlier reviewed Stream recording and timestamp, and no filming request appears. That is the only completed-mission replay; the app does not manufacture a pass/fail transition.
 

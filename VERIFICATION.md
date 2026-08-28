@@ -167,23 +167,23 @@ Chrome's imperative API guide was re-read on August 28 at its August 20 update. 
 
 Cloudflare's current Browser Run binding, Markdown Quick Action, timeout, pricing, and Content Signal documentation was re-read on August 28. The candidate uses the current `quickAction('markdown', …)` Worker contract, requires the current compatibility date, sends no Browser API token, records `X-Browser-Ms-Used`, restricts navigation and subresources to the supplied origin, and refuses page text when the origin declares `search=no` or `ai-input=no`. This is an implemented fixture-tested boundary; one authenticated request through the real production binding remains a release gate.
 
-## Read-only release-account audit
+## Release-account receipt
 
-The current Vercel, Cloudflare, and GitHub CLIs authenticated successfully on August 28 without creating or changing a resource. A standalone Vercel scope is available and its existing projects receive clean unsuffixed `*.vercel.app` hostnames. No candidate-specific Gateway budget or key exists yet. The exact candidate Cloudflare Worker name does not exist, the account has no D1 databases, and the current Wrangler OAuth token can manage Workers/D1 but cannot establish whether Stream has been enabled. The intended public GitHub repository is already public with a detected MIT license, but its `main` branch remains on the older prototype revision; the generic candidate has deliberately not been pushed.
+The Vercel, Cloudflare, and GitHub CLIs authenticated successfully on August 28. The standalone Vercel project is linked to `mkwatson/film-the-gap`, automatically deploys `main` to the clean `film-the-gap.vercel.app` alias, and carries a hard `$5`, non-renewing AI Gateway project budget with no auto-top-up. A live Gateway-native Exa search and Shopify Global Catalog/UCP query passed behind the production WAF ceiling.
 
-The worktree's ignored Vercel link still names the older project. The approved release session must create and explicitly link a new standalone project before any environment, budget, firewall, or deployment mutation. Cloudflare Stream enablement remains the sole dashboard-only account preflight.
+Cloudflare has a dedicated Western North America D1 database with all five migrations, a separate Worker, Durable Object export, Stream and Browser Run bindings, both case-creation rate-limit bindings, and the daily purge Cron Trigger. Its free-tier bootstrap passed live case, board, fresh-claim, and no-login recorder checks. Workers Paid, the minimum Stream storage block, private secrets, and exact-current-commit redeployment remain the dashboard/private-input gate. The GitHub repository is public under the final product name, `main` carries the candidate and challenge-period history, and the homepage points to the standalone live app.
 
 ## Gates not yet passed
 
 Do not convert these into public claims until each is recorded against the frozen release:
 
-- The current candidate has not been deployed to its final public Vercel and Cloudflare origins.
+- The Vercel app and free-tier Cloudflare bootstrap are public, but the Worker has not yet been redeployed from the exact current commit with its final paid-plan CPU limit, exact playback origin, and encrypted video/page-reader secrets.
 - The current candidate has not yet completed a real Cloudflare Browser Run read on the final Worker origin.
 - A physical phone has not yet completed this candidate's real Stream upload and real Gateway video-analysis path.
 - The current candidate has not yet completed the full flow in ChatGPT's current in-app Browser.
 - The installed Browser client and cache match at SHA-256 `2158647076eed887c7591cca0957da78747ab9155819d64409d6b895e84ed99b`, and that exact hash is now appended to the local trusted-client list while preserving both prior hashes. The already-running Codex session retains its startup trust environment and therefore still returns `Browser use requires a trusted Node REPL browser service`; one ChatGPT/Codex restart is required before the exact in-app run. This is an environment gate, not an app pass or failure, and no ordinary-browser substitute is counted as the required receipt.
 - The public D1 index has not yet been seeded by a real rights-clean bottle mission. Until that real capture exists, the app deliberately offers no completed-mission replay or synthetic pass/fail button; deterministic paid-edge fixtures remain test-only.
 - An unfamiliar person still needs to complete the no-login flow without coaching.
-- The final rights-clean video, public YouTube URL, stable live URL, and frozen repository revision do not yet exist.
+- The stable live URL and public repository exist; the final rights-clean video, public YouTube URL, and post-rehearsal frozen revision do not yet exist.
 
 Those are mandatory release gates. Passing fixtures, a polyfill, ordinary DOM automation, or a prior prototype does not substitute for them.

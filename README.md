@@ -6,6 +6,14 @@ Instead of stopping at product search or summarizing the claims already online, 
 
 **Live release rehearsal:** [film-the-gap.vercel.app](https://film-the-gap.vercel.app) · [open filming requests](https://film-the-gap.vercel.app/missions) · [rights-clean product page](https://film-the-gap.vercel.app/demo-product). Real UCP discovery, public-web discovery, evidence cases, the open request board, and no-login phone handoff are live. The paid Stream → video-model → reviewed-publication segment remains explicitly release-gated until its private account setup and physical-phone rehearsal pass.
 
+## Judge it in 90 seconds
+
+Open the [live app](https://film-the-gap.vercel.app) in ChatGPT's in-app Browser or WebMCP-enabled Chrome, then ask:
+
+> Use this page's Site Tools. Find a compact USB-C microphone sold in the US, choose one exact current variant, and ask whether speech stays intelligible outdoors in steady wind. Search existing evidence, but never treat catalog copy or ordinary web results as proof. If the answer is still missing, create the smallest continuous filming mission, inspect and tighten it, create its phone handoff, and ask before publishing the minimized request.
+
+Watch `open_catalog_product_question` appear only after live Shopify UCP results, `search_product_evidence` disappear after bounded discovery, mission refinement disappear after contributor handoff, and public publication require explicit confirmation. Then open [the request board](https://film-the-gap.vercel.app/missions) in a fresh context: it exposes only the product, observable question, filming recipe, and a no-login recorder—not the shopper's identity, budget, history, preferences, or conversation.
+
 The root page needs no merchant integration: its Site Tool searches real new products across participating merchants through Shopify Global Catalog and the Universal Commerce Protocol (UCP), while sending only a generic query and country. Catalog copy stays explicitly unverified. For a rights-clean complete loop, the app also includes an owned, same-origin `/demo-product` page for an unbranded bottle. Before evidence exists, that page distinguishes its “leak resistant” claim from the unproven ten-second test. After reviewed video arrives, the shopper's scoped recommendation changes and the original page gains the cited result and a new Site Tool.
 
 The shopper, public-request board, and phone recorder are ordinary web pages. WebMCP lets ChatGPT understand and operate the same state-dependent actions a person sees, while the contributor records and reviews evidence in any normal mobile browser.
